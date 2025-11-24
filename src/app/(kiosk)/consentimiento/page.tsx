@@ -170,7 +170,7 @@ export default function ConsentPage() {
             <h2 className="text-xl font-semibold text-neon-green">Menores Acompañantes</h2>
             <button
               type="button"
-              onClick={() => append({ fullName: "", birthDate: "", relationship: "" })}
+              onClick={() => append({ fullName: "", birthDate: "", relationship: "hijo" })}
               className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm transition-colors border border-gray-700"
             >
               <Plus size={16} /> Agregar Menor
@@ -210,13 +210,10 @@ export default function ConsentPage() {
                     {...register(`minors.${index}.relationship`)}
                     className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white focus:border-neon-blue focus:outline-none appearance-none"
                   >
-                    <option value="">Seleccionar...</option>
-                    <option value="Hijo/a">Hijo/a</option>
-                    <option value="Sobrino/a">Sobrino/a</option>
-                    <option value="Nieto/a">Nieto/a</option>
-                    <option value="Hermano/a">Hermano/a</option>
-                    <option value="Amigo/a">Amigo/a</option>
-                    <option value="Otro">Otro</option>
+                    <option value="hijo">Hijo/a</option>
+                    <option value="sobrino">Sobrino/a</option>
+                    <option value="nieto">Nieto/a</option>
+                    <option value="otro">Otro</option>
                   </select>
                   {errors.minors?.[index]?.relationship && (
                     <span className="text-red-500 text-xs">{errors.minors[index]?.relationship?.message}</span>
