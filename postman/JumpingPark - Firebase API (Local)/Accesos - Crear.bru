@@ -1,0 +1,27 @@
+meta {
+  name: Accesos - Crear
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{baseUrl}}/api/accesos
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "qr_hash": "234234fwf23f23",
+    "cedula_ingresada": "1022334455",
+    "id_usuario_resultado": "REPLACE_USUARIO_ID"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

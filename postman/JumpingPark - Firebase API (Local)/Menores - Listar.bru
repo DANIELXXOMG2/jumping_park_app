@@ -1,0 +1,19 @@
+meta {
+  name: Menores - Listar
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/menores
+  body: none
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+}
+
+settings {
+  encodeUrl: true
+}

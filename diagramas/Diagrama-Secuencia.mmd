@@ -1,0 +1,31 @@
+sequenceDiagram
+    participant User as Visitante (Kiosko)
+    participant Front as Frontend (Next.js)
+    participant API as API Route (/api/otp)
+    participant DB as Firestore
+    participant Mail as Resend API
+    participant Email as Correo Usuario
+
+    User->>Front: Ingresa Cédula
+    Front->>API: POST /api/usuarios/check {cedula}
+    API->>DB: ¿Existe usuario?
+    DB-->>API: (Si/No)
+    
+    alt Usuario Nuevo o Existente
+        API->>API: Generar código OTP (ej. 4582)
+        API->>DB: Guardar OTP temporal con expiración
+        API->>Mail: Enviar OTP via Resend
+        Mail->>Email: "Tu código es 4582"
+        API-->>Front: OK (Esperando OTP)
+    end
+
+    User->>Front: Ingresa OTP
+    Front->>API: POST /api/otp/validate
+    API->>DB: Verificar OTP
+    
+    alt OTP Correcto
+        DB-->>API: Valido
+        API-->>Front: Token de Sesión / Permitir Acceso
+    else OTP Incorrecto
+        API-->>Front: Error 401
+    end

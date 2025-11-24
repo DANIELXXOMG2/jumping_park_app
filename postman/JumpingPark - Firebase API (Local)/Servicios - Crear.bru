@@ -1,0 +1,28 @@
+meta {
+  name: Servicios - Crear
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/servicios
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "nombre": "Entrada General 1h",
+    "codigo": "ENT-1H",
+    "precio": 35000,
+    "estado": true
+  }
+}
+
+settings {
+  encodeUrl: true
+}

@@ -1,0 +1,28 @@
+meta {
+  name: OTP - Crear
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{baseUrl}}/api/otp
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "cedula_ingresada": "1022334455",
+    "codigo_otp": "843221",
+    "id_usuario": "REPLACE_USUARIO_ID",
+    "fue_validado": false
+  }
+}
+
+settings {
+  encodeUrl: true
+}

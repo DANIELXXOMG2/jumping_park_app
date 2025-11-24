@@ -1,0 +1,19 @@
+meta {
+  name: Usuarios - Listar
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/usuarios
+  body: none
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+}
+
+settings {
+  encodeUrl: true
+}

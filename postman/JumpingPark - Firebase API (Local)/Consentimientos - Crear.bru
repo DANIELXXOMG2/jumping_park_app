@@ -1,0 +1,49 @@
+meta {
+  name: Consentimientos - Crear
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/consentimientos
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "numero_unico": "CON-2025-XYZ",
+    "fecha": "2025-11-10",
+    "responsable": {
+      "id": "REPLACE_USUARIO_ID",
+      "tipo_doc": "CC",
+      "numero_doc": "1022334455",
+      "nombres": "Juan",
+      "apellidos": "Pérez",
+      "telefono": "+573003334455",
+      "correo": "juan@mail.com"
+    },
+    "menores": [
+      {
+        "id": "REPLACE_MENOR_ID",
+        "nombre": "Ana",
+        "apellido": "Pérez",
+        "fecha_nacimiento": "2018-02-01",
+        "eps": "Sura"
+      }
+    ],
+    "firma_responsable_url": "gs://jumpingpark/firmas/CON-2025-XYZ.png",
+    "aceptaciones": {
+      "uso_imagen": true,
+      "tratamiento_datos": true
+    }
+  }
+}
+
+settings {
+  encodeUrl: true
+}

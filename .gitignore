@@ -53,7 +53,7 @@ lerna-debug.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Python
+# Python (no se ignoran lib/ del proyecto)
 __pycache__/
 *.py[cod]
 *.pyo
@@ -64,8 +64,6 @@ build/
 develop-eggs/
 eggs/
 .eggs/
-lib/
-lib64/
 parts/
 sdist/
 var/
