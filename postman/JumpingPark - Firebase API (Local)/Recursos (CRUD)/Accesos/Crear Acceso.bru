@@ -1,0 +1,27 @@
+meta {
+  name: Crear Acceso
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/accesos
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "fecha": "2023-10-27T10:00:00Z",
+    "usuarioId": "12345678",
+    "tipo": "entrada"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

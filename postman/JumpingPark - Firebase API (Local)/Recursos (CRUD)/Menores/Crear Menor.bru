@@ -1,0 +1,27 @@
+meta {
+  name: Crear Menor
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/menores
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "fullName": "Niño Ejemplo",
+    "birthDate": "2015-01-01",
+    "parentId": "12345678"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

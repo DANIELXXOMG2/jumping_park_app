@@ -4,7 +4,7 @@ export const minorSchema = z.object({
   fullName: z.string().min(3, "El nombre completo es requerido (mínimo 3 caracteres)"),
   birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "La fecha debe tener el formato YYYY-MM-DD"),
   relationship: z.enum(["hijo", "sobrino", "nieto", "otro"], {
-    errorMap: () => ({ message: "Parentesco inválido" }),
+    message: "Parentesco inválido",
   }),
 });
 

@@ -1,0 +1,28 @@
+meta {
+  name: Crear Usuario
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/usuarios
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "uid": "12345678",
+    "fullName": "Usuario Test",
+    "email": "test@example.com",
+    "phone": "3000000000"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

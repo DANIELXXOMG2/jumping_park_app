@@ -14,114 +14,448 @@
   ],
   "item": [
     {
-      "name": "1. Check Usuario",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"cedula\": \"12345678\"\n}"
+      "name": "Flujo Kiosco",
+      "item": [
+        {
+          "name": "1. Check Usuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cedula\": \"12345678\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios/check",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "usuarios",
+                "check"
+              ]
+            }
+          },
+          "response": []
         },
-        "url": {
-          "raw": "{{baseUrl}}/api/usuarios/check",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "usuarios",
-            "check"
-          ]
+        {
+          "name": "2. OTP - Solicitar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@jumpingpark.com\",\n  \"cedula\": \"12345678\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/otp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "otp"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3. OTP - Validar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@jumpingpark.com\",\n  \"code\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/otp/validate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "otp",
+                "validate"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4. Crear Consentimiento",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"responsibleAdult\": {\n    \"documentId\": \"12345678\",\n    \"fullName\": \"Postman User\",\n    \"email\": \"test@jumpingpark.com\",\n    \"phone\": \"3001234567\",\n    \"address\": \"Calle Falsa 123\",\n    \"minors\": []\n  },\n  \"minors\": [\n    {\n      \"fullName\": \"Hijo Test\",\n      \"birthDate\": \"2015-10-10\",\n      \"relationship\": \"hijo\"\n    }\n  ],\n  \"signature\": \"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==\",\n  \"acceptedPolicy\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/consentimientos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "consentimientos"
+              ]
+            }
+          },
+          "response": []
         }
-      },
-      "response": []
+      ]
     },
     {
-      "name": "2. OTP - Solicitar",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"email\": \"test@jumpingpark.com\",\n  \"cedula\": \"12345678\"\n}"
+      "name": "Recursos (CRUD)",
+      "item": [
+        {
+          "name": "Accesos",
+          "item": [
+            {
+              "name": "Listar Accesos",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/accesos",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "accesos"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Obtener Acceso por ID",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/accesos?id=123",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "accesos"
+                  ],
+                  "query": [
+                    {
+                      "key": "id",
+                      "value": "123"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Crear Acceso",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"fecha\": \"2023-10-27T10:00:00Z\",\n  \"usuarioId\": \"12345678\",\n  \"tipo\": \"entrada\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/accesos",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "accesos"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
         },
-        "url": {
-          "raw": "{{baseUrl}}/api/otp",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "otp"
+        {
+          "name": "Facturas",
+          "item": [
+            {
+              "name": "Listar Facturas",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/facturas",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "facturas"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Crear Factura",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"total\": 50000,\n  \"items\": []\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/facturas",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "facturas"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Menores",
+          "item": [
+            {
+              "name": "Listar Menores",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/menores",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "menores"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Crear Menor",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"fullName\": \"Niño Ejemplo\",\n  \"birthDate\": \"2015-01-01\",\n  \"parentId\": \"12345678\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/menores",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "menores"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Servicios",
+          "item": [
+            {
+              "name": "Listar Servicios",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/servicios",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "servicios"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Crear Servicio",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nombre\": \"Salto Libre 1h\",\n  \"precio\": 25000\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/servicios",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "servicios"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Usuarios",
+          "item": [
+            {
+              "name": "Listar Usuarios",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/usuarios",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "usuarios"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Crear Usuario",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"uid\": \"12345678\",\n  \"fullName\": \"Usuario Test\",\n  \"email\": \"test@example.com\",\n  \"phone\": \"3000000000\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/usuarios",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "usuarios"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Ventas",
+          "item": [
+            {
+              "name": "Listar Ventas",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/ventas",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "ventas"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Crear Venta",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"fecha\": \"2023-10-27\",\n  \"total\": 100000,\n  \"usuarioId\": \"12345678\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/ventas",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "ventas"
+                  ]
+                }
+              },
+              "response": []
+            }
           ]
         }
-      },
-      "response": []
-    },
-    {
-      "name": "3. OTP - Validar",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"email\": \"test@jumpingpark.com\",\n  \"code\": \"123456\"\n}"
-        },
-        "url": {
-          "raw": "{{baseUrl}}/api/otp/validate",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "otp",
-            "validate"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "4. Crear Consentimiento",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"responsibleAdult\": {\n    \"documentId\": \"12345678\",\n    \"fullName\": \"Postman User\",\n    \"email\": \"test@jumpingpark.com\",\n    \"phone\": \"3001234567\",\n    \"address\": \"Calle Falsa 123\",\n    \"minors\": []\n  },\n  \"minors\": [\n    {\n      \"fullName\": \"Hijo Test\",\n      \"birthDate\": \"2015-10-10\",\n      \"relationship\": \"hijo\"\n    }\n  ],\n  \"signature\": \"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==\",\n  \"acceptedPolicy\": true\n}"
-        },
-        "url": {
-          "raw": "{{baseUrl}}/api/consentimientos",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "consentimientos"
-          ]
-        }
-      },
-      "response": []
+      ]
     }
   ]
 }

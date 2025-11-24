@@ -1,0 +1,26 @@
+meta {
+  name: Crear Servicio
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/servicios
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "nombre": "Salto Libre 1h",
+    "precio": 25000
+  }
+}
+
+settings {
+  encodeUrl: true
+}
