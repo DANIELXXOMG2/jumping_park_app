@@ -1,0 +1,39 @@
+erDiagram
+    USERS ||--o{ CONSENTS : "firma"
+    USERS ||--|{ MINORS : "tiene registrados"
+    USERS ||--o| OTP_CODES : "solicita"
+
+    USERS {
+        string id PK "Cédula del Usuario (Document ID)"
+        string fullName "Nombre completo"
+        string email "Correo (Indexado)"
+        string phone "Celular"
+        string address "Dirección"
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    MINORS {
+        string name "Nombre del menor"
+        date birthDate "Fecha nacimiento"
+        string relationship "Hijo/Sobrino/Nieto"
+    }
+
+    CONSENTS {
+        string id PK "Auto-ID Firestore"
+        string userId FK "Ref a Users"
+        string consecutivo "Human Readable ID (ej. C-1002)"
+        json snapshot_adult "Copia datos adulto al firmar"
+        array snapshot_minors "Copia datos menores al firmar"
+        string signatureUrl "URL en Storage"
+        string policyVersion "v1.0"
+        timestamp signedAt "Fecha firma"
+        timestamp validUntil "Vigencia (Fin del día)"
+    }
+
+    OTP_CODES {
+        string email PK "Email ID"
+        string code "Hash del código (opcional) o plano"
+        timestamp expiresAt
+        int attempts
+    }

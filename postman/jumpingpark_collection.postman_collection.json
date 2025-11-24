@@ -14,7 +14,35 @@
   ],
   "item": [
     {
-      "name": "OTP - Solicitar",
+      "name": "1. Check Usuario",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"cedula\": \"12345678\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/usuarios/check",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "usuarios",
+            "check"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "2. OTP - Solicitar",
       "request": {
         "method": "POST",
         "header": [
@@ -37,10 +65,11 @@
             "otp"
           ]
         }
-      }
+      },
+      "response": []
     },
     {
-      "name": "OTP - Validar",
+      "name": "3. OTP - Validar",
       "request": {
         "method": "POST",
         "header": [
@@ -64,7 +93,35 @@
             "validate"
           ]
         }
-      }
+      },
+      "response": []
+    },
+    {
+      "name": "4. Crear Consentimiento",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"responsibleAdult\": {\n    \"documentId\": \"12345678\",\n    \"fullName\": \"Postman User\",\n    \"email\": \"test@jumpingpark.com\",\n    \"phone\": \"3001234567\",\n    \"address\": \"Calle Falsa 123\",\n    \"minors\": []\n  },\n  \"minors\": [\n    {\n      \"fullName\": \"Hijo Test\",\n      \"birthDate\": \"2015-10-10\",\n      \"relationship\": \"hijo\"\n    }\n  ],\n  \"signature\": \"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==\",\n  \"acceptedPolicy\": true\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/consentimientos",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "consentimientos"
+          ]
+        }
+      },
+      "response": []
     }
   ]
 }
