@@ -1,7 +1,7 @@
 meta {
-  name: OTP - Crear
+  name: 2. OTP - Solicitar
   type: http
-  seq: 11
+  seq: 2
 }
 
 post {
@@ -16,10 +16,8 @@ headers {
 
 body:json {
   {
-    "cedula_ingresada": "1022334455",
-    "codigo_otp": "843221",
-    "id_usuario": "REPLACE_USUARIO_ID",
-    "fue_validado": false
+    "email": "test@jumpingpark.com",
+    "cedula": "12345678"
   }
 }
 

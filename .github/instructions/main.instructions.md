@@ -16,7 +16,7 @@ applyTo: '**'
 * **Backend/DB:** Firebase (Firestore) vía `firebase-admin` (Server-side) y SDK cliente.
 * **Emails (Transaccionales/OTP):** Resend (vía API Routes). **NO usar funcionalidades de email de Firebase.**
 * **Validación:** Zod (Obligatorio para todos los inputs de API y Forms).
-* **Gestor de Paquetes:** `pnpm` (Exclusivamente. No usar npm ni bun install).
+* **Gestor de Paquetes:** `bun` (Exclusivamente. No usar npm ni pnpm install).
 
 ## 📂 Convenciones de Arquitectura
 * **Rutas API:** `src/app/api/[recurso]/route.ts`.

@@ -1,0 +1,41 @@
+meta {
+  name: 4. Crear Consentimiento
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/consentimientos
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "responsibleAdult": {
+      "documentId": "12345678",
+      "fullName": "Postman User",
+      "email": "test@jumpingpark.com",
+      "phone": "3001234567",
+      "address": "Calle Falsa 123",
+      "minors": []
+    },
+    "minors": [
+      {
+        "fullName": "Hijo Test",
+        "birthDate": "2015-10-10",
+        "relationship": "hijo"
+      }
+    ],
+    "signature": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==",
+    "acceptedPolicy": true
+  }
+}
+
+settings {
+  encodeUrl: true
+}

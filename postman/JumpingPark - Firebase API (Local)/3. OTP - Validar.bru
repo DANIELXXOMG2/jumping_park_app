@@ -1,0 +1,26 @@
+meta {
+  name: 3. OTP - Validar
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/otp/validate
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "test@jumpingpark.com",
+    "code": "123456"
+  }
+}
+
+settings {
+  encodeUrl: true
+}
