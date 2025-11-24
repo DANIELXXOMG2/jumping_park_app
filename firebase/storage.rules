@@ -1,16 +1,9 @@
-// Plantilla básica para Firebase Storage
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    // firmas: solo usuarios autenticados pueden subir (ejemplo)
-    match /firmas/{allPaths=**} {
-      allow read: if true; // ajustar según necesites
+    match /signatures/{fileName} {
+      allow read: if request.auth != null;
       allow write: if request.auth != null;
-    }
-
-    // identificaciones privadas
-    match /identificaciones/{allPaths=**} {
-      allow read, write: if request.auth != null && request.auth.uid != null;
     }
 
     match /{allPaths=**} {

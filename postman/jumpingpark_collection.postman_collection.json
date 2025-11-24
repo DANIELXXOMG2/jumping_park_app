@@ -10,135 +10,60 @@
       "key": "baseUrl",
       "value": "http://localhost:3000",
       "type": "string"
-    },
-    {
-      "key": "authToken",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "lastCreatedId",
-      "value": "",
-      "type": "string"
     }
   ],
   "item": [
     {
-      "name": "Usuarios - Listar",
+      "name": "OTP - Solicitar",
       "request": {
-        "method": "GET",
+        "method": "POST",
         "header": [
           {
-            "key": "Accept",
+            "key": "Content-Type",
             "value": "application/json"
           }
         ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"test@jumpingpark.com\",\n  \"cedula\": \"12345678\"\n}"
+        },
         "url": {
-          "raw": "{{baseUrl}}/api/usuarios",
+          "raw": "{{baseUrl}}/api/otp",
           "host": [
             "{{baseUrl}}"
           ],
           "path": [
             "api",
-            "usuarios"
+            "otp"
           ]
         }
       }
     },
     {
-      "name": "Usuarios - Crear",
+      "name": "OTP - Validar",
       "request": {
         "method": "POST",
         "header": [
-          { "key": "Content-Type", "value": "application/json" }
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"tipo_doc\": \"CC\",\n  \"numero_doc\": \"1022334455\",\n  \"nombres\": \"Juan\",\n  \"apellidos\": \"P\u00e9rez\",\n  \"telefono\": \"+573003334455\",\n  \"correo\": \"juan@mail.com\",\n  \"rol\": \"responsable\"\n}"
+          "raw": "{\n  \"email\": \"test@jumpingpark.com\",\n  \"code\": \"123456\"\n}"
         },
         "url": {
-          "raw": "{{baseUrl}}/api/usuarios",
-          "host": ["{{baseUrl}}"],
-          "path": ["api","usuarios"]
+          "raw": "{{baseUrl}}/api/otp/validate",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "otp",
+            "validate"
+          ]
         }
-      }
-    },
-    {
-      "name": "Menores - Listar",
-      "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }], "url": { "raw": "{{baseUrl}}/api/menores", "host": ["{{baseUrl}}"], "path": ["api","menores"] } }
-    },
-    {
-      "name": "Menores - Crear",
-      "request": {
-        "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
-        "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Ana\",\n  \"apellido\": \"P\u00e9rez\",\n  \"fecha_nacimiento\": \"2018-02-01\",\n  \"tipo_doc\": \"TI\",\n  \"numero_doc\": \"11223344\",\n  \"eps\": \"Sura\",\n  \"registrado_por\": \"REPLACE_USUARIO_ID\"\n}" },
-        "url": { "raw": "{{baseUrl}}/api/menores", "host": ["{{baseUrl}}"], "path": ["api","menores"] }
-      }
-    },
-    {
-      "name": "Consentimientos - Listar",
-      "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }], "url": { "raw": "{{baseUrl}}/api/consentimientos", "host": ["{{baseUrl}}"], "path": ["api","consentimientos"] } }
-    },
-    {
-      "name": "Consentimientos - Crear",
-      "request": {
-        "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"numero_unico\": \"CON-2025-XYZ\",\n  \"fecha\": \"2025-11-10\",\n  \"responsable\": {\n    \"id\": \"REPLACE_USUARIO_ID\",\n    \"tipo_doc\": \"CC\",\n    \"numero_doc\": \"1022334455\",\n    \"nombres\": \"Juan\",\n    \"apellidos\": \"P\u00e9rez\",\n    \"telefono\": \"+573003334455\",\n    \"correo\": \"juan@mail.com\"\n  },\n  \"menores\": [\n    {\n      \"id\": \"REPLACE_MENOR_ID\",\n      \"nombre\": \"Ana\",\n      \"apellido\": \"P\u00e9rez\",\n      \"fecha_nacimiento\": \"2018-02-01\",\n      \"eps\": \"Sura\"\n    }\n  ],\n  \"firma_responsable_url\": \"gs://jumpingpark/firmas/CON-2025-XYZ.png\",\n  \"aceptaciones\": {\n    \"uso_imagen\": true,\n    \"tratamiento_datos\": true\n  }\n}"
-        },
-        "url": { "raw": "{{baseUrl}}/api/consentimientos", "host": ["{{baseUrl}}"], "path": ["api","consentimientos"] }
-      }
-    },
-    {
-      "name": "Servicios - Listar",
-      "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }], "url": { "raw": "{{baseUrl}}/api/servicios", "host": ["{{baseUrl}}"], "path": ["api","servicios"] } }
-    },
-    {
-      "name": "Servicios - Crear",
-      "request": {
-        "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
-        "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Entrada General 1h\",\n  \"codigo\": \"ENT-1H\",\n  \"precio\": 35000,\n  \"estado\": true\n}" },
-        "url": { "raw": "{{baseUrl}}/api/servicios", "host": ["{{baseUrl}}"], "path": ["api","servicios"] }
-      }
-    },
-    {
-      "name": "Facturas - Crear",
-      "request": {
-        "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
-        "body": { "mode": "raw", "raw": "{\n  \"numero_factura\": \"FAC-20250122123\",\n  \"fecha\": \"2025-11-10T12:00:00Z\",\n  \"id_usuario\": \"REPLACE_USUARIO_ID\",\n  \"total\": 120000\n}" },
-        "url": { "raw": "{{baseUrl}}/api/facturas", "host": ["{{baseUrl}}"], "path": ["api","facturas"] }
-      }
-    },
-    {
-      "name": "Ventas - Crear",
-      "request": {
-        "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
-        "body": { "mode": "raw", "raw": "{\n  \"id_factura\": \"REPLACE_FACTURA_ID\",\n  \"id_consentimiento\": \"REPLACE_CONSENTIMIENTO_ID\",\n  \"responsable_id\": \"REPLACE_USUARIO_ID\",\n  \"fecha\": \"2025-11-10T12:00:00Z\",\n  \"total\": 120000,\n  \"items\": [\n    {\n      \"servicio_id\": \"REPLACE_SERVICIO_ID\",\n      \"nombre\": \"Entrada General 1h\",\n      \"cantidad\": 2,\n      \"precio_unitario\": 35000,\n      \"subtotal\": 70000\n    }\n  ]\n}" },
-        "url": { "raw": "{{baseUrl}}/api/ventas", "host": ["{{baseUrl}}"], "path": ["api","ventas"] }
-      }
-    },
-    {
-      "name": "OTP - Crear",
-      "request": {
-        "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
-        "body": { "mode": "raw", "raw": "{\n  \"cedula_ingresada\": \"1022334455\",\n  \"codigo_otp\": \"843221\",\n  \"id_usuario\": \"REPLACE_USUARIO_ID\",\n  \"fue_validado\": false\n}" },
-        "url": { "raw": "{{baseUrl}}/api/otp", "host": ["{{baseUrl}}"], "path": ["api","otp"] }
-      }
-    },
-    {
-      "name": "Accesos - Crear",
-      "request": {
-        "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
-        "body": { "mode": "raw", "raw": "{\n  \"qr_hash\": \"234234fwf23f23\",\n  \"cedula_ingresada\": \"1022334455\",\n  \"id_usuario_resultado\": \"REPLACE_USUARIO_ID\"\n}" },
-        "url": { "raw": "{{baseUrl}}/api/accesos", "host": ["{{baseUrl}}"], "path": ["api","accesos"] }
       }
     }
   ]
