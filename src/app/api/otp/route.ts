@@ -29,11 +29,8 @@ export async function POST(req: Request) {
     const { email, cedula } = parsed.data;
     let targetEmail = email;
 
-    console.log(`[API OTP] Solicitud recibida. Email: ${email || 'N/A'}, Cédula: ${cedula || 'N/A'}`);
-
     // Caso B: Si no hay email pero hay cédula, buscamos el email del usuario (Login usuario existente)
     if (!targetEmail && cedula) {
-      console.log(`[API OTP] Buscando usuario por cédula: ${cedula}`);
       const user = await getUserByCedula(cedula);
       
       if (!user) {
@@ -47,7 +44,6 @@ export async function POST(req: Request) {
       }
 
       targetEmail = user.email;
-      console.log(`[API OTP] Email recuperado para cédula ${cedula}: ${targetEmail}`);
     }
 
     // Caso A: Payload tiene email (Registro nuevo o reenvío explícito)
@@ -57,11 +53,7 @@ export async function POST(req: Request) {
     }
 
     const otp = generateOtp();
-    console.log(`[API OTP] Generando y guardando OTP para: ${targetEmail}`);
-
     await saveOtp(targetEmail, otp);
-    
-    console.log(`[API OTP] Enviando email a: ${targetEmail}`);
     const result = await sendOtpEmail(targetEmail, otp);
 
     if (!result.success) {
@@ -69,7 +61,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: result.error ?? "No se pudo enviar el OTP" }, { status: 500 });
     }
 
-    console.log("[API OTP] Proceso completado exitosamente.");
     return NextResponse.json({ message: "OTP enviado" }, { status: 200 });
   } catch (error) {
     console.error("[API OTP] Error no controlado:", error);

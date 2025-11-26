@@ -37,7 +37,7 @@ export async function sendOtpEmail(email: string, otp: string): Promise<SendOtpR
     return { success: false, error: "RESEND_API_KEY no configurada" };
   }
 
-  console.log(`[OTP] Intentando enviar correo a: ${email}`);
+  console.log(`[AuthService] Intentando enviar correo a: ${email}`);
 
   try {
     const { data, error } = await resend.emails.send({
@@ -66,14 +66,14 @@ export async function sendOtpEmail(email: string, otp: string): Promise<SendOtpR
     });
 
     if (error) {
-      console.error("[OTP] Error respuesta Resend:", error);
+      console.error("[AuthService] Error respuesta Resend:", error);
       return { success: false, error: error.message };
     }
 
-    console.log(`[OTP] Correo enviado exitosamente. ID: ${data?.id}`);
+    console.log(`[AuthService] Correo enviado exitosamente. ID: ${data?.id}`);
     return { success: true };
   } catch (error) {
-    console.error("[OTP] Excepción enviando correo:", error);
+    console.error("[AuthService] Excepción enviando correo:", error);
     return { success: false, error: "No se pudo enviar el correo de OTP" };
   }
 }

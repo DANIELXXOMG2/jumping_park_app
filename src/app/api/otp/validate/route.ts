@@ -6,11 +6,9 @@ import type { UserProfile } from "@/types/firestore";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    console.log("[Validate API] Body recibido:", JSON.stringify(body));
     const parsed = validateOtpSchema.safeParse(body);
 
     if (!parsed.success) {
-      console.error("[Validate API] Error validación Zod:", JSON.stringify(parsed.error.flatten()));
       return NextResponse.json(
         {
           success: false,
@@ -24,8 +22,6 @@ export async function POST(req: Request) {
     const { email, cedula, code } = parsed.data;
     let targetEmail = email;
     let userProfile: UserProfile | null = null;
-
-    console.log("[Validate API] Resolviendo email para:", cedula || email);
 
     if (email) {
       targetEmail = email;
@@ -45,8 +41,6 @@ export async function POST(req: Request) {
       console.warn("[Validate API] No se pudo resolver un email válido (targetEmail es null/undefined).");
       return NextResponse.json({ success: false, error: "Faltan datos (Email no encontrado)" }, { status: 400 });
     }
-
-    console.log("[Validate API] Email objetivo:", targetEmail);
 
     const result = await validateOtp(targetEmail, code);
 

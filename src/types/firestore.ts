@@ -5,7 +5,9 @@ export type FirestoreDateValue = Date | Timestamp;
 
 // 1. Colección 'users'
 export interface Minor {
-  fullName: string;
+  fullName?: string;
+  firstName?: string;
+  lastName?: string;
   birthDate: string; // ISO YYYY-MM-DD
   relationship: 'hijo' | 'sobrino' | 'nieto' | 'otro';
   // Optional additional fields captured from the consent form
