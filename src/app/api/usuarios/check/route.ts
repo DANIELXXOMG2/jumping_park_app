@@ -30,9 +30,8 @@ const maskEmail = (email: string): string => {
 };
 
 const sanitizeUser = (user: UserProfile) => ({
-  uid: user.uid,
-  fullName: user.fullName,
-  email: user.email,
+  // NO devolver datos personales reales aquí para evitar enumeración/exposición
+  // Solo devolvemos el email ofuscado para UI feedback
   emailMasked: maskEmail(user.email),
 });
 

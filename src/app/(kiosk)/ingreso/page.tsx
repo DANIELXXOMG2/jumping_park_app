@@ -15,9 +15,9 @@ const REGISTER_ROUTE = "/registro";
 type CheckUserResponse = {
   exists: boolean;
   userData?: {
-    uid?: string;
-    fullName?: string;
-    email?: string;
+    // uid?: string; // Ya no viene del backend por seguridad
+    // fullName?: string; // Ya no viene
+    // email?: string; // Ya no viene
     emailMasked?: string;
   };
 };
@@ -43,22 +43,6 @@ export default function IngresoPage() {
     setCedula((prev) => prev.slice(0, -1));
     setErrorMessage(null);
   }, []);
-
-  const pushNextStep = useCallback(
-    (exists: boolean, payload?: CheckUserResponse["userData"]) => {
-      const visitorPatch: Partial<UserProfile> = {
-        uid: cedula,
-      };
-
-      if (payload?.fullName) visitorPatch.fullName = payload.fullName;
-      if (payload?.email) visitorPatch.email = payload.email;
-
-      updateVisitorData(visitorPatch);
-      setStep(2);
-      router.push(exists ? OTP_ROUTE : REGISTER_ROUTE);
-    },
-    [cedula, router, setStep, updateVisitorData],
-  );
 
   const handleCheckUser = useCallback(async () => {
     if (!cedula || isChecking) {
@@ -91,24 +75,37 @@ export default function IngresoPage() {
       }
 
       const data: CheckUserResponse = payload;
+      
       if (data.exists) {
-        if (!data.userData?.email) {
-          throw new Error("El usuario no tiene correo registrado");
-        }
-
+        // Usuario existe: enviamos OTP usando la cédula (el backend resuelve el email)
         const otpResponse = await fetch("/api/otp", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: data.userData.email, cedula }),
+          body: JSON.stringify({ cedula }),
         });
 
         const otpPayload = await otpResponse.json().catch(() => ({}));
         if (!otpResponse.ok) {
           throw new Error(otpPayload.error ?? "No pudimos enviar el código OTP");
         }
+
+        // Actualizamos store con cédula y email ofuscado (para mostrar en pantalla OTP)
+        updateVisitorData({ 
+          uid: cedula, 
+          email: data.userData?.emailMasked 
+        });
+        
+        // TODO: Mostrar Toast "Si tus datos coinciden..." (Implementar Toast si existe librería, o usar estado local en OTP page)
+        // Por ahora redirigimos
+        setStep(2);
+        router.push(OTP_ROUTE);
+      } else {
+        // Usuario no existe: redirigir a registro
+        updateVisitorData({ uid: cedula });
+        setStep(2); // O el paso que corresponda a registro
+        router.push(REGISTER_ROUTE);
       }
 
-      pushNextStep(data.exists, data.userData);
     } catch (error) {
       console.error("Error verificando cédula", error);
       const message = error instanceof Error
@@ -118,7 +115,7 @@ export default function IngresoPage() {
     } finally {
       setIsChecking(false);
     }
-  }, [cedula, isChecking, pushNextStep]);
+  }, [cedula, isChecking, router, setStep, updateVisitorData]);
 
   const handleSubmit = useCallback(
     (evt: FormEvent<HTMLFormElement>) => {

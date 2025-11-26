@@ -12,6 +12,7 @@ const CONSENT_ROUTE = "/consentimiento";
 const INGRESO_ROUTE = "/ingreso";
 
 const maskEmail = (email: string) => {
+  if (email.includes("*")) return email; // Ya está ofuscado
   const [localPart, domainPart] = email.split("@");
   if (!domainPart) return email;
   const safeLocal = `${localPart.slice(0, 2)}${"*".repeat(Math.max(localPart.length - 2, 3))}`;
@@ -24,12 +25,16 @@ const maskEmail = (email: string) => {
 export default function OtpPage() {
   const router = useRouter();
   const visitorData = useKioskStore((state) => state.visitorData);
+  const updateVisitorData = useKioskStore((state) => state.updateVisitorData); // Necesitamos actualizar datos
   const setAuthenticated = useKioskStore((state) => state.setAuthenticated);
   const setStep = useKioskStore((state) => state.setStep);
 
   const email = visitorData.email;
   const cedula = visitorData.uid;
-  const isReady = Boolean(email && cedula);
+  // Permitimos que isReady sea true si tenemos cédula O email. 
+  // En flujo ingreso tenemos cédula y email ofuscado.
+  // En flujo registro tenemos email real y cédula.
+  const isReady = Boolean(cedula || email);
 
   const [otp, setOtp] = useState("");
   const [isValidating, setIsValidating] = useState(false);
@@ -55,21 +60,45 @@ export default function OtpPage() {
 
   const validateCode = useCallback(
     async (code: string) => {
-      if (!email || code.length !== OTP_LENGTH) return;
+      if (code.length !== OTP_LENGTH) return;
       setIsValidating(true);
       setErrorMessage(null);
       setResendMessage(null);
 
       try {
+        // Enviamos cédula si la tenemos, o email si no.
+        // Si enviamos cédula, el backend busca el email real.
+        // Si enviamos email (flujo registro), el backend usa ese.
+        const payload = { 
+          code, 
+          ...(cedula ? { cedula } : { email }) 
+        };
+
         const response = await fetch("/api/otp/validate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, code }),
+          body: JSON.stringify(payload),
         });
 
         const data = await response.json();
-        if (!response.ok || !data.success) {
+        
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error("Código incorrecto o expirado");
+          }
+          if (response.status === 500) {
+            throw new Error("Error del sistema, intenta reenviar");
+          }
           throw new Error(data.error ?? "Código inválido");
+        }
+
+        if (!data.success) {
+          throw new Error(data.error ?? "Código inválido");
+        }
+
+        // Si la validación es exitosa y nos devuelven datos de usuario, actualizamos el store
+        if (data.userData) {
+          updateVisitorData(data.userData);
         }
 
         setAuthenticated(true);
@@ -83,7 +112,7 @@ export default function OtpPage() {
         setIsValidating(false);
       }
     },
-    [email, router, setAuthenticated, setStep],
+    [cedula, email, router, setAuthenticated, setStep, updateVisitorData],
   );
 
   useEffect(() => {
@@ -99,17 +128,19 @@ export default function OtpPage() {
   }, [otp, isValidating, validateCode]);
 
   const handleResend = useCallback(async () => {
-    if (!email || !cedula || isResending) return;
+    if (isResending) return;
     setIsResending(true);
     setErrorMessage(null);
     setResendMessage(null);
     setOtp("");
 
     try {
+      const payload = cedula ? { cedula } : { email };
+      
       const response = await fetch("/api/otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, cedula }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {

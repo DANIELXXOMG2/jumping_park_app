@@ -28,12 +28,15 @@ export async function saveOtp(email: string, code: string): Promise<void> {
 
 export async function sendOtpEmail(email: string, otp: string): Promise<SendOtpResult> {
   if (!process.env.RESEND_API_KEY) {
+    console.error("RESEND_API_KEY faltante");
     return { success: false, error: "RESEND_API_KEY no configurada" };
   }
 
+  console.log(`[OTP] Intentando enviar correo a: ${email}`);
+
   try {
-    await resend.emails.send({
-      from: "Jumping Park <onboarding@resend.dev>",
+    const { data, error } = await resend.emails.send({
+      from: "Jumping Park <no-reply@jumpingpark.lat>",
       to: email,
       subject: "Tu código de acceso - Jumping Park",
       html: `
@@ -57,9 +60,15 @@ export async function sendOtpEmail(email: string, otp: string): Promise<SendOtpR
       `,
     });
 
+    if (error) {
+      console.error("[OTP] Error respuesta Resend:", error);
+      return { success: false, error: error.message };
+    }
+
+    console.log(`[OTP] Correo enviado exitosamente. ID: ${data?.id}`);
     return { success: true };
   } catch (error) {
-    console.error("Error enviando OTP con Resend", error);
+    console.error("[OTP] Excepción enviando correo:", error);
     return { success: false, error: "No se pudo enviar el correo de OTP" };
   }
 }
@@ -69,9 +78,13 @@ export async function validateOtp(
   code: string,
 ): Promise<{ valid: boolean; message: string }> {
   try {
+    console.log(`[AuthService] Buscando OTP para email: ${email}`);
+    // Usamos el email como ID del documento, consistente con saveOtp
     const otpDoc = await getDocById("otps", email);
+    
     if (!otpDoc) {
-      return { valid: false, message: "Código no solicitado" };
+      console.warn(`[AuthService] No se encontró documento OTP para: ${email}`);
+      return { valid: false, message: "Código no solicitado o expirado" };
     }
 
     const matchesCode = otpDoc.code === code;
@@ -82,14 +95,17 @@ export async function validateOtp(
     const isExpired = expiresAtDate <= new Date();
 
     if (!matchesCode) {
+      console.warn(`[AuthService] Código incorrecto. Recibido: ${code}, Esperado: ${otpDoc.code}`);
       return { valid: false, message: "Código incorrecto" };
     }
 
     if (isExpired) {
+      console.warn(`[AuthService] Código expirado. Expiró en: ${expiresAtDate}`);
       await deleteDoc("otps", email);
       return { valid: false, message: "Código expirado" };
     }
 
+    console.log(`[AuthService] OTP válido. Eliminando documento.`);
     await deleteDoc("otps", email);
     return { valid: true, message: "OTP válido" };
   } catch (error) {

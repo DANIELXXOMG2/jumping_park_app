@@ -164,3 +164,103 @@
 [debug] [2025-11-24T05:48:20.559Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/jumping-park-consents/services/fcm.googleapis.com [omitted]
 [debug] [2025-11-24T05:48:20.753Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/jumping-park-consents/services/firebaseapphosting.googleapis.com 200
 [debug] [2025-11-24T05:48:20.753Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/jumping-park-consents/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2025-11-24T16:01:34.780Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-11-24T16:01:34.781Z] > authorizing via signed-in user (danielbello.dev@gmail.com)
+[debug] [2025-11-24T16:01:34.783Z] Checked if tokens are valid: false, expires at: 1763966894816
+[debug] [2025-11-24T16:01:34.783Z] Checked if tokens are valid: false, expires at: 1763966894816
+[debug] [2025-11-24T16:01:34.784Z] > refreshing access token with scopes: []
+[debug] [2025-11-24T16:01:34.784Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-11-24T16:01:34.785Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-11-24T16:01:34.786Z] Checked if tokens are valid: false, expires at: 1763966894816
+[debug] [2025-11-24T16:01:34.786Z] Checked if tokens are valid: false, expires at: 1763966894816
+[debug] [2025-11-24T16:01:34.786Z] > refreshing access token with scopes: []
+[debug] [2025-11-24T16:01:34.786Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-11-24T16:01:34.786Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-11-24T16:01:34.789Z] Checked if tokens are valid: false, expires at: 1763966894816
+[debug] [2025-11-24T16:01:34.790Z] Checked if tokens are valid: false, expires at: 1763966894816
+[debug] [2025-11-24T16:01:34.790Z] > refreshing access token with scopes: []
+[debug] [2025-11-24T16:01:34.790Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-11-24T16:01:34.790Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-11-24T16:01:34.790Z] Checked if tokens are valid: false, expires at: 1763966894816
+[debug] [2025-11-24T16:01:34.790Z] Checked if tokens are valid: false, expires at: 1763966894816
+[debug] [2025-11-24T16:01:34.790Z] > refreshing access token with scopes: []
+[debug] [2025-11-24T16:01:34.790Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-11-24T16:01:34.790Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-11-24T16:01:34.791Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-11-24T16:01:34.791Z] > authorizing via signed-in user (danielbello.dev@gmail.com)
+[debug] [2025-11-24T16:01:34.791Z] Checked if tokens are valid: false, expires at: 1763966894816
+[debug] [2025-11-24T16:01:34.791Z] Checked if tokens are valid: false, expires at: 1763966894816
+[debug] [2025-11-24T16:01:34.791Z] > refreshing access token with scopes: []
+[debug] [2025-11-24T16:01:34.791Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-11-24T16:01:34.791Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-11-24T16:01:34.792Z] Checked if tokens are valid: false, expires at: 1763966894816
+[debug] [2025-11-24T16:01:34.792Z] Checked if tokens are valid: false, expires at: 1763966894816
+[debug] [2025-11-24T16:01:34.792Z] > refreshing access token with scopes: []
+[debug] [2025-11-24T16:01:34.792Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-11-24T16:01:34.792Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-11-24T16:01:34.793Z] Checked if tokens are valid: false, expires at: 1763966894816
+[debug] [2025-11-24T16:01:34.793Z] Checked if tokens are valid: false, expires at: 1763966894816
+[debug] [2025-11-24T16:01:34.793Z] > refreshing access token with scopes: []
+[debug] [2025-11-24T16:01:34.793Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-11-24T16:01:34.793Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-11-24T16:01:34.793Z] Checked if tokens are valid: false, expires at: 1763966894816
+[debug] [2025-11-24T16:01:34.793Z] Checked if tokens are valid: false, expires at: 1763966894816
+[debug] [2025-11-24T16:01:34.793Z] > refreshing access token with scopes: []
+[debug] [2025-11-24T16:01:34.793Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-11-24T16:01:34.794Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-11-24T16:01:35.827Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-11-24T16:01:35.827Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-11-24T16:01:35.993Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/jumping-park-consents/services/firebaseapphosting.googleapis.com [none]
+[debug] [2025-11-24T16:01:35.993Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/jumping-park-consents/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/jumping-park-consents
+[debug] [2025-11-24T16:01:36.172Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-11-24T16:01:36.172Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-11-24T16:01:36.624Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/jumping-park-consents/services/firebaseio.com [none]
+[debug] [2025-11-24T16:01:36.624Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/jumping-park-consents/services/firebaseio.com x-goog-quota-user=projects/jumping-park-consents
+[debug] [2025-11-24T16:01:36.628Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-11-24T16:01:36.628Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-11-24T16:01:37.036Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/jumping-park-consents/services/firebaseio.com [none]
+[debug] [2025-11-24T16:01:37.036Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/jumping-park-consents/services/firebaseio.com x-goog-quota-user=projects/jumping-park-consents
+[debug] [2025-11-24T16:01:37.038Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-11-24T16:01:37.038Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-11-24T16:01:37.637Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/jumping-park-consents/services/firebaseapphosting.googleapis.com [none]
+[debug] [2025-11-24T16:01:37.637Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/jumping-park-consents/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/jumping-park-consents
+[debug] [2025-11-24T16:01:37.639Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-11-24T16:01:37.639Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-11-24T16:01:38.238Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/jumping-park-consents/services/firebasedataconnect.googleapis.com [none]
+[debug] [2025-11-24T16:01:38.238Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/jumping-park-consents/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/jumping-park-consents
+[debug] [2025-11-24T16:01:38.240Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-11-24T16:01:38.240Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-11-24T16:01:38.482Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/jumping-park-consents/services/firebasedataconnect.googleapis.com [none]
+[debug] [2025-11-24T16:01:38.482Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/jumping-park-consents/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/jumping-park-consents
+[debug] [2025-11-24T16:01:38.483Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-11-24T16:01:38.483Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-11-24T16:01:38.838Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/jumping-park-consents/services/cloudfunctions.googleapis.com [none]
+[debug] [2025-11-24T16:01:38.838Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/jumping-park-consents/services/cloudfunctions.googleapis.com x-goog-quota-user=projects/jumping-park-consents
+[debug] [2025-11-24T16:01:38.840Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-11-24T16:01:38.840Z] > authorizing via signed-in user (danielbello.dev@gmail.com)
+[debug] [2025-11-24T16:01:38.840Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-11-24T16:01:38.840Z] > authorizing via signed-in user (danielbello.dev@gmail.com)
+[debug] [2025-11-24T16:01:39.219Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-11-24T16:01:39.219Z] > authorizing via signed-in user (danielbello.dev@gmail.com)
+[debug] [2025-11-24T16:01:39.220Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-11-24T16:01:39.220Z] > authorizing via signed-in user (danielbello.dev@gmail.com)
+[debug] [2025-11-24T16:01:39.643Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-11-24T16:01:39.643Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-11-24T16:01:40.109Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/jumping-park-consents/services/cloudfunctions.googleapis.com [none]
+[debug] [2025-11-24T16:01:40.109Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/jumping-park-consents/services/cloudfunctions.googleapis.com x-goog-quota-user=projects/jumping-park-consents
+[debug] [2025-11-24T16:01:40.117Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/jumping-park-consents/services/firebaseio.com 403
+[debug] [2025-11-24T16:01:40.117Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/jumping-park-consents/services/firebaseio.com [omitted]
+[debug] [2025-11-24T16:01:40.237Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/jumping-park-consents/services/firebaseapphosting.googleapis.com 200
+[debug] [2025-11-24T16:01:40.237Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/jumping-park-consents/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2025-11-24T16:01:40.555Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/jumping-park-consents/services/cloudfunctions.googleapis.com 200
+[debug] [2025-11-24T16:01:40.555Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/jumping-park-consents/services/cloudfunctions.googleapis.com [omitted]
+[debug] [2025-11-24T16:01:40.580Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/jumping-park-consents/services/firebaseio.com 403
+[debug] [2025-11-24T16:01:40.580Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/jumping-park-consents/services/firebaseio.com [omitted]
+[debug] [2025-11-24T16:01:40.949Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/jumping-park-consents/services/firebasedataconnect.googleapis.com 200
+[debug] [2025-11-24T16:01:40.949Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/jumping-park-consents/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2025-11-24T16:01:41.169Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/jumping-park-consents/services/firebaseapphosting.googleapis.com 200
+[debug] [2025-11-24T16:01:41.169Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/jumping-park-consents/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2025-11-24T16:01:42.417Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/jumping-park-consents/services/firebasedataconnect.googleapis.com 200
+[debug] [2025-11-24T16:01:42.418Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/jumping-park-consents/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2025-11-24T16:01:42.588Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/jumping-park-consents/services/cloudfunctions.googleapis.com 200
+[debug] [2025-11-24T16:01:42.588Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/jumping-park-consents/services/cloudfunctions.googleapis.com [omitted]
