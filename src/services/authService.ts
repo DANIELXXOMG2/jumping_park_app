@@ -1,6 +1,6 @@
 import { Resend } from "resend";
 import { createDoc, deleteDoc, getDocById } from "../lib/firestoreService";
-import type { OtpRecord } from "../types/firestore";
+import type { OtpRecord, UserProfile } from "../types/firestore";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -8,6 +8,11 @@ export type SendOtpResult = {
   success: boolean;
   error?: string;
 };
+
+export async function getUserByCedula(cedula: string): Promise<UserProfile | null> {
+  console.log("[AuthService] Buscando en 'users' con ID:", cedula);
+  return await getDocById<UserProfile>("users", cedula);
+}
 
 export async function saveOtp(email: string, code: string): Promise<void> {
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000);

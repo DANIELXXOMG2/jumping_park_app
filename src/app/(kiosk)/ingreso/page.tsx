@@ -107,7 +107,7 @@ export default function IngresoPage() {
       }
 
     } catch (error) {
-      console.error("Error verificando cédula", error);
+      // console.error("Error verificando cédula", error);
       const message = error instanceof Error
         ? error.message
         : "No pudimos verificar tu cédula. Intentá nuevamente.";

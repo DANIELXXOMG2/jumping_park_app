@@ -61,17 +61,21 @@ export default function OtpPage() {
   const validateCode = useCallback(
     async (code: string) => {
       if (code.length !== OTP_LENGTH) return;
+      if (isValidating) return; // Prevenir ejecuciones paralelas
+
       setIsValidating(true);
       setErrorMessage(null);
       setResendMessage(null);
 
       try {
-        // Enviamos cédula si la tenemos, o email si no.
-        // Si enviamos cédula, el backend busca el email real.
-        // Si enviamos email (flujo registro), el backend usa ese.
+        // Si el email está ofuscado (contiene *), no lo enviamos al backend porque fallará la validación de formato.
+        // En ese caso, enviamos solo la cédula y dejamos que el backend resuelva el email real.
+        const isEmailMasked = email?.includes("*");
+        
         const payload = { 
           code, 
-          ...(cedula ? { cedula } : { email }) 
+          email: isEmailMasked ? undefined : (email || undefined),
+          cedula: cedula || undefined
         };
 
         const response = await fetch("/api/otp/validate", {
@@ -104,15 +108,15 @@ export default function OtpPage() {
         setAuthenticated(true);
         setStep(3);
         router.push(CONSENT_ROUTE);
+        // NO desbloqueamos el botón (setIsValidating(false)) aquí para evitar doble submit mientras redirige
       } catch (error) {
-        console.error("Error validando OTP", error);
+        // console.error("Error validando OTP", error);
         setErrorMessage(error instanceof Error ? error.message : "Código incorrecto");
         setOtp("");
-      } finally {
-        setIsValidating(false);
+        setIsValidating(false); // Solo desbloqueamos si hubo error
       }
     },
-    [cedula, email, router, setAuthenticated, setStep, updateVisitorData],
+    [cedula, email, router, setAuthenticated, setStep, updateVisitorData, isValidating],
   );
 
   useEffect(() => {
@@ -135,7 +139,10 @@ export default function OtpPage() {
     setOtp("");
 
     try {
-      const payload = cedula ? { cedula } : { email };
+      const payload = {
+        email: email || undefined,
+        cedula: cedula || undefined
+      };
       
       const response = await fetch("/api/otp", {
         method: "POST",
@@ -150,7 +157,7 @@ export default function OtpPage() {
 
       setResendMessage("Enviamos un nuevo código a tu correo");
     } catch (error) {
-      console.error("Error reenviando OTP", error);
+      // console.error("Error reenviando OTP", error);
       setErrorMessage(error instanceof Error ? error.message : "No pudimos reenviar el código");
     } finally {
       setIsResending(false);
@@ -207,6 +214,7 @@ export default function OtpPage() {
           onKeyPress={handleDigit}
           onDelete={handleDelete}
           onConfirm={handleConfirm}
+          isLoading={isValidating}
         />
 
         <div className="flex items-center gap-4">

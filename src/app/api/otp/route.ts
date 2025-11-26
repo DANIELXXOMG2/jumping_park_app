@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { sendOtpSchema } from "@/lib/schemas/auth.schema";
-import { saveOtp, sendOtpEmail } from "@/services/authService";
-import { getDocById } from "@/lib/firestoreService";
+import { saveOtp, sendOtpEmail, getUserByCedula } from "@/services/authService";
 import type { UserProfile } from "@/types/firestore";
 
 const OTP_DIGITS = 6;
@@ -27,14 +26,15 @@ export async function POST(req: Request) {
       );
     }
 
-    let { email, cedula } = parsed.data;
+    const { email, cedula } = parsed.data;
+    let targetEmail = email;
 
     console.log(`[API OTP] Solicitud recibida. Email: ${email || 'N/A'}, Cédula: ${cedula || 'N/A'}`);
 
     // Caso B: Si no hay email pero hay cédula, buscamos el email del usuario (Login usuario existente)
-    if (!email && cedula) {
+    if (!targetEmail && cedula) {
       console.log(`[API OTP] Buscando usuario por cédula: ${cedula}`);
-      const user = await getDocById<UserProfile>("usuarios", cedula);
+      const user = await getUserByCedula(cedula);
       
       if (!user) {
         console.warn(`[API OTP] Usuario no encontrado para cédula: ${cedula}`);
@@ -46,23 +46,23 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Usuario sin email registrado" }, { status: 404 });
       }
 
-      email = user.email;
-      console.log(`[API OTP] Email recuperado para cédula ${cedula}: ${email}`);
+      targetEmail = user.email;
+      console.log(`[API OTP] Email recuperado para cédula ${cedula}: ${targetEmail}`);
     }
 
     // Caso A: Payload tiene email (Registro nuevo o reenvío explícito)
-    if (!email) {
-      console.error("[API OTP] Email requerido y no pudo ser resuelto.");
-      return NextResponse.json({ error: "Email requerido" }, { status: 400 });
+    if (!targetEmail) {
+      console.error("[API OTP] Faltan datos (Email o Cédula válida)");
+      return NextResponse.json({ error: "Faltan datos" }, { status: 400 });
     }
 
     const otp = generateOtp();
-    console.log(`[API OTP] Generando y guardando OTP para: ${email}`);
+    console.log(`[API OTP] Generando y guardando OTP para: ${targetEmail}`);
 
-    await saveOtp(email, otp);
+    await saveOtp(targetEmail, otp);
     
-    console.log(`[API OTP] Enviando email a: ${email}`);
-    const result = await sendOtpEmail(email, otp);
+    console.log(`[API OTP] Enviando email a: ${targetEmail}`);
+    const result = await sendOtpEmail(targetEmail, otp);
 
     if (!result.success) {
       console.error(`[API OTP] Fallo envío de email: ${result.error}`);

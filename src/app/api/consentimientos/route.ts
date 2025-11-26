@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { db, bucket } from "@/lib/firebaseAdmin";
 import { consentSubmissionSchema } from "@/lib/schemas/consent.schema";
 import { Consent, UserProfile } from "@/types/firestore";
+import { generateConsentPdf } from "@/services/pdfService";
+import { Resend } from "resend";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: NextRequest) {
   try {
@@ -88,6 +92,32 @@ export async function POST(request: NextRequest) {
     };
 
     await db.collection("consents").doc(consentId).set(newConsent);
+
+    // 5. Generate PDF and Send Email
+    try {
+      const pdfBuffer = await generateConsentPdf(newConsent, buffer);
+      
+      await resend.emails.send({
+        from: 'Jumping Park <onboarding@resend.dev>',
+        to: responsibleAdult.email,
+        subject: 'Tu Consentimiento Firmado - Jumping Park',
+        html: `
+          <h1>¡Gracias por visitarnos!</h1>
+          <p>Hola ${responsibleAdult.fullName},</p>
+          <p>Adjunto encontrarás una copia de tu consentimiento informado firmado.</p>
+          <p>Disfruta tu estancia en Jumping Park.</p>
+        `,
+        attachments: [
+          {
+            filename: `Consentimiento-${consecutivo}.pdf`,
+            content: pdfBuffer,
+          },
+        ],
+      });
+    } catch (emailError) {
+      console.error("Error sending email:", emailError);
+      // Continue execution, don't fail the main request
+    }
 
     return NextResponse.json({ success: true, consentId });
 

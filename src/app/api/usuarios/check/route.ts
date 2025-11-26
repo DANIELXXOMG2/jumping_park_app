@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getDocById } from "@/lib/firestoreService";
+import { db } from "@/lib/firebaseAdmin";
 import type { UserProfile } from "@/types/firestore";
 
-const COLLECTION = "usuarios";
+const COLLECTION = "users";
 
 const bodySchema = z.object({
   cedula: z
@@ -40,19 +40,34 @@ export async function POST(req: Request) {
     const rawBody = await req.json();
     const { cedula } = bodySchema.parse(rawBody);
 
-    const existingUser = await getDocById<UserProfile>(COLLECTION, cedula);
+    // Buscamos por ID de documento (si coincide con la cédula) O por campo 'uid'
+    // Primero intentamos buscar por campo 'uid' que es lo más probable en la nueva estructura
+    const usersRef = db.collection(COLLECTION);
+    const querySnapshot = await usersRef.where("uid", "==", cedula).limit(1).get();
 
-    if (!existingUser) {
+    let userData: UserProfile | null = null;
+
+    if (!querySnapshot.empty) {
+      userData = querySnapshot.docs[0].data() as UserProfile;
+    } else {
+      // Fallback: intentar buscar por ID de documento
+      const docSnap = await usersRef.doc(cedula).get();
+      if (docSnap.exists) {
+        userData = docSnap.data() as UserProfile;
+      }
+    }
+
+    if (!userData) {
       return NextResponse.json({ exists: false });
     }
 
-    return NextResponse.json({ exists: true, userData: sanitizeUser(existingUser) });
+    return NextResponse.json({ exists: true, userData: sanitizeUser(userData) });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "Validación fallida", details: error.issues }, { status: 400 });
     }
 
-    console.error("Error en /api/usuarios/check", error);
+    // console.error("Error en /api/usuarios/check", error);
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }

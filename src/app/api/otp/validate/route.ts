@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server";
 import { validateOtpSchema } from "@/lib/schemas/auth.schema";
-import { validateOtp } from "@/services/authService";
-import { getDocById } from "@/lib/firestoreService";
+import { validateOtp, getUserByCedula } from "@/services/authService";
 import type { UserProfile } from "@/types/firestore";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
+    console.log("[Validate API] Body recibido:", JSON.stringify(body));
     const parsed = validateOtpSchema.safeParse(body);
 
     if (!parsed.success) {
+      console.error("[Validate API] Error validación Zod:", JSON.stringify(parsed.error.flatten()));
       return NextResponse.json(
         {
           success: false,
@@ -20,42 +21,38 @@ export async function POST(req: Request) {
       );
     }
 
-    let { email, cedula, code } = parsed.data;
+    const { email, cedula, code } = parsed.data;
+    let targetEmail = email;
     let userProfile: UserProfile | null = null;
 
-    console.log(`[Validate OTP] Solicitud recibida. Email: ${email || 'N/A'}, Cédula: ${cedula || 'N/A'}, Code: ${code}`);
+    console.log("[Validate API] Resolviendo email para:", cedula || email);
 
-    // Si viene cédula, buscamos el usuario para obtener el email y luego devolver el perfil
-    if (cedula) {
-      console.log(`[Validate OTP] Buscando usuario por cédula: ${cedula}`);
-      userProfile = await getDocById<UserProfile>("usuarios", cedula);
-      
-      if (userProfile?.email) {
-        // Si no venía email o venía uno diferente (aunque no debería), usamos el del perfil
-        email = userProfile.email;
-        console.log(`[Validate OTP] Email recuperado de perfil: ${email}`);
-      } else if (!email) {
-        // Si no hay email en perfil y no vino en request, no podemos validar
-        console.warn(`[Validate OTP] Usuario no encontrado o sin email para cédula: ${cedula}`);
-        return NextResponse.json({ success: false, error: "Usuario no encontrado o sin email" }, { status: 404 });
+    if (email) {
+      targetEmail = email;
+    } else if (cedula) {
+      userProfile = await getUserByCedula(cedula);
+      if (!userProfile) {
+        console.warn(`[Validate API] Usuario no encontrado para cédula: ${cedula}`);
+        return NextResponse.json({ success: false, error: "Usuario no encontrado" }, { status: 404 });
       }
+      if (!userProfile.email) {
+        console.error(`[Validate API] Usuario encontrado (${cedula}) pero sin campo 'email' en Firestore.`);
+      }
+      targetEmail = userProfile.email;
     }
 
-    if (!email) {
-      console.warn("[Validate OTP] Email requerido y no presente");
-      return NextResponse.json({ success: false, error: "Email requerido" }, { status: 400 });
+    if (!targetEmail) {
+      console.warn("[Validate API] No se pudo resolver un email válido (targetEmail es null/undefined).");
+      return NextResponse.json({ success: false, error: "Faltan datos (Email no encontrado)" }, { status: 400 });
     }
 
-    console.log(`[Validate OTP] Validando OTP para email: ${email} con código: ${code}`);
-    const result = await validateOtp(email, code);
+    console.log("[Validate API] Email objetivo:", targetEmail);
+
+    const result = await validateOtp(targetEmail, code);
 
     if (!result.valid) {
-      console.warn(`[Validate OTP] Validación fallida: ${result.message}`);
-      // Retornamos 404 si es código incorrecto/expirado para que el frontend muestre el mensaje adecuado
       return NextResponse.json({ success: false, error: result.message }, { status: 404 });
     }
-
-    console.log("[Validate OTP] Validación exitosa");
 
     // Si validación exitosa y no tenemos el perfil aún (caso solo email), intentamos buscarlo si es posible?
     // El requerimiento dice: "obtener el perfil COMPLETO del usuario".
