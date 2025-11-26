@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Trash2, Plus, AlertCircle, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
 import { useKioskStore } from "@/store/kioskStore";
 import { consentSchema, type ConsentFormData } from "@/lib/schemas/consent.schema";
 import SignaturePad, { SignaturePadRef } from "@/components/kiosk/SignaturePad";
@@ -45,7 +46,9 @@ export default function ConsentPage() {
 
   const handleSign = async (data: ConsentFormData) => {
     if (signatureRef.current?.isEmpty()) {
-      alert("Por favor, firme el documento.");
+      toast.error("Firma requerida", {
+        description: "Por favor, firme el documento antes de continuar.",
+      });
       return;
     }
 
@@ -55,7 +58,6 @@ export default function ConsentPage() {
     setIsSubmitting(true);
 
     try {
-      
       const payload = {
         ...data,
         signature: signatureBase64,
@@ -66,8 +68,6 @@ export default function ConsentPage() {
           phone: visitorData.phone || "",
         },
       };
-
-      console.log("Enviando consentimiento:", payload);
 
       const response = await fetch("/api/consentimientos", {
         method: "POST",
@@ -81,15 +81,22 @@ export default function ConsentPage() {
         throw new Error(result.error || "Error al guardar el consentimiento");
       }
 
-      alert("Consentimiento firmado correctamente. ID: " + result.consentId);
-      
-      
+      // Toast de éxito con delay para que el usuario lo vea
+      toast.success("¡Consentimiento firmado!", {
+        description: `Consecutivo #${result.consecutivo}. Recibirás una copia por email.`,
+      });
+
+      // Pequeño delay para que el usuario vea el toast antes de redirigir
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
       resetFlow();
-      router.push("/ingreso"); 
+      router.push("/ingreso");
 
     } catch (error) {
-      console.error("Error submitting consent:", error);
-      alert("Hubo un error al guardar el consentimiento. Intente nuevamente.");
+      console.error("[ConsentPage] Error:", error);
+      toast.error("Error al guardar", {
+        description: "Hubo un problema al guardar el consentimiento. Intente nuevamente.",
+      });
     } finally {
       setIsSubmitting(false);
     }

@@ -1,73 +1,90 @@
-import { NextResponse } from "next/server";
+/**
+ * API Route: /api/usuarios/check
+ * Verifica si un usuario existe por cédula (Blind Check - RF-03).
+ * NO expone datos sensibles sin validación OTP.
+ */
+import { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/firebaseAdmin";
+import { apiHandler, successResponse } from "@/lib/apiHandler";
+import { maskEmail } from "@/lib/utils/formatters";
 import type { UserProfile } from "@/types/firestore";
 
-const COLLECTION = "users";
+// ============================================================================
+// SCHEMA
+// ============================================================================
 
-const bodySchema = z.object({
+const checkUserSchema = z.object({
   cedula: z
     .string()
     .trim()
-    .min(6, "La cédula es muy corta")
-    .max(15, "La cédula es muy larga")
+    .min(6, "La cédula debe tener al menos 6 dígitos")
+    .max(15, "La cédula no puede exceder 15 dígitos")
     .regex(/^\d+$/, "Solo se permiten números"),
 });
 
-const maskEmail = (email: string): string => {
-  const [localPart, domainPart] = email.split("@");
-  if (!domainPart) return "***@***";
+// ============================================================================
+// TYPES
+// ============================================================================
 
-  const visibleLocal = localPart.slice(0, 2).padEnd(Math.min(localPart.length, 2) || 1, "*");
-  const obfuscatedLocal = `${visibleLocal}${"*".repeat(Math.max(localPart.length - 2, 2))}`;
-
-  const domainSegments = domainPart.split(".");
-  const tld = domainSegments.pop();
-  const domainName = domainSegments.join(".");
-  const obfuscatedDomain = `${domainName.slice(0, 1) || "*"}***`;
-
-  return `${obfuscatedLocal}@${obfuscatedDomain}${tld ? `.${tld}` : ""}`;
-};
-
-const sanitizeUser = (user: UserProfile) => ({
-  // NO devolver datos personales reales aquí para evitar enumeración/exposición
-  // Solo devolvemos el email ofuscado para UI feedback
-  emailMasked: maskEmail(user.email),
-});
-
-export async function POST(req: Request) {
-  try {
-    const rawBody = await req.json();
-    const { cedula } = bodySchema.parse(rawBody);
-
-    // Buscamos por ID de documento (si coincide con la cédula) O por campo 'uid'
-    // Primero intentamos buscar por campo 'uid' que es lo más probable en la nueva estructura
-    const usersRef = db.collection(COLLECTION);
-    const querySnapshot = await usersRef.where("uid", "==", cedula).limit(1).get();
-
-    let userData: UserProfile | null = null;
-
-    if (!querySnapshot.empty) {
-      userData = querySnapshot.docs[0].data() as UserProfile;
-    } else {
-      // Fallback: intentar buscar por ID de documento
-      const docSnap = await usersRef.doc(cedula).get();
-      if (docSnap.exists) {
-        userData = docSnap.data() as UserProfile;
-      }
-    }
-
-    if (!userData) {
-      return NextResponse.json({ exists: false });
-    }
-
-    return NextResponse.json({ exists: true, userData: sanitizeUser(userData) });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: "Validación fallida", details: error.issues }, { status: 400 });
-    }
-
-    // console.error("Error en /api/usuarios/check", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
-  }
+interface CheckUserResponse {
+  exists: boolean;
+  userData?: {
+    emailMasked: string;
+  };
 }
+
+// ============================================================================
+// HELPER
+// ============================================================================
+
+/**
+ * Sanitiza los datos del usuario para la respuesta.
+ * Solo expone el email ofuscado (RF-13).
+ */
+function sanitizeUserResponse(user: UserProfile): CheckUserResponse["userData"] {
+  return {
+    emailMasked: maskEmail(user.email),
+  };
+}
+
+// ============================================================================
+// HANDLER
+// ============================================================================
+
+export const POST = apiHandler(async (req: NextRequest) => {
+  const body = await req.json();
+  const { cedula } = checkUserSchema.parse(body);
+
+  const COLLECTION = "users";
+  const usersRef = db.collection(COLLECTION);
+
+  // Buscar por campo 'uid' (cédula almacenada)
+  const querySnapshot = await usersRef
+    .where("uid", "==", cedula)
+    .limit(1)
+    .get();
+
+  let userData: UserProfile | null = null;
+
+  if (!querySnapshot.empty) {
+    userData = querySnapshot.docs[0].data() as UserProfile;
+  } else {
+    // Fallback: buscar por ID de documento
+    const docSnap = await usersRef.doc(cedula).get();
+    if (docSnap.exists) {
+      userData = docSnap.data() as UserProfile;
+    }
+  }
+
+  // Usuario no encontrado
+  if (!userData) {
+    return successResponse<CheckUserResponse>({ exists: false });
+  }
+
+  // Usuario encontrado - retornar datos ofuscados
+  return successResponse<CheckUserResponse>({
+    exists: true,
+    userData: sanitizeUserResponse(userData),
+  });
+});
