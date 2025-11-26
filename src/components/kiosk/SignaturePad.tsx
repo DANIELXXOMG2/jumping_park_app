@@ -24,7 +24,18 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(({ onEnd }, 
   useImperativeHandle(ref, () => ({
     isEmpty: () => sigCanvas.current?.isEmpty() ?? true,
     getTrimmedCanvas: () => sigCanvas.current?.getTrimmedCanvas() as HTMLCanvasElement,
-    toDataURL: () => sigCanvas.current?.toDataURL() ?? "",
+    /**
+     * Retorna la firma como base64 PNG optimizado.
+     * Usa getTrimmedCanvas() para eliminar espacios vacíos y reducir tamaño.
+     * Típicamente reduce el tamaño de ~50KB a ~5-15KB.
+     */
+    toDataURL: () => {
+      if (!sigCanvas.current) return "";
+      // Usar canvas recortado para eliminar espacios en blanco
+      const trimmedCanvas = sigCanvas.current.getTrimmedCanvas();
+      // PNG con calidad por defecto (PNG no soporta quality param pero el trim reduce significativamente el peso)
+      return trimmedCanvas.toDataURL("image/png");
+    },
     clear: () => sigCanvas.current?.clear(),
   }));
 
