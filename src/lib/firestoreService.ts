@@ -1,14 +1,35 @@
 import type { DocumentData, DocumentSnapshot, QueryDocumentSnapshot } from 'firebase-admin/firestore';
 import { db, admin } from './firebaseAdmin';
-import type { Consent, OtpRecord, UserProfile } from '@/types/firestore';
+import type {
+  Consent,
+  OtpRecord,
+  UserProfile,
+  Minor,
+  Access,
+  Invoice,
+  Service,
+  Sale,
+} from '@/types/firestore';
 
 type BaseDoc = DocumentData;
 type WithId<T extends BaseDoc> = T & { id: string };
 
+/**
+ * Mapa de colecciones conocidas con sus tipos.
+ * ESTANDARIZADO EN INGLÉS para consistencia global.
+ * Los tipos provienen de @/types/firestore.ts (fuente de verdad).
+ */
 type FirestoreCollectionMap = {
-  usuarios: UserProfile;
-  consentimientos: Consent;
+  // Core collections
+  users: UserProfile;
+  consents: Consent;
   otps: OtpRecord;
+  minors: Minor;
+  // Business collections
+  accesses: Access;
+  invoices: Invoice;
+  services: Service;
+  sales: Sale;
 };
 
 type KnownCollection = keyof FirestoreCollectionMap;
@@ -33,7 +54,7 @@ export async function createDoc<T extends BaseDoc>(collection: string, data: T, 
   const docRef = id ? colRef.doc(id) : colRef.doc();
   const payload: BaseDoc = {
     ...data,
-    creado_en: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
   };
   await docRef.set(payload);
   const freshSnap = await docRef.get();
@@ -47,7 +68,7 @@ export async function getDocs<C extends KnownCollection>(
 export async function getDocs<T extends BaseDoc>(collection: string, limit?: number): Promise<Array<WithId<T>>>;
 export async function getDocs<T extends BaseDoc>(collection: string, limit = 100): Promise<Array<WithId<T>>> {
   const colRef = db.collection(collection);
-  const query = colRef.orderBy('creado_en', 'desc').limit(limit);
+  const query = colRef.orderBy('createdAt', 'desc').limit(limit);
   const snap = await query.get();
   return snap.docs.map((docSnap) => snapshotWithId<T>(docSnap));
 }
@@ -73,7 +94,7 @@ export async function updateDoc<T extends BaseDoc>(collection: string, id: strin
   const ref = db.collection(collection).doc(id);
   await ref.update({
     ...data,
-    actualizado_en: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
   });
   const updated = await ref.get();
   return snapshotWithId<T>(updated);

@@ -1,8 +1,6 @@
-import { Resend } from "resend";
 import { createDoc, deleteDoc, getDocById } from "../lib/firestoreService";
+import { sendOtpEmail as sendOtpViaEmail } from "./emailService";
 import type { OtpRecord, UserProfile } from "../types/firestore";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 export type SendOtpResult = {
   success: boolean;
@@ -31,51 +29,13 @@ export async function saveOtp(email: string, code: string): Promise<void> {
   }
 }
 
+/**
+ * Envía un OTP por correo electrónico.
+ * Delega al emailService centralizado.
+ */
 export async function sendOtpEmail(email: string, otp: string): Promise<SendOtpResult> {
-  if (!process.env.RESEND_API_KEY) {
-    console.error("RESEND_API_KEY faltante");
-    return { success: false, error: "RESEND_API_KEY no configurada" };
-  }
-
-  console.log(`[AuthService] Intentando enviar correo a: ${email}`);
-
-  try {
-    const { data, error } = await resend.emails.send({
-      from: "Jumping Park <no-reply@jumpingpark.lat>",
-      to: email,
-      subject: "Tu código de acceso - Jumping Park",
-      html: `
-        <table width="100%" cellpadding="0" cellspacing="0" style="font-family: Arial, sans-serif; background-color: #f6f6f6; padding: 24px;">
-          <tr>
-            <td align="center">
-              <table width="480" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; padding: 32px; text-align: center;">
-                <tr>
-                  <td style="font-size: 18px; color: #111827;">Usa este código para validar tu acceso</td>
-                </tr>
-                <tr>
-                  <td style="font-size: 40px; letter-spacing: 6px; font-weight: bold; color: #10b981; padding: 24px 0;">${otp}</td>
-                </tr>
-                <tr>
-                  <td style="font-size: 14px; color: #6b7280;">Este código expira en pocos minutos. Si no solicitaste este acceso, ignora este correo.</td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
-      `,
-    });
-
-    if (error) {
-      console.error("[AuthService] Error respuesta Resend:", error);
-      return { success: false, error: error.message };
-    }
-
-    console.log(`[AuthService] Correo enviado exitosamente. ID: ${data?.id}`);
-    return { success: true };
-  } catch (error) {
-    console.error("[AuthService] Excepción enviando correo:", error);
-    return { success: false, error: "No se pudo enviar el correo de OTP" };
-  }
+  // El log está en emailService - evitamos duplicación
+  return sendOtpViaEmail({ to: email, otp });
 }
 
 export async function validateOtp(
