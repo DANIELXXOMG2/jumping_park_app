@@ -15,9 +15,6 @@ const REGISTER_ROUTE = "/registro";
 type CheckUserResponse = {
   exists: boolean;
   userData?: {
-    // uid?: string; // Ya no viene del backend por seguridad
-    // fullName?: string; // Ya no viene
-    // email?: string; // Ya no viene
     emailMasked?: string;
   };
 };

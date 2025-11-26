@@ -81,7 +81,13 @@ Certifico que yo y los menores a mi cargo nos encontramos en condiciones física
   yPosition -= 20;
   
   data.minorsSnapshot.forEach((minor) => {
-    page.drawText(`- ${minor.fullName} (${minor.relationship}) - Nacimiento: ${minor.birthDate}`, {
+    const minorName = (minor.firstName || minor.lastName)
+      ? `${minor.firstName || ""} ${minor.lastName || ""}`.trim()
+      : (minor.fullName || "");
+    const idInfo = minor.idType && minor.idNumber ? ` | ${minor.idType.toUpperCase()}: ${minor.idNumber}` : "";
+    const epsInfo = minor.eps ? ` | EPS: ${minor.eps}` : "";
+
+    page.drawText(`- ${minorName} (${minor.relationship}) - Nacimiento: ${minor.birthDate}${idInfo}${epsInfo}`, {
       x: 50,
       y: yPosition,
       size: 10,

@@ -11,7 +11,6 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
-    // 1. Validate Body
     const validation = consentSubmissionSchema.safeParse(body);
     if (!validation.success) {
       return NextResponse.json(
@@ -50,15 +49,29 @@ export async function POST(request: NextRequest) {
 
     // 3. Persist User in 'users' collection
     // We use merge: true to update existing users or create new ones without overwriting everything if not intended (though here we overwrite mostly everything to keep it fresh)
+    // Normalize minors for user profile (UserProfile.Minor requires fullName)
+    const profileMinors = minors.map((m) => {
+      const fullName = (m.firstName || m.lastName)
+        ? `${m.firstName || ""} ${m.lastName || ""}`.trim()
+        : ((m as any).fullName || "");
+
+      return {
+        fullName,
+        birthDate: m.birthDate,
+        relationship: m.relationship,
+        // keep additional fields optional for the consent record
+        eps: (m as any).eps,
+        idType: (m as any).idType,
+        idNumber: (m as any).idNumber,
+      };
+    });
+
     const userProfileData: UserProfile = {
       uid: responsibleAdult.documentId,
       fullName: responsibleAdult.fullName,
       email: responsibleAdult.email,
       phone: responsibleAdult.phone,
-      minors: minors.map(m => ({
-        ...m,
-        relationship: m.relationship
-      })),
+      minors: profileMinors,
       createdAt: new Date(), // Note: In a real app, we might want to use set({ ... }, { merge: true }) carefully with createdAt. 
                              // For this MVP, we'll accept that createdAt might be updated or we could check existence first.
                              // However, to keep it simple and idempotent as requested:
@@ -80,20 +93,27 @@ export async function POST(request: NextRequest) {
       consecutivo: consecutivo,
       userId: responsibleAdult.documentId,
       adultSnapshot: userProfileData, // Use the fresh user profile data
-      minorsSnapshot: minors.map(m => ({
-        ...m,
-        relationship: m.relationship
+      // For the consent document we persist the richer minor info as provided
+      minorsSnapshot: minors.map((m) => ({
+        fullName: (m.firstName || m.lastName)
+          ? `${m.firstName || ""} ${m.lastName || ""}`.trim()
+          : ((m as any).fullName || ""),
+        birthDate: m.birthDate,
+        relationship: m.relationship,
+        eps: (m as any).eps,
+        idType: (m as any).idType,
+        idNumber: (m as any).idNumber,
       })),
       signatureUrl: signedUrl,
       policyVersion: "1.0",
       ipAddress: request.headers.get("x-forwarded-for") || "unknown",
       signedAt: new Date(),
-      validUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
+      validUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), 
     };
 
     await db.collection("consents").doc(consentId).set(newConsent);
 
-    // 5. Generate PDF and Send Email
+   
     try {
       const pdfBuffer = await generateConsentPdf(newConsent, buffer);
       
@@ -116,7 +136,7 @@ export async function POST(request: NextRequest) {
       });
     } catch (emailError) {
       console.error("Error sending email:", emailError);
-      // Continue execution, don't fail the main request
+     
     }
 
     return NextResponse.json({ success: true, consentId });

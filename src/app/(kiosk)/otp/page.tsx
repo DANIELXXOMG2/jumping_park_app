@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, RefreshCw } from "lucide-react";
 import { VirtualKeypad } from "@/components/kiosk/VirtualKeypad";
@@ -41,6 +41,9 @@ export default function OtpPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isResending, setIsResending] = useState(false);
   const [resendMessage, setResendMessage] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const RESEND_SECONDS = 20; 
+  const [resendCooldown, setResendCooldown] = useState(RESEND_SECONDS);
 
   const maskedEmail = useMemo(() => (email ? maskEmail(email) : ""), [email]);
 
@@ -58,18 +61,33 @@ export default function OtpPage() {
     setErrorMessage(null);
   }, []);
 
+  const handleInputChange = useCallback((value: string) => {
+    const digits = value.replace(/\D/g, "").slice(0, OTP_LENGTH);
+    setOtp(digits);
+    setErrorMessage(null);
+  }, []);
+
+  const handlePaste = useCallback((e: React.ClipboardEvent<HTMLInputElement>) => {
+    const pasted = e.clipboardData?.getData("text") ?? "";
+    const digits = pasted.replace(/\D/g, "").slice(0, OTP_LENGTH);
+    if (digits.length) {
+      setOtp(digits);
+      setErrorMessage(null);
+    }
+    // Prevent the default to avoid any unexpected text insertion
+    e.preventDefault();
+  }, []);
+
   const validateCode = useCallback(
     async (code: string) => {
       if (code.length !== OTP_LENGTH) return;
-      if (isValidating) return; // Prevenir ejecuciones paralelas
+      if (isValidating) return; 
 
       setIsValidating(true);
       setErrorMessage(null);
       setResendMessage(null);
 
       try {
-        // Si el email está ofuscado (contiene *), no lo enviamos al backend porque fallará la validación de formato.
-        // En ese caso, enviamos solo la cédula y dejamos que el backend resuelva el email real.
         const isEmailMasked = email?.includes("*");
         
         const payload = { 
@@ -100,7 +118,7 @@ export default function OtpPage() {
           throw new Error(data.error ?? "Código inválido");
         }
 
-        // Si la validación es exitosa y nos devuelven datos de usuario, actualizamos el store
+      
         if (data.userData) {
           updateVisitorData(data.userData);
         }
@@ -108,12 +126,12 @@ export default function OtpPage() {
         setAuthenticated(true);
         setStep(3);
         router.push(CONSENT_ROUTE);
-        // NO desbloqueamos el botón (setIsValidating(false)) aquí para evitar doble submit mientras redirige
+        
       } catch (error) {
-        // console.error("Error validando OTP", error);
+       
         setErrorMessage(error instanceof Error ? error.message : "Código incorrecto");
         setOtp("");
-        setIsValidating(false); // Solo desbloqueamos si hubo error
+        setIsValidating(false); 
       }
     },
     [cedula, email, router, setAuthenticated, setStep, updateVisitorData, isValidating],
@@ -139,11 +157,17 @@ export default function OtpPage() {
     setOtp("");
 
     try {
-      const payload = {
-        email: email || undefined,
-        cedula: cedula || undefined
-      };
-      
+      const isEmailMasked = email?.includes("*");
+      const payload: Record<string, string> = {};
+      if (!isEmailMasked && email) payload.email = email;
+      if (cedula) payload.cedula = cedula;
+
+      if (!payload.email && !payload.cedula) {
+        setErrorMessage("No hay datos válidos para reenviar el código");
+        setIsResending(false);
+        return;
+      }
+
       const response = await fetch("/api/otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -156,13 +180,29 @@ export default function OtpPage() {
       }
 
       setResendMessage("Enviamos un nuevo código a tu correo");
+      
+      setResendCooldown(RESEND_SECONDS);
     } catch (error) {
-      // console.error("Error reenviando OTP", error);
+      
       setErrorMessage(error instanceof Error ? error.message : "No pudimos reenviar el código");
     } finally {
       setIsResending(false);
     }
   }, [cedula, email, isResending]);
+
+  
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setResendCooldown((c) => (c <= 1 ? 0 : c - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
+
+  
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
 
   if (!isReady) {
     return (
@@ -196,7 +236,21 @@ export default function OtpPage() {
           </p>
         </div>
 
-        <OtpDisplay value={otp} length={OTP_LENGTH} />
+        <div className="relative w-full" onClick={() => inputRef.current?.focus()}>
+          <OtpDisplay value={otp} length={OTP_LENGTH} />
+          <input
+            ref={inputRef}
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            value={otp}
+            onChange={(e) => handleInputChange(e.target.value)}
+            onPaste={handlePaste}
+            className="absolute inset-0 h-full w-full opacity-0 cursor-text"
+            aria-label="Ingresar código"
+            maxLength={OTP_LENGTH}
+          />
+        </div>
 
         {errorMessage && (
           <div className="w-full max-w-3xl rounded-3xl border border-red-500/40 bg-red-500/10 px-6 py-4 text-lg text-red-100">
@@ -221,15 +275,15 @@ export default function OtpPage() {
           <button
             type="button"
             onClick={handleResend}
-            disabled={isResending}
-            className="flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-6 py-3 text-base font-semibold text-white transition hover:border-primary/60"
+            disabled={isResending || resendCooldown > 0}
+            className="flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-6 py-3 text-base font-semibold text-white transition hover:border-primary/60 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isResending ? (
               <Loader2 className="h-5 w-5 animate-spin" />
             ) : (
               <RefreshCw className="h-5 w-5" strokeWidth={1.5} />
             )}
-            Reenviar código
+            {resendCooldown > 0 ? `Reenviar (${resendCooldown}s)` : "Reenviar código"}
           </button>
 
           {isValidating && (

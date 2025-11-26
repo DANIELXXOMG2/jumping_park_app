@@ -8,6 +8,10 @@ export interface Minor {
   fullName: string;
   birthDate: string; // ISO YYYY-MM-DD
   relationship: 'hijo' | 'sobrino' | 'nieto' | 'otro';
+  // Optional additional fields captured from the consent form
+  eps?: string;
+  idType?: 'cc' | 'ti' | 'passport' | 'otro';
+  idNumber?: string;
 }
 
 export interface UserProfile {

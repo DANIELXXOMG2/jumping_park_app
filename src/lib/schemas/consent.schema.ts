@@ -1,8 +1,12 @@
 import { z } from "zod";
 
 export const minorSchema = z.object({
-  fullName: z.string().min(3, "El nombre completo es requerido (mínimo 3 caracteres)"),
+  firstName: z.string().min(2, "El nombre es requerido (mínimo 2 caracteres)"),
+  lastName: z.string().min(2, "Los apellidos son requeridos (mínimo 2 caracteres)"),
   birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "La fecha debe tener el formato YYYY-MM-DD"),
+  eps: z.string().min(2, "La EPS es requerida"),
+  idType: z.enum(["cc", "ti", "passport", "otro"], { message: "Tipo de identificación inválido" }),
+  idNumber: z.string().min(3, "Número de identificación es requerido"),
   relationship: z.enum(["hijo", "sobrino", "nieto", "otro"], {
     message: "Parentesco inválido",
   }),
