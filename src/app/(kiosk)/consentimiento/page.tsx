@@ -126,7 +126,7 @@ export default function ConsentPage() {
         {/* Terms Box */}
         <section className="flex-1 min-h-[200px] bg-white text-black p-6 rounded-xl overflow-y-auto max-h-[400px] shadow-inner">
           <h3 className="font-bold text-lg mb-4 text-center uppercase">Consentimiento Informado para la Práctica de Actividades Deportivas</h3>
-          <p className="text-center font-semibold mb-4">"Es una actividad deportiva que puede ocasionar lesiones leves o importantes"</p>
+          <p className="text-center font-semibold mb-4">&quot;Es una actividad deportiva que puede ocasionar lesiones leves o importantes&quot;</p>
           
           <div className="space-y-4 text-sm leading-relaxed">
             <p>

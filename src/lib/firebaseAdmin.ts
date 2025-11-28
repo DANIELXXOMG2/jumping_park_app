@@ -24,5 +24,6 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 const bucket = process.env.FIREBASE_STORAGE_BUCKET ? admin.storage().bucket() : undefined;
+const adminAuth = admin.auth();
 
-export { admin, db, bucket };
+export { admin, db, bucket, adminAuth };

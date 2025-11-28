@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { sendOtpSchema } from "@/lib/schemas/auth.schema";
 import { saveOtp, sendOtpEmail, getUserByCedula } from "@/services/authService";
-import type { UserProfile } from "@/types/firestore";
 
 const OTP_DIGITS = 6;
 

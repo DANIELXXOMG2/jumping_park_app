@@ -73,7 +73,7 @@ export async function sendOtpEmail(params: SendOtpEmailParams): Promise<EmailRes
               <table width="480" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; padding: 32px; text-align: center;">
                 <tr>
                   <td style="padding-bottom: 16px;">
-                    <img src="https://jumping-park.vercel.app/assets/logo.png" alt="Jumping Park" width="120" style="max-width: 120px;" />
+                    <img src="https://jumping-park.vercel.app/assets/jumping-park-logo.png" alt="Jumping Park" width="120" style="max-width: 120px;" />
                   </td>
                 </tr>
                 <tr>
@@ -149,7 +149,7 @@ export async function sendConsentEmail(params: SendConsentEmailParams): Promise<
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
           <div style="text-align: center; padding-bottom: 24px;">
-            <img src="https://jumping-park.vercel.app/assets/logo.png" alt="Jumping Park" width="150" />
+            <img src="https://jumping-park.vercel.app/assets/jumping-park-logo.png" alt="Jumping Park" width="150" />
           </div>
           
           <h1 style="color: #10b981; font-size: 24px; margin-bottom: 16px;">

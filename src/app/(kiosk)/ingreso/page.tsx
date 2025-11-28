@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { VirtualKeypad } from "@/components/kiosk/VirtualKeypad";
 import { useKioskStore } from "@/store/kioskStore";
-import type { UserProfile } from "@/types/firestore";
 
 const MIN_DIGITS = 6;
 const MAX_DIGITS = 15;

@@ -14,9 +14,9 @@ export async function generateConsentPdf(data: Consent, signatureBuffer?: Buffer
 
   // 1. Logo
   try {
-    const logoPath = path.join(process.cwd(), 'public', 'assets', 'jumping-park-logo.jpg');
+    const logoPath = path.join(process.cwd(), 'public', 'assets', 'jumping-park-logo.png');
     const logoBytes = await fs.readFile(logoPath);
-    const logoImage = await pdfDoc.embedJpg(logoBytes);
+    const logoImage = await pdfDoc.embedPng(logoBytes);
     const logoDims = logoImage.scale(0.2); // Adjust scale as needed
     page.drawImage(logoImage, {
       x: 50,
