@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -60,16 +61,19 @@ export function Sidebar() {
         )}
       >
         {/* Logo */}
-        <div className="flex items-center justify-between h-16 px-4 border-b border-border">
-          {!collapsed && (
-            <div className="flex items-center gap-2">
-              <span className="text-primary font-bold text-lg">Jumping</span>
-              <span className="font-semibold text-foreground/80">Park</span>
-            </div>
-          )}
+        <div className="flex items-center h-16 px-3 border-b border-border">
+          <div className="flex-1 flex justify-center">
+            <Image
+              src="/assets/jumping-park-logo.png"
+              alt="Jumping Park"
+              width={collapsed ? 40 : 160}
+              height={collapsed ? 40 : 45}
+              className={collapsed ? "h-9 w-9 object-contain" : "h-10 w-auto"}
+            />
+          </div>
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="p-2 rounded-lg hover:bg-surface-muted transition-colors min-h-0"
+            className="p-2 rounded-lg hover:bg-surface-muted transition-colors min-h-0 shrink-0"
           >
             {collapsed ? (
               <ChevronRight className="w-5 h-5 text-foreground/60" />

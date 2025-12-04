@@ -1,6 +1,7 @@
 "use client";
 
-import { Bell, Search, Menu, LogOut } from "lucide-react";
+import Image from "next/image";
+import { Bell, Search, LogOut } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
@@ -31,10 +32,16 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 h-16 bg-surface/80 backdrop-blur-md border-b border-border">
       <div className="flex items-center justify-between h-full px-4 lg:px-6">
-        {/* Mobile menu button */}
-        <button className="lg:hidden p-2 rounded-lg hover:bg-surface-muted transition-colors min-h-0">
-          <Menu className="w-5 h-5 text-foreground/70" />
-        </button>
+        {/* Mobile logo */}
+        <div className="lg:hidden">
+          <Image
+            src="/assets/jumping-park-logo.png"
+            alt="Jumping Park"
+            width={100}
+            height={30}
+            className="h-7 w-auto"
+          />
+        </div>
 
         {/* Search */}
         <div className="flex-1 max-w-md mx-4">
@@ -42,9 +49,12 @@ export function Header() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40" />
             <input
               type="text"
+              id="header-search"
+              name="header-search"
               placeholder="Buscar usuarios, consentimientos..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              autoComplete="off"
               className="w-full pl-10 pr-4 py-2 text-sm bg-surface-muted border-border rounded-lg focus:border-primary min-h-0"
             />
           </div>

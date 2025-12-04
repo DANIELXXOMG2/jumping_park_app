@@ -51,10 +51,16 @@ textarea {
   border: 1px solid var(--border);
   background-color: var(--surface);
   color: var(--foreground);
-  padding: 0.75rem 1rem;
   font-size: 1rem;
   font-family: inherit;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+/* Default padding solo cuando no hay clases de Tailwind específicas */
+input:not([class*="pl-"]):not([class*="pr-"]):not([class*="px-"]):not([class*="p-"]),
+select:not([class*="pl-"]):not([class*="pr-"]):not([class*="px-"]):not([class*="p-"]),
+textarea:not([class*="pl-"]):not([class*="pr-"]):not([class*="px-"]):not([class*="p-"]) {
+  padding: 0.75rem 1rem;
 }
 
 button:focus-visible,

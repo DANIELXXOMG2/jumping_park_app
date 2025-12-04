@@ -40,9 +40,12 @@ export function SearchInput({
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40" />
       <input
         type="text"
+        id="search-input"
+        name="search"
         value={localValue}
         onChange={(e) => setLocalValue(e.target.value)}
         placeholder={placeholder}
+        autoComplete="off"
         className="w-full pl-10 pr-10 py-2.5 text-sm bg-surface-muted border-border rounded-lg focus:border-primary min-h-0"
       />
       {localValue && (

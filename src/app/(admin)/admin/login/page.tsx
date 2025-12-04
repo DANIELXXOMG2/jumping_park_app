@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/admin/Button";
 import { Lock, Mail, AlertCircle, Eye, EyeOff } from "lucide-react";
@@ -57,9 +58,15 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 mb-4">
-            <span className="text-primary font-bold text-2xl">Jumping</span>
-            <span className="font-semibold text-foreground/80 text-2xl">Park</span>
+          <div className="flex justify-center mb-4">
+            <Image
+              src="/assets/jumping-park-logo.png"
+              alt="Jumping Park"
+              width={280}
+              height={80}
+              className="h-16 w-auto"
+              priority
+            />
           </div>
           <h1 className="text-xl font-semibold text-foreground">
             Panel de Administración
