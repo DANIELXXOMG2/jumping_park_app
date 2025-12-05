@@ -1,375 +1,252 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Users, FileCheck, Baby, TrendingUp } from "lucide-react";
+import { Search, FileCheck, CheckCircle, XCircle, FileText, Baby, Loader2 } from "lucide-react";
 import { StatCard } from "@/components/admin/StatCard";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/admin/Card";
-import { Badge } from "@/components/admin/Badge";
-import { formatRelativeTime } from "@/lib/utils";
 import { adminGet } from "@/lib/adminApi";
-import Link from "next/link";
 
 interface DashboardStats {
-  totalUsers: number;
-  totalConsents: number;
-  totalMinors: number;
-  usersToday: number;
   consentsToday: number;
 }
 
-interface RecentUser {
-  id: string;
-  uid: string;
-  fullName: string;
-  email: string;
-  createdAt: string | null;
+interface MinorSnapshot {
+  firstName: string;
+  lastName: string;
 }
 
-interface RecentConsent {
-  id: string;
-  consecutivo: number;
-  adultSnapshot?: {
-    fullName: string;
+interface ConsentResult {
+  found: boolean;
+  consent?: {
+    id: string;
+    consecutivo: number;
+    adultSnapshot: {
+      fullName: string;
+      uid: string;
+    };
+    minorsSnapshot: MinorSnapshot[];
+    pdfUrl?: string;
+    createdAt: string;
+    expiresAt?: string;
   };
-  minorsSnapshot?: unknown[];
-  createdAt: string | null;
-}
-
-interface ChartData {
-  name: string;
-  value: number;
-}
-
-interface DashboardData {
-  stats: DashboardStats;
-  recentUsers: RecentUser[];
-  recentConsents: RecentConsent[];
-  chartData: ChartData[];
-}
-
-function SkeletonStatCard() {
-  return (
-    <div className="bg-surface rounded-xl border border-border p-4 animate-pulse">
-      <div className="h-4 w-24 bg-surface-muted rounded mb-3" />
-      <div className="h-8 w-16 bg-surface-muted rounded mb-2" />
-      <div className="h-3 w-20 bg-surface-muted rounded" />
-    </div>
-  );
-}
-
-function SkeletonList({ rows = 5 }: { rows?: number }) {
-  return (
-    <div className="space-y-3">
-      {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="flex items-center gap-3 p-3 animate-pulse">
-          <div className="w-9 h-9 rounded-full bg-surface-muted" />
-          <div className="flex-1">
-            <div className="h-4 w-32 bg-surface-muted rounded mb-2" />
-            <div className="h-3 w-24 bg-surface-muted rounded" />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function SkeletonTable({ rows = 5 }: { rows?: number }) {
-  return (
-    <div className="space-y-3">
-      {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="flex items-center gap-4 p-3 animate-pulse">
-          <div className="h-6 w-12 bg-surface-muted rounded" />
-          <div className="h-4 w-32 bg-surface-muted rounded" />
-          <div className="h-6 w-20 bg-surface-muted rounded" />
-          <div className="h-4 w-24 bg-surface-muted rounded" />
-        </div>
-      ))}
-    </div>
-  );
+  isExpired?: boolean;
 }
 
 export default function AdminDashboard() {
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const cacheRef = useRef<{ data: DashboardData; timestamp: number } | null>(null);
-  const CACHE_DURATION = 10000;
+  const [cedula, setCedula] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResult, setSearchResult] = useState<ConsentResult | null>(null);
+  const [consentsToday, setConsentsToday] = useState<number>(0);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const fetchDashboardData = useCallback(async (force = false) => {
-    if (!force && cacheRef.current && Date.now() - cacheRef.current.timestamp < CACHE_DURATION) {
-      setData(cacheRef.current.data);
-      setIsLoading(false);
-      return;
-    }
+  // Cargar estadísticas simples al inicio
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const result = await adminGet<{ stats: DashboardStats }>("/api/admin/stats");
+        setConsentsToday(result.stats.consentsToday || 0);
+      } catch {
+        // Silenciar error, mostrar 0
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+    fetchStats();
+  }, []);
+
+  // Focus en el input al cargar
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  const handleSearch = useCallback(async () => {
+    if (!cedula.trim() || cedula.length < 6) return;
+
+    setIsSearching(true);
+    setSearchResult(null);
 
     try {
-      if (!data) setIsLoading(true);
-      const result = await adminGet<DashboardData>("/api/admin/stats");
-      cacheRef.current = { data: result, timestamp: Date.now() };
-      setData(result);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error desconocido");
+      const result = await adminGet<ConsentResult>(
+        `/api/admin/verificar-consentimiento?cedula=${encodeURIComponent(cedula.trim())}`
+      );
+      setSearchResult(result);
+    } catch {
+      setSearchResult({ found: false });
     } finally {
-      setIsLoading(false);
+      setIsSearching(false);
     }
-  }, [data]);
+  }, [cedula]);
 
-  useEffect(() => {
-    fetchDashboardData();
-    const interval = setInterval(() => fetchDashboardData(true), 30000);
-    return () => clearInterval(interval);
-  }, [fetchDashboardData]);
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
 
-  if (isLoading && !data) {
-    return (
-      <div className="space-y-6 pb-20 lg:pb-6">
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-foreground/60 mt-1">Resumen de actividad del parque</p>
-        </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <SkeletonStatCard />
-          <SkeletonStatCard />
-          <SkeletonStatCard />
-          <SkeletonStatCard />
-        </div>
-        <div className="grid lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader><CardTitle>Consentimientos por Día</CardTitle></CardHeader>
-            <CardContent>
-              <div className="flex items-end gap-2 h-40">
-                {[1,2,3,4,5,6,7].map((i) => (
-                  <div key={i} className="flex-1 flex flex-col items-center gap-2 animate-pulse">
-                    <div className="w-full bg-surface-muted rounded-t" style={{ height: `${Math.random() * 60 + 20}%` }} />
-                    <div className="h-3 w-6 bg-surface-muted rounded" />
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader><CardTitle>Usuarios Recientes</CardTitle></CardHeader>
-            <CardContent><SkeletonList /></CardContent>
-          </Card>
-        </div>
-        <Card>
-          <CardHeader><CardTitle>Consentimientos Recientes</CardTitle></CardHeader>
-          <CardContent><SkeletonTable /></CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
-        <p className="text-red-400">{error}</p>
-        <button
-          onClick={() => fetchDashboardData(true)}
-          className="px-4 py-2 bg-primary text-background rounded-lg font-medium min-h-0"
-        >
-          Reintentar
-        </button>
-      </div>
-    );
-  }
-
-  const maxChartValue = data?.chartData
-    ? Math.max(...data.chartData.map((d) => d.value), 1)
-    : 1;
+  const handleClear = () => {
+    setCedula("");
+    setSearchResult(null);
+    inputRef.current?.focus();
+  };
 
   return (
-    <div className="space-y-6 pb-20 lg:pb-6">
-      {/* Page Header */}
-      <div>
+    <div className="min-h-[80vh] flex flex-col items-center justify-start pt-8 px-4 pb-20 lg:pb-6">
+      {/* Header */}
+      <div className="text-center mb-8">
         <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
-          Dashboard
+          Visor de Verificación
         </h1>
-        <p className="text-foreground/60 mt-1">
-          Resumen de actividad del parque
+        <p className="text-foreground/60 mt-2">
+          Ingresa la cédula para verificar el consentimiento vigente
         </p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Contador simple */}
+      <div className="w-full max-w-md mb-8">
         <StatCard
-          title="Usuarios Totales"
-          value={data?.stats.totalUsers || 0}
-          subtitle={`+${data?.stats.usersToday || 0} hoy`}
-          icon={Users}
-        />
-        <StatCard
-          title="Consentimientos"
-          value={data?.stats.totalConsents || 0}
-          subtitle={`+${data?.stats.consentsToday || 0} hoy`}
+          title="Consentimientos Hoy"
+          value={statsLoading ? "..." : consentsToday}
           icon={FileCheck}
         />
-        <StatCard
-          title="Menores Registrados"
-          value={data?.stats.totalMinors || 0}
-          icon={Baby}
-        />
-        <StatCard
-          title="Tasa de Conversión"
-          value={
-            data?.stats.totalUsers
-              ? Math.round(
-                  (data.stats.totalConsents / data.stats.totalUsers) * 100
-                )
-              : 0
-          }
-          subtitle="Usuarios con firma"
-          icon={TrendingUp}
-        />
       </div>
 
-      {/* Charts and Recent Activity */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Weekly Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Consentimientos por Día</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-end gap-2 h-40">
-              {data?.chartData.map((item) => (
-                <div
-                  key={item.name}
-                  className="flex-1 flex flex-col items-center gap-2"
-                >
-                  <div
-                    className="w-full bg-primary/20 rounded-t transition-all duration-500"
-                    style={{
-                      height: `${(item.value / maxChartValue) * 100}%`,
-                      minHeight: item.value > 0 ? "8px" : "2px",
-                    }}
-                  >
-                    <div
-                      className="w-full h-full bg-gradient-to-t from-primary to-primary/60 rounded-t"
-                      style={{
-                        opacity: item.value > 0 ? 1 : 0.3,
-                      }}
-                    />
-                  </div>
-                  <span className="text-xs text-foreground/50">{item.name}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Recent Users */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Usuarios Recientes</CardTitle>
-            <Link
-              href="/admin/usuarios"
-              className="text-sm text-primary hover:underline"
-            >
-              Ver todos
-            </Link>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {data?.recentUsers.map((user) => (
-                <Link
-                  key={user.id}
-                  href={`/admin/usuarios/${user.uid}`}
-                  className="flex items-center justify-between p-3 rounded-lg bg-surface-muted hover:bg-surface-muted/80 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary/30 to-primary-contrast/30 flex items-center justify-center">
-                      <span className="text-xs font-bold text-primary">
-                        {user.fullName?.charAt(0)?.toUpperCase() || "U"}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">
-                        {user.fullName}
-                      </p>
-                      <p className="text-xs text-foreground/50">{user.email}</p>
-                    </div>
-                  </div>
-                  <span className="text-xs text-foreground/40">
-                    {user.createdAt ? formatRelativeTime(user.createdAt) : "-"}
-                  </span>
-                </Link>
-              ))}
-              {(!data?.recentUsers || data.recentUsers.length === 0) && (
-                <p className="text-center text-foreground/50 py-4">
-                  No hay usuarios recientes
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Recent Consents */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Consentimientos Recientes</CardTitle>
-          <Link
-            href="/admin/consentimientos"
-            className="text-sm text-primary hover:underline"
+      {/* Buscador Central */}
+      <div className="w-full max-w-lg mb-8">
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 text-foreground/40" />
+          <input
+            ref={inputRef}
+            type="text"
+            value={cedula}
+            onChange={(e) => setCedula(e.target.value.replace(/\D/g, ""))}
+            onKeyDown={handleKeyDown}
+            placeholder="Ingresa número de cédula..."
+            className="w-full pl-14 pr-4 py-4 text-xl bg-surface border-2 border-border rounded-2xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-foreground placeholder:text-foreground/40"
+            maxLength={12}
+            autoComplete="off"
+          />
+        </div>
+        <div className="flex gap-3 mt-4">
+          <button
+            onClick={handleSearch}
+            disabled={isSearching || cedula.length < 6}
+            className="flex-1 py-4 px-6 bg-primary text-background font-semibold rounded-xl hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
           >
-            Ver todos
-          </Link>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-foreground/60">
-                    #
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-foreground/60">
-                    Responsable
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-foreground/60">
-                    Menores
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-foreground/60">
-                    Fecha
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {data?.recentConsents.map((consent) => (
-                  <tr
-                    key={consent.id}
-                    className="border-b border-border/50 hover:bg-surface-muted/50 transition-colors"
-                  >
-                    <td className="px-4 py-3">
-                      <Badge variant="info">#{consent.consecutivo}</Badge>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-foreground/80">
-                      {consent.adultSnapshot?.fullName || "N/A"}
-                    </td>
-                    <td className="px-4 py-3">
-                      <Badge variant="default">
-                        {consent.minorsSnapshot?.length || 0} menores
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-foreground/50">
-                      {consent.createdAt
-                        ? formatRelativeTime(consent.createdAt)
-                        : "-"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {(!data?.recentConsents || data.recentConsents.length === 0) && (
-              <p className="text-center text-foreground/50 py-8">
-                No hay consentimientos recientes
-              </p>
+            {isSearching ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Buscando...
+              </>
+            ) : (
+              <>
+                <Search className="w-5 h-5" />
+                Verificar
+              </>
             )}
-          </div>
-        </CardContent>
-      </Card>
+          </button>
+          {searchResult && (
+            <button
+              onClick={handleClear}
+              className="py-4 px-6 bg-surface-muted text-foreground font-medium rounded-xl hover:bg-surface-muted/80 transition-all"
+            >
+              Limpiar
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Resultado de búsqueda */}
+      {searchResult && (
+        <div className="w-full max-w-lg animate-in fade-in slide-in-from-bottom-4 duration-300">
+          {searchResult.found && searchResult.consent && !searchResult.isExpired ? (
+            // ✅ CONSENTIMIENTO VIGENTE
+            <Card className="border-2 border-green-500 bg-green-500/10">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-center mb-4">
+                  <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center">
+                    <CheckCircle className="w-12 h-12 text-green-500" />
+                  </div>
+                </div>
+                <h2 className="text-2xl font-bold text-center text-green-500 mb-2">
+                  CONSENTIMIENTO VIGENTE
+                </h2>
+                <div className="text-center space-y-3 mt-6">
+                  <p className="text-xl font-semibold text-foreground">
+                    {searchResult.consent.adultSnapshot.fullName}
+                  </p>
+                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-500/20 rounded-full">
+                    <FileText className="w-4 h-4 text-green-400" />
+                    <span className="font-mono text-lg text-green-400">
+                      #{searchResult.consent.consecutivo}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-center gap-2 text-foreground/70">
+                    <Baby className="w-5 h-5" />
+                    <span className="text-lg">
+                      {searchResult.consent.minorsSnapshot.length} menor(es) autorizado(s)
+                    </span>
+                  </div>
+                  {searchResult.consent.minorsSnapshot.length > 0 && (
+                    <div className="mt-4 p-3 bg-surface-muted rounded-lg">
+                      <p className="text-sm text-foreground/60 mb-2">Menores:</p>
+                      <div className="flex flex-wrap gap-2 justify-center">
+                        {searchResult.consent.minorsSnapshot.map((minor, idx) => (
+                          <span
+                            key={idx}
+                            className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm"
+                          >
+                            {minor.firstName} {minor.lastName}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {searchResult.consent.pdfUrl && (
+                  <a
+                    href={searchResult.consent.pdfUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-6 w-full py-3 bg-green-500 text-white font-semibold rounded-xl hover:bg-green-600 transition-all flex items-center justify-center gap-2"
+                  >
+                    <FileText className="w-5 h-5" />
+                    Ver PDF del Consentimiento
+                  </a>
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+            // ❌ SIN CONSENTIMIENTO O EXPIRADO
+            <Card className="border-2 border-red-500 bg-red-500/10">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-center mb-4">
+                  <div className="w-20 h-20 rounded-full bg-red-500/20 flex items-center justify-center">
+                    <XCircle className="w-12 h-12 text-red-500" />
+                  </div>
+                </div>
+                <h2 className="text-2xl font-bold text-center text-red-500 mb-2">
+                  {searchResult.isExpired 
+                    ? "CONSENTIMIENTO VENCIDO" 
+                    : "SIN CONSENTIMIENTO VIGENTE"
+                  }
+                </h2>
+                <p className="text-center text-foreground/60 mt-4">
+                  {searchResult.isExpired
+                    ? "El consentimiento de este usuario ha expirado. Debe firmar uno nuevo."
+                    : "No se encontró un consentimiento activo para esta cédula."
+                  }
+                </p>
+                <div className="mt-6 p-4 bg-red-500/10 rounded-lg border border-red-500/30">
+                  <p className="text-center text-red-400 font-medium">
+                    ⚠️ El usuario debe completar el registro en el kiosco antes de ingresar.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
     </div>
   );
 }

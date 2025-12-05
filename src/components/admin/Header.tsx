@@ -1,13 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { Bell, Search, LogOut } from "lucide-react";
-import { useState } from "react";
+import { LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 
 export function Header() {
-  const [searchQuery, setSearchQuery] = useState("");
   const { user, signOut } = useAuth();
   const router = useRouter();
 
@@ -32,7 +30,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 h-16 bg-surface/80 backdrop-blur-md border-b border-border">
       <div className="flex items-center justify-between h-full px-4 lg:px-6">
-        {/* Mobile logo */}
+        {/* Logo (visible en mobile, en desktop se muestra en el Sidebar) */}
         <div className="lg:hidden">
           <Image
             src="/assets/jumping-park-logo.png"
@@ -43,46 +41,27 @@ export function Header() {
           />
         </div>
 
-        {/* Search */}
-        <div className="flex-1 max-w-md mx-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40" />
-            <input
-              type="text"
-              id="header-search"
-              name="header-search"
-              placeholder="Buscar usuarios, consentimientos..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              autoComplete="off"
-              className="w-full pl-10 pr-4 py-2 text-sm bg-surface-muted border-border rounded-lg focus:border-primary min-h-0"
-            />
-          </div>
-        </div>
+        {/* Spacer para mantener el layout en desktop */}
+        <div className="hidden lg:block" />
 
-        {/* Actions */}
+        {/* Controles de usuario (derecha) */}
         <div className="flex items-center gap-3">
-          <button className="relative p-2 rounded-lg hover:bg-surface-muted transition-colors min-h-0">
-            <Bell className="w-5 h-5 text-foreground/70" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary rounded-full" />
-          </button>
-
-          {/* User info */}
-          <div className="hidden sm:flex items-center gap-2">
-            <span className="text-sm text-foreground/70 max-w-[150px] truncate">
+          {/* Email del usuario */}
+          <div className="hidden sm:flex items-center">
+            <span className="text-sm text-text-secondary max-w-[180px] truncate">
               {user?.email}
             </span>
           </div>
 
-          {/* User avatar */}
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary-contrast flex items-center justify-center">
-            <span className="text-xs font-bold text-background">{getInitials()}</span>
+          {/* Avatar */}
+          <div className="w-9 h-9 rounded-full bg-linear-to-br from-brand-blue to-brand-purple flex items-center justify-center shadow-soft-sm">
+            <span className="text-xs font-bold text-white">{getInitials()}</span>
           </div>
 
-          {/* Logout button */}
+          {/* Logout */}
           <button
             onClick={handleSignOut}
-            className="p-2 rounded-lg hover:bg-red-500/10 text-foreground/70 hover:text-red-500 transition-colors min-h-0"
+            className="p-2 rounded-lg hover:bg-danger/10 text-text-secondary hover:text-danger transition-colors min-h-0"
             title="Cerrar sesión"
           >
             <LogOut className="w-5 h-5" />
