@@ -44,50 +44,6 @@ export function maskEmail(email: string): string {
 }
 
 /**
- * Formatea un número de teléfono para mostrar parcialmente.
- *
- * @example
- * maskPhone("3001234567") => "300***4567"
- *
- * @param phone - Teléfono a ofuscar
- * @returns Teléfono ofuscado
- */
-export function maskPhone(phone: string): string {
-  const digits = phone.replace(/\D/g, "");
-
-  if (digits.length < 7) {
-    return "***";
-  }
-
-  const first = digits.slice(0, 3);
-  const last = digits.slice(-4);
-
-  return `${first}***${last}`;
-}
-
-/**
- * Formatea una cédula/documento para mostrar parcialmente.
- *
- * @example
- * maskDocument("1234567890") => "123****890"
- *
- * @param doc - Documento a ofuscar
- * @returns Documento ofuscado
- */
-export function maskDocument(doc: string): string {
-  const cleaned = doc.replace(/\D/g, "");
-
-  if (cleaned.length < 6) {
-    return "***";
-  }
-
-  const first = cleaned.slice(0, 3);
-  const last = cleaned.slice(-3);
-
-  return `${first}****${last}`;
-}
-
-/**
  * Capitaliza la primera letra de cada palabra.
  *
  * @example
