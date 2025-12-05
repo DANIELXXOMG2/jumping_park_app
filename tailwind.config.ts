@@ -128,6 +128,9 @@ const config: Config = {
         "slide-up": "slideUp 300ms ease-out",
         "scale-in": "scaleIn 200ms ease-out",
         "pulse-soft": "pulseSoft 2s ease-in-out infinite",
+        "heartbeat": "heartbeat 1.5s ease-in-out infinite",
+        "shimmer": "shimmer 3s ease-in-out infinite",
+        "glow-pulse": "glowPulse 2s ease-in-out infinite",
       },
       keyframes: {
         fadeIn: {
@@ -145,6 +148,28 @@ const config: Config = {
         pulseSoft: {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.7" },
+        },
+        // Efecto de latido tipo corazón - para botones CTA
+        heartbeat: {
+          "0%, 100%": { transform: "scale(1)" },
+          "14%": { transform: "scale(1.06)" },
+          "28%": { transform: "scale(1)" },
+          "42%": { transform: "scale(1.06)" },
+          "70%": { transform: "scale(1)" },
+        },
+        // Efecto shimmer - brillo que atraviesa el elemento
+        shimmer: {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(100%)" },
+        },
+        // Efecto de pulso de brillo para sombras
+        glowPulse: {
+          "0%, 100%": { 
+            boxShadow: "0 0 40px rgba(46,204,113,0.5), 0 0 80px rgba(46,204,113,0.3)" 
+          },
+          "50%": { 
+            boxShadow: "0 0 60px rgba(46,204,113,0.7), 0 0 120px rgba(46,204,113,0.5)" 
+          },
         },
       },
 
