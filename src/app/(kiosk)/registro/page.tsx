@@ -7,12 +7,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { visitorSchema, type VisitorFormValues } from "@/lib/schemas/visitor.schema";
 import { useKioskStore } from "@/store/kioskStore";
+import { useUISound } from "@/hooks";
 
 export default function RegistroPage() {
   const router = useRouter();
   const visitorData = useKioskStore((state) => state.visitorData);
   const updateVisitorData = useKioskStore((state) => state.updateVisitorData);
   const setStep = useKioskStore((state) => state.setStep);
+  
+  // Hook de sonidos para feedback auditivo
+  const { playClick, playSuccess, playError } = useUISound();
 
   const cedula = visitorData.uid ?? "";
   const hasCedula = Boolean(cedula);
@@ -69,10 +73,16 @@ export default function RegistroPage() {
         throw new Error(data.error ?? "No pudimos enviar el OTP");
       }
 
+      // 🔊 Feedback sonoro de éxito
+      playSuccess();
+      
       setStep(2);
       setServerMessage("Enviamos un código a tu correo");
       router.push("/otp");
     } catch (error) {
+      // 🔊 Feedback sonoro de error
+      playError();
+      
       console.error("Error registrando visitante", error);
       setServerError(error instanceof Error ? error.message : "No pudimos continuar. Intentá de nuevo.");
     }
@@ -94,7 +104,10 @@ export default function RegistroPage() {
           </p>
           <button
             type="button"
-            onClick={() => router.replace("/ingreso")}
+            onClick={() => {
+              playClick();
+              router.replace("/ingreso");
+            }}
             className="rounded-3xl px-10 py-4 text-xl font-semibold uppercase tracking-wide text-[#050505] shadow-[0_20px_70px_rgba(195,255,45,0.35)]"
           >
             Volver a Ingreso

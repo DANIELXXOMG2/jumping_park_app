@@ -3,6 +3,7 @@
 import React, { useRef, useEffect, useState, useImperativeHandle, forwardRef } from "react";
 import SignatureCanvas from "react-signature-canvas";
 import { Eraser } from "lucide-react";
+import { useUISound } from "@/hooks";
 
 interface SignaturePadProps {
   onEnd?: () => void;
@@ -19,6 +20,9 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(({ onEnd }, 
   const sigCanvas = useRef<SignatureCanvas>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [canvasSize, setCanvasSize] = useState({ width: 500, height: 200 });
+  
+  // Hook de sonidos para feedback auditivo
+  const { playClick } = useUISound();
 
   // Expose methods to parent
   useImperativeHandle(ref, () => ({
@@ -54,8 +58,23 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(({ onEnd }, 
     return () => window.removeEventListener("resize", resizeCanvas);
   }, []);
 
+  /**
+   * Handler para limpiar firma con feedback sonoro
+   */
   const clearSignature = () => {
+    playClick();
     sigCanvas.current?.clear();
+  };
+
+  /**
+   * Handler para cuando termina de firmar (onEnd del canvas)
+   * Sonido muy sutil al completar un trazo
+   */
+  const handleSignatureEnd = () => {
+    // Llamar al callback del padre si existe
+    onEnd?.();
+    // Nota: Decidimos NO reproducir sonido aquí para no interrumpir
+    // el flujo natural de la firma. El usuario puede hacer múltiples trazos.
   };
 
   return (
@@ -68,7 +87,7 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(({ onEnd }, 
           height: canvasSize.height,
           className: "cursor-crosshair block",
         }}
-        onEnd={onEnd}
+        onEnd={handleSignatureEnd}
       />
       
       <button
