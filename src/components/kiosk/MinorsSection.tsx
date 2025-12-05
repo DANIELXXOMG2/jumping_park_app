@@ -22,9 +22,10 @@ import {
   CheckCircle,
   AlertCircle,
 } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { ConsentFormData, Minor } from "@/lib/schemas/consent.schema";
-import { useOCRScanner } from "@/hooks/useOCRScanner";
+import { useOCRScanner, useUISound } from "@/hooks";
 
 type TabMode = "manual" | "scan";
 
@@ -62,10 +63,29 @@ export function MinorsSection({
   // Hook de OCR
   const { scanning, progress, error: ocrError, parsedData, scanImage, reset: resetOCR } = useOCRScanner();
   
+  // Hook de sonidos UI para feedback auditivo
+  const { playSuccess, playError, playClick, playScanComplete } = useUISound();
+  
   // Ref para el input de cámara
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
+  /**
+   * Handler para cambiar de tab con feedback sonoro
+   */
+  const handleTabChange = useCallback((tab: TabMode) => {
+    if (tab !== activeTab) {
+      playClick();
+      setActiveTab(tab);
+      // Resetear estado de OCR al cambiar de tab
+      if (tab === "manual") {
+        setOcrSuccess(false);
+        resetOCR();
+      }
+    }
+  }, [activeTab, playClick, resetOCR]);
+
   const handleAddMinor = () => {
+    playClick();
     setIsFormOpen(true);
     setActiveTab("manual");
     setOcrSuccess(false);
@@ -99,7 +119,9 @@ export function MinorsSection({
       const result = await scanImage(file);
       
       // Si tenemos datos parseados, agregar un nuevo menor con los datos
-      if (result.parsedData.documentNumber || result.parsedData.firstName || result.parsedData.birthDate) {
+      const hasValidData = result.parsedData.documentNumber || result.parsedData.firstName || result.parsedData.birthDate;
+      
+      if (hasValidData) {
         const newMinorData: Minor = {
           firstName: result.parsedData.firstName || "",
           lastName: result.parsedData.lastName || "",
@@ -116,7 +138,7 @@ export function MinorsSection({
         // Obtener el índice del menor recién agregado
         const newIndex = fields.length;
 
-        // Establecer los valores en el formulario
+        // Establecer los valores en el formulario (autocompletado)
         if (result.parsedData.firstName) {
           setValue(`minors.${newIndex}.firstName`, result.parsedData.firstName);
         }
@@ -132,19 +154,53 @@ export function MinorsSection({
 
         setOcrSuccess(true);
         
-        // Limpiar estado después de 3 segundos
+        // 🔊 Feedback sonoro: éxito
+        playScanComplete();
+        playSuccess();
+        
+        // 📣 Toast de éxito con datos detectados
+        const detectedFields = [
+          result.parsedData.firstName && "nombre",
+          result.parsedData.lastName && "apellido",
+          result.parsedData.birthDate && "fecha",
+          result.parsedData.documentNumber && "documento",
+        ].filter(Boolean);
+        
+        toast.success("✅ Datos leídos correctamente", {
+          description: `Campos detectados: ${detectedFields.join(", ")}`,
+          duration: 4000,
+        });
+        
+        // Limpiar estado visual después de 3 segundos
         setTimeout(() => {
           setOcrSuccess(false);
         }, 3000);
+      } else {
+        // OCR completado pero sin datos útiles
+        playError();
+        
+        // 📣 Toast de advertencia
+        toast.warning("⚠️ No se detectó documento", {
+          description: "Intenta con mejor iluminación o enfoque",
+          duration: 4000,
+        });
       }
     } catch {
-      // Error ya manejado en el hook
+      // 🔊 Reproducir sonido de error cuando el OCR falla
+      playError();
+      
+      // 📣 Toast de error
+      toast.error("❌ Error al procesar imagen", {
+        description: "Ocurrió un problema al escanear. Intenta de nuevo.",
+        duration: 4000,
+      });
+      
       console.error("Error en OCR");
     }
 
     // Limpiar el input para permitir seleccionar la misma imagen
     event.target.value = "";
-  }, [scanImage, append, setValue, fields.length]);
+  }, [scanImage, append, setValue, fields.length, playScanComplete, playError, playSuccess]);
 
   return (
     <section className="space-y-4">
@@ -204,7 +260,7 @@ export function MinorsSection({
           <div className="flex border-b border-gray-700">
             <button
               type="button"
-              onClick={() => setActiveTab("manual")}
+              onClick={() => handleTabChange("manual")}
               className={cn(
                 "flex-1 flex items-center justify-center gap-2 py-4 px-4 text-sm font-medium transition-colors",
                 activeTab === "manual"
@@ -217,7 +273,7 @@ export function MinorsSection({
             </button>
             <button
               type="button"
-              onClick={() => setActiveTab("scan")}
+              onClick={() => handleTabChange("scan")}
               className={cn(
                 "flex-1 flex items-center justify-center gap-2 py-4 px-4 text-sm font-medium transition-colors relative",
                 activeTab === "scan"

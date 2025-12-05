@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useTransition, useCallback } from "react";
 import { useKioskStore } from "@/store/kioskStore";
+import { useUISound } from "@/hooks";
 
 interface StartActionButtonProps {
   href?: string;
@@ -20,14 +21,20 @@ export function StartActionButton({ href = "/ingreso" }: StartActionButtonProps)
   const resetFlow = useKioskStore((state) => state.resetFlow);
   const setStep = useKioskStore((state) => state.setStep);
   const [isPending, startTransition] = useTransition();
+  
+  // Hook de sonidos UI
+  const { playClick } = useUISound();
 
   const handlePress = useCallback(() => {
+    // Reproducir sonido de click al presionar
+    playClick();
+    
     startTransition(() => {
       resetFlow();
       setStep(1);
       router.push(href);
     });
-  }, [href, resetFlow, router, setStep, startTransition]);
+  }, [href, resetFlow, router, setStep, startTransition, playClick]);
 
   return (
     <button
