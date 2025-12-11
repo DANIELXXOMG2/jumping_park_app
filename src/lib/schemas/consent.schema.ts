@@ -10,6 +10,7 @@ export const minorSchema = z.object({
   relationship: z.enum(["hijo", "sobrino", "nieto", "otro"], {
     message: "Parentesco inválido",
   }),
+  medicalCondition: z.string().max(200, "Máximo 200 caracteres").optional(),
 });
 
 export const consentSchema = z.object({

@@ -44,6 +44,8 @@ export interface Minor {
   idType?: DocumentIdType;
   /** Número de documento */
   idNumber?: string;
+  /** Condición médica o alergias (opcional) */
+  medicalCondition?: string;
 }
 
 /**

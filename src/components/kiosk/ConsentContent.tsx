@@ -1,10 +1,28 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import type { ReactNode } from "react";
 
 interface ConsentContentProps {
   /** Variante de tamaño: 'compact' para scroll pequeño, 'expanded' para modal */
   variant?: "compact" | "expanded";
+}
+
+/**
+ * Componente interno para resaltar texto crítico del consentimiento.
+ * Aplica estilo visual de advertencia (fondo suave + borde lateral fucsia).
+ */
+function Highlight({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <span
+      className={cn(
+        "block bg-pink-500/10 border-l-4 border-pink-500 text-pink-200 pl-3 py-2 my-1 rounded-r-md",
+        className
+      )}
+    >
+      {children}
+    </span>
+  );
 }
 
 export function ConsentContent({ variant = "compact" }: ConsentContentProps) {
@@ -62,8 +80,10 @@ export function ConsentContent({ variant = "compact" }: ConsentContentProps) {
           o perjuicio que la práctica dentro del establecimiento pueda generar.
         </li>
         <li>
-          NO uso de accesorios (anillos, relojes, cadena o derivados) que puedan
-          poner en riesgo la integridad física de los participantes.
+          <Highlight>
+            <strong>⚠️ IMPORTANTE:</strong> NO uso de accesorios (anillos, relojes, cadena o derivados) que puedan
+            poner en riesgo la integridad física de los participantes.
+          </Highlight>
         </li>
         <li>
           Las actividades que realizaremos en <strong>Jumping Park</strong>{" "}
@@ -127,10 +147,12 @@ export function ConsentContent({ variant = "compact" }: ConsentContentProps) {
           <strong>Jumping Park</strong> de cualquier responsabilidad.
         </li>
         <li>
-          El personal no está autorizado a hacerse responsable de los
-          participantes en ausencia de los padres o acudientes, o de abandonar
-          las instalaciones del parque por parte de los participantes ya que no
-          se presta servicio de guardería.
+          <Highlight>
+            <strong>⚠️ IMPORTANTE:</strong> El personal no está autorizado a hacerse responsable de los
+            participantes en ausencia de los padres o acudientes, o de abandonar
+            las instalaciones del parque por parte de los participantes ya que no
+            se presta servicio de guardería.
+          </Highlight>
         </li>
         <li>
           <strong>
@@ -180,9 +202,11 @@ export function ConsentContent({ variant = "compact" }: ConsentContentProps) {
           inscripción y haber firmado la carta de consentimiento.
         </li>
         <li>
-          Los menores de seis (6) años con condiciones especiales o zona
-          galáctica deben estar acompañados por sus padres o un adulto
-          responsable.
+          <Highlight>
+            <strong>👶 MENORES:</strong> Los menores de seis (6) años con condiciones especiales o zona
+            galáctica deben estar acompañados por sus padres o un adulto
+            responsable.
+          </Highlight>
         </li>
         <li>
           Al ingresar a la zona del parque no tenga nada en la boca (chicles,
@@ -262,9 +286,11 @@ export function ConsentContent({ variant = "compact" }: ConsentContentProps) {
           la de los demás.
         </li>
         <li>
-          No se permite las agresiones físicas o verbales con otros visitantes o
-          colaboradores ya que es causa de retiro de la atracción sin derecho a
-          devolución de dinero.
+          <Highlight>
+            <strong>🚫 PROHIBIDO:</strong> No se permite las agresiones físicas o verbales con otros visitantes o
+            colaboradores ya que es causa de retiro de la atracción sin derecho a
+            devolución de dinero.
+          </Highlight>
         </li>
         <li>
           Siga todas y cada una de las reglas del parque y evite ser retirado de

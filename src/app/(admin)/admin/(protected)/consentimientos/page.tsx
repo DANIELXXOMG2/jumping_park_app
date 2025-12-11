@@ -8,8 +8,8 @@ import { Badge } from "@/components/admin/Badge";
 import { Modal } from "@/components/admin/Modal";
 import { Button } from "@/components/admin/Button";
 import { formatRelativeTime } from "@/lib/utils";
-import { adminGet } from "@/lib/adminApi";
-import { Eye, ExternalLink } from "lucide-react";
+import { adminGet, getAuthToken } from "@/lib/adminApi";
+import { Eye, ExternalLink, FileText } from "lucide-react";
 
 interface Minor {
   fullName?: string;
@@ -361,6 +361,33 @@ export default function ConsentsPage() {
                 }}
               >
                 Ver Usuario
+              </Button>
+              <Button
+                variant="primary"
+                onClick={async () => {
+                  // Abrir PDF en nueva pestaña con autenticación
+                  const token = await getAuthToken();
+                  if (token) {
+                    // Crear URL con token como query param para la descarga
+                    const pdfUrl = `/api/admin/consents/${selectedConsent.id}/pdf`;
+                    // Fetch con auth header y abrir blob
+                    try {
+                      const response = await fetch(pdfUrl, {
+                        headers: { Authorization: `Bearer ${token}` },
+                      });
+                      if (response.ok) {
+                        const blob = await response.blob();
+                        const url = URL.createObjectURL(blob);
+                        window.open(url, "_blank");
+                      }
+                    } catch {
+                      // Error silencioso
+                    }
+                  }
+                }}
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Ver PDF
               </Button>
               {selectedConsent.signatureUrl && (
                 <Button

@@ -8,6 +8,22 @@ const withPWA = withPWAInit({
   skipWaiting: true,
   // Estrategia de cache para el kiosko offline
   runtimeCaching: [
+    // Regla específica para APIs de Admin (prioridad alta)
+    {
+      urlPattern: /\/api\/admin\/.*/i,
+      handler: "NetworkFirst",
+      options: {
+        cacheName: "admin-api-cache",
+        networkTimeoutSeconds: 5, // Timeout rápido para no bloquear UI
+        expiration: {
+          maxEntries: 100,
+          maxAgeSeconds: 60 * 60, // 1 hora
+        },
+        cacheableResponse: {
+          statuses: [0, 200],
+        },
+      },
+    },
     {
       urlPattern: /^https:\/\/fonts\.(?:gstatic|googleapis)\.com\/.*/i,
       handler: "CacheFirst",

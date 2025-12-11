@@ -2,6 +2,16 @@
 
 import { auth } from "@/lib/firebaseClient";
 
+/**
+ * Obtiene el token de autenticación del usuario actual.
+ * Útil para llamadas manuales que requieren el token.
+ */
+export async function getAuthToken(): Promise<string | null> {
+  const user = auth.currentUser;
+  if (!user) return null;
+  return user.getIdToken();
+}
+
 export async function adminFetch(
   url: string,
   options: RequestInit = {}
