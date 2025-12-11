@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, RefreshCw } from "lucide-react";
+import { AlertTriangle, Loader2, RefreshCw } from "lucide-react";
 import { VirtualKeypad } from "@/components/kiosk/VirtualKeypad";
 import { OtpDisplay } from "@/components/kiosk/OtpDisplay";
 import { useKioskStore } from "@/store/kioskStore";
@@ -292,6 +292,22 @@ export default function OtpPage() {
               Validando código...
             </div>
           )}
+        </div>
+
+        {/* Warning Banner: Medias Antideslizantes */}
+        <div className="w-full max-w-3xl rounded-2xl border border-yellow-500/30 bg-yellow-500/10 px-6 py-4 mt-2">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-6 w-6 text-yellow-400 shrink-0 mt-0.5" />
+            <div className="text-left">
+              <p className="text-yellow-200 font-semibold text-base">
+                ⚠️ IMPORTANTE: Medias Antideslizantes
+              </p>
+              <p className="text-yellow-100/80 text-sm mt-1">
+                El uso de medias antideslizantes es <strong>obligatorio</strong> para ingresar a las atracciones. 
+                Puedes traerlas o adquirirlas en taquilla.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </section>

@@ -46,6 +46,7 @@ const defaultMinor: Minor = {
   idType: "ti",
   idNumber: "",
   relationship: "hijo",
+  medicalCondition: "",
 };
 
 export function MinorsSection({
@@ -750,6 +751,29 @@ function MinorCard({
               {errors.minors[index]?.relationship?.message}
             </span>
           )}
+        </div>
+
+        {/* Fila 5: Condición Médica / Alergias (ancho completo) */}
+        <div className="col-span-1 sm:col-span-2">
+          <label className="flex items-center gap-1 text-xs text-gray-500 mb-1">
+            <Heart size={12} className="text-red-400" />
+            Condición Médica / Alergias
+            <span className="text-gray-600 ml-1">(opcional)</span>
+          </label>
+          <input
+            {...register(`minors.${index}.medicalCondition`)}
+            placeholder="Ninguna o especificar (asma, alergias, lesiones recientes...)"
+            maxLength={200}
+            className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white text-sm focus:border-neon-blue focus:outline-none focus:ring-1 focus:ring-neon-blue/50 transition-all placeholder:text-gray-600"
+          />
+          {errors.minors?.[index]?.medicalCondition && (
+            <span className="text-red-500 text-xs mt-1 block">
+              {errors.minors[index]?.medicalCondition?.message}
+            </span>
+          )}
+          <p className="text-gray-600 text-xs mt-1">
+            ⚠️ Información importante para la seguridad del menor durante las actividades.
+          </p>
         </div>
       </div>
     </div>

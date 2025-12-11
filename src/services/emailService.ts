@@ -124,6 +124,33 @@ function generateOtpEmailHtml(otp: string): string {
             </td>
           </tr>
           
+          <!-- Advertencia Medias Antideslizantes -->
+          <tr>
+            <td style="padding: 0 28px 24px 28px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="background-color: #FEF3C7; border: 1px solid #F59E0B; border-radius: 12px; padding: 16px 20px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td width="32" valign="top">
+                          <span style="font-size: 24px;">🧦</span>
+                        </td>
+                        <td style="padding-left: 12px;">
+                          <p style="margin: 0 0 4px 0; color: #92400E; font-size: 14px; font-weight: 700;">
+                            Recuerda: Medias Antideslizantes
+                          </p>
+                          <p style="margin: 0; color: #A16207; font-size: 13px; line-height: 1.4;">
+                            El uso de medias antideslizantes es <strong>obligatorio</strong>. Puedes traerlas o adquirirlas en taquilla.
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
           <!-- Separador -->
           <tr>
             <td style="padding: 0 28px;">
