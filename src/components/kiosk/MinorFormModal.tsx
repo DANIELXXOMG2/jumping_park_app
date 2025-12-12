@@ -78,7 +78,7 @@ export function MinorFormModal({
     "w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white text-sm focus:border-neon-blue focus:outline-none focus:ring-1 focus:ring-neon-blue/50 transition-all";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
@@ -86,7 +86,7 @@ export function MinorFormModal({
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-lg max-h-[90vh] bg-gray-900 rounded-t-2xl sm:rounded-2xl border border-gray-700 shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-300 sm:animate-in sm:zoom-in-95">
+      <div className="relative w-full max-w-lg max-h-[85vh] bg-gray-900 rounded-2xl border border-gray-700 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 bg-gray-800/80 border-b border-gray-700 sticky top-0 z-10">
           <div className="flex items-center gap-2">
@@ -107,7 +107,13 @@ export function MinorFormModal({
         </div>
 
         {/* Form Content - Scrollable */}
-        <form onSubmit={handleSubmit(onSubmit)} className="overflow-y-auto max-h-[calc(90vh-120px)]">
+        <form 
+          onSubmit={(e) => {
+            e.stopPropagation(); // Prevent bubbling to parent consent form
+            handleSubmit(onSubmit)(e);
+          }} 
+          className="overflow-y-auto max-h-[calc(90vh-120px)]"
+        >
           <div className="p-4 space-y-4">
             {/* Nombre y Apellidos */}
             <div className="grid grid-cols-2 gap-3">
