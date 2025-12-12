@@ -171,6 +171,7 @@ export default function ConsentPage() {
           remove={remove}
           register={register}
           setValue={setValue}
+          control={control}
           errors={errors}
         />
 

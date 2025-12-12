@@ -149,7 +149,7 @@ button,
 input,
 select,
 textarea {
-  min-height: 48px;
+  min-height: 44px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   background-color: var(--surface);
@@ -161,6 +161,16 @@ textarea {
     box-shadow var(--transition-base), 
     transform var(--transition-fast),
     background-color var(--transition-base);
+}
+
+/* Responsive min-height para inputs en dispositivos pequeños */
+@media (min-width: 640px) {
+  button,
+  input,
+  select,
+  textarea {
+    min-height: 48px;
+  }
 }
 
 /* Padding por defecto para inputs sin clases de Tailwind */
