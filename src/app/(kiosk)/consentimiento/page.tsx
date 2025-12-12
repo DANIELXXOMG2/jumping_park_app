@@ -25,6 +25,7 @@ export default function ConsentPage() {
     control,
     handleSubmit,
     setValue,
+    getValues,
     formState: { errors },
   } = useForm<ConsentFormData>({
     resolver: zodResolver(consentSchema),
@@ -36,7 +37,7 @@ export default function ConsentPage() {
     mode: "onChange",
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, update } = useFieldArray({
     control,
     name: "minors",
   });
@@ -141,7 +142,7 @@ export default function ConsentPage() {
           </button>
 
           {/* Contenido reutilizado del consentimiento */}
-          <div className="text-sm leading-relaxed pr-24 sm:pr-0">
+          <div className="text-sm leading-relaxed pt-12 sm:pt-0">
             <ConsentContent variant="compact" />
           </div>
         </section>
@@ -169,10 +170,9 @@ export default function ConsentPage() {
           fields={fields}
           append={append}
           remove={remove}
-          register={register}
+          update={update}
           setValue={setValue}
-          control={control}
-          errors={errors}
+          getValues={getValues}
         />
 
         {/* Signature Section */}
