@@ -6,6 +6,8 @@ import {
   UseFormRegister,
   UseFormSetValue,
   FieldErrors,
+  Controller,
+  Control,
 } from "react-hook-form";
 import {
   Plus,
@@ -26,6 +28,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { ConsentFormData, Minor } from "@/lib/schemas/consent.schema";
 import { useOCRScanner, useUISound } from "@/hooks";
+import { EPSSelector } from "./EPSSelector";
 
 type TabMode = "manual" | "scan";
 
@@ -35,6 +38,7 @@ interface MinorsSectionProps {
   remove: UseFieldArrayReturn<ConsentFormData, "minors", "id">["remove"];
   register: UseFormRegister<ConsentFormData>;
   setValue: UseFormSetValue<ConsentFormData>;
+  control: Control<ConsentFormData>;
   errors: FieldErrors<ConsentFormData>;
 }
 
@@ -55,6 +59,7 @@ export function MinorsSection({
   remove,
   register,
   setValue,
+  control,
   errors,
 }: MinorsSectionProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -233,6 +238,7 @@ export function MinorsSection({
               key={field.id}
               index={index}
               register={register}
+              control={control}
               errors={errors}
               onRemove={() => remove(index)}
               isExpanded={true}
@@ -581,6 +587,7 @@ export function MinorsSection({
 interface MinorCardProps {
   index: number;
   register: UseFormRegister<ConsentFormData>;
+  control: Control<ConsentFormData>;
   errors: FieldErrors<ConsentFormData>;
   onRemove: () => void;
   isExpanded?: boolean;
@@ -589,6 +596,7 @@ interface MinorCardProps {
 function MinorCard({
   index,
   register,
+  control,
   errors,
   onRemove,
 }: MinorCardProps) {
@@ -653,8 +661,8 @@ function MinorCard({
           </div>
         </div>
 
-        {/* Fila 2: Fecha Nacimiento y EPS */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {/* Fila 2: Fecha Nacimiento */}
+        <div className="grid grid-cols-1 gap-3">
           <div>
             <label className="flex items-center gap-1 text-xs text-gray-500 mb-1">
               <Calendar size={12} />
@@ -671,23 +679,21 @@ function MinorCard({
               </span>
             )}
           </div>
+        </div>
 
-          <div>
-            <label className="flex items-center gap-1 text-xs text-gray-500 mb-1">
-              <Heart size={12} />
-              EPS
-            </label>
-            <input
-              {...register(`minors.${index}.eps`)}
-              placeholder="EPS del menor"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white text-sm focus:border-neon-blue focus:outline-none focus:ring-1 focus:ring-neon-blue/50 transition-all"
-            />
-            {errors.minors?.[index]?.eps && (
-              <span className="text-red-500 text-xs mt-1 block">
-                {errors.minors[index]?.eps?.message}
-              </span>
+        {/* Fila 2b: EPS - Selector estandarizado Colombia */}
+        <div>
+          <Controller
+            name={`minors.${index}.eps`}
+            control={control}
+            render={({ field }) => (
+              <EPSSelector
+                value={field.value}
+                onChange={field.onChange}
+                error={errors.minors?.[index]?.eps?.message}
+              />
             )}
-          </div>
+          />
         </div>
 
         {/* Fila 3: Tipo ID y Número */}

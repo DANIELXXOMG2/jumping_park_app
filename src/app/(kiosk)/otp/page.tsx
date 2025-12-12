@@ -206,17 +206,17 @@ export default function OtpPage() {
 
   if (!isReady) {
     return (
-      <section className="flex flex-1 items-center justify-center px-6 py-8">
-        <div className="flex w-full max-w-3xl flex-col items-center gap-6 rounded-4xl border border-white/10 bg-white/5 p-10 text-center shadow-[0_40px_140px_rgba(0,0,0,0.45)] backdrop-blur-lg">
-          <p className="text-sm uppercase tracking-[0.4em] text-primary">Paso 2</p>
-          <h1 className="text-4xl font-semibold text-foreground">Necesitamos validar tu correo</h1>
-          <p className="text-base text-white/70">
+      <section className="flex flex-1 items-center justify-center px-3 sm:px-6 py-4 sm:py-8">
+        <div className="flex w-full max-w-3xl flex-col items-center gap-4 sm:gap-6 rounded-2xl sm:rounded-3xl md:rounded-4xl border border-white/10 bg-white/5 p-4 sm:p-6 md:p-10 text-center shadow-[0_40px_140px_rgba(0,0,0,0.45)] backdrop-blur-lg">
+          <p className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.4em] text-primary">Paso 2</p>
+          <h1 className="text-xl sm:text-2xl md:text-4xl font-semibold text-foreground">Necesitamos validar tu correo</h1>
+          <p className="text-sm sm:text-base text-white/70">
             Para ingresar el código OTP primero tenés que registrar tu cédula y correo en el paso anterior.
           </p>
           <button
             type="button"
             onClick={() => router.replace(INGRESO_ROUTE)}
-            className="rounded-3xl px-10 py-4 text-xl font-semibold uppercase tracking-wide text-[#050505] shadow-[0_20px_70px_rgba(195,255,45,0.35)]"
+            className="rounded-xl sm:rounded-2xl md:rounded-3xl px-6 sm:px-8 md:px-10 py-3 sm:py-4 text-base sm:text-lg md:text-xl font-semibold uppercase tracking-wide text-[#050505] shadow-[0_20px_70px_rgba(195,255,45,0.35)]"
           >
             Volver a Ingreso
           </button>
@@ -226,12 +226,12 @@ export default function OtpPage() {
   }
 
   return (
-    <section className="flex flex-1 items-center justify-center px-6 py-8">
-      <div className="flex w-full max-w-4xl flex-col items-center gap-8 rounded-4xl border border-white/10 bg-white/5 p-10 text-center shadow-[0_40px_140px_rgba(0,0,0,0.45)] backdrop-blur-lg">
-        <div className="space-y-3">
-          <p className="text-sm uppercase tracking-[0.4em] text-primary">Paso 2</p>
-          <h1 className="text-4xl font-semibold text-foreground">Ingresá el código de verificación</h1>
-          <p className="text-base text-foreground/70">
+    <section className="flex flex-1 items-center justify-center px-3 sm:px-6 py-4 sm:py-8">
+      <div className="flex w-full max-w-4xl flex-col items-center gap-4 sm:gap-6 md:gap-8 rounded-2xl sm:rounded-3xl md:rounded-4xl border border-white/10 bg-white/5 p-4 sm:p-6 md:p-10 text-center shadow-[0_40px_140px_rgba(0,0,0,0.45)] backdrop-blur-lg">
+        <div className="space-y-2 sm:space-y-3">
+          <p className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.4em] text-primary">Paso 2</p>
+          <h1 className="text-xl sm:text-2xl md:text-4xl font-semibold text-foreground">Ingresá el código de verificación</h1>
+          <p className="text-sm sm:text-base text-foreground/70">
             Hemos enviado un código a <span className="text-primary">{maskedEmail}</span>
           </p>
         </div>
@@ -253,13 +253,13 @@ export default function OtpPage() {
         </div>
 
         {errorMessage && (
-          <div className="w-full max-w-3xl rounded-3xl border border-red-500/40 bg-red-500/10 px-6 py-4 text-lg text-red-100">
+          <div className="w-full max-w-3xl rounded-xl sm:rounded-2xl md:rounded-3xl border border-red-500/40 bg-red-500/10 px-4 sm:px-6 py-3 sm:py-4 text-sm sm:text-base md:text-lg text-red-100">
             {errorMessage}
           </div>
         )}
 
         {resendMessage && !errorMessage && (
-          <div className="w-full max-w-3xl rounded-3xl border border-green-500/30 bg-green-500/10 px-6 py-3 text-base text-green-100">
+          <div className="w-full max-w-3xl rounded-xl sm:rounded-2xl md:rounded-3xl border border-green-500/30 bg-green-500/10 px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base text-green-100">
             {resendMessage}
           </div>
         )}
@@ -271,38 +271,38 @@ export default function OtpPage() {
           isLoading={isValidating}
         />
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
           <button
             type="button"
             onClick={handleResend}
             disabled={isResending || resendCooldown > 0}
-            className="flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-6 py-3 text-base font-semibold text-white transition hover:border-primary/60 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-semibold text-white transition hover:border-primary/60 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isResending ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
+              <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
             ) : (
-              <RefreshCw className="h-5 w-5" strokeWidth={1.5} />
+              <RefreshCw className="h-4 w-4 sm:h-5 sm:w-5" strokeWidth={1.5} />
             )}
             {resendCooldown > 0 ? `Reenviar (${resendCooldown}s)` : "Reenviar código"}
           </button>
 
           {isValidating && (
-            <div className="flex items-center gap-2 text-white/70">
-              <Loader2 className="h-5 w-5 animate-spin" />
+            <div className="flex items-center gap-2 text-sm sm:text-base text-white/70">
+              <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
               Validando código...
             </div>
           )}
         </div>
 
         {/* Warning Banner: Medias Antideslizantes */}
-        <div className="w-full max-w-3xl rounded-2xl border border-yellow-500/30 bg-yellow-500/10 px-6 py-4 mt-2">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="h-6 w-6 text-yellow-400 shrink-0 mt-0.5" />
+        <div className="w-full max-w-3xl rounded-xl sm:rounded-2xl border border-yellow-500/30 bg-yellow-500/10 px-4 sm:px-6 py-3 sm:py-4 mt-1 sm:mt-2">
+          <div className="flex items-start gap-2 sm:gap-3">
+            <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-400 shrink-0 mt-0.5" />
             <div className="text-left">
-              <p className="text-yellow-200 font-semibold text-base">
+              <p className="text-yellow-200 font-semibold text-sm sm:text-base">
                 ⚠️ IMPORTANTE: Medias Antideslizantes
               </p>
-              <p className="text-yellow-100/80 text-sm mt-1">
+              <p className="text-yellow-100/80 text-xs sm:text-sm mt-1">
                 El uso de medias antideslizantes es <strong>obligatorio</strong> para ingresar a las atracciones. 
                 Puedes traerlas o adquirirlas en taquilla.
               </p>
