@@ -15,10 +15,12 @@ import {
   CreditCard,
   Calendar,
   Heart,
+  History,
 } from "lucide-react";
 import type { ConsentFormData, Minor } from "@/lib/schemas/consent.schema";
 import { useUISound } from "@/hooks";
 import { MinorFormModal } from "./MinorFormModal";
+import { MinorHistoryModal } from "./MinorHistoryModal";
 import { getEPSLabel } from "@/lib/data/epsColombiaData";
 
 interface MinorsSectionProps {
@@ -28,6 +30,8 @@ interface MinorsSectionProps {
   update: UseFieldArrayReturn<ConsentFormData, "minors", "id">["update"];
   setValue: UseFormSetValue<ConsentFormData>;
   getValues: UseFormGetValues<ConsentFormData>;
+  /** ID del usuario (cédula) para cargar historial de menores */
+  userId?: string;
 }
 
 export function MinorsSection({
@@ -36,8 +40,10 @@ export function MinorsSection({
   remove,
   update,
   getValues,
+  userId,
 }: MinorsSectionProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   
   const { playClick, playSuccess } = useUISound();
@@ -59,6 +65,23 @@ export function MinorsSection({
     setEditingIndex(null);
   }, []);
 
+  const handleOpenHistory = useCallback(() => {
+    playClick();
+    setIsHistoryModalOpen(true);
+  }, [playClick]);
+
+  const handleCloseHistory = useCallback(() => {
+    setIsHistoryModalOpen(false);
+  }, []);
+
+  const handleSelectFromHistory = useCallback((minors: Minor[]) => {
+    // Agregar todos los menores seleccionados del historial
+    minors.forEach((minor) => {
+      append(minor);
+    });
+    playSuccess();
+  }, [append, playSuccess]);
+
   const handleSaveMinor = useCallback((data: Minor) => {
     if (editingIndex !== null) {
       // Editando existente
@@ -75,6 +98,12 @@ export function MinorsSection({
     playClick();
     remove(index);
   }, [remove, playClick]);
+
+  // Obtener IDs de menores ya agregados (para filtrar en historial)
+  const alreadyAddedIds = fields.map((_, index) => {
+    const minor = getValues(`minors.${index}`);
+    return minor?.idNumber || "";
+  }).filter(Boolean);
 
   // Obtener datos del menor que se está editando
   const getEditingMinorData = (): Minor | null => {
@@ -143,15 +172,30 @@ export function MinorsSection({
           </h2>
         </div>
 
-        {/* Botón de Agregar */}
-        <button
-          type="button"
-          onClick={handleAddMinor}
-          className="flex items-center gap-2 px-4 py-2.5 bg-neon-green/20 hover:bg-neon-green/30 text-neon-green font-semibold rounded-xl transition-all transform hover:scale-105 active:scale-95 border border-neon-green/50 w-full sm:w-auto justify-center"
-        >
-          <Plus size={18} />
-          Agregar Menor
-        </button>
+        {/* Botones de acción */}
+        <div className="flex gap-2 w-full sm:w-auto">
+          {/* Botón de Historial - solo si hay userId */}
+          {userId && (
+            <button
+              type="button"
+              onClick={handleOpenHistory}
+              className="flex items-center gap-2 px-4 py-2.5 bg-neon-blue/20 hover:bg-neon-blue/30 text-neon-blue font-semibold rounded-xl transition-all transform hover:scale-105 active:scale-95 border border-neon-blue/50 flex-1 sm:flex-none justify-center"
+            >
+              <History size={18} />
+              <span className="hidden sm:inline">Historial</span>
+            </button>
+          )}
+
+          {/* Botón de Agregar Nuevo */}
+          <button
+            type="button"
+            onClick={handleAddMinor}
+            className="flex items-center gap-2 px-4 py-2.5 bg-neon-green/20 hover:bg-neon-green/30 text-neon-green font-semibold rounded-xl transition-all transform hover:scale-105 active:scale-95 border border-neon-green/50 flex-1 sm:flex-none justify-center"
+          >
+            <Plus size={18} />
+            <span className="hidden sm:inline">Agregar</span> Nuevo
+          </button>
+        </div>
       </div>
 
       {/* Lista de Menores - Tarjetas Compactas */}
@@ -178,17 +222,32 @@ export function MinorsSection({
 
       {/* Estado vacío */}
       {fields.length === 0 && (
-        <div 
-          onClick={handleAddMinor}
-          className="text-center py-8 border-2 border-dashed border-gray-700 rounded-2xl bg-gray-900/30 cursor-pointer hover:border-neon-green/50 hover:bg-gray-900/50 transition-all group"
-        >
-          <Baby className="w-10 h-10 text-gray-600 mx-auto mb-2 group-hover:text-neon-green/50 transition-colors" />
-          <p className="text-gray-500 text-sm">
+        <div className="text-center py-8 border-2 border-dashed border-gray-700 rounded-2xl bg-gray-900/30">
+          <Baby className="w-10 h-10 text-gray-600 mx-auto mb-3" />
+          <p className="text-gray-400 text-sm mb-4">
             No has agregado menores aún
           </p>
-          <p className="text-gray-600 text-xs mt-1">
-            Toca aquí o el botón &quot;Agregar Menor&quot; para comenzar
-          </p>
+          
+          <div className="flex flex-col sm:flex-row gap-3 justify-center px-4">
+            {userId && (
+              <button
+                type="button"
+                onClick={handleOpenHistory}
+                className="flex items-center justify-center gap-2 px-5 py-3 bg-neon-blue/20 hover:bg-neon-blue/30 text-neon-blue font-semibold rounded-xl transition-all border border-neon-blue/50"
+              >
+                <History size={18} />
+                Cargar del Historial
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={handleAddMinor}
+              className="flex items-center justify-center gap-2 px-5 py-3 bg-neon-green/20 hover:bg-neon-green/30 text-neon-green font-semibold rounded-xl transition-all border border-neon-green/50"
+            >
+              <Plus size={18} />
+              Agregar Nuevo
+            </button>
+          </div>
         </div>
       )}
 
@@ -200,6 +259,17 @@ export function MinorsSection({
         initialData={getEditingMinorData()}
         minorNumber={editingIndex !== null ? editingIndex + 1 : fields.length + 1}
       />
+
+      {/* Modal de Historial */}
+      {userId && (
+        <MinorHistoryModal
+          isOpen={isHistoryModalOpen}
+          onClose={handleCloseHistory}
+          onSelectMinors={handleSelectFromHistory}
+          userId={userId}
+          alreadyAddedIds={alreadyAddedIds}
+        />
+      )}
     </section>
   );
 }
