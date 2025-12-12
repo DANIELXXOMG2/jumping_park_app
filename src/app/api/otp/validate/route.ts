@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { validateOtpSchema } from "@/lib/schemas/auth.schema";
-import { validateOtp, getUserByCedula } from "@/services/authService";
+import { validateOtp, getUserByCedula, createOtpSession } from "@/services/authService";
 import type { UserProfile } from "@/types/firestore";
 
 export async function POST(req: Request) {
@@ -46,6 +46,13 @@ export async function POST(req: Request) {
 
     if (!result.valid) {
       return NextResponse.json({ success: false, error: result.message }, { status: 404 });
+    }
+
+    // Crear sesión OTP para proteger endpoints sensibles (historial de menores, etc.)
+    // Solo si tenemos la cédula del usuario
+    if (cedula || userProfile?.uid) {
+      const userId = cedula || userProfile?.uid || "";
+      await createOtpSession(userId, targetEmail);
     }
 
     // Si validación exitosa y no tenemos el perfil aún (caso solo email), intentamos buscarlo si es posible?

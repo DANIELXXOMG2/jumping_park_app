@@ -1,6 +1,9 @@
 import { createDoc, deleteDoc, getDocById } from "../lib/firestoreService";
 import { sendOtpEmail as sendOtpViaEmail } from "./emailService";
-import type { OtpRecord, UserProfile } from "../types/firestore";
+import type { OtpRecord, OtpSession, UserProfile } from "../types/firestore";
+
+// Duración de la sesión OTP en minutos
+const OTP_SESSION_DURATION_MINUTES = 15;
 
 export type SendOtpResult = {
   success: boolean;
@@ -76,5 +79,90 @@ export async function validateOtp(
   } catch (error) {
     console.error("Error validando OTP", error);
     return { valid: false, message: "No se pudo validar el OTP" };
+  }
+}
+
+// ============================================================================
+// SESIONES OTP - Para proteger endpoints sensibles
+// ============================================================================
+
+/**
+ * Crea una sesión OTP después de una validación exitosa.
+ * Permite verificar que el usuario completó el flujo de autenticación.
+ * 
+ * @param userId - Cédula del usuario
+ * @param email - Email validado
+ */
+export async function createOtpSession(userId: string, email: string): Promise<void> {
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + OTP_SESSION_DURATION_MINUTES * 60 * 1000);
+  
+  const session: OtpSession = {
+    userId,
+    email,
+    validatedAt: now,
+    expiresAt,
+  };
+
+  try {
+    // Usamos el userId (cédula) como ID del documento
+    await createDoc("otp_sessions", session, userId);
+    console.log(`[AuthService] Sesión OTP creada para usuario: ${userId}, expira en ${OTP_SESSION_DURATION_MINUTES} min`);
+  } catch (error) {
+    console.error("[AuthService] Error creando sesión OTP:", error);
+    // No lanzamos error - la sesión es para seguridad adicional, no debe bloquear el flujo
+  }
+}
+
+/**
+ * Verifica si existe una sesión OTP válida para un usuario.
+ * Usado para proteger endpoints sensibles como el historial de menores.
+ * 
+ * @param userId - Cédula del usuario a verificar
+ * @returns true si hay una sesión válida, false si no existe o expiró
+ */
+export async function verifyOtpSession(userId: string): Promise<boolean> {
+  try {
+    const session = await getDocById<OtpSession>("otp_sessions", userId);
+    
+    if (!session) {
+      console.warn(`[AuthService] No existe sesión OTP para usuario: ${userId}`);
+      return false;
+    }
+
+    // Verificar expiración
+    const rawExpiresAt = session.expiresAt as Date | { toDate?: () => Date };
+    const expiresAtDate = rawExpiresAt && "toDate" in rawExpiresAt && typeof rawExpiresAt.toDate === "function"
+      ? rawExpiresAt.toDate()
+      : (rawExpiresAt as Date);
+    
+    const isExpired = expiresAtDate <= new Date();
+
+    if (isExpired) {
+      console.warn(`[AuthService] Sesión OTP expirada para usuario: ${userId}`);
+      // Limpiar sesión expirada
+      await deleteDoc("otp_sessions", userId);
+      return false;
+    }
+
+    console.log(`[AuthService] Sesión OTP válida para usuario: ${userId}`);
+    return true;
+  } catch (error) {
+    console.error("[AuthService] Error verificando sesión OTP:", error);
+    return false;
+  }
+}
+
+/**
+ * Elimina la sesión OTP de un usuario (logout o expiración manual).
+ * 
+ * @param userId - Cédula del usuario
+ */
+export async function deleteOtpSession(userId: string): Promise<void> {
+  try {
+    await deleteDoc("otp_sessions", userId);
+    console.log(`[AuthService] Sesión OTP eliminada para usuario: ${userId}`);
+  } catch (error) {
+    console.error("[AuthService] Error eliminando sesión OTP:", error);
   }
 }
