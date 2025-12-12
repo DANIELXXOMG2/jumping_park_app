@@ -175,6 +175,7 @@ class ConsentService {
 
   /**
    * Crea o actualiza el perfil del usuario responsable.
+   * Los menores se ACUMULAN (no se reemplazan) para mantener historial completo.
    */
   private async upsertUser(
     responsibleAdult: CreateConsentInput["responsibleAdult"],
@@ -183,18 +184,46 @@ class ConsentService {
     const userRef = db.collection(this.USERS_COLLECTION).doc(responsibleAdult.documentId);
     const now = new Date();
 
+    // Obtener usuario existente para preservar menores anteriores
+    const existingDoc = await userRef.get();
+    let allMinors: Minor[] = normalizedMinors;
+
+    if (existingDoc.exists) {
+      const existingData = existingDoc.data() as UserProfile;
+      const existingMinors = existingData.minors || [];
+
+      // Crear un mapa de menores existentes por idNumber
+      const minorsMap = new Map<string, Minor>();
+      
+      // Primero agregar los existentes
+      for (const minor of existingMinors) {
+        if (minor.idNumber) {
+          minorsMap.set(minor.idNumber, minor);
+        }
+      }
+      
+      // Luego actualizar/agregar los nuevos (sobrescriben si ya existen)
+      for (const minor of normalizedMinors) {
+        if (minor.idNumber) {
+          minorsMap.set(minor.idNumber, minor);
+        }
+      }
+      
+      allMinors = Array.from(minorsMap.values());
+      console.log(`[ConsentService] Menores combinados: ${existingMinors.length} existentes + ${normalizedMinors.length} nuevos = ${allMinors.length} únicos`);
+    }
+
     const userProfile: UserProfile = {
       uid: responsibleAdult.documentId,
       fullName: responsibleAdult.fullName,
       email: responsibleAdult.email,
       phone: responsibleAdult.phone,
-      minors: normalizedMinors,
-      createdAt: now,
+      minors: allMinors,
+      createdAt: existingDoc.exists ? (existingDoc.data() as UserProfile).createdAt : now,
       updatedAt: now,
     };
 
-    // Merge: preserva createdAt si el documento ya existe
-    await userRef.set(userProfile, { merge: true });
+    await userRef.set(userProfile);
 
     console.log(`[ConsentService] Usuario upserted: ${responsibleAdult.documentId}`);
     return userProfile;

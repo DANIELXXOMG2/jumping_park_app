@@ -222,32 +222,14 @@ export function MinorsSection({
 
       {/* Estado vacío */}
       {fields.length === 0 && (
-        <div className="text-center py-8 border-2 border-dashed border-gray-700 rounded-2xl bg-gray-900/30">
-          <Baby className="w-10 h-10 text-gray-600 mx-auto mb-3" />
-          <p className="text-gray-400 text-sm mb-4">
+        <div className="text-center py-6 border-2 border-dashed border-gray-700 rounded-2xl bg-gray-900/30">
+          <Baby className="w-8 h-8 text-gray-600 mx-auto mb-2" />
+          <p className="text-gray-400 text-sm">
             No has agregado menores aún
           </p>
-          
-          <div className="flex flex-col sm:flex-row gap-3 justify-center px-4">
-            {userId && (
-              <button
-                type="button"
-                onClick={handleOpenHistory}
-                className="flex items-center justify-center gap-2 px-5 py-3 bg-neon-blue/20 hover:bg-neon-blue/30 text-neon-blue font-semibold rounded-xl transition-all border border-neon-blue/50"
-              >
-                <History size={18} />
-                Cargar del Historial
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={handleAddMinor}
-              className="flex items-center justify-center gap-2 px-5 py-3 bg-neon-green/20 hover:bg-neon-green/30 text-neon-green font-semibold rounded-xl transition-all border border-neon-green/50"
-            >
-              <Plus size={18} />
-              Agregar Nuevo
-            </button>
-          </div>
+          <p className="text-gray-500 text-xs mt-1">
+            Usa los botones de arriba para agregar acompañantes
+          </p>
         </div>
       )}
 

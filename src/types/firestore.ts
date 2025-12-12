@@ -124,6 +124,21 @@ export interface OtpRecord {
   createdAt?: FirestoreDateValue;
 }
 
+/**
+ * Registro de sesión OTP validada.
+ * Permite verificar que un usuario completó el flujo de autenticación recientemente.
+ */
+export interface OtpSession {
+  /** ID del usuario (cédula) */
+  userId: string;
+  /** Email validado */
+  email: string;
+  /** Fecha de validación del OTP */
+  validatedAt: FirestoreDateValue;
+  /** Fecha de expiración de la sesión */
+  expiresAt: FirestoreDateValue;
+}
+
 // ============================================================================
 // COLECCIÓN: accesses
 // ============================================================================

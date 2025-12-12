@@ -2,10 +2,12 @@
  * API Route: /api/usuarios/[uid]/menores
  * Obtiene los menores asociados a un usuario específico.
  * 
+ * PROTEGIDO: Requiere sesión OTP válida (el usuario debe haber validado su identidad).
  * Usado para el historial de acompañantes en el kiosko.
  */
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/firebaseAdmin";
+import { verifyOtpSession } from "@/services/authService";
 
 interface RouteParams {
   params: Promise<{ uid: string }>;
@@ -14,6 +16,8 @@ interface RouteParams {
 /**
  * GET /api/usuarios/[uid]/menores
  * Retorna los menores únicos asociados a un usuario desde sus consentimientos previos.
+ * 
+ * SEGURIDAD: Solo accesible si el usuario validó su OTP en los últimos 15 minutos.
  */
 export async function GET(
   request: NextRequest,
@@ -26,6 +30,17 @@ export async function GET(
       return NextResponse.json(
         { error: "ID de usuario inválido" },
         { status: 400 }
+      );
+    }
+
+    // 🔒 VERIFICACIÓN DE SEGURIDAD: Validar sesión OTP
+    const hasValidSession = await verifyOtpSession(uid);
+    
+    if (!hasValidSession) {
+      console.warn(`[API /usuarios/${uid}/menores] Acceso denegado - Sin sesión OTP válida`);
+      return NextResponse.json(
+        { error: "No autorizado. Debe validar su identidad primero." },
+        { status: 401 }
       );
     }
 

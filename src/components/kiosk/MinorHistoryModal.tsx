@@ -266,31 +266,31 @@ export function MinorHistoryModal({
 
                       {/* Info del menor */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <User size={14} className="text-gray-400" />
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <User size={14} className="text-neon-green" />
                           <span className="font-semibold text-white truncate">
                             {minor.firstName} {minor.lastName}
                           </span>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-400">
-                          <div className="flex items-center gap-1">
-                            <Calendar size={10} />
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
+                          <div className="flex items-center gap-1.5 text-gray-200">
+                            <Calendar size={12} className="text-neon-blue" />
                             <span>{calculateAge(minor.birthDate)}</span>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <CreditCard size={10} />
+                          <div className="flex items-center gap-1.5 text-gray-200">
+                            <CreditCard size={12} className="text-neon-pink" />
                             <span>
                               {formatIdType(minor.idType || "ti")} {minor.idNumber}
                             </span>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2 mt-2 text-xs">
-                          <span className="px-2 py-0.5 bg-gray-700 rounded text-gray-300">
+                        <div className="flex items-center gap-2 mt-2.5 text-xs">
+                          <span className="px-2 py-0.5 bg-neon-blue/20 border border-neon-blue/30 rounded text-neon-blue">
                             {getEPSDisplayLabel(minor.eps)}
                           </span>
-                          <span className="text-gray-500">
+                          <span className="text-gray-400">
                             {formatLastUsed(minor.lastUsed)}
                           </span>
                         </div>
