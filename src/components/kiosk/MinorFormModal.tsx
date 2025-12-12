@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -77,7 +78,8 @@ export function MinorFormModal({
   const inputClass =
     "w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white text-sm focus:border-neon-blue focus:outline-none focus:ring-1 focus:ring-neon-blue/50 transition-all";
 
-  return (
+  // Use portal to render outside of parent form - fixes nested form issue
+  const modalContent = (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
@@ -285,4 +287,11 @@ export function MinorFormModal({
       </div>
     </div>
   );
+
+  // Render via portal to escape parent form context
+  if (typeof document !== "undefined") {
+    return createPortal(modalContent, document.body);
+  }
+
+  return null;
 }
