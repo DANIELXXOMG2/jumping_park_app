@@ -173,6 +173,7 @@ export default function ConsentPage() {
           update={update}
           setValue={setValue}
           getValues={getValues}
+          userId={visitorData.uid}
         />
 
         {/* Signature Section */}
