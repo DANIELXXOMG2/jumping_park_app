@@ -83,3 +83,26 @@ export async function adminDelete<T>(url: string): Promise<T> {
   
   return response.json();
 }
+
+/**
+ * Descarga un archivo desde una URL protegida.
+ * Útil para exportar CSV, PDF, etc.
+ */
+export async function adminDownload(url: string, filename: string): Promise<void> {
+  const response = await adminFetch(url, { method: "GET" });
+  
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || "Error al descargar");
+  }
+  
+  const blob = await response.blob();
+  const downloadUrl = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = downloadUrl;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(downloadUrl);
+}

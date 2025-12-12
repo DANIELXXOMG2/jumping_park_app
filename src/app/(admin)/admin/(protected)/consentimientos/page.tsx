@@ -8,8 +8,9 @@ import { Badge } from "@/components/admin/Badge";
 import { Modal } from "@/components/admin/Modal";
 import { Button } from "@/components/admin/Button";
 import { formatRelativeTime } from "@/lib/utils";
-import { adminGet, getAuthToken } from "@/lib/adminApi";
-import { Eye, ExternalLink, FileText } from "lucide-react";
+import { adminGet, adminPost, adminDownload, getAuthToken } from "@/lib/adminApi";
+import { Eye, ExternalLink, FileText, Download, Send, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface Minor {
   fullName?: string;
@@ -58,6 +59,8 @@ export default function ConsentsPage() {
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [selectedConsent, setSelectedConsent] = useState<Consent | null>(null);
+  const [isResending, setIsResending] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const fetchConsents = useCallback(
     async (searchTerm: string, offset: number) => {
@@ -96,6 +99,39 @@ export default function ConsentsPage() {
   const isValidConsent = (validUntil: string | null) => {
     if (!validUntil) return false;
     return new Date(validUntil) > new Date();
+  };
+
+  // Reenviar consentimiento por email
+  const handleResendEmail = async (consent: Consent) => {
+    setIsResending(true);
+    try {
+      await adminPost(`/api/admin/consents/${consent.id}/resend`, {});
+      toast.success("Email reenviado", {
+        description: `Consentimiento enviado a ${consent.adultEmail}`,
+      });
+    } catch (error) {
+      toast.error("Error al reenviar", {
+        description: error instanceof Error ? error.message : "Intente nuevamente",
+      });
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+  // Exportar consentimientos a CSV
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const today = new Date().toISOString().split("T")[0];
+      await adminDownload("/api/admin/export/consents", `consentimientos_${today}.csv`);
+      toast.success("Exportación completada");
+    } catch (error) {
+      toast.error("Error al exportar", {
+        description: error instanceof Error ? error.message : "Intente nuevamente",
+      });
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const columns = [
@@ -183,6 +219,18 @@ export default function ConsentsPage() {
             {pagination.total} consentimientos registrados
           </p>
         </div>
+        <Button
+          variant="secondary"
+          onClick={handleExport}
+          disabled={isExporting}
+        >
+          {isExporting ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <Download className="w-4 h-4 mr-2" />
+          )}
+          Exportar CSV
+        </Button>
       </div>
 
       {/* Search */}
@@ -351,10 +399,9 @@ export default function ConsentsPage() {
             )}
 
             {/* Actions */}
-            <div className="flex gap-3 pt-4 border-t border-border">
+            <div className="flex flex-wrap gap-3 pt-4 border-t border-border">
               <Button
                 variant="secondary"
-                className="flex-1"
                 onClick={() => {
                   setSelectedConsent(null);
                   router.push(`/admin/usuarios/${selectedConsent.userId}`);
@@ -368,9 +415,7 @@ export default function ConsentsPage() {
                   // Abrir PDF en nueva pestaña con autenticación
                   const token = await getAuthToken();
                   if (token) {
-                    // Crear URL con token como query param para la descarga
                     const pdfUrl = `/api/admin/consents/${selectedConsent.id}/pdf`;
-                    // Fetch con auth header y abrir blob
                     try {
                       const response = await fetch(pdfUrl, {
                         headers: { Authorization: `Bearer ${token}` },
@@ -389,12 +434,25 @@ export default function ConsentsPage() {
                 <FileText className="w-4 h-4 mr-2" />
                 Ver PDF
               </Button>
+              <Button
+                variant="outline"
+                onClick={() => handleResendEmail(selectedConsent)}
+                disabled={isResending}
+              >
+                {isResending ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4 mr-2" />
+                )}
+                Reenviar Email
+              </Button>
               {selectedConsent.signatureUrl && (
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   onClick={() =>
                     window.open(selectedConsent.signatureUrl, "_blank")
                   }
+                  title="Ver firma"
                 >
                   <ExternalLink className="w-4 h-4" />
                 </Button>

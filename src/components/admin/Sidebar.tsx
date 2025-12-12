@@ -8,9 +8,9 @@ import {
   Users,
   FileCheck,
   Baby,
-  Settings,
   ChevronLeft,
   ChevronRight,
+  BarChart3,
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -20,6 +20,11 @@ const menuItems = [
     href: "/admin",
     icon: LayoutDashboard,
     label: "Dashboard",
+  },
+  {
+    href: "/admin/estadisticas",
+    icon: BarChart3,
+    label: "Estadísticas",
   },
   {
     href: "/admin/usuarios",
@@ -35,11 +40,6 @@ const menuItems = [
     href: "/admin/menores",
     icon: Baby,
     label: "Menores",
-  },
-  {
-    href: "/admin/configuracion",
-    icon: Settings,
-    label: "Configuración",
   },
 ];
 

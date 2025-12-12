@@ -7,8 +7,27 @@ const setAdminSchema = z.object({
   secret: z.string().min(1, "Secret requerido"),
 });
 
+/**
+ * POST /api/admin/set-admin
+ * 
+ * ⚠️ ENDPOINT SENSIBLE: Solo usar para configuración inicial.
+ * En producción, considerar deshabilitar o restringir por IP.
+ * 
+ * Requiere ADMIN_SECRET_KEY en variables de entorno.
+ */
 export async function POST(request: NextRequest) {
   try {
+    // ⚠️ Rate limiting básico: Solo permitir en desarrollo o con header especial
+    const isDev = process.env.NODE_ENV === "development";
+    const allowSetup = process.env.ALLOW_ADMIN_SETUP === "true";
+    
+    if (!isDev && !allowSetup) {
+      return NextResponse.json(
+        { error: "Este endpoint está deshabilitado en producción" },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const { email, secret } = setAdminSchema.parse(body);
 

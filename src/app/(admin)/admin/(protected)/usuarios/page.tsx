@@ -5,8 +5,11 @@ import { useRouter } from "next/navigation";
 import { DataTable } from "@/components/admin/DataTable";
 import { SearchInput } from "@/components/admin/SearchInput";
 import { Badge } from "@/components/admin/Badge";
+import { Button } from "@/components/admin/Button";
 import { formatRelativeTime } from "@/lib/utils";
-import { adminGet } from "@/lib/adminApi";
+import { adminGet, adminDownload } from "@/lib/adminApi";
+import { Download, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface User {
   id: string;
@@ -36,6 +39,7 @@ export default function UsersPage() {
   });
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
 
   const fetchUsers = useCallback(async (searchTerm: string, offset: number) => {
     try {
@@ -66,6 +70,21 @@ export default function UsersPage() {
 
   const handlePageChange = (newOffset: number) => {
     fetchUsers(search, newOffset);
+  };
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const today = new Date().toISOString().split("T")[0];
+      await adminDownload("/api/admin/export/users", `usuarios_${today}.csv`);
+      toast.success("Exportación completada");
+    } catch (error) {
+      toast.error("Error al exportar", {
+        description: error instanceof Error ? error.message : "Intente nuevamente",
+      });
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const columns = [
@@ -136,6 +155,18 @@ export default function UsersPage() {
             {pagination.total} usuarios registrados
           </p>
         </div>
+        <Button
+          variant="secondary"
+          onClick={handleExport}
+          disabled={isExporting}
+        >
+          {isExporting ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <Download className="w-4 h-4 mr-2" />
+          )}
+          Exportar CSV
+        </Button>
       </div>
 
       {/* Search and Filters */}
