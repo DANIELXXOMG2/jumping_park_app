@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Search, FileCheck, CheckCircle, XCircle, FileText, Baby, Loader2 } from "lucide-react";
+import { Search, FileCheck, CheckCircle, XCircle, FileText, Baby, Loader2, Clock, Users, TrendingUp, RefreshCw } from "lucide-react";
 import { StatCard } from "@/components/admin/StatCard";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/admin/Card";
+import { Badge } from "@/components/admin/Badge";
 import { adminGet } from "@/lib/adminApi";
+import { formatRelativeTime } from "@/lib/utils";
 
 interface DashboardStats {
   consentsToday: number;
@@ -32,28 +34,55 @@ interface ConsentResult {
   isExpired?: boolean;
 }
 
+interface ActivityData {
+  stats: {
+    consentsToday: number;
+    minorsToday: number;
+    timestamp: string;
+  };
+  latestConsents: {
+    id: string;
+    consecutivo: number;
+    adultName: string;
+    minorsCount: number;
+    signedAt: string | null;
+  }[];
+  hourlyData: {
+    hour: number;
+    label: string;
+    count: number;
+  }[];
+}
+
 export default function AdminDashboard() {
   const [cedula, setCedula] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [searchResult, setSearchResult] = useState<ConsentResult | null>(null);
-  const [consentsToday, setConsentsToday] = useState<number>(0);
-  const [statsLoading, setStatsLoading] = useState(true);
+  const [activityData, setActivityData] = useState<ActivityData | null>(null);
+  const [activityLoading, setActivityLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Cargar estadísticas simples al inicio
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const result = await adminGet<{ stats: DashboardStats }>("/api/admin/stats");
-        setConsentsToday(result.stats.consentsToday || 0);
-      } catch {
-        // Silenciar error, mostrar 0
-      } finally {
-        setStatsLoading(false);
-      }
-    };
-    fetchStats();
+  // Cargar actividad del día
+  const fetchActivity = useCallback(async (showRefresh = false) => {
+    if (showRefresh) setIsRefreshing(true);
+    try {
+      const result = await adminGet<ActivityData>("/api/admin/activity");
+      setActivityData(result);
+    } catch {
+      // Silenciar error
+    } finally {
+      setActivityLoading(false);
+      setIsRefreshing(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchActivity();
+    // Auto-refresh cada 30 segundos
+    const interval = setInterval(() => fetchActivity(), 30000);
+    return () => clearInterval(interval);
+  }, [fetchActivity]);
 
   // Focus en el input al cargar
   useEffect(() => {
@@ -93,7 +122,7 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-[80vh] flex flex-col items-center justify-start pt-8 px-4 pb-20 lg:pb-6">
       {/* Header */}
-      <div className="text-center mb-8">
+      <div className="text-center mb-6">
         <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
           Visor de Verificación
         </h1>
@@ -102,17 +131,38 @@ export default function AdminDashboard() {
         </p>
       </div>
 
-      {/* Contador simple */}
-      <div className="w-full max-w-md mb-8">
-        <StatCard
-          title="Consentimientos Hoy"
-          value={statsLoading ? "..." : consentsToday}
-          icon={FileCheck}
-        />
+      {/* Stats del día */}
+      <div className="w-full max-w-2xl mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-foreground/60 uppercase flex items-center gap-2">
+            <Clock className="w-4 h-4" />
+            Actividad de Hoy
+          </h2>
+          <button
+            onClick={() => fetchActivity(true)}
+            disabled={isRefreshing}
+            className="p-2 hover:bg-surface-muted rounded-lg transition-colors"
+            title="Actualizar"
+          >
+            <RefreshCw className={`w-4 h-4 text-foreground/60 ${isRefreshing ? "animate-spin" : ""}`} />
+          </button>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <StatCard
+            title="Consentimientos"
+            value={activityLoading ? "..." : activityData?.stats.consentsToday || 0}
+            icon={FileCheck}
+          />
+          <StatCard
+            title="Menores Registrados"
+            value={activityLoading ? "..." : activityData?.stats.minorsToday || 0}
+            icon={Baby}
+          />
+        </div>
       </div>
 
       {/* Buscador Central */}
-      <div className="w-full max-w-lg mb-8">
+      <div className="w-full max-w-lg mb-6">
         <div className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 text-foreground/40" />
           <input
@@ -245,6 +295,49 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
           )}
+        </div>
+      )}
+
+      {/* Últimos registros */}
+      {!searchResult && activityData && activityData.latestConsents.length > 0 && (
+        <div className="w-full max-w-2xl mt-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <TrendingUp className="w-5 h-5 text-primary" />
+                Últimos Registros
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {activityData.latestConsents.map((consent) => (
+                  <div
+                    key={consent.id}
+                    className="flex items-center justify-between p-3 bg-surface-muted rounded-lg"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <FileCheck className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-foreground text-sm">
+                          {consent.adultName}
+                        </p>
+                        <p className="text-xs text-foreground/50">
+                          #{consent.consecutivo} • {consent.minorsCount} menor(es)
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <Badge variant="success" className="text-xs">
+                        {consent.signedAt ? formatRelativeTime(consent.signedAt) : "Reciente"}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>

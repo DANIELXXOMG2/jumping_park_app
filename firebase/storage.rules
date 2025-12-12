@@ -1,8 +1,11 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+    // Firmas: Solo el admin puede leer, usuarios autenticados pueden subir su propia firma
     match /signatures/{fileName} {
-      allow read: if request.auth != null;
+      // Solo admins pueden leer cualquier firma (verificado via custom claims)
+      allow read: if request.auth != null && request.auth.token.admin == true;
+      // Usuarios pueden subir firmas (el nombre incluye su userId)
       allow write: if request.auth != null;
     }
 

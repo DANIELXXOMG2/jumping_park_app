@@ -9,12 +9,22 @@ import {
   Calendar,
   FileCheck,
   Baby,
+  Eye,
+  FileText,
+  Send,
+  ExternalLink,
+  Loader2,
+  User,
+  Heart,
+  CreditCard,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/admin/Card";
 import { Badge } from "@/components/admin/Badge";
 import { Button } from "@/components/admin/Button";
+import { Modal } from "@/components/admin/Modal";
 import { formatRelativeTime } from "@/lib/utils";
-import { adminGet } from "@/lib/adminApi";
+import { adminGet, adminPost, getAuthToken } from "@/lib/adminApi";
+import { toast } from "sonner";
 
 interface Minor {
   fullName?: string;
@@ -45,6 +55,12 @@ interface Consent {
   policyVersion: string;
   signatureUrl: string;
   minorsCount: number;
+  minors: Minor[];
+  adultName: string;
+  adultEmail: string;
+  adultPhone: string;
+  userId: string;
+  ipAddress?: string;
   createdAt: string | null;
   signedAt: string | null;
   validUntil: string | null;
@@ -71,6 +87,9 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
   const [data, setData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedMinor, setSelectedMinor] = useState<Minor | null>(null);
+  const [selectedConsent, setSelectedConsent] = useState<Consent | null>(null);
+  const [isResending, setIsResending] = useState(false);
 
   const fetchUserData = useCallback(async () => {
     try {
@@ -123,6 +142,37 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
       age--;
     }
     return age;
+  };
+
+  const isValidConsent = (validUntil: string | null) => {
+    if (!validUntil) return false;
+    return new Date(validUntil) > new Date();
+  };
+
+  const handleResendEmail = async (consent: Consent) => {
+    setIsResending(true);
+    try {
+      await adminPost(`/api/admin/consents/${consent.id}/resend`, {});
+      toast.success("Email reenviado", {
+        description: `Consentimiento enviado a ${consent.adultEmail}`,
+      });
+    } catch (error) {
+      toast.error("Error al reenviar", {
+        description: error instanceof Error ? error.message : "Intente nuevamente",
+      });
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+  const getRelationshipLabel = (relationship: string) => {
+    const labels: Record<string, string> = {
+      hijo: "Hijo/a",
+      sobrino: "Sobrino/a",
+      nieto: "Nieto/a",
+      otro: "Otro",
+    };
+    return labels[relationship] || relationship;
   };
 
   return (
@@ -207,7 +257,8 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
               {user.minors.map((minor, index) => (
                 <div
                   key={index}
-                  className="bg-surface-muted rounded-lg p-4 border border-border/50"
+                  onClick={() => setSelectedMinor(minor)}
+                  className="bg-surface-muted rounded-lg p-4 border border-border/50 cursor-pointer hover:border-primary/50 hover:bg-surface-muted/80 transition-all"
                 >
                   <div className="flex items-start justify-between">
                     <div>
@@ -217,25 +268,14 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
                           "Sin nombre"}
                       </p>
                       <p className="text-sm text-foreground/60 mt-1">
-                        {minor.relationship}
+                        {getRelationshipLabel(minor.relationship)}
                       </p>
                     </div>
-                    <Badge variant="info">
-                      {calculateAge(minor.birthDate)} años
-                    </Badge>
-                  </div>
-                  <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-foreground/50">
-                    <div>
-                      <span className="uppercase">Documento:</span>{" "}
-                      {minor.idType?.toUpperCase()} {minor.idNumber || "-"}
-                    </div>
-                    <div>
-                      <span className="uppercase">EPS:</span>{" "}
-                      {minor.eps || "-"}
-                    </div>
-                    <div>
-                      <span className="uppercase">Nacimiento:</span>{" "}
-                      {minor.birthDate}
+                    <div className="flex items-center gap-2">
+                      <Badge variant="info">
+                        {calculateAge(minor.birthDate)} años
+                      </Badge>
+                      <Eye className="w-4 h-4 text-foreground/40" />
                     </div>
                   </div>
                 </div>
@@ -258,12 +298,12 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
           {consents.length > 0 ? (
             <div className="space-y-3">
               {consents.map((consent) => {
-                const isValid =
-                  consent.validUntil && new Date(consent.validUntil) > new Date();
+                const isValid = isValidConsent(consent.validUntil);
                 return (
                   <div
                     key={consent.id}
-                    className="flex items-center justify-between p-4 rounded-lg bg-surface-muted border border-border/50"
+                    onClick={() => setSelectedConsent(consent)}
+                    className="flex items-center justify-between p-4 rounded-lg bg-surface-muted border border-border/50 cursor-pointer hover:border-primary/50 hover:bg-surface-muted/80 transition-all"
                   >
                     <div className="flex items-center gap-4">
                       <Badge variant="info">#{consent.consecutivo}</Badge>
@@ -276,15 +316,18 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
                         </p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <Badge variant={isValid ? "success" : "error"}>
-                        {isValid ? "Vigente" : "Vencido"}
-                      </Badge>
-                      <p className="text-xs text-foreground/50 mt-1">
-                        {consent.signedAt
-                          ? formatRelativeTime(consent.signedAt)
-                          : "-"}
-                      </p>
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        <Badge variant={isValid ? "success" : "error"}>
+                          {isValid ? "Vigente" : "Vencido"}
+                        </Badge>
+                        <p className="text-xs text-foreground/50 mt-1">
+                          {consent.signedAt
+                            ? formatRelativeTime(consent.signedAt)
+                            : "-"}
+                        </p>
+                      </div>
+                      <Eye className="w-4 h-4 text-foreground/40" />
                     </div>
                   </div>
                 );
@@ -297,6 +340,288 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
           )}
         </CardContent>
       </Card>
+
+      {/* Minor Detail Modal */}
+      <Modal
+        isOpen={!!selectedMinor}
+        onClose={() => setSelectedMinor(null)}
+        title="Información del Menor"
+      >
+        {selectedMinor && (
+          <div className="space-y-6">
+            {/* Header con avatar */}
+            <div className="flex items-center gap-4 pb-4 border-b border-border">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/80 to-primary-contrast flex items-center justify-center">
+                <Baby className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-foreground">
+                  {selectedMinor.fullName ||
+                    `${selectedMinor.firstName || ""} ${selectedMinor.lastName || ""}`.trim()}
+                </h3>
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge variant="info" className="text-sm">
+                    {calculateAge(selectedMinor.birthDate)} años
+                  </Badge>
+                  <Badge variant="default">
+                    {getRelationshipLabel(selectedMinor.relationship)}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+
+            {/* Información personal */}
+            <div>
+              <h4 className="text-sm font-semibold text-foreground/60 uppercase mb-3 flex items-center gap-2">
+                <User className="w-4 h-4" />
+                Identificación
+              </h4>
+              <div className="bg-surface-muted rounded-lg p-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-foreground/60">Tipo de documento:</span>
+                  <Badge variant="default">
+                    {selectedMinor.idType?.toUpperCase() || "No registrado"}
+                  </Badge>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-foreground/60">Número:</span>
+                  <span className="text-sm font-mono font-medium">
+                    {selectedMinor.idNumber || "No registrado"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-foreground/60">Fecha de nacimiento:</span>
+                  <span className="text-sm font-medium">
+                    {new Date(selectedMinor.birthDate).toLocaleDateString("es-CO", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Información médica */}
+            <div>
+              <h4 className="text-sm font-semibold text-foreground/60 uppercase mb-3 flex items-center gap-2">
+                <Heart className="w-4 h-4" />
+                Información Médica
+              </h4>
+              <div className="bg-surface-muted rounded-lg p-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-foreground/60">EPS:</span>
+                  <span className="text-sm font-medium">
+                    {selectedMinor.eps || "No registrada"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Responsable */}
+            <div>
+              <h4 className="text-sm font-semibold text-foreground/60 uppercase mb-3 flex items-center gap-2">
+                <CreditCard className="w-4 h-4" />
+                Responsable
+              </h4>
+              <div className="bg-surface-muted rounded-lg p-4 space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm text-foreground/60">Nombre:</span>
+                  <span className="text-sm font-medium">{user.fullName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-foreground/60">Documento:</span>
+                  <span className="text-sm font-mono">{user.uid}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-foreground/60">Parentesco:</span>
+                  <span className="text-sm font-medium">
+                    {getRelationshipLabel(selectedMinor.relationship)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Consent Detail Modal */}
+      <Modal
+        isOpen={!!selectedConsent}
+        onClose={() => setSelectedConsent(null)}
+        title={`Consentimiento #${selectedConsent?.consecutivo}`}
+      >
+        {selectedConsent && (
+          <div className="space-y-6">
+            {/* Adult Info */}
+            <div>
+              <h4 className="text-sm font-semibold text-foreground/60 uppercase mb-3">
+                Información del Responsable
+              </h4>
+              <div className="bg-surface-muted rounded-lg p-4 space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm text-foreground/60">Nombre:</span>
+                  <span className="text-sm font-medium">
+                    {selectedConsent.adultName || user.fullName}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-foreground/60">Documento:</span>
+                  <span className="text-sm font-mono">
+                    {selectedConsent.userId || user.uid}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-foreground/60">Email:</span>
+                  <span className="text-sm">{selectedConsent.adultEmail || user.email}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-foreground/60">Teléfono:</span>
+                  <span className="text-sm">{selectedConsent.adultPhone || user.phone}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Minors */}
+            {selectedConsent.minors && selectedConsent.minors.length > 0 && (
+              <div>
+                <h4 className="text-sm font-semibold text-foreground/60 uppercase mb-3">
+                  Menores ({selectedConsent.minors.length})
+                </h4>
+                <div className="space-y-2">
+                  {selectedConsent.minors.map((minor, index) => (
+                    <div
+                      key={index}
+                      className="bg-surface-muted rounded-lg p-3 flex items-center justify-between"
+                    >
+                      <div>
+                        <p className="text-sm font-medium">
+                          {minor.fullName ||
+                            `${minor.firstName || ""} ${minor.lastName || ""}`.trim()}
+                        </p>
+                        <p className="text-xs text-foreground/50">
+                          {getRelationshipLabel(minor.relationship)} • {minor.birthDate}
+                        </p>
+                      </div>
+                      <Badge variant="default" className="text-xs">
+                        {minor.idType?.toUpperCase()} {minor.idNumber}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Consent Details */}
+            <div>
+              <h4 className="text-sm font-semibold text-foreground/60 uppercase mb-3">
+                Detalles del Consentimiento
+              </h4>
+              <div className="bg-surface-muted rounded-lg p-4 space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm text-foreground/60">Versión:</span>
+                  <span className="text-sm">{selectedConsent.policyVersion}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-foreground/60">IP:</span>
+                  <span className="text-sm font-mono">
+                    {selectedConsent.ipAddress || "-"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-foreground/60">Firmado:</span>
+                  <span className="text-sm">
+                    {selectedConsent.signedAt
+                      ? new Date(selectedConsent.signedAt).toLocaleString("es-CO")
+                      : "-"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-foreground/60">Válido hasta:</span>
+                  <span className="text-sm">
+                    {selectedConsent.validUntil
+                      ? new Date(selectedConsent.validUntil).toLocaleString("es-CO")
+                      : "-"}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-foreground/60">Estado:</span>
+                  <Badge
+                    variant={isValidConsent(selectedConsent.validUntil) ? "success" : "error"}
+                  >
+                    {isValidConsent(selectedConsent.validUntil) ? "Vigente" : "Vencido"}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+
+            {/* Signature */}
+            {selectedConsent.signatureUrl && (
+              <div>
+                <h4 className="text-sm font-semibold text-foreground/60 uppercase mb-3">
+                  Firma Digital
+                </h4>
+                <div className="bg-white rounded-lg p-4">
+                  <img
+                    src={selectedConsent.signatureUrl}
+                    alt="Firma"
+                    className="max-h-24 mx-auto"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex flex-wrap gap-3 pt-4 border-t border-border">
+              <Button
+                variant="primary"
+                onClick={async () => {
+                  const token = await getAuthToken();
+                  if (token) {
+                    const pdfUrl = `/api/admin/consents/${selectedConsent.id}/pdf`;
+                    try {
+                      const response = await fetch(pdfUrl, {
+                        headers: { Authorization: `Bearer ${token}` },
+                      });
+                      if (response.ok) {
+                        const blob = await response.blob();
+                        const url = URL.createObjectURL(blob);
+                        window.open(url, "_blank");
+                      }
+                    } catch {
+                      // Error silencioso
+                    }
+                  }
+                }}
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Ver PDF
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => handleResendEmail(selectedConsent)}
+                disabled={isResending}
+              >
+                {isResending ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4 mr-2" />
+                )}
+                Reenviar Email
+              </Button>
+              {selectedConsent.signatureUrl && (
+                <Button
+                  variant="ghost"
+                  onClick={() => window.open(selectedConsent.signatureUrl, "_blank")}
+                  title="Ver firma"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
