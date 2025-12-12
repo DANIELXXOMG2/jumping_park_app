@@ -6,24 +6,42 @@ const withPWA = withPWAInit({
   disable: process.env.NODE_ENV === "development",
   register: true,
   skipWaiting: true,
-  // Estrategia de cache para el kiosko offline
+  // Fallback para modo offline (se creará la página luego)
+  fallbacks: {
+    document: "/offline",
+  },
+  // Estrategia de cache granular para Admin y Kiosko
   runtimeCaching: [
-    // Regla específica para APIs de Admin (prioridad alta)
+    // 1. APIs del Admin (Datos críticos - prioridad alta)
     {
       urlPattern: /\/api\/admin\/.*/i,
       handler: "NetworkFirst",
       options: {
         cacheName: "admin-api-cache",
-        networkTimeoutSeconds: 5, // Timeout rápido para no bloquear UI
+        networkTimeoutSeconds: 5,
         expiration: {
-          maxEntries: 100,
-          maxAgeSeconds: 60 * 60, // 1 hora
+          maxEntries: 50,
+          maxAgeSeconds: 24 * 60 * 60, // 24 horas
         },
         cacheableResponse: {
           statuses: [0, 200],
         },
       },
     },
+    // 2. Navegación del Admin (Documentos HTML - rutas /admin/*)
+    {
+      urlPattern: /\/admin(?:\/.*)?$/i,
+      handler: "NetworkFirst",
+      options: {
+        cacheName: "admin-pages-cache",
+        networkTimeoutSeconds: 5,
+        expiration: {
+          maxEntries: 20,
+          maxAgeSeconds: 24 * 60 * 60, // 24 horas
+        },
+      },
+    },
+    // 3. Fuentes de Google (CacheFirst - larga duración)
     {
       urlPattern: /^https:\/\/fonts\.(?:gstatic|googleapis)\.com\/.*/i,
       handler: "CacheFirst",
@@ -35,6 +53,7 @@ const withPWA = withPWAInit({
         },
       },
     },
+    // 4. Imágenes y assets estáticos (CacheFirst)
     {
       urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/i,
       handler: "CacheFirst",
@@ -46,12 +65,12 @@ const withPWA = withPWAInit({
         },
       },
     },
+    // 5. Fallback para todo lo demás (Next.js internals, scripts, etc.)
     {
       urlPattern: /^https?.*/,
-      handler: "NetworkFirst",
+      handler: "StaleWhileRevalidate",
       options: {
-        cacheName: "offlineCache",
-        networkTimeoutSeconds: 15,
+        cacheName: "general-cache",
         expiration: {
           maxEntries: 200,
           maxAgeSeconds: 24 * 60 * 60, // 24 horas
