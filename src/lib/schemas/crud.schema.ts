@@ -3,6 +3,7 @@
  * Cada colección tiene su schema de creación (POST) definido aquí.
  */
 import { z } from "zod";
+import { birthDateSchema, epsSchema } from "./consent.schema";
 
 // ============================================================================
 // ACCESOS - Registro de entradas/salidas al parque
@@ -38,11 +39,11 @@ export const menorCreateSchema = z.object({
   /** Apellidos del menor */
   lastName: z.string().min(2, "Los apellidos son requeridos"),
 
-  /** Fecha de nacimiento (YYYY-MM-DD) */
-  birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Formato de fecha inválido (YYYY-MM-DD)"),
+  /** Fecha de nacimiento con validación robusta */
+  birthDate: birthDateSchema,
 
-  /** EPS del menor */
-  eps: z.string().min(2, "La EPS es requerida"),
+  /** EPS validada contra lista oficial de Colombia */
+  eps: epsSchema,
 
   /** Tipo de identificación */
   idType: z.enum(["cc", "ti", "passport", "otro"]),

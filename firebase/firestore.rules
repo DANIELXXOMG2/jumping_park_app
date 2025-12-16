@@ -27,9 +27,9 @@ service cloud.firestore {
     }
 
     // =========================================================================
-    // COLECCIÓN: otps (Solo acceso server-side via Admin SDK)
+    // COLECCIÓN: otp_sessions (Solo acceso server-side via Admin SDK)
     // =========================================================================
-    match /otps/{email} {
+    match /otp_sessions/{documentId} {
       allow read, write: if false;
     }
 

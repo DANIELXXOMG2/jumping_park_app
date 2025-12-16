@@ -1,10 +1,77 @@
 import { z } from "zod";
+import { EPS_LIST, isValidEPS } from "@/lib/data/epsColombiaData";
+
+// ============================================================================
+// VALIDACIÓN DE FECHA DE NACIMIENTO
+// ============================================================================
+
+/**
+ * Schema de fecha de nacimiento con validaciones robustas:
+ * - Formato YYYY-MM-DD
+ * - No puede ser fecha futura
+ * - No puede ser anterior a 1900
+ * - Año debe ser lógico (no 200006, etc.)
+ */
+export const birthDateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "La fecha debe tener el formato YYYY-MM-DD")
+  .refine(
+    (dateStr) => {
+      const year = parseInt(dateStr.split("-")[0], 10);
+      return year >= 1900;
+    },
+    { message: "El año de nacimiento no puede ser anterior a 1900" }
+  )
+  .refine(
+    (dateStr) => {
+      const year = parseInt(dateStr.split("-")[0], 10);
+      const currentYear = new Date().getFullYear();
+      return year <= currentYear;
+    },
+    { message: "El año de nacimiento no puede ser en el futuro" }
+  )
+  .refine(
+    (dateStr) => {
+      const date = new Date(dateStr);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return date <= today;
+    },
+    { message: "La fecha de nacimiento no puede ser futura" }
+  )
+  .refine(
+    (dateStr) => {
+      // Validar que la fecha sea válida (ej. no 2024-02-30)
+      const date = new Date(dateStr);
+      return !isNaN(date.getTime());
+    },
+    { message: "La fecha ingresada no es válida" }
+  );
+
+// ============================================================================
+// VALIDACIÓN DE EPS
+// ============================================================================
+
+/**
+ * Schema de EPS validado contra la lista oficial de Colombia
+ */
+export const epsSchema = z
+  .string()
+  .min(2, "La EPS es requerida")
+  .refine(
+    (value) => isValidEPS(value),
+    { message: "Selecciona una EPS válida de la lista" }
+  );
+
+// ============================================================================
+// SCHEMA DE MENOR
+// ============================================================================
 
 export const minorSchema = z.object({
   firstName: z.string().min(2, "El nombre es requerido (mínimo 2 caracteres)"),
   lastName: z.string().min(2, "Los apellidos son requeridos (mínimo 2 caracteres)"),
-  birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "La fecha debe tener el formato YYYY-MM-DD"),
-  eps: z.string().min(2, "La EPS es requerida"),
+  birthDate: birthDateSchema,
+  eps: epsSchema,
   idType: z.enum(["cc", "ti", "passport", "otro"], { message: "Tipo de identificación inválido" }),
   idNumber: z.string().min(3, "Número de identificación es requerido"),
   relationship: z.enum(["hijo", "sobrino", "nieto", "otro"], {
