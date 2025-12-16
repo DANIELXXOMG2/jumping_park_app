@@ -273,3 +273,14 @@ export function getRegimenLabel(value: RegimenType): string {
 export function isValidEPS(value: string): boolean {
   return epsOptions.some((eps) => eps.value === value) || value === "otra_manual";
 }
+
+/**
+ * Lista simple de valores de EPS para usar con Zod
+ * Incluye todas las EPS válidas como array de strings
+ */
+export const EPS_LIST = epsOptions.map((eps) => eps.value) as [string, ...string[]];
+
+/**
+ * Lista de labels de EPS para mostrar en UI
+ */
+export const EPS_LABELS = epsOptions.map((eps) => eps.label);

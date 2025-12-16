@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 interface KioskLayoutProps {
   children: ReactNode;
@@ -13,9 +14,12 @@ export default function KioskLayout({ children }: KioskLayoutProps) {
             <span className="text-primary">Jumping</span>
             <span>Park</span>
           </div>
-          <span className="text-sm font-medium text-foreground/60">
-            Kiosko de Registro
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-foreground/60">
+              Kiosko de Registro
+            </span>
+            <ThemeToggle />
+          </div>
         </header>
         <main className="flex flex-1 flex-col px-4 sm:px-8">{children}</main>
       </div>

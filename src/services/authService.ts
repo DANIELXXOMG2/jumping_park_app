@@ -25,7 +25,7 @@ export async function saveOtp(email: string, code: string): Promise<void> {
   };
 
   try {
-    await createDoc("otps", otpRecord, email);
+    await createDoc("otp_sessions", otpRecord, email);
   } catch (error) {
     console.error("Error guardando OTP en Firestore", error);
     throw new Error("No se pudo guardar el OTP");
@@ -48,7 +48,7 @@ export async function validateOtp(
   try {
     console.log(`[AuthService] Buscando OTP para email: ${email}`);
     // Usamos el email como ID del documento, consistente con saveOtp
-    const otpDoc = await getDocById("otps", email);
+    const otpDoc = await getDocById("otp_sessions", email);
     
     if (!otpDoc) {
       console.warn(`[AuthService] No se encontró documento OTP para: ${email}`);
@@ -69,12 +69,12 @@ export async function validateOtp(
 
     if (isExpired) {
       console.warn(`[AuthService] Código expirado. Expiró en: ${expiresAtDate}`);
-      await deleteDoc("otps", email);
+      await deleteDoc("otp_sessions", email);
       return { valid: false, message: "Código expirado" };
     }
 
     console.log(`[AuthService] OTP válido. Eliminando documento.`);
-    await deleteDoc("otps", email);
+    await deleteDoc("otp_sessions", email);
     return { valid: true, message: "OTP válido" };
   } catch (error) {
     console.error("Error validando OTP", error);

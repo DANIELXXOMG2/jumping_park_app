@@ -4,6 +4,7 @@ import Image from "next/image";
 import { LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
+import { ThemeToggleCompact } from "@/components/ui/ThemeToggle";
 
 export function Header() {
   const { user, signOut } = useAuth();
@@ -57,6 +58,9 @@ export function Header() {
           <div className="w-9 h-9 rounded-full bg-linear-to-br from-brand-blue to-brand-purple flex items-center justify-center shadow-soft-sm">
             <span className="text-xs font-bold text-white">{getInitials()}</span>
           </div>
+
+          {/* Theme Toggle */}
+          <ThemeToggleCompact />
 
           {/* Logout */}
           <button
