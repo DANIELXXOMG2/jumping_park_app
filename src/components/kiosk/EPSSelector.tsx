@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Heart, ChevronDown, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -18,6 +18,46 @@ interface EPSSelectorProps {
 }
 
 /**
+ * Parsea el valor inicial para determinar régimen, EPS y valor custom
+ */
+function parseInitialValue(value: string): {
+  regimen: RegimenType | "";
+  eps: string;
+  custom: string;
+} {
+  if (!value) {
+    return { regimen: "", eps: "", custom: "" };
+  }
+
+  // Caso: valor manual con prefijo "otra_manual:"
+  if (value.startsWith("otra_manual:")) {
+    return {
+      regimen: "contributivo",
+      eps: "otra",
+      custom: value.replace("otra_manual:", ""),
+    };
+  }
+
+  // Caso: particular o prepagada
+  if (value === "particular" || value === "prepagada") {
+    return { regimen: "particular", eps: value, custom: "" };
+  }
+
+  // Caso: buscar EPS en las listas para determinar régimen
+  const allOptions = [
+    ...getEPSByRegimen("contributivo"),
+    ...getEPSByRegimen("subsidiado"),
+    ...getEPSByRegimen("especial"),
+  ];
+  const found = allOptions.find((eps) => eps.value === value);
+  if (found) {
+    return { regimen: found.regimen[0], eps: value, custom: "" };
+  }
+
+  return { regimen: "", eps: "", custom: "" };
+}
+
+/**
  * Selector de EPS estandarizado para Colombia
  * 
  * Flujo:
@@ -31,45 +71,15 @@ export function EPSSelector({
   error,
   className,
 }: EPSSelectorProps) {
-  const [selectedRegimen, setSelectedRegimen] = useState<RegimenType | "">("");
-  const [selectedEPS, setSelectedEPS] = useState<string>("");
-  const [customEPS, setCustomEPS] = useState<string>("");
-  const [availableEPS, setAvailableEPS] = useState<EPSOption[]>([]);
+  // Lazy initialization: parsear valor inicial una sola vez
+  const [selectedRegimen, setSelectedRegimen] = useState<RegimenType | "">(() => parseInitialValue(value).regimen);
+  const [selectedEPS, setSelectedEPS] = useState<string>(() => parseInitialValue(value).eps);
+  const [customEPS, setCustomEPS] = useState<string>(() => parseInitialValue(value).custom);
 
-  // Sincronizar estado inicial si hay un valor previo
-  useEffect(() => {
-    if (value && !selectedEPS) {
-      // Si el valor es un EPS conocido, intentar determinar el régimen
-      if (value.startsWith("otra_manual:")) {
-        setSelectedRegimen("contributivo"); // Default para "otra"
-        setSelectedEPS("otra");
-        setCustomEPS(value.replace("otra_manual:", ""));
-      } else if (value === "particular" || value === "prepagada") {
-        setSelectedRegimen("particular");
-        setSelectedEPS(value);
-      } else {
-        // Buscar el EPS en la lista para determinar su régimen
-        const allOptions = [
-          ...getEPSByRegimen("contributivo"),
-          ...getEPSByRegimen("subsidiado"),
-          ...getEPSByRegimen("especial"),
-        ];
-        const found = allOptions.find((eps) => eps.value === value);
-        if (found) {
-          setSelectedRegimen(found.regimen[0]);
-          setSelectedEPS(value);
-        }
-      }
-    }
-  }, [value, selectedEPS]);
-
-  // Actualizar lista de EPS cuando cambia el régimen
-  useEffect(() => {
-    if (selectedRegimen) {
-      setAvailableEPS(getEPSByRegimen(selectedRegimen));
-    } else {
-      setAvailableEPS([]);
-    }
+  // Derivar availableEPS con useMemo en lugar de estado + useEffect
+  const availableEPS = useMemo<EPSOption[]>(() => {
+    if (!selectedRegimen) return [];
+    return getEPSByRegimen(selectedRegimen);
   }, [selectedRegimen]);
 
   // Manejar cambio de régimen

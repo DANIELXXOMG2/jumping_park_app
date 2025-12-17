@@ -1,11 +1,13 @@
   "use client";
 
 import { cn } from "@/lib/utils";
-import { useMemo, type ReactNode } from "react";
+import { useMemo, useState, useEffect, type ReactNode } from "react";
 import {
   getConsentContent,
+  replaceCompanyName,
   type ConsentClause,
   type ParkRule,
+  type ConsentContentStructure,
 } from "@/lib/data/legalContent";
 
 interface ConsentContentProps {
@@ -103,13 +105,55 @@ function RuleItem({ rule }: { rule: ParkRule }) {
 
 /**
  * Componente de contenido del consentimiento informado.
- * Lee el contenido desde el archivo de datos centralizado.
+ * Lee el contenido desde API (Firestore) con fallback al contenido estático.
  */
 export function ConsentContent({ variant = "compact" }: ConsentContentProps) {
   const isExpanded = variant === "expanded";
 
-  // Obtener contenido procesado (con placeholders reemplazados)
-  const content = useMemo(() => getConsentContent(), []);
+  // Contenido inicial estático para carga instantánea
+  const defaultContent = useMemo(() => getConsentContent(), []);
+  
+  // Estado para el contenido dinámico
+  const [content, setContent] = useState<ConsentContentStructure>(defaultContent);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch del contenido desde API
+  useEffect(() => {
+    const fetchContent = async () => {
+      try {
+        const response = await fetch("/api/settings/consent");
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.data) {
+            // Procesar el contenido para reemplazar placeholders
+            const companyName = result.data.meta.companyName;
+            const processedClauses = result.data.consent.clauses.map(
+              (clause: ConsentClause) => ({
+                ...clause,
+                text: replaceCompanyName(clause.text, companyName),
+              })
+            );
+            
+            setContent({
+              ...result.data,
+              consent: {
+                ...result.data.consent,
+                clauses: processedClauses,
+              },
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching consent content:", error);
+        // Mantener el contenido por defecto en caso de error
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchContent();
+  }, []);
+
   const { consent, rules, meta } = content;
 
   return (
