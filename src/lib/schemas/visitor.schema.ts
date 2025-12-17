@@ -24,9 +24,9 @@ export const visitorSchema = z.object({
   cedula: z
     .string()
     .trim()
-    .min(6, "Mínimo 6 dígitos")
-    .max(15, "Máximo 15 dígitos")
-    .regex(/^\d+$/, "Solo números"),
+    .min(6, "Mínimo 6 caracteres")
+    .max(15, "Máximo 15 caracteres")
+    .regex(/^[a-zA-Z0-9]+$/, "Solo letras y números (sin espacios ni caracteres especiales)"),
 });
 
 export type VisitorFormValues = z.infer<typeof visitorSchema>;

@@ -6,6 +6,7 @@
  */
 import { PDFDocument, PDFPage, PDFFont, StandardFonts, rgb, RGB } from "pdf-lib";
 import type { Consent, Minor } from "@/types/firestore";
+import { toJsDate } from "@/lib/utils/dateUtils";
 import fs from "fs/promises";
 import path from "path";
 
@@ -166,11 +167,10 @@ function drawSeparator(
 
 /**
  * Convierte Firestore Timestamp o Date a Date.
+ * Usa la utilidad centralizada.
  */
 function toDate(value: Date | { toDate: () => Date }): Date {
-  if (value instanceof Date) return value;
-  if (typeof value === "object" && "toDate" in value) return value.toDate();
-  return new Date();
+  return toJsDate(value);
 }
 
 /**

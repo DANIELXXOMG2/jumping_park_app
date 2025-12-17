@@ -138,10 +138,25 @@
 }
 
 /* === ADMIN LAYOUT === */
+/* Light mode: fondos más cálidos para el panel admin */
 .admin-layout {
   --background: #F4F6F7;
   --surface: #FFFFFF;
   --surface-muted: #FAFBFC;
+}
+
+/* Dark mode: heredar las variables de .dark para consistencia */
+.dark .admin-layout {
+  --background: #0A0A0B;
+  --surface: #141416;
+  --surface-muted: #1C1C1F;
+  --surface-card: #1A1A1D;
+  --surface-elevated: #202024;
+  --border: #2D2D32;
+  --border-muted: #232328;
+  --text-primary: #F7F7F8;
+  --text-secondary: #A1A1AA;
+  --text-muted: #71717A;
 }
 
 @theme inline {
