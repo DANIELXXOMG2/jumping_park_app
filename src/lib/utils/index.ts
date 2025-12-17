@@ -2,6 +2,7 @@
  * Barrel exports para utilidades compartidas.
  */
 export * from "./formatters";
+export * from "./dateUtils";
 
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";

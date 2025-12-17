@@ -40,15 +40,37 @@ function initFirebase() {
     const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
     
     if (serviceAccountJson) {
+      // Producción/Staging: usar service account
       const serviceAccount = JSON.parse(serviceAccountJson);
       initializeApp({
         credential: cert(serviceAccount),
       });
-    } else {
-      // En desarrollo, usar Application Default Credentials
+      console.log("🔑 Usando Service Account Key");
+    } else if (process.env.FIRESTORE_EMULATOR_HOST) {
+      // Desarrollo: usar emulador de Firestore
       initializeApp({
         projectId: process.env.FIREBASE_PROJECT_ID || "jumping-park-dev",
       });
+      console.log(`🔌 Conectando al emulador: ${process.env.FIRESTORE_EMULATOR_HOST}`);
+    } else {
+      // Sin credenciales ni emulador: mostrar error útil
+      console.error(`
+╔════════════════════════════════════════════════════════════════════════╗
+║  ⚠️  CREDENCIALES DE FIREBASE NO ENCONTRADAS                          ║
+╠════════════════════════════════════════════════════════════════════════╣
+║  Para ejecutar el seed, necesitas una de estas opciones:              ║
+║                                                                        ║
+║  OPCIÓN 1 - Usar el emulador de Firestore (recomendado para dev):     ║
+║    1. Ejecutar: firebase emulators:start                              ║
+║    2. En otra terminal: FIRESTORE_EMULATOR_HOST=localhost:8080 bun run seed ║
+║                                                                        ║
+║  OPCIÓN 2 - Usar Service Account (para datos reales):                 ║
+║    1. Descargar el JSON desde Firebase Console > Project Settings     ║
+║    2. Exportar: FIREBASE_SERVICE_ACCOUNT_KEY='{"type":"..."}' bun run seed ║
+║                                                                        ║
+╚════════════════════════════════════════════════════════════════════════╝
+`);
+      process.exit(1);
     }
   }
   return getFirestore();
@@ -174,9 +196,10 @@ function generateUser() {
     fullName: faker.person.fullName(),
     email: faker.internet.email().toLowerCase(),
     phone: `+57 ${faker.string.numeric(3)} ${faker.string.numeric(3)} ${faker.string.numeric(4)}`,
+    // Firestore no acepta undefined, usar null para campos opcionales vacíos
     address: faker.datatype.boolean({ probability: 0.7 })
       ? `${faker.location.streetAddress()}, ${faker.location.city()}`
-      : undefined,
+      : null,
     minors,
     createdAt: Timestamp.fromDate(createdAt),
     updatedAt: Timestamp.fromDate(updatedAt),

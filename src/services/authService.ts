@@ -1,5 +1,6 @@
 import { createDoc, deleteDoc, getDocById } from "../lib/firestoreService";
 import { sendOtpEmail as sendOtpViaEmail } from "./emailService";
+import { toJsDate, isExpired } from "../lib/utils/dateUtils";
 import type { OtpRecord, OtpSession, UserProfile } from "../types/firestore";
 
 // Duración de la sesión OTP en minutos
@@ -56,18 +57,15 @@ export async function validateOtp(
     }
 
     const matchesCode = otpDoc.code === code;
-    const rawExpiresAt = otpDoc.expiresAt as Date | { toDate?: () => Date };
-    const expiresAtDate = rawExpiresAt && "toDate" in rawExpiresAt && typeof rawExpiresAt.toDate === "function"
-      ? rawExpiresAt.toDate()
-      : (rawExpiresAt as Date);
-    const isExpired = expiresAtDate <= new Date();
+    const expiresAtDate = toJsDate(otpDoc.expiresAt);
+    const hasExpired = isExpired(otpDoc.expiresAt);
 
     if (!matchesCode) {
       console.warn(`[AuthService] Código incorrecto. Recibido: ${code}, Esperado: ${otpDoc.code}`);
       return { valid: false, message: "Código incorrecto" };
     }
 
-    if (isExpired) {
+    if (hasExpired) {
       console.warn(`[AuthService] Código expirado. Expiró en: ${expiresAtDate}`);
       await deleteDoc("otp_sessions", email);
       return { valid: false, message: "Código expirado" };
@@ -130,15 +128,10 @@ export async function verifyOtpSession(userId: string): Promise<boolean> {
       return false;
     }
 
-    // Verificar expiración
-    const rawExpiresAt = session.expiresAt as Date | { toDate?: () => Date };
-    const expiresAtDate = rawExpiresAt && "toDate" in rawExpiresAt && typeof rawExpiresAt.toDate === "function"
-      ? rawExpiresAt.toDate()
-      : (rawExpiresAt as Date);
-    
-    const isExpired = expiresAtDate <= new Date();
+    // Verificar expiración usando utilidad centralizada
+    const hasExpired = isExpired(session.expiresAt);
 
-    if (isExpired) {
+    if (hasExpired) {
       console.warn(`[AuthService] Sesión OTP expirada para usuario: ${userId}`);
       // Limpiar sesión expirada
       await deleteDoc("otp_sessions", userId);

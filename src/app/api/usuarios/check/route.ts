@@ -18,9 +18,9 @@ const checkUserSchema = z.object({
   cedula: z
     .string()
     .trim()
-    .min(6, "La cédula debe tener al menos 6 dígitos")
-    .max(15, "La cédula no puede exceder 15 dígitos")
-    .regex(/^\d+$/, "Solo se permiten números"),
+    .min(6, "El documento debe tener al menos 6 caracteres")
+    .max(15, "El documento no puede exceder 15 caracteres")
+    .regex(/^[a-zA-Z0-9]+$/, "Solo se permiten letras y números"),
 });
 
 // ============================================================================
