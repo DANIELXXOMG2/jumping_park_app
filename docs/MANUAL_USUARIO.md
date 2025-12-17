@@ -13,9 +13,10 @@
 2. [Glosario de Términos](#2-glosario-de-términos)
 3. [Rol Cajero/Portero - Visor de Verificación](#3-rol-cajeroportero---visor-de-verificación)
 4. [Rol Visitante - Flujo en Kiosko](#4-rol-visitante---flujo-en-kiosko)
-5. [Preguntas Frecuentes (FAQ)](#5-preguntas-frecuentes-faq)
-6. [Solución de Problemas](#6-solución-de-problemas)
-7. [Contacto de Soporte](#7-contacto-de-soporte)
+5. [Panel Administrativo](#5-panel-administrativo)
+6. [Preguntas Frecuentes (FAQ)](#6-preguntas-frecuentes-faq)
+7. [Solución de Problemas](#7-solución-de-problemas)
+8. [Contacto de Soporte](#8-contacto-de-soporte)
 
 ---
 
@@ -339,7 +340,255 @@ El documento incluye:
 
 ---
 
-## 5. Preguntas Frecuentes (FAQ)
+## 5. Panel Administrativo
+
+El **Panel Administrativo** es la herramienta central para la gestión del sistema de consentimientos. Solo el personal autorizado puede acceder a esta sección.
+
+### 5.1 Login con Google
+
+El acceso al panel administrativo se realiza mediante autenticación con **Google**.
+
+#### Requisitos de Acceso
+
+- ✅ Cuenta de Google corporativa o personal autorizada
+- ✅ Rol asignado previamente por un administrador del sistema
+- ✅ Conexión a internet estable
+
+#### Pasos para Ingresar
+
+1. Abre el navegador y accede a la URL del panel: `/admin`
+2. Haz clic en el botón **"Iniciar sesión con Google"**
+3. Selecciona tu cuenta de Google autorizada
+4. Espera la validación de permisos
+5. Serás redirigido al Dashboard automáticamente
+
+![Placeholder - Login con Google](./screenshots/admin-google-login.png)
+<!-- PLACEHOLDER: Captura de la pantalla de login con botón de Google -->
+
+> ⚠️ **Importante:** Si tu cuenta no tiene permisos asignados, verás un mensaje de error. Contacta al administrador del sistema.
+
+---
+
+### 5.2 Dashboard - Métricas y Estadísticas
+
+El Dashboard es la pantalla principal del panel administrativo. Muestra un resumen de la actividad del sistema.
+
+#### Métricas Disponibles
+
+| Métrica | Descripción |
+|---------|-------------|
+| **Consentimientos Hoy** | Total de consentimientos firmados en el día actual |
+| **Consentimientos del Mes** | Acumulado de consentimientos en el mes |
+| **Usuarios Registrados** | Total de visitantes en la base de datos |
+| **Ingresos del Día** | Cantidad de accesos registrados hoy |
+
+#### Vista del Dashboard
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  📊 DASHBOARD                                                       │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐              │
+│  │ 📝 Hoy       │  │ 📅 Este Mes  │  │ 👥 Usuarios  │              │
+│  │     45       │  │     1,234    │  │    5,678     │              │
+│  │ consentim.   │  │ consentim.   │  │ registrados  │              │
+│  └──────────────┘  └──────────────┘  └──────────────┘              │
+│                                                                     │
+│  📈 Actividad Reciente                                             │
+│  ─────────────────────────────────────────────────                 │
+│  • Juan Pérez firmó consentimiento #1234 (hace 5 min)              │
+│  • María García firmó consentimiento #1233 (hace 12 min)           │
+│  • Carlos López ingresó al parque (hace 15 min)                    │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+![Placeholder - Dashboard con Métricas](./screenshots/admin-dashboard-metrics.png)
+<!-- PLACEHOLDER: Captura del dashboard mostrando las tarjetas de métricas -->
+
+---
+
+### 5.3 Gestión de Consentimientos
+
+En esta sección puedes buscar, visualizar y gestionar todos los consentimientos firmados.
+
+#### Cómo Buscar un Consentimiento
+
+1. Navega a **"Consentimientos"** en el menú lateral
+2. Usa la **barra de búsqueda** para filtrar por:
+   - Número de cédula
+   - Nombre del visitante
+   - Número de consecutivo
+3. Los resultados se muestran en una tabla paginada
+
+![Placeholder - Lista de Consentimientos](./screenshots/admin-consents-list.png)
+<!-- PLACEHOLDER: Captura de la tabla de consentimientos con barra de búsqueda -->
+
+#### Ver Detalle de un Consentimiento
+
+1. En la tabla de resultados, haz clic en el **número de consecutivo** o en el botón **"Ver"**
+2. Se abrirá una vista detallada con:
+   - Datos completos del firmante
+   - Fecha y hora de firma
+   - Lista de menores incluidos
+   - Estado del consentimiento
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  📄 DETALLE DEL CONSENTIMIENTO #1234                                │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  👤 Firmante                                                        │
+│  ─────────────                                                      │
+│  Nombre: Juan Pérez García                                          │
+│  Cédula: 1234567890                                                 │
+│  Email: juan@email.com                                              │
+│  Teléfono: 300 123 4567                                             │
+│                                                                     │
+│  📅 Información de Firma                                            │
+│  ─────────────────────                                              │
+│  Fecha: 15 de Diciembre de 2025                                     │
+│  Hora: 14:35:22                                                     │
+│  Estado: ✅ Vigente                                                 │
+│                                                                     │
+│  👶 Menores Incluidos (2)                                           │
+│  ──────────────────────                                             │
+│  • María Pérez - 8 años                                             │
+│  • Carlos Pérez - 12 años                                           │
+│                                                                     │
+│  [Ver Firma] [Descargar PDF] [Volver]                               │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+![Placeholder - Detalle del Consentimiento](./screenshots/admin-consent-detail.png)
+<!-- PLACEHOLDER: Captura de la vista de detalle de un consentimiento -->
+
+#### Ver la Firma del Consentimiento
+
+1. Dentro del detalle del consentimiento, haz clic en **"Ver Firma"**
+2. Se mostrará la imagen de la firma digital capturada
+3. Puedes verificar visualmente la autenticidad de la firma
+
+![Placeholder - Vista de Firma](./screenshots/admin-consent-signature.png)
+<!-- PLACEHOLDER: Captura mostrando la firma digital del consentimiento -->
+
+---
+
+### 5.4 Configuración del Sistema
+
+La sección de configuración permite personalizar aspectos clave del sistema **sin necesidad de tocar código**.
+
+#### Editar el Texto Legal del Consentimiento
+
+Esta es una de las funciones más importantes. Permite modificar el contenido del documento que firman los visitantes.
+
+##### Pasos para Editar:
+
+1. Navega a **"Configuración"** en el menú lateral
+2. Busca la sección **"Texto del Consentimiento"**
+3. Verás un editor de texto con el contenido actual
+4. Realiza los cambios necesarios:
+   - Modifica párrafos existentes
+   - Agrega nuevas cláusulas
+   - Actualiza información legal
+5. Haz clic en **"Guardar Cambios"**
+6. Los nuevos consentimientos usarán el texto actualizado
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  ⚙️ CONFIGURACIÓN > Texto del Consentimiento                       │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  📝 Editor de Texto Legal                                           │
+│  ┌───────────────────────────────────────────────────────────────┐ │
+│  │                                                               │ │
+│  │  CONSENTIMIENTO INFORMADO Y LIBERACIÓN DE RESPONSABILIDAD     │ │
+│  │                                                               │ │
+│  │  Yo, el firmante, declaro que:                                │ │
+│  │                                                               │ │
+│  │  1. Comprendo que las actividades en Jumping Park             │ │
+│  │     conllevan riesgos inherentes...                           │ │
+│  │                                                               │ │
+│  │  2. Me comprometo a seguir todas las instrucciones            │ │
+│  │     del personal del parque...                                │ │
+│  │                                                               │ │
+│  │  [El texto continúa...]                                       │ │
+│  │                                                               │ │
+│  └───────────────────────────────────────────────────────────────┘ │
+│                                                                     │
+│  [Cancelar]                              [💾 Guardar Cambios]       │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+![Placeholder - Editor de Texto Legal](./screenshots/admin-config-consent-text.png)
+<!-- PLACEHOLDER: Captura del editor de texto del consentimiento -->
+
+> ⚠️ **Nota Legal:** Cualquier cambio en el texto del consentimiento debe ser revisado por el departamento legal antes de publicarse. Los consentimientos ya firmados **no se ven afectados** por cambios posteriores.
+
+---
+
+### 5.5 Gestión de Usuarios
+
+En esta sección puedes ver y gestionar los usuarios del sistema administrativo.
+
+#### Ver Usuarios y sus Roles
+
+1. Navega a **"Usuarios"** en el menú lateral
+2. Verás una tabla con todos los usuarios registrados
+3. La tabla muestra:
+   - Nombre del usuario
+   - Email
+   - Rol asignado
+   - Estado de la cuenta
+
+#### Roles Disponibles
+
+| Rol | Permisos |
+|-----|----------|
+| **Administrador** | Acceso completo a todas las funciones |
+| **Cajero/Portero** | Solo puede verificar consentimientos y registrar ingresos |
+| **Visualizador** | Solo puede ver información, sin editar |
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  👥 GESTIÓN DE USUARIOS                                             │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  🔍 Buscar usuario...                                               │
+│                                                                     │
+│  ┌───────────────────────────────────────────────────────────────┐ │
+│  │ Nombre           │ Email                │ Rol          │ ⚙️  │ │
+│  ├───────────────────────────────────────────────────────────────┤ │
+│  │ Admin Principal  │ admin@jumping.com    │ 🔴 Admin     │ ... │ │
+│  │ Juan Portero     │ juan@jumping.com     │ 🟡 Cajero    │ ... │ │
+│  │ María Caja       │ maria@jumping.com    │ 🟡 Cajero    │ ... │ │
+│  │ Carlos Supervisor│ carlos@jumping.com   │ 🟢 Viewer    │ ... │ │
+│  └───────────────────────────────────────────────────────────────┘ │
+│                                                                     │
+│  Mostrando 4 de 4 usuarios                                         │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+![Placeholder - Lista de Usuarios](./screenshots/admin-users-list.png)
+<!-- PLACEHOLDER: Captura de la tabla de usuarios con roles -->
+
+#### Identificación Visual de Roles
+
+Cada rol tiene un color distintivo para facilitar su identificación:
+
+- 🔴 **Rojo:** Administrador (acceso total)
+- 🟡 **Amarillo:** Cajero/Portero (acceso operativo)
+- 🟢 **Verde:** Visualizador (solo lectura)
+
+> 💡 **Tip:** Para cambiar el rol de un usuario o agregar nuevos usuarios administrativos, contacta al administrador del sistema o consulta el Manual de Instalación.
+
+---
+
+## 6. Preguntas Frecuentes (FAQ)
 
 ### Para Visitantes
 
@@ -379,7 +628,7 @@ Al buscar al adulto, el sistema muestra la lista de menores incluidos en su cons
 
 ---
 
-## 6. Solución de Problemas
+## 7. Solución de Problemas
 
 ### Problemas Comunes en el Kiosko
 
@@ -402,7 +651,7 @@ Al buscar al adulto, el sistema muestra la lista de menores incluidos en su cons
 
 ---
 
-## 7. Contacto de Soporte
+## 8. Contacto de Soporte
 
 ### Soporte Técnico
 
@@ -468,13 +717,20 @@ docs/
 ├── MANUAL_USUARIO.md
 └── screenshots/
     ├── admin-login.png
+    ├── admin-google-login.png
     ├── admin-dashboard.png
+    ├── admin-dashboard-metrics.png
     ├── admin-search-bar.png
     ├── admin-status-green.png
     ├── admin-status-red.png
     ├── admin-status-yellow.png
     ├── admin-access-confirm.png
     ├── admin-access-history.png
+    ├── admin-consents-list.png
+    ├── admin-consent-detail.png
+    ├── admin-consent-signature.png
+    ├── admin-config-consent-text.png
+    ├── admin-users-list.png
     ├── kiosk-home.png
     ├── kiosk-cedula.png
     ├── kiosk-otp.png
