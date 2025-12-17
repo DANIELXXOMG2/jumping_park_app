@@ -3,10 +3,14 @@
  *
  * Genera documentos PDF profesionales con diseño de marca.
  * Incluye manejo de texto largo (truncate/wrap) para evitar desbordamientos.
+ * 
+ * @note El contenido legal se importa desde legalContent.ts para mantener
+ *       consistencia entre el frontend y los PDFs generados.
  */
 import { PDFDocument, PDFPage, PDFFont, StandardFonts, rgb, RGB } from "pdf-lib";
 import type { Consent, Minor } from "@/types/firestore";
 import { toJsDate } from "@/lib/utils/dateUtils";
+import { getConsentContent, DEFAULT_CONSENT_CONTENT } from "@/lib/data/legalContent";
 import fs from "fs/promises";
 import path from "path";
 
@@ -294,33 +298,103 @@ export async function generateConsentPdf(
   yPosition -= 25;
 
   // =========================================================================
-  // 3. TEXTO LEGAL
+  // 3. TEXTO LEGAL COMPLETO (Importado desde legalContent.ts)
   // =========================================================================
 
-  const legalParagraphs = [
-    "Por medio del presente documento, yo, identificado como aparece al pie de mi firma, actuando en nombre propio y/o como padre, madre o tutor legal de los menores relacionados, declaro que he leído, comprendido y aceptado los términos y condiciones de uso de las instalaciones de JUMPING PARK.",
-    "Reconozco que la actividad física en camas elásticas y atracciones similares conlleva riesgos inherentes, incluyendo pero no limitado a lesiones físicas. Asumo voluntariamente todos los riesgos asociados con el uso de las instalaciones.",
-    "Exonero a JUMPING PARK, sus empleados, directivos y agentes de cualquier responsabilidad por lesiones, daños o pérdidas que puedan ocurrir durante mi estancia o la de los menores a mi cargo en las instalaciones, salvo aquellos derivados de negligencia grave o dolo por parte de la empresa.",
-    "Certifico que yo y los menores a mi cargo nos encontramos en condiciones físicas aptas para participar en las actividades y que seguiremos todas las instrucciones de seguridad impartidas por el personal.",
-  ];
+  // Obtener contenido legal con placeholders reemplazados
+  const legalContent = getConsentContent();
+  const { consent } = legalContent;
 
-  for (const paragraph of legalParagraphs) {
-    yPosition = drawWrappedText(
-      page,
-      paragraph,
-      PAGE.marginX,
-      yPosition,
-      font,
-      9,
-      contentWidth,
-      12,
-      COLORS.lightText
-    );
-    yPosition -= 8;
+  // Título de la sección de consentimiento
+  page.drawText(consent.subtitle, {
+    x: PAGE.marginX,
+    y: yPosition,
+    size: 8,
+    font,
+    color: COLORS.lightText,
+  });
+  yPosition -= 18;
+
+  // Introducción del consentimiento
+  yPosition = drawWrappedText(
+    page,
+    consent.introduction,
+    PAGE.marginX,
+    yPosition,
+    font,
+    9,
+    contentWidth,
+    12,
+    COLORS.darkText
+  );
+  yPosition -= 12;
+
+  // DECLARACIÓN JURAMENTADA Y TÉRMINOS - Texto legal completo
+  const companyName = DEFAULT_CONSENT_CONTENT.meta.companyName;
+  const fullLegalClauses = DEFAULT_CONSENT_CONTENT.consent.clauses
+    .map((c) => `${c.id}. ${c.text.replace(/{COMPANY_NAME}/g, companyName)}`)
+    .join("\n\n");
+  
+  const fullLegalText = `DECLARACIÓN JURAMENTADA Y TÉRMINOS:\n\n${fullLegalClauses}\n\n${DEFAULT_CONSENT_CONTENT.consent.closingStatement.replace(/{COMPANY_NAME}/g, companyName)}`;
+
+  // Renderizar texto legal completo con fuente pequeña
+  // Dividir en líneas y verificar si necesitamos más páginas
+  const legalFontSize = 7;
+  const legalLineHeight = 9;
+  const legalLines = fullLegalText.split("\n").flatMap((paragraph) => {
+    if (paragraph.trim() === "") return [""];
+    return wrapText(paragraph, font, legalFontSize, contentWidth);
+  });
+
+  // Calcular espacio mínimo necesario para datos del responsable, menores, firma y footer
+  const minSpaceForRest = 280;
+  let currentPage = page;
+
+  for (const line of legalLines) {
+    // Verificar si necesitamos una nueva página
+    if (yPosition < PAGE.marginBottom + minSpaceForRest) {
+      // Agregar indicador de continuación
+      currentPage.drawText("(continúa en la siguiente página...)", {
+        x: PAGE.marginX,
+        y: yPosition,
+        size: 7,
+        font,
+        color: COLORS.lightText,
+      });
+      
+      // Crear nueva página
+      currentPage = pdfDoc.addPage([PAGE.width, PAGE.height]);
+      yPosition = PAGE.height - PAGE.marginTop;
+      
+      // Header simple en página de continuación
+      currentPage.drawText("CONSENTIMIENTO INFORMADO (Continuación)", {
+        x: PAGE.marginX,
+        y: yPosition,
+        size: 10,
+        font: boldFont,
+        color: COLORS.darkText,
+      });
+      yPosition -= 25;
+    }
+
+    if (line.trim()) {
+      currentPage.drawText(line, {
+        x: PAGE.marginX,
+        y: yPosition,
+        size: legalFontSize,
+        font,
+        color: COLORS.darkText,
+      });
+    }
+    yPosition -= legalLineHeight;
   }
 
-  yPosition -= 10;
-  drawSeparator(page, yPosition);
+  // Usar la última página para el resto del contenido
+  // Reasignar para que las siguientes secciones usen la página correcta
+  const finalPage = currentPage;
+
+  yPosition -= 15;
+  drawSeparator(finalPage, yPosition);
   yPosition -= 25;
 
   // =========================================================================
@@ -328,7 +402,7 @@ export async function generateConsentPdf(
   // =========================================================================
 
   // Título de sección con icono verde
-  page.drawRectangle({
+  finalPage.drawRectangle({
     x: PAGE.marginX,
     y: yPosition - 2,
     width: 4,
@@ -336,7 +410,7 @@ export async function generateConsentPdf(
     color: COLORS.green,
   });
 
-  page.drawText("DATOS DEL RESPONSABLE", {
+  finalPage.drawText("DATOS DEL RESPONSABLE", {
     x: PAGE.marginX + 12,
     y: yPosition,
     size: 11,
@@ -350,13 +424,13 @@ export async function generateConsentPdf(
   const labelWidth = 80;
   const dataFields = [
     { label: "Nombre:", value: data.adultSnapshot.fullName },
-    { label: "Documento:", value: data.adultSnapshot.uid },
+    { label: "Documento:", value: data.adultSnapshot.uid || data.userId },
     { label: "Email:", value: data.adultSnapshot.email },
     { label: "Teléfono:", value: data.adultSnapshot.phone },
   ];
 
   for (const field of dataFields) {
-    page.drawText(field.label, {
+    finalPage.drawText(field.label, {
       x: PAGE.marginX,
       y: yPosition,
       size: 9,
@@ -365,7 +439,7 @@ export async function generateConsentPdf(
     });
 
     drawTruncatedText(
-      page,
+      finalPage,
       field.value || "N/A",
       PAGE.marginX + labelWidth,
       yPosition,
@@ -379,7 +453,7 @@ export async function generateConsentPdf(
   }
 
   yPosition -= 10;
-  drawSeparator(page, yPosition);
+  drawSeparator(finalPage, yPosition);
   yPosition -= 25;
 
   // =========================================================================
@@ -387,7 +461,7 @@ export async function generateConsentPdf(
   // =========================================================================
 
   // Título de sección con icono azul
-  page.drawRectangle({
+  finalPage.drawRectangle({
     x: PAGE.marginX,
     y: yPosition - 2,
     width: 4,
@@ -395,7 +469,7 @@ export async function generateConsentPdf(
     color: COLORS.blue,
   });
 
-  page.drawText("MENORES A CARGO", {
+  finalPage.drawText("MENORES A CARGO", {
     x: PAGE.marginX + 12,
     y: yPosition,
     size: 11,
@@ -406,7 +480,7 @@ export async function generateConsentPdf(
   yPosition -= 22;
 
   if (data.minorsSnapshot.length === 0) {
-    page.drawText("No se registraron menores a cargo.", {
+    finalPage.drawText("No se registraron menores a cargo.", {
       x: PAGE.marginX,
       y: yPosition,
       size: 9,
@@ -423,7 +497,7 @@ export async function generateConsentPdf(
           : minor.fullName || "Sin nombre";
 
       // Bullet point verde
-      page.drawCircle({
+      finalPage.drawCircle({
         x: PAGE.marginX + 4,
         y: yPosition + 3,
         size: 3,
@@ -432,7 +506,7 @@ export async function generateConsentPdf(
 
       // Nombre del menor (truncado si es necesario)
       drawTruncatedText(
-        page,
+        finalPage,
         minorName,
         PAGE.marginX + 14,
         yPosition,
@@ -455,7 +529,7 @@ export async function generateConsentPdf(
 
       const detailsText = details.join(" | ");
       drawTruncatedText(
-        page,
+        finalPage,
         detailsText,
         PAGE.marginX + 14,
         yPosition,
@@ -470,7 +544,7 @@ export async function generateConsentPdf(
   }
 
   yPosition -= 5;
-  drawSeparator(page, yPosition);
+  drawSeparator(finalPage, yPosition);
   yPosition -= 25;
 
   // =========================================================================
@@ -478,7 +552,7 @@ export async function generateConsentPdf(
   // =========================================================================
 
   // Título de sección con icono morado
-  page.drawRectangle({
+  finalPage.drawRectangle({
     x: PAGE.marginX,
     y: yPosition - 2,
     width: 4,
@@ -486,7 +560,7 @@ export async function generateConsentPdf(
     color: COLORS.purple,
   });
 
-  page.drawText("FIRMA DIGITAL", {
+  finalPage.drawText("FIRMA DIGITAL", {
     x: PAGE.marginX + 12,
     y: yPosition,
     size: 11,
@@ -523,7 +597,7 @@ export async function generateConsentPdf(
       }
 
       // Caja contenedora de firma
-      page.drawRectangle({
+      finalPage.drawRectangle({
         x: PAGE.marginX,
         y: yPosition - sigHeight - 10,
         width: sigWidth + 20,
@@ -532,7 +606,7 @@ export async function generateConsentPdf(
         borderWidth: 1,
       });
 
-      page.drawImage(signatureImage, {
+      finalPage.drawImage(signatureImage, {
         x: PAGE.marginX + 10,
         y: yPosition - sigHeight - 5,
         width: sigWidth,
@@ -545,7 +619,7 @@ export async function generateConsentPdf(
     }
   } catch (error) {
     console.error("[PDFService] Error embebiendo firma:", error);
-    page.drawText("(Firma no disponible)", {
+    finalPage.drawText("(Firma no disponible)", {
       x: PAGE.marginX,
       y: yPosition - 15,
       size: 9,
@@ -562,12 +636,12 @@ export async function generateConsentPdf(
   const footerY = PAGE.marginBottom - 20;
 
   // Línea separadora del footer
-  drawSeparator(page, footerY + 25);
+  drawSeparator(finalPage, footerY + 25);
 
   // Dirección legal
   const footerAddress = "Jumping Park - C.C. Primavera Urbana, Piso 3, Local 314 - Villavicencio, Meta";
   const addressWidth = font.widthOfTextAtSize(footerAddress, 8);
-  page.drawText(footerAddress, {
+  finalPage.drawText(footerAddress, {
     x: (width - addressWidth) / 2,
     y: footerY + 10,
     size: 8,
@@ -579,7 +653,7 @@ export async function generateConsentPdf(
   const signedAtDate = toDate(data.signedAt);
   const footerMeta = `Documento ID: ${data.id} | Consecutivo: #${data.consecutivo} | Firmado: ${formatDate(signedAtDate)}`;
   const metaWidth = font.widthOfTextAtSize(footerMeta, 7);
-  page.drawText(footerMeta, {
+  finalPage.drawText(footerMeta, {
     x: (width - metaWidth) / 2,
     y: footerY - 5,
     size: 7,

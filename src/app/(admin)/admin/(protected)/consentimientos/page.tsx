@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { DataTable } from "@/components/admin/DataTable";
 import { SearchInput } from "@/components/admin/SearchInput";
@@ -8,92 +8,34 @@ import { Badge } from "@/components/admin/Badge";
 import { Modal } from "@/components/admin/Modal";
 import { Button } from "@/components/admin/Button";
 import { formatRelativeTime } from "@/lib/utils";
-import { adminGet, adminPost, adminDownload, getAuthToken } from "@/lib/adminApi";
-import { Eye, ExternalLink, FileText, Download, Send, Loader2 } from "lucide-react";
+import { adminPost, adminDownload, getAuthToken } from "@/lib/adminApi";
+import { useConsents, type Consent } from "@/hooks";
+import { Eye, ExternalLink, FileText, Download, Send, Loader2, MoreHorizontal, PenTool } from "lucide-react";
 import { toast } from "sonner";
-
-interface Minor {
-  fullName?: string;
-  firstName?: string;
-  lastName?: string;
-  birthDate: string;
-  relationship: string;
-  eps?: string;
-  idType?: string;
-  idNumber?: string;
-}
-
-interface Consent {
-  id: string;
-  consecutivo: number;
-  userId: string;
-  adultName: string;
-  adultEmail: string;
-  adultPhone: string;
-  minorsCount: number;
-  minors: Minor[];
-  signatureUrl: string;
-  policyVersion: string;
-  ipAddress?: string;
-  createdAt: string | null;
-  signedAt: string | null;
-  validUntil: string | null;
-}
-
-interface Pagination {
-  total: number;
-  limit: number;
-  offset: number;
-  hasMore: boolean;
-}
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function ConsentsPage() {
   const router = useRouter();
-  const [consents, setConsents] = useState<Consent[]>([]);
-  const [pagination, setPagination] = useState<Pagination>({
-    total: 0,
-    limit: 20,
-    offset: 0,
-    hasMore: false,
-  });
   const [search, setSearch] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
+  const [offset, setOffset] = useState(0);
   const [selectedConsent, setSelectedConsent] = useState<Consent | null>(null);
   const [isResending, setIsResending] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
-  const fetchConsents = useCallback(
-    async (searchTerm: string, offset: number) => {
-      try {
-        setIsLoading(true);
-        const params = new URLSearchParams({
-          limit: "20",
-          offset: offset.toString(),
-        });
-        if (searchTerm) {
-          params.set("search", searchTerm);
-        }
-
-        const data = await adminGet<{ consents: Consent[]; pagination: Pagination }>(
-          `/api/admin/consents?${params}`
-        );
-        setConsents(data.consents);
-        setPagination(data.pagination);
-      } catch {
-        // Error silencioso
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    []
-  );
-
-  useEffect(() => {
-    fetchConsents(search, 0);
-  }, [search, fetchConsents]);
+  // Usar SWR para caché y revalidación automática
+  const { consents, pagination, isLoading } = useConsents({
+    search,
+    offset,
+    limit: 20,
+  });
 
   const handlePageChange = (newOffset: number) => {
-    fetchConsents(search, newOffset);
+    setOffset(newOffset);
   };
 
   const isValidConsent = (validUntil: string | null) => {
@@ -131,6 +73,33 @@ export default function ConsentsPage() {
       });
     } finally {
       setIsExporting(false);
+    }
+  };
+
+  // Descargar PDF de un consentimiento
+  const handleDownloadPdf = async (consent: Consent) => {
+    try {
+      const token = await getAuthToken();
+      if (token) {
+        const pdfUrl = `/api/admin/consents/${consent.id}/pdf`;
+        const response = await fetch(pdfUrl, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (response.ok) {
+          const blob = await response.blob();
+          const url = URL.createObjectURL(blob);
+          window.open(url, "_blank");
+        }
+      }
+    } catch {
+      toast.error("Error al abrir PDF");
+    }
+  };
+
+  // Ver firma de un consentimiento
+  const handleViewSignature = (consent: Consent) => {
+    if (consent.signatureUrl) {
+      window.open(consent.signatureUrl, "_blank");
     }
   };
 
@@ -191,18 +160,47 @@ export default function ConsentsPage() {
       key: "actions",
       header: "",
       render: (consent: Consent) => (
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              setSelectedConsent(consent);
-            }}
-          >
-            <Eye className="w-4 h-4" />
-          </Button>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              className="p-2 rounded-lg hover:bg-surface-muted transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <MoreHorizontal className="w-4 h-4 text-foreground/60" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedConsent(consent);
+              }}
+            >
+              <Eye className="w-4 h-4" />
+              Ver Detalle
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDownloadPdf(consent);
+              }}
+            >
+              <FileText className="w-4 h-4" />
+              Descargar PDF
+            </DropdownMenuItem>
+            {consent.signatureUrl && (
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleViewSignature(consent);
+                }}
+              >
+                <PenTool className="w-4 h-4" />
+                Ver Firma
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       ),
     },
   ];
@@ -239,7 +237,7 @@ export default function ConsentsPage() {
           value={search}
           onChange={(value) => {
             setSearch(value);
-            setPagination((prev) => ({ ...prev, offset: 0 }));
+            setOffset(0);
           }}
           placeholder="Buscar por nombre, email, documento, consecutivo..."
           className="flex-1 max-w-md"

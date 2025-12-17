@@ -3,16 +3,16 @@ import type { NextRequest } from "next/server";
 
 /**
  * ============================================================================
- * MIDDLEWARE - RBAC para rutas protegidas
+ * PROXY - RBAC para rutas protegidas (Next.js 16+)
  * ============================================================================
  * 
  * Protege las rutas bajo /admin/* verificando la autenticación del usuario.
  * 
- * Nota: El middleware de Next.js se ejecuta en Edge Runtime y no tiene acceso
+ * Nota: El proxy de Next.js se ejecuta en Edge Runtime y no tiene acceso
  * directo a Firebase Admin SDK. La verificación completa del rol se hace en
  * el componente AdminGuard del lado del cliente.
  * 
- * Este middleware solo verifica la existencia de cookies de sesión de Firebase.
+ * Este proxy solo verifica la existencia de cookies de sesión de Firebase.
  */
 
 // Rutas que no requieren autenticación
@@ -36,7 +36,7 @@ export const config = {
   ],
 };
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Solo verificar rutas bajo /admin

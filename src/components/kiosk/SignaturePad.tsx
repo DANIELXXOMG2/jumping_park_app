@@ -43,19 +43,50 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(({ onEnd }, 
     clear: () => sigCanvas.current?.clear(),
   }));
 
-  // Handle responsive resize
+  /**
+   * Calcula la altura óptima del canvas basándose en el ancho.
+   * Mantiene una relación de aspecto ~2.5:1 para firmas naturales.
+   * Mínimo 150px, máximo 250px para tablets.
+   */
+  const calculateOptimalHeight = (width: number): number => {
+    const aspectRatio = 2.5; // Relación ancho:alto ideal para firmas
+    const calculatedHeight = Math.round(width / aspectRatio);
+    // Limitar entre 150px y 250px para mejor UX en tablets
+    return Math.max(150, Math.min(250, calculatedHeight));
+  };
+
+  // Handle responsive resize con debounce para evitar parpadeos
   useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    
     const resizeCanvas = () => {
       if (containerRef.current) {
         const { width } = containerRef.current.getBoundingClientRect();
-        // Maintain a reasonable aspect ratio or fixed height
-        setCanvasSize({ width, height: 200 });
+        // Evitar re-renders innecesarios si el cambio es mínimo
+        const newHeight = calculateOptimalHeight(width);
+        setCanvasSize((prev) => {
+          if (Math.abs(prev.width - width) > 5 || Math.abs(prev.height - newHeight) > 5) {
+            return { width, height: newHeight };
+          }
+          return prev;
+        });
       }
     };
 
+    // Resize inicial
     resizeCanvas();
-    window.addEventListener("resize", resizeCanvas);
-    return () => window.removeEventListener("resize", resizeCanvas);
+    
+    // Debounce del resize para evitar renders excesivos
+    const handleResize = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(resizeCanvas, 100);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   /**

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Avatar from "boring-avatars";
 import { LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
@@ -55,9 +56,12 @@ export function Header() {
           </div>
 
           {/* Avatar */}
-          <div className="w-9 h-9 rounded-full bg-linear-to-br from-brand-blue to-brand-purple flex items-center justify-center shadow-soft-sm">
-            <span className="text-xs font-bold text-white">{getInitials()}</span>
-          </div>
+          <Avatar
+            size={36}
+            name={user?.email || "admin"}
+            variant="beam"
+            colors={["#1e3a8a", "#3b82f6", "#60a5fa", "#93c5fd", "#f3f4f6"]}
+          />
 
           {/* Theme Toggle */}
           <ThemeToggleCompact />
