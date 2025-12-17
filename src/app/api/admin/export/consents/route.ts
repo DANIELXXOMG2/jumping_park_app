@@ -128,8 +128,9 @@ export async function GET(request: NextRequest) {
       ].join(",");
     });
 
-    // Construir CSV
-    const csv = [headers.join(","), ...rows].join("\n");
+    // Construir CSV con BOM para compatibilidad con Excel
+    const BOM = "\uFEFF";
+    const csv = BOM + [headers.join(","), ...rows].join("\n");
 
     // Nombre del archivo con fecha
     const today = formatDate(new Date());
