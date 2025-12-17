@@ -1,6 +1,6 @@
 /**
  * Template de Email para Consentimiento Firmado - Jumping Park
- * 
+ *
  * Diseño "Ticket de Acceso Digital" con paleta azul oscuro corporativo.
  * Compatible con todos los clientes de email (HTML tables).
  */
@@ -8,19 +8,43 @@
 import { EMAIL_COLORS, EMAIL_CONFIG, getCurrentYear } from "./emailStyles";
 
 export interface ConsentEmailProps {
-  fullName: string;
-  consecutivo: number;
+	fullName: string;
+	consecutivo: number;
 }
 
 /**
  * Genera el HTML del email de consentimiento con diseño corporativo.
  */
-export function generateConsentEmailHtml({ fullName, consecutivo }: ConsentEmailProps): string {
-  const { primary, primaryLight, accent, background, surface, surfaceMuted, textDark, textMuted, textLight, textWhite, border } = EMAIL_COLORS;
-  const { logoUrl, logoWidth, companyName, address, whatsapp, whatsappLink, instagram, facebook } = EMAIL_CONFIG;
-  const year = getCurrentYear();
-  
-  return `
+export function generateConsentEmailHtml({
+	fullName,
+	consecutivo,
+}: ConsentEmailProps): string {
+	const {
+		primary,
+		primaryLight,
+		accent,
+		background,
+		surface,
+		surfaceMuted,
+		textDark,
+		textMuted,
+		textLight,
+		textWhite,
+		border,
+	} = EMAIL_COLORS;
+	const {
+		logoUrl,
+		logoWidth,
+		companyName,
+		address,
+		whatsapp,
+		whatsappLink,
+		instagram,
+		facebook,
+	} = EMAIL_CONFIG;
+	const year = getCurrentYear();
+
+	return `
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -144,7 +168,7 @@ export function generateConsentEmailHtml({ fullName, consecutivo }: ConsentEmail
                   </td>
                   <td style="color: ${textMuted}; font-size: 13px; line-height: 1.5;">
                     <strong style="color: ${textDark};">WhatsApp:</strong><br/>
-                    <a href="tel:${whatsapp.replace(/\s/g, '')}" style="color: ${primaryLight}; text-decoration: none;">${whatsapp}</a>
+                    <a href="tel:${whatsapp.replace(/\s/g, "")}" style="color: ${primaryLight}; text-decoration: none;">${whatsapp}</a>
                   </td>
                 </tr>
               </table>

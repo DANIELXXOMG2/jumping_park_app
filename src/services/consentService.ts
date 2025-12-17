@@ -1,6 +1,6 @@
 /**
  * ConsentService - Servicio de dominio para gestión de consentimientos.
- * 
+ *
  * Orquesta el proceso completo de creación de consentimientos:
  * 1. Upload de firma a Storage
  * 2. Upsert de usuario en Firestore
@@ -9,42 +9,42 @@
  * 5. Generación del PDF
  * 6. Envío del email con el PDF adjunto
  */
-import { db, bucket } from "@/lib/firebaseAdmin";
-import { generateConsentPdf } from "./pdfService";
+import { bucket, db } from "@/lib/firebaseAdmin";
+import type { Consent, Minor, UserProfile } from "@/types/firestore";
 import { sendConsentEmail } from "./emailService";
-import type { Consent, UserProfile, Minor } from "@/types/firestore";
+import { generateConsentPdf } from "./pdfService";
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
 export interface CreateConsentInput {
-  responsibleAdult: {
-    fullName: string;
-    documentId: string; // cédula
-    email: string;
-    phone: string;
-  };
-  minors: Array<{
-    firstName?: string;
-    lastName?: string;
-    fullName?: string;
-    birthDate: string;
-    relationship: "hijo" | "sobrino" | "nieto" | "otro";
-    eps?: string;
-    idType?: "cc" | "ti" | "passport" | "otro";
-    idNumber?: string;
-  }>;
-  signatureBase64: string;
-  ipAddress: string;
+	responsibleAdult: {
+		fullName: string;
+		documentId: string; // cédula
+		email: string;
+		phone: string;
+	};
+	minors: Array<{
+		firstName?: string;
+		lastName?: string;
+		fullName?: string;
+		birthDate: string;
+		relationship: "hijo" | "sobrino" | "nieto" | "otro";
+		eps?: string;
+		idType?: "cc" | "ti" | "passport" | "otro";
+		idNumber?: string;
+	}>;
+	signatureBase64: string;
+	ipAddress: string;
 }
 
 export interface CreateConsentResult {
-  success: boolean;
-  consentId?: string;
-  consecutivo?: number;
-  emailSent?: boolean;
-  error?: string;
+	success: boolean;
+	consentId?: string;
+	consecutivo?: number;
+	emailSent?: boolean;
+	error?: string;
 }
 
 // ============================================================================
@@ -52,349 +52,382 @@ export interface CreateConsentResult {
 // ============================================================================
 
 class ConsentService {
-  private readonly USERS_COLLECTION = "users";
-  private readonly CONSENTS_COLLECTION = "consents";
-  private readonly COUNTERS_COLLECTION = "_counters";
-  private readonly COUNTER_DOC = "consents";
+	private readonly USERS_COLLECTION = "users";
+	private readonly CONSENTS_COLLECTION = "consents";
+	private readonly COUNTERS_COLLECTION = "_counters";
+	private readonly COUNTER_DOC = "consents";
 
-  // --------------------------------------------------------------------------
-  // CONSECUTIVO ATÓMICO (RF-08)
-  // --------------------------------------------------------------------------
+	// --------------------------------------------------------------------------
+	// CONSECUTIVO ATÓMICO (RF-08)
+	// --------------------------------------------------------------------------
 
-  /**
-   * Genera un consecutivo único usando transacciones atómicas de Firestore.
-   * 
-   * Cumple con RF-08: Generación única de ID de consentimiento.
-   * Garantiza que no haya colisiones ni huecos en la secuencia.
-   * 
-   * @returns Número consecutivo único (1001, 1002, 1003...)
-   */
-  private async generateConsecutivo(): Promise<number> {
-    const counterRef = db.collection(this.COUNTERS_COLLECTION).doc(this.COUNTER_DOC);
+	/**
+	 * Genera un consecutivo único usando transacciones atómicas de Firestore.
+	 *
+	 * Cumple con RF-08: Generación única de ID de consentimiento.
+	 * Garantiza que no haya colisiones ni huecos en la secuencia.
+	 *
+	 * @returns Número consecutivo único (1001, 1002, 1003...)
+	 */
+	private async generateConsecutivo(): Promise<number> {
+		const counterRef = db
+			.collection(this.COUNTERS_COLLECTION)
+			.doc(this.COUNTER_DOC);
 
-    const newConsecutivo = await db.runTransaction(async (transaction) => {
-      const counterDoc = await transaction.get(counterRef);
+		const newConsecutivo = await db.runTransaction(async (transaction) => {
+			const counterDoc = await transaction.get(counterRef);
 
-      let currentValue: number;
+			let currentValue: number;
 
-      if (!counterDoc.exists) {
-        // Primera vez: inicializar en 1000 (el primer consecutivo será 1001)
-        currentValue = 1000;
-        console.log("[ConsentService] Inicializando contador de consecutivos en 1000");
-      } else {
-        currentValue = counterDoc.data()?.value ?? 1000;
-      }
+			if (!counterDoc.exists) {
+				// Primera vez: inicializar en 1000 (el primer consecutivo será 1001)
+				currentValue = 1000;
+				console.log(
+					"[ConsentService] Inicializando contador de consecutivos en 1000",
+				);
+			} else {
+				currentValue = counterDoc.data()?.value ?? 1000;
+			}
 
-      const nextValue = currentValue + 1;
+			const nextValue = currentValue + 1;
 
-      // Actualizar el contador atómicamente
-      transaction.set(counterRef, { 
-        value: nextValue,
-        updatedAt: new Date(),
-      });
+			// Actualizar el contador atómicamente
+			transaction.set(counterRef, {
+				value: nextValue,
+				updatedAt: new Date(),
+			});
 
-      return nextValue;
-    });
+			return nextValue;
+		});
 
-    console.log(`[ConsentService] Consecutivo generado: ${newConsecutivo}`);
-    return newConsecutivo;
-  }
+		console.log(`[ConsentService] Consecutivo generado: ${newConsecutivo}`);
+		return newConsecutivo;
+	}
 
-  // --------------------------------------------------------------------------
-  // UPLOAD DE FIRMA
-  // --------------------------------------------------------------------------
+	// --------------------------------------------------------------------------
+	// UPLOAD DE FIRMA
+	// --------------------------------------------------------------------------
 
-  /**
-   * Sube la firma digital a Firebase Storage y retorna la URL firmada.
-   */
-  private async uploadSignature(
-    documentId: string,
-    base64Data: string
-  ): Promise<{ url: string; buffer: Buffer }> {
-    if (!bucket) {
-      throw new Error("Firebase Storage no está configurado");
-    }
+	/**
+	 * Sube la firma digital a Firebase Storage y retorna la URL firmada.
+	 */
+	private async uploadSignature(
+		documentId: string,
+		base64Data: string,
+	): Promise<{ url: string; buffer: Buffer }> {
+		if (!bucket) {
+			throw new Error("Firebase Storage no está configurado");
+		}
 
-    const timestamp = Date.now();
-    const path = `signatures/${documentId}/${timestamp}.png`;
-    const file = bucket.file(path);
+		const timestamp = Date.now();
+		const path = `signatures/${documentId}/${timestamp}.png`;
+		const file = bucket.file(path);
 
-    // Limpiar el prefijo base64 si existe
-    const cleanBase64 = base64Data.replace(/^data:image\/\w+;base64,/, "");
-    const buffer = Buffer.from(cleanBase64, "base64");
+		// Limpiar el prefijo base64 si existe
+		const cleanBase64 = base64Data.replace(/^data:image\/\w+;base64,/, "");
+		const buffer = Buffer.from(cleanBase64, "base64");
 
-    console.log(`[ConsentService] Subiendo firma: ${path}`);
+		console.log(`[ConsentService] Subiendo firma: ${path}`);
 
-    await file.save(buffer, {
-      metadata: {
-        contentType: "image/png",
-        customMetadata: {
-          userId: documentId,
-          uploadedAt: new Date().toISOString(),
-        },
-      },
-    });
+		await file.save(buffer, {
+			metadata: {
+				contentType: "image/png",
+				customMetadata: {
+					userId: documentId,
+					uploadedAt: new Date().toISOString(),
+				},
+			},
+		});
 
-    // Generar URL firmada con expiración larga (para MVP)
-    const [signedUrl] = await file.getSignedUrl({
-      action: "read",
-      expires: "03-01-2500", // Expiración lejana para MVP
-    });
+		// Generar URL firmada con expiración larga (para MVP)
+		const [signedUrl] = await file.getSignedUrl({
+			action: "read",
+			expires: "03-01-2500", // Expiración lejana para MVP
+		});
 
-    console.log(`[ConsentService] Firma subida exitosamente`);
-    return { url: signedUrl, buffer };
-  }
+		console.log(`[ConsentService] Firma subida exitosamente`);
+		return { url: signedUrl, buffer };
+	}
 
-  // --------------------------------------------------------------------------
-  // NORMALIZACIÓN DE MENORES
-  // --------------------------------------------------------------------------
+	// --------------------------------------------------------------------------
+	// NORMALIZACIÓN DE MENORES
+	// --------------------------------------------------------------------------
 
-  /**
-   * Normaliza la estructura de menores para consistencia.
-   * Genera fullName si no existe a partir de firstName/lastName.
-   */
-  private normalizeMinors(minors: CreateConsentInput["minors"]): Minor[] {
-    return minors.map((m) => ({
-      fullName:
-        m.firstName || m.lastName
-          ? `${m.firstName || ""} ${m.lastName || ""}`.trim()
-          : m.fullName || "",
-      firstName: m.firstName,
-      lastName: m.lastName,
-      birthDate: m.birthDate,
-      relationship: m.relationship,
-      eps: m.eps,
-      idType: m.idType,
-      idNumber: m.idNumber,
-    }));
-  }
+	/**
+	 * Normaliza la estructura de menores para consistencia.
+	 * Genera fullName si no existe a partir de firstName/lastName.
+	 */
+	private normalizeMinors(minors: CreateConsentInput["minors"]): Minor[] {
+		return minors.map((m) => ({
+			fullName:
+				m.firstName || m.lastName
+					? `${m.firstName || ""} ${m.lastName || ""}`.trim()
+					: m.fullName || "",
+			firstName: m.firstName,
+			lastName: m.lastName,
+			birthDate: m.birthDate,
+			relationship: m.relationship,
+			eps: m.eps,
+			idType: m.idType,
+			idNumber: m.idNumber,
+		}));
+	}
 
-  // --------------------------------------------------------------------------
-  // UPSERT DE USUARIO
-  // --------------------------------------------------------------------------
+	// --------------------------------------------------------------------------
+	// UPSERT DE USUARIO
+	// --------------------------------------------------------------------------
 
-  /**
-   * Crea o actualiza el perfil del usuario responsable.
-   * Los menores se ACUMULAN (no se reemplazan) para mantener historial completo.
-   */
-  private async upsertUser(
-    responsibleAdult: CreateConsentInput["responsibleAdult"],
-    normalizedMinors: Minor[]
-  ): Promise<UserProfile> {
-    const userRef = db.collection(this.USERS_COLLECTION).doc(responsibleAdult.documentId);
-    const now = new Date();
+	/**
+	 * Crea o actualiza el perfil del usuario responsable.
+	 * Los menores se ACUMULAN (no se reemplazan) para mantener historial completo.
+	 */
+	private async upsertUser(
+		responsibleAdult: CreateConsentInput["responsibleAdult"],
+		normalizedMinors: Minor[],
+	): Promise<UserProfile> {
+		const userRef = db
+			.collection(this.USERS_COLLECTION)
+			.doc(responsibleAdult.documentId);
+		const now = new Date();
 
-    // Obtener usuario existente para preservar menores anteriores
-    const existingDoc = await userRef.get();
-    let allMinors: Minor[] = normalizedMinors;
+		// Obtener usuario existente para preservar menores anteriores
+		const existingDoc = await userRef.get();
+		let allMinors: Minor[] = normalizedMinors;
 
-    if (existingDoc.exists) {
-      const existingData = existingDoc.data() as UserProfile;
-      const existingMinors = existingData.minors || [];
+		if (existingDoc.exists) {
+			const existingData = existingDoc.data() as UserProfile;
+			const existingMinors = existingData.minors || [];
 
-      // Crear un mapa de menores existentes por idNumber
-      const minorsMap = new Map<string, Minor>();
-      
-      // Primero agregar los existentes
-      for (const minor of existingMinors) {
-        if (minor.idNumber) {
-          minorsMap.set(minor.idNumber, minor);
-        }
-      }
-      
-      // Luego actualizar/agregar los nuevos (sobrescriben si ya existen)
-      for (const minor of normalizedMinors) {
-        if (minor.idNumber) {
-          minorsMap.set(minor.idNumber, minor);
-        }
-      }
-      
-      allMinors = Array.from(minorsMap.values());
-      console.log(`[ConsentService] Menores combinados: ${existingMinors.length} existentes + ${normalizedMinors.length} nuevos = ${allMinors.length} únicos`);
-    }
+			// Crear un mapa de menores existentes por idNumber
+			const minorsMap = new Map<string, Minor>();
 
-    const userProfile: UserProfile = {
-      uid: responsibleAdult.documentId,
-      fullName: responsibleAdult.fullName,
-      email: responsibleAdult.email,
-      phone: responsibleAdult.phone,
-      minors: allMinors,
-      createdAt: existingDoc.exists ? (existingDoc.data() as UserProfile).createdAt : now,
-      updatedAt: now,
-    };
+			// Primero agregar los existentes
+			for (const minor of existingMinors) {
+				if (minor.idNumber) {
+					minorsMap.set(minor.idNumber, minor);
+				}
+			}
 
-    await userRef.set(userProfile);
+			// Luego actualizar/agregar los nuevos (sobrescriben si ya existen)
+			for (const minor of normalizedMinors) {
+				if (minor.idNumber) {
+					minorsMap.set(minor.idNumber, minor);
+				}
+			}
 
-    console.log(`[ConsentService] Usuario upserted: ${responsibleAdult.documentId}`);
-    return userProfile;
-  }
+			allMinors = Array.from(minorsMap.values());
+			console.log(
+				`[ConsentService] Menores combinados: ${existingMinors.length} existentes + ${normalizedMinors.length} nuevos = ${allMinors.length} únicos`,
+			);
+		}
 
-  // --------------------------------------------------------------------------
-  // CREAR CONSENTIMIENTO
-  // --------------------------------------------------------------------------
+		const userProfile: UserProfile = {
+			uid: responsibleAdult.documentId,
+			fullName: responsibleAdult.fullName,
+			email: responsibleAdult.email,
+			phone: responsibleAdult.phone,
+			minors: allMinors,
+			createdAt: existingDoc.exists
+				? (existingDoc.data() as UserProfile).createdAt
+				: now,
+			updatedAt: now,
+		};
 
-  /**
-   * Crea el documento de consentimiento en Firestore.
-   */
-  private async createConsentDocument(
-    consecutivo: number,
-    userProfile: UserProfile,
-    normalizedMinors: Minor[],
-    signatureUrl: string,
-    ipAddress: string
-  ): Promise<Consent> {
-    const consentRef = db.collection(this.CONSENTS_COLLECTION).doc();
-    const now = new Date();
-    const oneYearFromNow = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+		await userRef.set(userProfile);
 
-    const consent: Consent = {
-      id: consentRef.id,
-      consecutivo,
-      userId: userProfile.uid,
-      adultSnapshot: userProfile,
-      minorsSnapshot: normalizedMinors,
-      signatureUrl,
-      policyVersion: "1.0",
-      ipAddress,
-      signedAt: now,
-      validUntil: oneYearFromNow,
-      createdAt: now,
-    };
+		console.log(
+			`[ConsentService] Usuario upserted: ${responsibleAdult.documentId}`,
+		);
+		return userProfile;
+	}
 
-    await consentRef.set(consent);
+	// --------------------------------------------------------------------------
+	// CREAR CONSENTIMIENTO
+	// --------------------------------------------------------------------------
 
-    console.log(`[ConsentService] Consentimiento creado: ${consent.id} (Consecutivo: ${consecutivo})`);
-    return consent;
-  }
+	/**
+	 * Crea el documento de consentimiento en Firestore.
+	 */
+	private async createConsentDocument(
+		consecutivo: number,
+		userProfile: UserProfile,
+		normalizedMinors: Minor[],
+		signatureUrl: string,
+		ipAddress: string,
+	): Promise<Consent> {
+		const consentRef = db.collection(this.CONSENTS_COLLECTION).doc();
+		const now = new Date();
+		const oneYearFromNow = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
 
-  // --------------------------------------------------------------------------
-  // ORQUESTADOR PRINCIPAL
-  // --------------------------------------------------------------------------
+		const consent: Consent = {
+			id: consentRef.id,
+			consecutivo,
+			userId: userProfile.uid,
+			adultSnapshot: userProfile,
+			minorsSnapshot: normalizedMinors,
+			signatureUrl,
+			policyVersion: "1.0",
+			ipAddress,
+			signedAt: now,
+			validUntil: oneYearFromNow,
+			createdAt: now,
+		};
 
-  /**
-   * Crea un consentimiento completo con todas sus dependencias.
-   * 
-   * Flujo:
-   * 1. Upload firma a Storage
-   * 2. Normalizar datos de menores
-   * 3. Upsert usuario en Firestore
-   * 4. Generar consecutivo atómico (RF-08)
-   * 5. Crear documento de consentimiento
-   * 6. Generar PDF
-   * 7. Enviar email con PDF adjunto
-   * 
-   * @param input - Datos del consentimiento
-   * @returns Resultado con consentId, consecutivo y estado del email
-   */
-  async createConsent(input: CreateConsentInput): Promise<CreateConsentResult> {
-    const { responsibleAdult, minors, signatureBase64, ipAddress } = input;
+		await consentRef.set(consent);
 
-    console.log(`[ConsentService] Iniciando creación de consentimiento para: ${responsibleAdult.documentId}`);
+		console.log(
+			`[ConsentService] Consentimiento creado: ${consent.id} (Consecutivo: ${consecutivo})`,
+		);
+		return consent;
+	}
 
-    try {
-      // 1. Subir firma a Storage
-      const { url: signatureUrl, buffer: signatureBuffer } = await this.uploadSignature(
-        responsibleAdult.documentId,
-        signatureBase64
-      );
+	// --------------------------------------------------------------------------
+	// ORQUESTADOR PRINCIPAL
+	// --------------------------------------------------------------------------
 
-      // 2. Normalizar menores
-      const normalizedMinors = this.normalizeMinors(minors);
+	/**
+	 * Crea un consentimiento completo con todas sus dependencias.
+	 *
+	 * Flujo:
+	 * 1. Upload firma a Storage
+	 * 2. Normalizar datos de menores
+	 * 3. Upsert usuario en Firestore
+	 * 4. Generar consecutivo atómico (RF-08)
+	 * 5. Crear documento de consentimiento
+	 * 6. Generar PDF
+	 * 7. Enviar email con PDF adjunto
+	 *
+	 * @param input - Datos del consentimiento
+	 * @returns Resultado con consentId, consecutivo y estado del email
+	 */
+	async createConsent(input: CreateConsentInput): Promise<CreateConsentResult> {
+		const { responsibleAdult, minors, signatureBase64, ipAddress } = input;
 
-      // 3. Upsert usuario
-      const userProfile = await this.upsertUser(responsibleAdult, normalizedMinors);
+		console.log(
+			`[ConsentService] Iniciando creación de consentimiento para: ${responsibleAdult.documentId}`,
+		);
 
-      // 4. Generar consecutivo atómico (RF-08 - CRÍTICO)
-      const consecutivo = await this.generateConsecutivo();
+		try {
+			// 1. Subir firma a Storage
+			const { url: signatureUrl, buffer: signatureBuffer } =
+				await this.uploadSignature(
+					responsibleAdult.documentId,
+					signatureBase64,
+				);
 
-      // 5. Crear documento de consentimiento
-      const consent = await this.createConsentDocument(
-        consecutivo,
-        userProfile,
-        normalizedMinors,
-        signatureUrl,
-        ipAddress
-      );
+			// 2. Normalizar menores
+			const normalizedMinors = this.normalizeMinors(minors);
 
-      // 6 & 7. Generar PDF y enviar email (no bloqueante)
-      let emailSent = false;
-      try {
-        console.log(`[ConsentService] Generando PDF para consecutivo: ${consecutivo}`);
-        const pdfBuffer = await generateConsentPdf(consent, signatureBuffer);
+			// 3. Upsert usuario
+			const userProfile = await this.upsertUser(
+				responsibleAdult,
+				normalizedMinors,
+			);
 
-        console.log(`[ConsentService] Enviando email a: ${responsibleAdult.email}`);
-        const emailResult = await sendConsentEmail({
-          to: responsibleAdult.email,
-          fullName: responsibleAdult.fullName,
-          consecutivo,
-          pdfBuffer,
-        });
+			// 4. Generar consecutivo atómico (RF-08 - CRÍTICO)
+			const consecutivo = await this.generateConsecutivo();
 
-        emailSent = emailResult.success;
-        
-        if (!emailResult.success) {
-          console.warn(`[ConsentService] Email no enviado: ${emailResult.error}`);
-        }
-      } catch (emailError) {
-        // El email falla silenciosamente - el consentimiento ya está creado
-        console.error("[ConsentService] Error en generación/envío de PDF:", emailError);
-      }
+			// 5. Crear documento de consentimiento
+			const consent = await this.createConsentDocument(
+				consecutivo,
+				userProfile,
+				normalizedMinors,
+				signatureUrl,
+				ipAddress,
+			);
 
-      console.log(`[ConsentService] Consentimiento completado. ID: ${consent.id}, Consecutivo: ${consecutivo}, Email: ${emailSent}`);
+			// 6 & 7. Generar PDF y enviar email (no bloqueante)
+			let emailSent = false;
+			try {
+				console.log(
+					`[ConsentService] Generando PDF para consecutivo: ${consecutivo}`,
+				);
+				const pdfBuffer = await generateConsentPdf(consent, signatureBuffer);
 
-      return {
-        success: true,
-        consentId: consent.id,
-        consecutivo,
-        emailSent,
-      };
+				console.log(
+					`[ConsentService] Enviando email a: ${responsibleAdult.email}`,
+				);
+				const emailResult = await sendConsentEmail({
+					to: responsibleAdult.email,
+					fullName: responsibleAdult.fullName,
+					consecutivo,
+					pdfBuffer,
+				});
 
-    } catch (error) {
-      console.error("[ConsentService] Error creando consentimiento:", error);
-      
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : "Error desconocido al crear consentimiento",
-      };
-    }
-  }
+				emailSent = emailResult.success;
 
-  // --------------------------------------------------------------------------
-  // MÉTODOS ADICIONALES (Para futuras implementaciones)
-  // --------------------------------------------------------------------------
+				if (!emailResult.success) {
+					console.warn(
+						`[ConsentService] Email no enviado: ${emailResult.error}`,
+					);
+				}
+			} catch (emailError) {
+				// El email falla silenciosamente - el consentimiento ya está creado
+				console.error(
+					"[ConsentService] Error en generación/envío de PDF:",
+					emailError,
+				);
+			}
 
-  /**
-   * Verifica si un usuario tiene un consentimiento vigente.
-   * Útil para RF-10 (Bloqueo de Venta).
-   */
-  async hasValidConsent(userId: string): Promise<boolean> {
-    const now = new Date();
-    
-    const snapshot = await db
-      .collection(this.CONSENTS_COLLECTION)
-      .where("userId", "==", userId)
-      .where("validUntil", ">", now)
-      .limit(1)
-      .get();
+			console.log(
+				`[ConsentService] Consentimiento completado. ID: ${consent.id}, Consecutivo: ${consecutivo}, Email: ${emailSent}`,
+			);
 
-    return !snapshot.empty;
-  }
+			return {
+				success: true,
+				consentId: consent.id,
+				consecutivo,
+				emailSent,
+			};
+		} catch (error) {
+			console.error("[ConsentService] Error creando consentimiento:", error);
 
-  /**
-   * Obtiene el último consentimiento de un usuario.
-   */
-  async getLastConsent(userId: string): Promise<Consent | null> {
-    const snapshot = await db
-      .collection(this.CONSENTS_COLLECTION)
-      .where("userId", "==", userId)
-      .orderBy("signedAt", "desc")
-      .limit(1)
-      .get();
+			return {
+				success: false,
+				error:
+					error instanceof Error
+						? error.message
+						: "Error desconocido al crear consentimiento",
+			};
+		}
+	}
 
-    if (snapshot.empty) return null;
+	// --------------------------------------------------------------------------
+	// MÉTODOS ADICIONALES (Para futuras implementaciones)
+	// --------------------------------------------------------------------------
 
-    return snapshot.docs[0].data() as Consent;
-  }
+	/**
+	 * Verifica si un usuario tiene un consentimiento vigente.
+	 * Útil para RF-10 (Bloqueo de Venta).
+	 */
+	async hasValidConsent(userId: string): Promise<boolean> {
+		const now = new Date();
+
+		const snapshot = await db
+			.collection(this.CONSENTS_COLLECTION)
+			.where("userId", "==", userId)
+			.where("validUntil", ">", now)
+			.limit(1)
+			.get();
+
+		return !snapshot.empty;
+	}
+
+	/**
+	 * Obtiene el último consentimiento de un usuario.
+	 */
+	async getLastConsent(userId: string): Promise<Consent | null> {
+		const snapshot = await db
+			.collection(this.CONSENTS_COLLECTION)
+			.where("userId", "==", userId)
+			.orderBy("signedAt", "desc")
+			.limit(1)
+			.get();
+
+		if (snapshot.empty) return null;
+
+		return snapshot.docs[0].data() as Consent;
+	}
 }
 
 // ============================================================================

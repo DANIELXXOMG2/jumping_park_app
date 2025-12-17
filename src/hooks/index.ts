@@ -1,9 +1,13 @@
 // Hooks personalizados de la aplicación
-export { useOCRScanner } from "./useOCRScanner";
-export type { OCRResult, OCRScannerState } from "./useOCRScanner";
 
-export { useUISound } from "./useUISound";
-export type { SoundType } from "./useUISound";
-
+export type {
+	Consent,
+	ConsentsResponse,
+	Minor,
+	Pagination,
+} from "./useConsents";
 export { useConsents } from "./useConsents";
-export type { Consent, Minor, Pagination, ConsentsResponse } from "./useConsents";
+export type { OCRResult, OCRScannerState } from "./useOCRScanner";
+export { useOCRScanner } from "./useOCRScanner";
+export type { SoundType } from "./useUISound";
+export { useUISound } from "./useUISound";

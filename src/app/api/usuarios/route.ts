@@ -6,7 +6,7 @@ import { createCrudRoutes } from "@/lib/createCrudRoutes";
 import { usuarioCreateSchema } from "@/lib/schemas/crud.schema";
 
 export const { GET, POST } = createCrudRoutes({
-  collection: "users",
-  createSchema: usuarioCreateSchema,
-  resourceName: "Usuario",
+	collection: "users",
+	createSchema: usuarioCreateSchema,
+	resourceName: "Usuario",
 });
