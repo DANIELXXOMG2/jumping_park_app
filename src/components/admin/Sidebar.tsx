@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import Avatar from "boring-avatars";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -159,9 +160,12 @@ export function Sidebar() {
                     className="rounded-full"
                   />
                 ) : (
-                  <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
-                    <UserCog className="w-4 h-4 text-primary" />
-                  </div>
+                  <Avatar
+                    size={36}
+                    name={user.email || "admin"}
+                    variant="beam"
+                    colors={["#1e3a8a", "#3b82f6", "#60a5fa", "#93c5fd", "#f3f4f6"]}
+                  />
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground truncate">

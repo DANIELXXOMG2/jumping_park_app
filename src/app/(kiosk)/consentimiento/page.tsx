@@ -15,7 +15,7 @@ import { MinorsSection } from "@/components/kiosk/MinorsSection";
 
 export default function ConsentPage() {
   const router = useRouter();
-  const { visitorData, resetFlow } = useKioskStore();
+  const { visitorData } = useKioskStore();
   const signatureRef = useRef<SignaturePadRef>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isReadingModalOpen, setIsReadingModalOpen] = useState(false);
@@ -86,16 +86,14 @@ export default function ConsentPage() {
         throw new Error(result.error || "Error al guardar el consentimiento");
       }
 
-      // Toast de éxito con delay para que el usuario lo vea
+      // Toast de éxito breve
       toast.success("¡Consentimiento firmado!", {
-        description: `Consecutivo #${result.consecutivo}. Recibirás una copia por email.`,
+        description: `Consecutivo #${result.consecutivo}`,
       });
 
-      // Pequeño delay para que el usuario vea el toast antes de redirigir
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      resetFlow();
-      router.push("/ingreso");
+      // Redirigir a la página de éxito con los parámetros
+      const nombreEncoded = encodeURIComponent(visitorData.fullName || "Visitante");
+      router.push(`/exito?consecutivo=${result.consecutivo}&nombre=${nombreEncoded}`);
 
     } catch (error) {
       console.error("[ConsentPage] Error:", error);
