@@ -1,40 +1,40 @@
-import { NextRequest } from "next/server";
-import { ZodSchema } from "zod";
-import { createDoc, getDocs, getDocById } from "./firestoreService";
+import type { NextRequest } from "next/server";
+import type { ZodSchema } from "zod";
 import {
-  apiHandler,
-  getValidatedBody,
-  successResponse,
-  NotFoundError,
+	apiHandler,
+	getValidatedBody,
+	NotFoundError,
+	successResponse,
 } from "./apiHandler";
+import { createDoc, getDocById, getDocs } from "./firestoreService";
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
 interface CrudConfig<TCreate = unknown> {
-  /**
-   * Nombre de la colección en Firestore.
-   */
-  collection: string;
+	/**
+	 * Nombre de la colección en Firestore.
+	 */
+	collection: string;
 
-  /**
-   * Esquema Zod para validar el body del POST.
-   * Si no se provee, el body pasa sin validación (no recomendado).
-   */
-  createSchema?: ZodSchema<TCreate>;
+	/**
+	 * Esquema Zod para validar el body del POST.
+	 * Si no se provee, el body pasa sin validación (no recomendado).
+	 */
+	createSchema?: ZodSchema<TCreate>;
 
-  /**
-   * Límite de documentos a retornar en GET (list).
-   * Default: 100
-   */
-  listLimit?: number;
+	/**
+	 * Límite de documentos a retornar en GET (list).
+	 * Default: 100
+	 */
+	listLimit?: number;
 
-  /**
-   * Nombre del recurso para mensajes de error (ej. "Usuario", "Acceso").
-   * Default: "Recurso"
-   */
-  resourceName?: string;
+	/**
+	 * Nombre del recurso para mensajes de error (ej. "Usuario", "Acceso").
+	 * Default: "Recurso"
+	 */
+	resourceName?: string;
 }
 
 // ============================================================================
@@ -57,56 +57,61 @@ interface CrudConfig<TCreate = unknown> {
  * });
  * ```
  */
-export function createCrudRoutes<TCreate = unknown>(config: CrudConfig<TCreate>) {
-  const {
-    collection,
-    createSchema,
-    listLimit = 100,
-    resourceName = "Recurso",
-  } = config;
+export function createCrudRoutes<TCreate = unknown>(
+	config: CrudConfig<TCreate>,
+) {
+	const {
+		collection,
+		createSchema,
+		listLimit = 100,
+		resourceName = "Recurso",
+	} = config;
 
-  // -------------------------------------------------------------------------
-  // GET: Listar todos o buscar por ID
-  // -------------------------------------------------------------------------
-  const GET = apiHandler(async (req: NextRequest) => {
-    const url = new URL(req.url);
-    const id = url.searchParams.get("id");
+	// -------------------------------------------------------------------------
+	// GET: Listar todos o buscar por ID
+	// -------------------------------------------------------------------------
+	const GET = apiHandler(async (req: NextRequest) => {
+		const url = new URL(req.url);
+		const id = url.searchParams.get("id");
 
-    // GET by ID
-    if (id) {
-      const doc = await getDocById(collection, id);
+		// GET by ID
+		if (id) {
+			const doc = await getDocById(collection, id);
 
-      if (!doc) {
-        throw new NotFoundError(resourceName);
-      }
+			if (!doc) {
+				throw new NotFoundError(resourceName);
+			}
 
-      return successResponse(doc);
-    }
+			return successResponse(doc);
+		}
 
-    // GET list
-    const docs = await getDocs(collection, listLimit);
-    return successResponse(docs);
-  });
+		// GET list
+		const docs = await getDocs(collection, listLimit);
+		return successResponse(docs);
+	});
 
-  // -------------------------------------------------------------------------
-  // POST: Crear nuevo documento
-  // -------------------------------------------------------------------------
-  const POST = apiHandler(
-    async (req: NextRequest) => {
-      // Si hay schema, el body ya está validado por apiHandler
-      // Si no hay schema, parseamos el body directamente
-      const body = createSchema
-        ? getValidatedBody<TCreate>(req)
-        : await req.json();
+	// -------------------------------------------------------------------------
+	// POST: Crear nuevo documento
+	// -------------------------------------------------------------------------
+	const POST = apiHandler(
+		async (req: NextRequest) => {
+			// Si hay schema, el body ya está validado por apiHandler
+			// Si no hay schema, parseamos el body directamente
+			const body = createSchema
+				? getValidatedBody<TCreate>(req)
+				: await req.json();
 
-      const created = await createDoc(collection, body as Record<string, unknown>);
+			const created = await createDoc(
+				collection,
+				body as Record<string, unknown>,
+			);
 
-      return successResponse(created, 201);
-    },
-    { bodySchema: createSchema }
-  );
+			return successResponse(created, 201);
+		},
+		{ bodySchema: createSchema },
+	);
 
-  return { GET, POST };
+	return { GET, POST };
 }
 
 // ============================================================================

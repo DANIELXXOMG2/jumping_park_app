@@ -6,7 +6,7 @@ import { createCrudRoutes } from "@/lib/createCrudRoutes";
 import { menorCreateSchema } from "@/lib/schemas/crud.schema";
 
 export const { GET, POST } = createCrudRoutes({
-  collection: "minors",
-  createSchema: menorCreateSchema,
-  resourceName: "Menor",
+	collection: "minors",
+	createSchema: menorCreateSchema,
+	resourceName: "Menor",
 });

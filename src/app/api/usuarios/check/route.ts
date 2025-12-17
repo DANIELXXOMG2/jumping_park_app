@@ -3,10 +3,10 @@
  * Verifica si un usuario existe por cédula (Blind Check - RF-03).
  * NO expone datos sensibles sin validación OTP.
  */
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { z } from "zod";
-import { db } from "@/lib/firebaseAdmin";
 import { apiHandler, successResponse } from "@/lib/apiHandler";
+import { db } from "@/lib/firebaseAdmin";
 import { maskEmail } from "@/lib/utils/formatters";
 import type { UserProfile } from "@/types/firestore";
 
@@ -15,12 +15,12 @@ import type { UserProfile } from "@/types/firestore";
 // ============================================================================
 
 const checkUserSchema = z.object({
-  cedula: z
-    .string()
-    .trim()
-    .min(6, "El documento debe tener al menos 6 caracteres")
-    .max(15, "El documento no puede exceder 15 caracteres")
-    .regex(/^[a-zA-Z0-9]+$/, "Solo se permiten letras y números"),
+	cedula: z
+		.string()
+		.trim()
+		.min(6, "El documento debe tener al menos 6 caracteres")
+		.max(15, "El documento no puede exceder 15 caracteres")
+		.regex(/^[a-zA-Z0-9]+$/, "Solo se permiten letras y números"),
 });
 
 // ============================================================================
@@ -28,10 +28,10 @@ const checkUserSchema = z.object({
 // ============================================================================
 
 interface CheckUserResponse {
-  exists: boolean;
-  userData?: {
-    emailMasked: string;
-  };
+	exists: boolean;
+	userData?: {
+		emailMasked: string;
+	};
 }
 
 // ============================================================================
@@ -42,10 +42,12 @@ interface CheckUserResponse {
  * Sanitiza los datos del usuario para la respuesta.
  * Solo expone el email ofuscado (RF-13).
  */
-function sanitizeUserResponse(user: UserProfile): CheckUserResponse["userData"] {
-  return {
-    emailMasked: maskEmail(user.email),
-  };
+function sanitizeUserResponse(
+	user: UserProfile,
+): CheckUserResponse["userData"] {
+	return {
+		emailMasked: maskEmail(user.email),
+	};
 }
 
 // ============================================================================
@@ -53,38 +55,38 @@ function sanitizeUserResponse(user: UserProfile): CheckUserResponse["userData"] 
 // ============================================================================
 
 export const POST = apiHandler(async (req: NextRequest) => {
-  const body = await req.json();
-  const { cedula } = checkUserSchema.parse(body);
+	const body = await req.json();
+	const { cedula } = checkUserSchema.parse(body);
 
-  const COLLECTION = "users";
-  const usersRef = db.collection(COLLECTION);
+	const COLLECTION = "users";
+	const usersRef = db.collection(COLLECTION);
 
-  // Buscar por campo 'uid' (cédula almacenada)
-  const querySnapshot = await usersRef
-    .where("uid", "==", cedula)
-    .limit(1)
-    .get();
+	// Buscar por campo 'uid' (cédula almacenada)
+	const querySnapshot = await usersRef
+		.where("uid", "==", cedula)
+		.limit(1)
+		.get();
 
-  let userData: UserProfile | null = null;
+	let userData: UserProfile | null = null;
 
-  if (!querySnapshot.empty) {
-    userData = querySnapshot.docs[0].data() as UserProfile;
-  } else {
-    // Fallback: buscar por ID de documento
-    const docSnap = await usersRef.doc(cedula).get();
-    if (docSnap.exists) {
-      userData = docSnap.data() as UserProfile;
-    }
-  }
+	if (!querySnapshot.empty) {
+		userData = querySnapshot.docs[0].data() as UserProfile;
+	} else {
+		// Fallback: buscar por ID de documento
+		const docSnap = await usersRef.doc(cedula).get();
+		if (docSnap.exists) {
+			userData = docSnap.data() as UserProfile;
+		}
+	}
 
-  // Usuario no encontrado
-  if (!userData) {
-    return successResponse<CheckUserResponse>({ exists: false });
-  }
+	// Usuario no encontrado
+	if (!userData) {
+		return successResponse<CheckUserResponse>({ exists: false });
+	}
 
-  // Usuario encontrado - retornar datos ofuscados
-  return successResponse<CheckUserResponse>({
-    exists: true,
-    userData: sanitizeUserResponse(userData),
-  });
+	// Usuario encontrado - retornar datos ofuscados
+	return successResponse<CheckUserResponse>({
+		exists: true,
+		userData: sanitizeUserResponse(userData),
+	});
 });

@@ -15,32 +15,32 @@
  * @returns Email ofuscado o placeholder si el formato es inválido
  */
 export function maskEmail(email: string): string {
-  // Si ya está ofuscado, retornarlo tal cual
-  if (email.includes("*")) {
-    return email;
-  }
+	// Si ya está ofuscado, retornarlo tal cual
+	if (email.includes("*")) {
+		return email;
+	}
 
-  const parts = email.split("@");
-  if (parts.length !== 2) {
-    return "***@***.***";
-  }
+	const parts = email.split("@");
+	if (parts.length !== 2) {
+		return "***@***.***";
+	}
 
-  const [localPart, domainPart] = parts;
+	const [localPart, domainPart] = parts;
 
-  // Ofuscar parte local: mostrar primeros 2 caracteres + asteriscos
-  const visibleLocal = localPart.slice(0, 2);
-  const paddingLocal = Math.max(localPart.length - 2, 3);
-  const maskedLocal = `${visibleLocal}${"*".repeat(paddingLocal)}`;
+	// Ofuscar parte local: mostrar primeros 2 caracteres + asteriscos
+	const visibleLocal = localPart.slice(0, 2);
+	const paddingLocal = Math.max(localPart.length - 2, 3);
+	const maskedLocal = `${visibleLocal}${"*".repeat(paddingLocal)}`;
 
-  // Ofuscar dominio: mostrar primer caracter + asteriscos + TLD
-  const domainSegments = domainPart.split(".");
-  const tld = domainSegments.pop() ?? "";
-  const domainName = domainSegments.join(".");
+	// Ofuscar dominio: mostrar primer caracter + asteriscos + TLD
+	const domainSegments = domainPart.split(".");
+	const tld = domainSegments.pop() ?? "";
+	const domainName = domainSegments.join(".");
 
-  const visibleDomain = domainName.slice(0, 1) || "*";
-  const maskedDomain = `${visibleDomain}***`;
+	const visibleDomain = domainName.slice(0, 1) || "*";
+	const maskedDomain = `${visibleDomain}***`;
 
-  return `${maskedLocal}@${maskedDomain}${tld ? `.${tld}` : ""}`;
+	return `${maskedLocal}@${maskedDomain}${tld ? `.${tld}` : ""}`;
 }
 
 /**
@@ -50,11 +50,11 @@ export function maskEmail(email: string): string {
  * capitalizeWords("juan perez") => "Juan Perez"
  */
 export function capitalizeWords(str: string): string {
-  return str
-    .toLowerCase()
-    .split(" ")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
+	return str
+		.toLowerCase()
+		.split(" ")
+		.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+		.join(" ");
 }
 
 /**
@@ -64,13 +64,13 @@ export function capitalizeWords(str: string): string {
  * formatDate("2025-11-26") => "26 de noviembre de 2025"
  */
 export function formatDate(isoDate: string | Date): string {
-  const date = typeof isoDate === "string" ? new Date(isoDate) : isoDate;
+	const date = typeof isoDate === "string" ? new Date(isoDate) : isoDate;
 
-  return date.toLocaleDateString("es-CO", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+	return date.toLocaleDateString("es-CO", {
+		day: "numeric",
+		month: "long",
+		year: "numeric",
+	});
 }
 
 /**
@@ -80,13 +80,13 @@ export function formatDate(isoDate: string | Date): string {
  * formatDateShort("2025-11-26") => "26/11/2025"
  */
 export function formatDateShort(isoDate: string | Date): string {
-  const date = typeof isoDate === "string" ? new Date(isoDate) : isoDate;
+	const date = typeof isoDate === "string" ? new Date(isoDate) : isoDate;
 
-  return date.toLocaleDateString("es-CO", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
+	return date.toLocaleDateString("es-CO", {
+		day: "2-digit",
+		month: "2-digit",
+		year: "numeric",
+	});
 }
 
 /**
@@ -96,10 +96,10 @@ export function formatDateShort(isoDate: string | Date): string {
  * formatCurrency(50000) => "$50.000"
  */
 export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
+	return new Intl.NumberFormat("es-CO", {
+		style: "currency",
+		currency: "COP",
+		minimumFractionDigits: 0,
+		maximumFractionDigits: 0,
+	}).format(amount);
 }

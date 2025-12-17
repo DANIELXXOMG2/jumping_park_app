@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { EPS_LIST, isValidEPS } from "@/lib/data/epsColombiaData";
+import { isValidEPS } from "@/lib/data/epsColombiaData";
 
 // ============================================================================
 // VALIDACIÓN DE FECHA DE NACIMIENTO
@@ -13,40 +13,40 @@ import { EPS_LIST, isValidEPS } from "@/lib/data/epsColombiaData";
  * - Año debe ser lógico (no 200006, etc.)
  */
 export const birthDateSchema = z
-  .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, "La fecha debe tener el formato YYYY-MM-DD")
-  .refine(
-    (dateStr) => {
-      const year = parseInt(dateStr.split("-")[0], 10);
-      return year >= 1900;
-    },
-    { message: "El año de nacimiento no puede ser anterior a 1900" }
-  )
-  .refine(
-    (dateStr) => {
-      const year = parseInt(dateStr.split("-")[0], 10);
-      const currentYear = new Date().getFullYear();
-      return year <= currentYear;
-    },
-    { message: "El año de nacimiento no puede ser en el futuro" }
-  )
-  .refine(
-    (dateStr) => {
-      const date = new Date(dateStr);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      return date <= today;
-    },
-    { message: "La fecha de nacimiento no puede ser futura" }
-  )
-  .refine(
-    (dateStr) => {
-      // Validar que la fecha sea válida (ej. no 2024-02-30)
-      const date = new Date(dateStr);
-      return !isNaN(date.getTime());
-    },
-    { message: "La fecha ingresada no es válida" }
-  );
+	.string()
+	.regex(/^\d{4}-\d{2}-\d{2}$/, "La fecha debe tener el formato YYYY-MM-DD")
+	.refine(
+		(dateStr) => {
+			const year = parseInt(dateStr.split("-")[0], 10);
+			return year >= 1900;
+		},
+		{ message: "El año de nacimiento no puede ser anterior a 1900" },
+	)
+	.refine(
+		(dateStr) => {
+			const year = parseInt(dateStr.split("-")[0], 10);
+			const currentYear = new Date().getFullYear();
+			return year <= currentYear;
+		},
+		{ message: "El año de nacimiento no puede ser en el futuro" },
+	)
+	.refine(
+		(dateStr) => {
+			const date = new Date(dateStr);
+			const today = new Date();
+			today.setHours(0, 0, 0, 0);
+			return date <= today;
+		},
+		{ message: "La fecha de nacimiento no puede ser futura" },
+	)
+	.refine(
+		(dateStr) => {
+			// Validar que la fecha sea válida (ej. no 2024-02-30)
+			const date = new Date(dateStr);
+			return !isNaN(date.getTime());
+		},
+		{ message: "La fecha ingresada no es válida" },
+	);
 
 // ============================================================================
 // VALIDACIÓN DE EPS
@@ -56,45 +56,48 @@ export const birthDateSchema = z
  * Schema de EPS validado contra la lista oficial de Colombia
  */
 export const epsSchema = z
-  .string()
-  .min(2, "La EPS es requerida")
-  .refine(
-    (value) => isValidEPS(value),
-    { message: "Selecciona una EPS válida de la lista" }
-  );
+	.string()
+	.min(2, "La EPS es requerida")
+	.refine((value) => isValidEPS(value), {
+		message: "Selecciona una EPS válida de la lista",
+	});
 
 // ============================================================================
 // SCHEMA DE MENOR
 // ============================================================================
 
 export const minorSchema = z.object({
-  firstName: z.string().min(2, "El nombre es requerido (mínimo 2 caracteres)"),
-  lastName: z.string().min(2, "Los apellidos son requeridos (mínimo 2 caracteres)"),
-  birthDate: birthDateSchema,
-  eps: epsSchema,
-  idType: z.enum(["cc", "ti", "passport", "otro"], { message: "Tipo de identificación inválido" }),
-  idNumber: z.string().min(3, "Número de identificación es requerido"),
-  relationship: z.enum(["hijo", "sobrino", "nieto", "otro"], {
-    message: "Parentesco inválido",
-  }),
-  medicalCondition: z.string().max(200, "Máximo 200 caracteres").optional(),
+	firstName: z.string().min(2, "El nombre es requerido (mínimo 2 caracteres)"),
+	lastName: z
+		.string()
+		.min(2, "Los apellidos son requeridos (mínimo 2 caracteres)"),
+	birthDate: birthDateSchema,
+	eps: epsSchema,
+	idType: z.enum(["cc", "ti", "passport", "otro"], {
+		message: "Tipo de identificación inválido",
+	}),
+	idNumber: z.string().min(3, "Número de identificación es requerido"),
+	relationship: z.enum(["hijo", "sobrino", "nieto", "otro"], {
+		message: "Parentesco inválido",
+	}),
+	medicalCondition: z.string().max(200, "Máximo 200 caracteres").optional(),
 });
 
 export const consentSchema = z.object({
-  acceptedPolicy: z.boolean().refine((val) => val === true, {
-    message: "Debes aceptar los términos y condiciones",
-  }),
-  minors: z.array(minorSchema),
-  signature: z.string().min(1, "La firma es obligatoria"), // Base64 string
+	acceptedPolicy: z.boolean().refine((val) => val === true, {
+		message: "Debes aceptar los términos y condiciones",
+	}),
+	minors: z.array(minorSchema),
+	signature: z.string().min(1, "La firma es obligatoria"), // Base64 string
 });
 
 export const consentSubmissionSchema = consentSchema.extend({
-  responsibleAdult: z.object({
-    fullName: z.string(),
-    documentId: z.string(), // This corresponds to uid in UserProfile
-    email: z.string().email(),
-    phone: z.string(),
-  }),
+	responsibleAdult: z.object({
+		fullName: z.string(),
+		documentId: z.string(), // This corresponds to uid in UserProfile
+		email: z.string().email(),
+		phone: z.string(),
+	}),
 });
 
 export type Minor = z.infer<typeof minorSchema>;

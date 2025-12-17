@@ -1,6 +1,6 @@
 /**
  * Template de Email para código OTP - Jumping Park
- * 
+ *
  * Diseño corporativo con paleta azul oscuro.
  * Compatible con todos los clientes de email (HTML tables).
  */
@@ -8,18 +8,30 @@
 import { EMAIL_COLORS, EMAIL_CONFIG, getCurrentYear } from "./emailStyles";
 
 export interface OtpEmailProps {
-  otp: string;
+	otp: string;
 }
 
 /**
  * Genera el HTML del email OTP con diseño corporativo azul oscuro.
  */
 export function generateOtpEmailHtml({ otp }: OtpEmailProps): string {
-  const { primary, primaryLight, background, surface, textMuted, textLight, textWhite, warning, warningBg, warningText, border } = EMAIL_COLORS;
-  const { logoUrl, logoWidth, companyName, address } = EMAIL_CONFIG;
-  const year = getCurrentYear();
-  
-  return `
+	const {
+		primary,
+		primaryLight,
+		background,
+		surface,
+		textMuted,
+		textLight,
+		textWhite,
+		warning,
+		warningBg,
+		warningText,
+		border,
+	} = EMAIL_COLORS;
+	const { logoUrl, logoWidth, companyName, address } = EMAIL_CONFIG;
+	const year = getCurrentYear();
+
+	return `
 <!DOCTYPE html>
 <html lang="es">
 <head>
