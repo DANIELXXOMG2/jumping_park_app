@@ -1,4 +1,5 @@
 import type { Timestamp } from 'firebase-admin/firestore';
+import type { UserRole } from './auth';
 
 // ============================================================================
 // TIPOS BASE
@@ -63,6 +64,8 @@ export interface UserProfile {
   phone: string;
   /** Dirección (opcional) */
   address?: string;
+  /** Rol del usuario en el sistema (RBAC) */
+  role?: UserRole;
   /** Lista de menores a cargo */
   minors: Minor[];
   /** Fecha de creación del registro */

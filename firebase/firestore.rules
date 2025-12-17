@@ -6,9 +6,18 @@ service cloud.firestore {
     // FUNCIONES HELPER
     // =========================================================================
     
-    // Verifica si el usuario es admin
+    // Verifica si el usuario es admin (via custom claim)
     function isAdmin() {
       return request.auth != null && request.auth.token.admin == true;
+    }
+    
+    // Verifica si el usuario tiene rol admin o cashier en admin_users
+    function hasAdminRole() {
+      return isAdmin() || (
+        request.auth != null && 
+        exists(/databases/$(database)/documents/admin_users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/admin_users/$(request.auth.uid)).data.role in ['admin', 'cashier']
+      );
     }
     
     // Verifica si el usuario está autenticado
@@ -17,12 +26,22 @@ service cloud.firestore {
     }
     
     // =========================================================================
+    // COLECCIÓN: admin_users (RBAC)
+    // =========================================================================
+    match /admin_users/{userId} {
+      // Solo admins pueden leer usuarios admin
+      allow read: if hasAdminRole();
+      // Solo escritura via Admin SDK (server-side)
+      allow write: if false;
+    }
+    
+    // =========================================================================
     // COLECCIÓN: users
     // =========================================================================
     match /users/{userId} {
       // Usuarios pueden leer/escribir su propio documento
       // Admins pueden leer cualquier usuario (para panel admin)
-      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow read: if isAuthenticated() && (request.auth.uid == userId || hasAdminRole());
       allow write: if isAuthenticated() && request.auth.uid == userId;
     }
 
@@ -39,7 +58,7 @@ service cloud.firestore {
     match /consents/{consentId} {
       // Usuario puede leer sus propios consentimientos
       // Admins pueden leer cualquier consentimiento
-      allow read: if isAuthenticated() && (request.auth.uid == resource.data.userId || isAdmin());
+      allow read: if isAuthenticated() && (request.auth.uid == resource.data.userId || hasAdminRole());
       // Solo escritura via Admin SDK (server-side)
       allow write: if false;
     }
@@ -49,7 +68,7 @@ service cloud.firestore {
     // =========================================================================
     match /accesses/{accessId} {
       // Solo admins pueden leer/escribir (panel admin)
-      allow read, write: if isAdmin();
+      allow read, write: if hasAdminRole();
     }
 
     // =========================================================================

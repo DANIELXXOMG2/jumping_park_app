@@ -9,6 +9,7 @@
     "lint": "eslint",
     "optimize-assets": "bun run scripts/optimize-assets.ts",
     "seed": "bun run scripts/seed-database.ts",
+    "set-admin": "bun run scripts/set-admin-role.ts",
     "audit:dead": "knip",
     "audit:dupe": "jscpd src/ --ignore \"**/*.d.ts\" --reporters console"
   },
