@@ -269,10 +269,12 @@ export function getRegimenLabel(value: RegimenType): string {
 
 /**
  * Valida si un valor de EPS es válido
+ * Acepta EPS de la lista oficial o valores personalizados con prefijo "otra_manual:"
  */
 export function isValidEPS(value: string): boolean {
 	return (
-		epsOptions.some((eps) => eps.value === value) || value === "otra_manual"
+		epsOptions.some((eps) => eps.value === value) ||
+		value.startsWith("otra_manual:")
 	);
 }
 

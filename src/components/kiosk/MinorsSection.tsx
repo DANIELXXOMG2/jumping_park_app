@@ -180,7 +180,7 @@ export function MinorsSection({
 				<div className="flex items-center gap-2">
 					<Baby className="w-6 h-6 text-neon-green" />
 					<h2 className="text-xl font-semibold text-neon-green">
-						Menores Acompañantes
+						Acompañantes
 						{fields.length > 0 && (
 							<span className="ml-2 text-sm font-normal text-gray-400">
 								({fields.length})
@@ -241,7 +241,7 @@ export function MinorsSection({
 			{fields.length === 0 && (
 				<div className="text-center py-6 border-2 border-dashed border-gray-700 rounded-2xl bg-gray-900/30">
 					<Baby className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-					<p className="text-gray-400 text-sm">No has agregado menores aún</p>
+					<p className="text-gray-400 text-sm">No has agregado acompañantes aún</p>
 					<p className="text-gray-500 text-xs mt-1">
 						Usa los botones de arriba para agregar acompañantes
 					</p>
@@ -354,7 +354,7 @@ function MinorCompactCard({
 						type="button"
 						onClick={onEdit}
 						className="p-2 text-gray-400 hover:text-neon-blue hover:bg-neon-blue/10 rounded-lg transition-all"
-						title="Editar menor"
+						title="Editar acompañante"
 					>
 						<Edit3 size={16} />
 					</button>
@@ -362,7 +362,7 @@ function MinorCompactCard({
 						type="button"
 						onClick={onRemove}
 						className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
-						title="Eliminar menor"
+						title="Eliminar acompañante"
 					>
 						<Trash2 size={16} />
 					</button>

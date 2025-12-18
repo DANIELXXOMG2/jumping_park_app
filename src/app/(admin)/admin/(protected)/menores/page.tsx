@@ -158,10 +158,10 @@ export default function MinorsPage() {
 			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 				<div>
 					<h1 className="text-2xl lg:text-3xl font-bold text-foreground">
-						Menores
+						Acompañantes
 					</h1>
 					<p className="text-foreground/60 mt-1">
-						{pagination.total} menores registrados
+						{pagination.total} acompañantes registrados
 					</p>
 				</div>
 			</div>
@@ -189,7 +189,7 @@ export default function MinorsPage() {
 						router.push(`/admin/usuarios/${minor.parentId}`)
 					}
 					isLoading={isLoading}
-					emptyMessage="No se encontraron menores"
+					emptyMessage="No se encontraron acompañantes"
 					pagination={{
 						...pagination,
 						onPageChange: handlePageChange,

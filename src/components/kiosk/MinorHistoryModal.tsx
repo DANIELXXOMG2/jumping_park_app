@@ -192,7 +192,7 @@ export function MinorHistoryModal({
 								Historial de Acompañantes
 							</span>
 							<p className="text-xs text-gray-400">
-								Selecciona menores registrados previamente
+								Selecciona acompañantes registrados previamente
 							</p>
 						</div>
 					</div>
@@ -229,17 +229,17 @@ export function MinorHistoryModal({
 							<UserPlus className="w-12 h-12 mb-3 opacity-50" />
 							<p className="text-center">
 								{historicalMinors.length > 0
-									? "Todos los menores del historial ya están agregados"
-									: "No hay menores registrados previamente"}
+									? "Todos los acompañantes del historial ya están agregados"
+									: "No hay acompañantes registrados previamente"}
 							</p>
 							<p className="text-xs text-gray-500 mt-2 text-center">
-								Usa &quot;Agregar Menor&quot; para registrar nuevos acompañantes
+								Usa &quot;Agregar Nuevo&quot; para registrar nuevos acompañantes
 							</p>
 						</div>
 					) : (
 						<div className="space-y-3">
 							<p className="text-xs text-gray-400 mb-4">
-								Toca para seleccionar los menores que te acompañan hoy:
+								Toca para seleccionar los acompañantes de hoy:
 							</p>
 
 							{availableMinors.map((minor) => {

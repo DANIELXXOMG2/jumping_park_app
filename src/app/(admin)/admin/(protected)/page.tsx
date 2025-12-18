@@ -10,6 +10,7 @@ import {
 	RefreshCw,
 	Search,
 	TrendingUp,
+	Users,
 	XCircle,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -27,6 +28,8 @@ import { formatRelativeTime } from "@/lib/utils";
 interface MinorSnapshot {
 	firstName: string;
 	lastName: string;
+	idType?: string;
+	idNumber?: string;
 }
 
 interface ConsentResult {
@@ -172,7 +175,7 @@ export default function AdminDashboard() {
 						icon={FileCheck}
 					/>
 					<StatCard
-						title="Menores Registrados"
+						title="Acompañantes Registrados"
 						value={
 							activityLoading ? "..." : activityData?.stats.minorsToday || 0
 						}
@@ -230,7 +233,7 @@ export default function AdminDashboard() {
 
 			{/* Resultado de búsqueda */}
 			{searchResult && (
-				<div className="w-full max-w-lg animate-in fade-in slide-in-from-bottom-4 duration-300">
+				<div className="w-full max-w-xl animate-in fade-in slide-in-from-bottom-4 duration-300">
 					{searchResult.found &&
 					searchResult.consent &&
 					!searchResult.isExpired ? (
@@ -245,43 +248,81 @@ export default function AdminDashboard() {
 								<h2 className="text-2xl font-bold text-center text-green-500 mb-2">
 									CONSENTIMIENTO VIGENTE
 								</h2>
-								<div className="text-center space-y-3 mt-6">
-									<p className="text-xl font-semibold text-foreground">
-										{searchResult.consent.adultSnapshot.fullName}
-									</p>
-									<div className="inline-flex items-center gap-2 px-4 py-2 bg-green-500/20 rounded-full">
-										<FileText className="w-4 h-4 text-green-400" />
-										<span className="font-mono text-lg text-green-400">
-											#{searchResult.consent.consecutivo}
-										</span>
-									</div>
-									<div className="flex items-center justify-center gap-2 text-foreground/70">
-										<Baby className="w-5 h-5" />
-										<span className="text-lg">
-											{searchResult.consent.minorsSnapshot.length} menor(es)
-											autorizado(s)
-										</span>
-									</div>
-									{searchResult.consent.minorsSnapshot.length > 0 && (
-										<div className="mt-4 p-3 bg-surface-muted rounded-lg">
-											<p className="text-sm text-foreground/60 mb-2">
-												Menores:
-											</p>
-											<div className="flex flex-wrap gap-2 justify-center">
-												{searchResult.consent.minorsSnapshot.map(
-													(minor, idx) => (
-														<span
-															key={idx}
-															className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm"
-														>
-															{minor.firstName} {minor.lastName}
-														</span>
-													),
-												)}
-											</div>
+								
+								{/* Información del Responsable */}
+								<div className="mt-6 p-4 bg-surface-muted rounded-xl border border-green-500/20">
+									<div className="flex items-center gap-3 mb-3">
+										<div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
+											<Users className="w-6 h-6 text-green-400" />
 										</div>
-									)}
+										<div>
+											<p className="text-lg font-bold text-foreground">
+												{searchResult.consent.adultSnapshot.fullName}
+											</p>
+											<p className="text-sm text-foreground/60">
+												Adulto Responsable
+											</p>
+										</div>
+									</div>
+									<div className="flex flex-wrap gap-3 mt-3">
+										<div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-500/20 rounded-lg">
+											<FileText className="w-4 h-4 text-green-400" />
+											<span className="font-mono text-sm text-green-400">
+												#{searchResult.consent.consecutivo}
+											</span>
+										</div>
+										<div className="inline-flex items-center gap-2 px-3 py-1.5 bg-surface rounded-lg">
+											<Baby className="w-4 h-4 text-foreground/60" />
+											<span className="text-sm text-foreground/70">
+												{searchResult.consent.minorsSnapshot.length} acompañante(s)
+											</span>
+										</div>
+									</div>
 								</div>
+								
+								{/* Lista de Acompañantes */}
+								{searchResult.consent.minorsSnapshot.length > 0 && (
+									<div className="mt-4">
+										<p className="text-sm font-semibold text-foreground/60 mb-3 flex items-center gap-2">
+											<Baby className="w-4 h-4" />
+											Acompañantes Autorizados
+										</p>
+										<div className="space-y-2">
+											{searchResult.consent.minorsSnapshot.map((minor, idx) => (
+												<div
+													key={idx}
+													className="p-3 bg-surface-muted rounded-xl border border-border/50 hover:border-green-500/30 transition-colors"
+												>
+													<div className="flex items-center justify-between">
+														<div className="flex items-center gap-3">
+															<div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
+																<span className="text-green-400 font-bold text-sm">
+																	{idx + 1}
+																</span>
+															</div>
+															<div>
+																<p className="font-semibold text-foreground">
+																	{minor.firstName} {minor.lastName}
+																</p>
+																<div className="flex items-center gap-2 mt-0.5">
+																	<span className="text-xs text-foreground/50 font-mono bg-surface px-1.5 py-0.5 rounded">
+																		{minor.idType?.toUpperCase() || "T.I."}: {minor.idNumber}
+																	</span>
+																</div>
+															</div>
+														</div>
+														<div className="text-right">
+															<span className="inline-flex items-center gap-1 px-2 py-1 bg-green-500/10 text-green-400 rounded-full text-xs">
+																<CheckCircle className="w-3 h-3" />
+																Autorizado
+															</span>
+														</div>
+													</div>
+												</div>
+											))}
+										</div>
+									</div>
+								)}
 								{searchResult.consent.pdfUrl && (
 									<a
 										href={searchResult.consent.pdfUrl}
@@ -355,7 +396,7 @@ export default function AdminDashboard() {
 													</p>
 													<p className="text-xs text-foreground/50">
 														#{consent.consecutivo} • {consent.minorsCount}{" "}
-														menor(es)
+														acompañante(s)
 													</p>
 												</div>
 											</div>
