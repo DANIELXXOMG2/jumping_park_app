@@ -156,7 +156,7 @@ export function EPSSelector({
 				<div className="animate-in slide-in-from-top-2 duration-200">
 					<label htmlFor="epsSelect" className="flex items-center gap-1 text-xs text-gray-500 mb-1">
 						<Heart size={12} />
-						EPS del Menor
+						EPS del Acompañante
 					</label>
 					<div className="relative">
 						<select

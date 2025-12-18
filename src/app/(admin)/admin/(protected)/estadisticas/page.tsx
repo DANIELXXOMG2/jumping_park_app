@@ -411,14 +411,14 @@ export default function EstadisticasPage() {
 							</CardContent>
 						</Card>
 
-						{/* Menores */}
+						{/* Acompañantes */}
 						<Card className="relative overflow-hidden">
 							<div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full -mr-8 -mt-8" />
 							<CardContent className="pt-6">
 								<div className="flex items-start justify-between">
 									<div>
 										<p className="text-sm text-foreground/60 font-medium">
-											Menores Registrados
+											Acompañantes Registrados
 										</p>
 										<p className="text-3xl font-bold text-foreground mt-1">
 											{data.kpis.minors.value.toLocaleString()}
@@ -491,7 +491,7 @@ export default function EstadisticasPage() {
 								<p className="text-2xl font-bold text-foreground">
 									{data.averages.minorsPerConsent}
 								</p>
-								<p className="text-xs text-foreground/60">Menores/consent.</p>
+								<p className="text-xs text-foreground/60">Acomp./consent.</p>
 							</CardContent>
 						</Card>
 					</div>
@@ -522,7 +522,7 @@ export default function EstadisticasPage() {
 										</div>
 										<div className="flex items-center gap-1">
 											<div className="w-3 h-3 rounded bg-amber-500" />
-											<span className="text-foreground/60">Menores</span>
+												<span className="text-foreground/60">Acompañantes</span>
 										</div>
 									</div>
 
@@ -642,7 +642,7 @@ export default function EstadisticasPage() {
 										</div>
 										<div className="flex items-center justify-between">
 											<span className="text-sm text-foreground/70">
-												Total Menores
+												Total Acompañantes
 											</span>
 											<span className="text-lg font-bold text-foreground">
 												{data.totals.minors.toLocaleString()}
@@ -671,7 +671,7 @@ export default function EstadisticasPage() {
 										<div className="text-foreground/50 text-xs">
 											Período anterior: {data.kpis.consents.previousValue}{" "}
 											consentimientos, {data.kpis.users.previousValue} usuarios,{" "}
-											{data.kpis.minors.previousValue} menores
+											{data.kpis.minors.previousValue} acompañantes
 										</div>
 									)}
 							</div>

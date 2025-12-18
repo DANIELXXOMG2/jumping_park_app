@@ -97,8 +97,8 @@ export function MinorFormModal({
 						</div>
 						<span className="text-sm font-semibold text-white">
 							{initialData
-								? `Editar Menor #${minorNumber}`
-								: `Agregar Menor #${minorNumber}`}
+								? `Editar Acompañante #${minorNumber}`
+								: `Agregar Acompañante #${minorNumber}`}
 						</span>
 					</div>
 					<button
@@ -276,7 +276,7 @@ export function MinorFormModal({
 								className={cn(inputClass, "placeholder:text-gray-600")}
 							/>
 							<p className="text-gray-600 text-xs mt-1">
-								⚠️ Información importante para la seguridad del menor.
+								⚠️ Información importante para la seguridad del acompañante.
 							</p>
 						</div>
 					</div>

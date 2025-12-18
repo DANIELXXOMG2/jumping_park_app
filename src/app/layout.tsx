@@ -28,7 +28,7 @@ export const metadata: Metadata = {
 		"parque de trampolines",
 		"consentimiento",
 		"registro",
-		"menores",
+		"acompañantes",
 		"firma digital",
 	],
 

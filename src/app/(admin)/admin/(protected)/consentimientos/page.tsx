@@ -148,7 +148,7 @@ export default function ConsentsPage() {
 		},
 		{
 			key: "minorsCount",
-			header: "Menores",
+			header: "Acompañantes",
 			render: (consent: Consent) => (
 				<Badge variant="default">{consent.minorsCount}</Badge>
 			),
@@ -319,7 +319,7 @@ export default function ConsentsPage() {
 						{/* Minors */}
 						<div>
 							<h4 className="text-sm font-semibold text-foreground/60 uppercase mb-3">
-								Menores ({selectedConsent.minors.length})
+								Acompañantes ({selectedConsent.minors.length})
 							</h4>
 							<div className="space-y-2">
 								{selectedConsent.minors.map((minor, index) => (

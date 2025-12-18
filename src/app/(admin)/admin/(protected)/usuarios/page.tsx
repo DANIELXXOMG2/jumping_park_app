@@ -126,7 +126,7 @@ export default function UsersPage() {
 		},
 		{
 			key: "minorsCount",
-			header: "Menores",
+			header: "Acompañantes",
 			render: (user: User) => (
 				<Badge variant={user.minorsCount > 0 ? "success" : "default"}>
 					{user.minorsCount}
