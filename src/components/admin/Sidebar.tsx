@@ -12,46 +12,73 @@ import {
   ChevronRight,
   BarChart3,
   Settings,
+  type LucideIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import type { Permission } from "@/types/auth";
 
-const menuItems = [
+interface MenuItem {
+  href: string;
+  icon: LucideIcon;
+  label: string;
+  /** Permiso requerido para ver este ítem */
+  permission: Permission;
+}
+
+/**
+ * Menú de navegación con permisos requeridos por ítem.
+ * Solo se mostrarán los ítems para los cuales el usuario tenga permiso.
+ */
+const menuItems: MenuItem[] = [
   {
     href: "/admin",
     icon: LayoutDashboard,
     label: "Dashboard",
+    permission: "dashboard:view",
   },
   {
     href: "/admin/estadisticas",
     icon: BarChart3,
     label: "Estadísticas",
+    permission: "statistics:view",
   },
   {
     href: "/admin/usuarios",
     icon: Users,
     label: "Usuarios",
+    permission: "users:view",
   },
   {
     href: "/admin/consentimientos",
     icon: FileCheck,
     label: "Consentimientos",
+    permission: "consents:view",
   },
   {
     href: "/admin/menores",
     icon: Baby,
     label: "Acompañantes",
+    permission: "minors:view",
   },
   {
     href: "/admin/configuracion",
     icon: Settings,
     label: "Configuración",
+    permission: "settings:manage",
   },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const { hasPermission } = useAuth();
+
+  // Filtrar ítems del menú según permisos del usuario
+  const visibleMenuItems = useMemo(() => {
+    return menuItems.filter((item) => hasPermission(item.permission));
+  }, [hasPermission]);
 
   return (
     <>
@@ -91,7 +118,7 @@ export function Sidebar() {
 
         {/* Navigation */}
         <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
-          {menuItems.map((item) => {
+          {visibleMenuItems.map((item) => {
             const isActive =
               pathname === item.href ||
               (item.href !== "/admin" && pathname.startsWith(item.href));
@@ -134,7 +161,7 @@ export function Sidebar() {
       {/* Mobile bottom navigation */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface border-t border-border">
         <div className="flex items-center justify-around py-2">
-          {menuItems.map((item) => {
+          {visibleMenuItems.map((item) => {
             const isActive =
               pathname === item.href ||
               (item.href !== "/admin" && pathname.startsWith(item.href));

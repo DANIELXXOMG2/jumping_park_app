@@ -13,8 +13,8 @@ export default function KioskLayout({ children }: KioskLayoutProps) {
 	return (
 		<LanguageProvider>
 			<div className="kiosk-bg min-h-screen text-foreground">
-				{/* Botón de idioma flotante - esquina superior izquierda */}
-				<div className="fixed top-4 left-4 z-50">
+				{/* Botón de idioma flotante - esquina inferior izquierda */}
+				<div className="fixed bottom-4 left-4 z-50">
 					<LanguageToggle />
 				</div>
 

@@ -59,17 +59,29 @@ export const dictionary = {
 	// ============================================================================
 	// PÁGINA DE INGRESO (CÉDULA)
 	// ============================================================================
+	"ingreso.step": {
+		es: "Paso 1",
+		en: "Step 1",
+	},
 	"ingreso.title": {
-		es: "Ingresa tu Cédula",
-		en: "Enter your ID Number",
+		es: "Ingresá tu cédula para continuar",
+		en: "Enter your ID to continue",
 	},
 	"ingreso.subtitle": {
-		es: "Escribe tu número de documento para continuar",
-		en: "Type your document number to continue",
+		es: "Usamos este número para validar tu identidad y mostrar tus consentimientos previos.",
+		en: "We use this number to verify your identity and show your previous consents.",
 	},
 	"ingreso.placeholder": {
 		es: "Número de cédula",
 		en: "ID Number",
+	},
+	"ingreso.hint": {
+		es: "Solo números, sin puntos ni guiones. Mínimo {min} dígitos.",
+		en: "Numbers only, no dots or dashes. Minimum {min} digits.",
+	},
+	"ingreso.verifying": {
+		es: "Verificando cédula...",
+		en: "Verifying ID...",
 	},
 	"ingreso.continue": {
 		es: "Continuar",
@@ -131,6 +143,54 @@ export const dictionary = {
 		es: "El código ha expirado. Solicita uno nuevo.",
 		en: "Code expired. Please request a new one.",
 	},
+	"otp.step": {
+		es: "Paso 2",
+		en: "Step 2",
+	},
+	"otp.heading": {
+		es: "Ingresá el código de verificación",
+		en: "Enter the verification code",
+	},
+	"otp.sentToEmail": {
+		es: "Hemos enviado un código a",
+		en: "We have sent a code to",
+	},
+	"otp.inputLabel": {
+		es: "Ingresar código",
+		en: "Enter code",
+	},
+	"otp.resendCooldown": {
+		es: "Reenviar ({seconds}s)",
+		en: "Resend ({seconds}s)",
+	},
+	"otp.validating": {
+		es: "Validando código...",
+		en: "Validating code...",
+	},
+	"otp.noData.title": {
+		es: "Necesitamos validar tu correo",
+		en: "We need to validate your email",
+	},
+	"otp.noData.description": {
+		es: "Para ingresar el código OTP primero tenés que registrar tu cédula y correo en el paso anterior.",
+		en: "To enter the OTP code, you first need to register your ID and email in the previous step.",
+	},
+	"otp.noData.button": {
+		es: "Volver a Ingreso",
+		en: "Back to Entry",
+	},
+	"otp.noData.resendError": {
+		es: "No hay datos válidos para reenviar el código",
+		en: "No valid data to resend the code",
+	},
+	"otp.warning.title": {
+		es: "IMPORTANTE: Medias Antideslizantes",
+		en: "IMPORTANT: Non-Slip Socks",
+	},
+	"otp.warning.description": {
+		es: "El uso de medias antideslizantes es obligatorio para ingresar a las atracciones. Puedes traerlas o adquirirlas en taquilla.",
+		en: "Non-slip socks are mandatory to enter the attractions. You can bring your own or purchase them at the ticket office.",
+	},
 
 	// ============================================================================
 	// PÁGINA DE REGISTRO
@@ -166,6 +226,66 @@ export const dictionary = {
 	"registro.saving": {
 		es: "Guardando...",
 		en: "Saving...",
+	},
+	"registro.step": {
+		es: "Paso 1",
+		en: "Step 1",
+	},
+	"registro.heading": {
+		es: "Ingresá tus datos",
+		en: "Enter your information",
+	},
+	"registro.description": {
+		es: "Necesitamos tu información para generar el consentimiento y enviarte el código de verificación.",
+		en: "We need your information to generate the consent and send you the verification code.",
+	},
+	"registro.form.address": {
+		es: "Dirección (opcional)",
+		en: "Address (optional)",
+	},
+	"registro.form.cedula": {
+		es: "Cédula",
+		en: "ID Number",
+	},
+	"registro.placeholder.fullName": {
+		es: "Ej. Ana María López",
+		en: "E.g. Ana Maria Lopez",
+	},
+	"registro.placeholder.email": {
+		es: "nombre@correo.com",
+		en: "name@email.com",
+	},
+	"registro.placeholder.phone": {
+		es: "300 123 4567",
+		en: "300 123 4567",
+	},
+	"registro.placeholder.address": {
+		es: "Calle 123 #45-67",
+		en: "123 Main St #45",
+	},
+	"registro.submit": {
+		es: "Guardar y Continuar",
+		en: "Save and Continue",
+	},
+	"registro.noCedula.title": {
+		es: "Empecemos desde el inicio",
+		en: "Let's start from the beginning",
+	},
+	"registro.noCedula.description": {
+		es: "Necesitamos que ingreses primero tu cédula para continuar con el registro.",
+		en: "We need you to enter your ID first to continue with the registration.",
+	},
+	"registro.noCedula.button": {
+		es: "Volver a Ingreso",
+		en: "Back to Entry",
+	},
+	"registro.success": {
+		es: "Enviamos un código a tu correo",
+		en: "We sent a code to your email",
+	},
+	"registro.error.generic": {
+		es: "No pudimos continuar. Intentá de nuevo.",
+		en: "We couldn't continue. Please try again.",
 	},
 
 	// ============================================================================

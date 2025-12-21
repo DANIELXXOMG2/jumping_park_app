@@ -3,7 +3,7 @@ import { z } from "zod";
 import { verifyAdminToken } from "@/lib/adminAuth";
 import { db, adminAuth } from "@/lib/firebaseAdmin";
 import { FieldValue } from "firebase-admin/firestore";
-import { ROLE_PERMISSIONS } from "@/types/auth";
+import { ROLE_PERMISSIONS, getEffectivePermissions, type UserRole } from "@/types/auth";
 
 // ============================================================================
 // SCHEMAS DE VALIDACIÓN
@@ -13,7 +13,7 @@ const querySchema = z.object({
 	search: z.string().optional(),
 	limit: z.coerce.number().min(1).max(100).default(20),
 	offset: z.coerce.number().min(0).default(0),
-	role: z.enum(["admin", "cashier"]).optional(),
+	role: z.string().min(1).optional(), // Roles dinámicos desde DB
 });
 
 const createStaffSchema = z.object({
@@ -22,9 +22,7 @@ const createStaffSchema = z.object({
 		.string()
 		.min(6, "La contraseña debe tener al menos 6 caracteres"),
 	fullName: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
-	role: z.enum(["admin", "cashier"], {
-		message: "Rol debe ser 'admin' o 'cashier'",
-	}),
+	role: z.string().min(1, "El rol es requerido"), // Roles dinámicos desde DB
 	avatar: z.string().optional(),
 	phone: z.string().optional(),
 	customPermissions: z.array(z.string()).optional(),
@@ -37,27 +35,44 @@ const createStaffSchema = z.object({
 /**
  * Verifica si el usuario autenticado tiene permisos para crear usuarios.
  * Solo Super Admins (con roles:manage) o usuarios con users:create pueden crear staff.
+ * Retorna información detallada para debugging.
  */
-async function hasCreateUserPermission(uid: string): Promise<boolean> {
+async function hasCreateUserPermission(uid: string): Promise<{ hasPermission: boolean; role: string; permissions: string[] }> {
 	try {
+		console.log(`[STAFF] Intento de creación de staff por usuario: ${uid}`);
+
 		// Buscar en admin_users (colección separada para staff)
 		const userDoc = await db.collection("admin_users").doc(uid).get();
-		if (!userDoc.exists) return false;
+		if (!userDoc.exists) {
+			console.log(`[STAFF] Usuario ${uid} no encontrado en admin_users`);
+			return { hasPermission: false, role: "unknown", permissions: [] };
+		}
 
 		const userData = userDoc.data();
-		const userRole = userData?.role || "visitor";
+		const userRole = (userData?.role || "visitor") as UserRole;
 		const customPermissions = userData?.customPermissions || [];
 
-		// Obtener permisos del rol base
-		const rolePermissions = ROLE_PERMISSIONS[userRole as keyof typeof ROLE_PERMISSIONS] || [];
+		console.log(`[STAFF] Rol detectado: ${userRole}`);
 
-		// Combinar permisos del rol + permisos personalizados
-		const allPermissions = [...rolePermissions, ...customPermissions];
+		// Usar getEffectivePermissions para obtener permisos combinados
+		const effectivePermissions = getEffectivePermissions(userRole, customPermissions);
+
+		console.log(`[STAFF] Permisos efectivos: ${JSON.stringify(effectivePermissions)}`);
+
+		// Si el rol es 'admin', tiene acceso completo siempre
+		if (userRole === "admin") {
+			console.log(`[STAFF] Usuario es admin - acceso concedido automáticamente`);
+			return { hasPermission: true, role: userRole, permissions: effectivePermissions };
+		}
 
 		// Verificar si tiene permiso para crear usuarios o gestionar roles
-		return allPermissions.includes("users:create") || allPermissions.includes("roles:manage");
-	} catch {
-		return false;
+		const canCreate = effectivePermissions.includes("users:create") || effectivePermissions.includes("roles:manage");
+		console.log(`[STAFF] Permiso users:create o roles:manage: ${canCreate}`);
+
+		return { hasPermission: canCreate, role: userRole, permissions: effectivePermissions };
+	} catch (error) {
+		console.error(`[STAFF] Error verificando permisos para ${uid}:`, error);
+		return { hasPermission: false, role: "error", permissions: [] };
 	}
 }
 
@@ -167,10 +182,18 @@ export async function POST(request: NextRequest) {
 		}
 
 		// Verificar permisos para crear usuarios
-		const hasPermission = await hasCreateUserPermission(authResult.uid);
-		if (!hasPermission) {
+		const permissionResult = await hasCreateUserPermission(authResult.uid);
+		if (!permissionResult.hasPermission) {
+			console.warn(`[STAFF] Acceso denegado para usuario ${authResult.uid}. Rol: ${permissionResult.role}, Permisos: ${JSON.stringify(permissionResult.permissions)}`);
 			return NextResponse.json(
-				{ error: "No tienes permisos para crear usuarios administrativos" },
+				{ 
+					error: "No tienes permisos para crear usuarios administrativos",
+					details: {
+						role: permissionResult.role,
+						requiredPermission: "users:create",
+						userPermissions: permissionResult.permissions
+					}
+				},
 				{ status: 403 },
 			);
 		}

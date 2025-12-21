@@ -1,7 +1,5 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
 import {
 	ChevronRight,
 	Eye,
@@ -9,28 +7,41 @@ import {
 	Loader2,
 	Plus,
 	Shield,
-	ShieldCheck,
+	Trash2,
 	User,
-	UserCog,
 	Users,
 	X,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/admin/Card";
-import { Button } from "@/components/admin/Button";
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Badge } from "@/components/admin/Badge";
+import { Button } from "@/components/admin/Button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/admin/Card";
 import { Modal } from "@/components/admin/Modal";
-import { adminGet, adminPost, adminFetch } from "@/lib/adminApi";
+import { UserAvatar } from "@/components/ui/UserAvatar";
+import { useAuth, isSuperAdmin } from "@/contexts/AuthContext";
+import { adminFetch, adminGet, adminPost, adminDelete } from "@/lib/adminApi";
 import { cn } from "@/lib/utils";
-import {
-	ALL_PERMISSIONS,
-	ROLE_PERMISSIONS,
-	type Permission,
-	type UserRole,
-} from "@/types/auth";
+import { ALL_PERMISSIONS, type Permission } from "@/types/auth";
 
 // ============================================================================
 // TIPOS
 // ============================================================================
+
+interface Role {
+	id: string;
+	name: string;
+	displayName: string;
+	description?: string;
+	permissions: string[];
+	isSystem: boolean;
+}
+
+interface RolesResponse {
+	roles: Role[];
+	availablePermissions: string[];
+	total: number;
+}
 
 interface StaffMember {
 	id: string;
@@ -38,7 +49,7 @@ interface StaffMember {
 	fullName: string;
 	email: string;
 	phone?: string | null;
-	role: UserRole;
+	role: string; // Ahora es string dinámico, no UserRole hardcodeado
 	avatar?: string | null;
 	customPermissions: Permission[];
 	createdAt?: string | null;
@@ -58,26 +69,13 @@ interface CreateStaffData {
 	email: string;
 	password: string;
 	fullName: string;
-	role: "admin" | "cashier";
-	avatar?: string;
+	role: string; // Ahora es string dinámico
 	phone?: string;
 }
 
 // ============================================================================
 // CONSTANTES
 // ============================================================================
-
-const ROLE_LABELS: Record<UserRole, string> = {
-	admin: "Administrador",
-	cashier: "Cajero",
-	visitor: "Visitante",
-};
-
-const ROLE_VARIANTS: Record<UserRole, "success" | "info" | "default"> = {
-	admin: "success",
-	cashier: "info",
-	visitor: "default",
-};
 
 const MODULE_ICONS: Record<string, string> = {
 	Dashboard: "📊",
@@ -90,96 +88,75 @@ const MODULE_ICONS: Record<string, string> = {
 	Kiosco: "🖥️",
 };
 
-// Avatares disponibles (iconos de Lucide)
-const AVAILABLE_AVATARS = [
-	{ id: "user", icon: User, label: "Usuario" },
-	{ id: "shield", icon: Shield, label: "Escudo" },
-	{ id: "shield-check", icon: ShieldCheck, label: "Escudo Verificado" },
-	{ id: "user-cog", icon: UserCog, label: "Usuario Config" },
-	{ id: "users", icon: Users, label: "Usuarios" },
-] as const;
-
-// ============================================================================
-// COMPONENTE DE AVATAR
-// ============================================================================
-
-function StaffAvatar({
-	avatarId,
-	size = "md",
-	className,
-}: {
-	avatarId?: string | null;
-	size?: "sm" | "md" | "lg";
-	className?: string;
-}) {
-	const sizeClasses = {
-		sm: "w-10 h-10",
-		md: "w-14 h-14",
-		lg: "w-20 h-20",
-	};
-
-	const iconSizes = {
-		sm: "w-5 h-5",
-		md: "w-7 h-7",
-		lg: "w-10 h-10",
-	};
-
-	const avatarConfig = AVAILABLE_AVATARS.find((a) => a.id === avatarId);
-	const IconComponent = avatarConfig?.icon || User;
-
-	return (
-		<div
-			className={cn(
-				"rounded-full bg-linear-to-br from-primary/20 to-primary/5 flex items-center justify-center border-2 border-primary/20",
-				sizeClasses[size],
-				className
-			)}
-		>
-			<IconComponent className={cn("text-primary", iconSizes[size])} />
-		</div>
-	);
-}
-
 // ============================================================================
 // COMPONENTE DE TARJETA DE STAFF
 // ============================================================================
 
 function StaffCard({
 	member,
+	roles,
 	onClick,
+	showDelete,
+	onDelete,
 }: {
 	member: StaffMember;
+	roles: Role[];
 	onClick: () => void;
+	showDelete?: boolean;
+	onDelete?: (member: StaffMember) => void;
 }) {
+	// Buscar el rol en la lista de roles dinámicos
+	const roleData = roles.find((r) => r.name === member.role);
+	const roleLabel = roleData?.displayName || member.role;
+	// Determinar variante del badge basada en el nombre del rol
+	const roleVariant =
+		member.role === "admin" ? "success" : member.role === "cashier" ? "info" : "default";
+
+	const handleDeleteClick = (e: React.MouseEvent) => {
+		e.stopPropagation(); // Evitar que se abra el panel de permisos
+		onDelete?.(member);
+	};
+
 	return (
-		<button
-			type="button"
-			onClick={onClick}
-			className="group w-full text-left bg-surface rounded-xl border border-border p-5 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
-		>
-			<div className="flex items-start gap-4">
-				<StaffAvatar avatarId={member.avatar} size="md" />
-				<div className="flex-1 min-w-0">
-					<h3 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
-						{member.fullName}
-					</h3>
-					<p className="text-sm text-foreground/60 truncate mt-0.5">
-						{member.email}
-					</p>
-					<div className="flex items-center gap-2 mt-3">
-						<Badge variant={ROLE_VARIANTS[member.role]}>
-							{ROLE_LABELS[member.role]}
-						</Badge>
-						{member.customPermissions.length > 0 && (
-							<Badge variant="info" className="text-xs">
-								+{member.customPermissions.length} permisos
-							</Badge>
-						)}
+		<div className="group relative w-full bg-surface rounded-xl border border-border hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300">
+			<button
+				type="button"
+				onClick={onClick}
+				className="w-full text-left p-5"
+			>
+				<div className="flex items-start gap-4">
+					<UserAvatar name={member.email} size={56} />
+					<div className="flex-1 min-w-0">
+						<h3 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+							{member.fullName}
+						</h3>
+						<p className="text-sm text-foreground/60 truncate mt-0.5">
+							{member.email}
+						</p>
+						<div className="flex items-center gap-2 mt-3">
+							<Badge variant={roleVariant}>{roleLabel}</Badge>
+							{member.customPermissions.length > 0 && (
+								<Badge variant="info" className="text-xs">
+									+{member.customPermissions.length} permisos
+								</Badge>
+							)}
+						</div>
 					</div>
+					<ChevronRight className="w-5 h-5 text-foreground/30 group-hover:text-primary group-hover:translate-x-1 transition-all" />
 				</div>
-				<ChevronRight className="w-5 h-5 text-foreground/30 group-hover:text-primary group-hover:translate-x-1 transition-all" />
-			</div>
-		</button>
+			</button>
+			{/* Botón de eliminar - Solo visible para Super Admin */}
+			{showDelete && !isSuperAdmin(member.email) && (
+				<button
+					type="button"
+					onClick={handleDeleteClick}
+					className="absolute top-2 right-2 p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+					title="Eliminar miembro"
+				>
+					<Trash2 className="w-4 h-4" />
+				</button>
+			)}
+		</div>
 	);
 }
 
@@ -191,16 +168,23 @@ function PermissionsSheet({
 	isOpen,
 	onClose,
 	member,
+	roles,
 	onSaved,
 }: {
 	isOpen: boolean;
 	onClose: () => void;
 	member: StaffMember | null;
+	roles: Role[];
 	onSaved: () => void;
 }) {
 	const [customPermissions, setCustomPermissions] = useState<Permission[]>([]);
 	const [isSaving, setIsSaving] = useState(false);
 	const [hasChanges, setHasChanges] = useState(false);
+
+	// Obtener permisos del rol desde la DB
+	const roleData = roles.find((r) => r.name === member?.role);
+	const rolePermissions = (roleData?.permissions || []) as Permission[];
+	const roleLabel = roleData?.displayName || member?.role || "Sin rol";
 
 	// Cargar permisos cuando se abre el panel
 	useEffect(() => {
@@ -224,10 +208,8 @@ function PermissionsSheet({
 
 	if (!isOpen || !member) return null;
 
-	const userRole = member.role;
-
 	const isRolePermission = (permission: Permission): boolean => {
-		return ROLE_PERMISSIONS[userRole]?.includes(permission) ?? false;
+		return rolePermissions.includes(permission);
 	};
 
 	const hasCustomPermission = (permission: Permission): boolean => {
@@ -321,7 +303,7 @@ function PermissionsSheet({
 				{/* Header */}
 				<div className="flex items-center justify-between px-6 py-4 border-b border-border bg-surface-muted shrink-0">
 					<div className="flex items-center gap-3">
-						<StaffAvatar avatarId={member.avatar} size="sm" />
+						<UserAvatar name={member.email} size={40} />
 						<div>
 							<h2 className="font-semibold text-foreground">{member.fullName}</h2>
 							<p className="text-xs text-foreground/60">{member.email}</p>
@@ -342,8 +324,17 @@ function PermissionsSheet({
 					{/* Info del Rol */}
 					<div className="flex items-center justify-between p-4 bg-surface-muted rounded-lg">
 						<span className="text-sm text-foreground/70">Rol asignado:</span>
-						<Badge variant={ROLE_VARIANTS[userRole]} className="text-sm">
-							{ROLE_LABELS[userRole]}
+						<Badge
+							variant={
+								member.role === "admin"
+									? "success"
+									: member.role === "cashier"
+										? "info"
+										: "default"
+							}
+							className="text-sm"
+						>
+							{roleLabel}
 						</Badge>
 					</div>
 
@@ -464,22 +455,34 @@ function CreateStaffModal({
 	isOpen,
 	onClose,
 	onCreated,
+	roles,
 }: {
 	isOpen: boolean;
 	onClose: () => void;
 	onCreated: () => void;
+	roles: Role[];
 }) {
+	// Filtrar solo roles que pueden ser asignados a staff (excluir 'visitor')
+	const assignableRoles = roles.filter((r) => r.name !== "visitor");
+	const defaultRole = assignableRoles.find((r) => r.name === "cashier")?.name || assignableRoles[0]?.name || "";
+
 	const [formData, setFormData] = useState<CreateStaffData>({
 		email: "",
 		password: "",
 		fullName: "",
-		role: "cashier",
-		avatar: "user",
+		role: defaultRole,
 		phone: "",
 	});
 	const [showPassword, setShowPassword] = useState(false);
 	const [isCreating, setIsCreating] = useState(false);
 	const [errors, setErrors] = useState<Partial<Record<keyof CreateStaffData, string>>>({});
+
+	// Actualizar rol por defecto cuando cambien los roles disponibles
+	useEffect(() => {
+		if (defaultRole && !formData.role) {
+			setFormData((prev) => ({ ...prev, role: defaultRole }));
+		}
+	}, [defaultRole, formData.role]);
 
 	const validateForm = (): boolean => {
 		const newErrors: Partial<Record<keyof CreateStaffData, string>> = {};
@@ -502,6 +505,10 @@ function CreateStaffModal({
 			newErrors.fullName = "Mínimo 2 caracteres";
 		}
 
+		if (!formData.role) {
+			newErrors.role = "El rol es requerido";
+		}
+
 		setErrors(newErrors);
 		return Object.keys(newErrors).length === 0;
 	};
@@ -515,8 +522,9 @@ function CreateStaffModal({
 		try {
 			await adminPost("/api/admin/staff", formData);
 
+			const roleLabel = roles.find((r) => r.name === formData.role)?.displayName || formData.role;
 			toast.success("Miembro creado", {
-				description: `${formData.fullName} ha sido agregado como ${ROLE_LABELS[formData.role]}.`,
+				description: `${formData.fullName} ha sido agregado como ${roleLabel}.`,
 			});
 
 			onCreated();
@@ -536,8 +544,7 @@ function CreateStaffModal({
 			email: "",
 			password: "",
 			fullName: "",
-			role: "cashier",
-			avatar: "user",
+			role: defaultRole,
 			phone: "",
 		});
 		setErrors({});
@@ -552,41 +559,6 @@ function CreateStaffModal({
 	return (
 		<Modal isOpen={isOpen} onClose={handleClose} title="Agregar Miembro del Equipo">
 			<form onSubmit={handleSubmit} className="space-y-5">
-				{/* Selección de Avatar */}
-				<div>
-					<label className="block text-sm font-medium text-foreground mb-3">
-						Avatar
-					</label>
-					<div className="flex flex-wrap gap-3">
-						{AVAILABLE_AVATARS.map((avatar) => {
-							const IconComponent = avatar.icon;
-							const isSelected = formData.avatar === avatar.id;
-
-							return (
-								<button
-									key={avatar.id}
-									type="button"
-									onClick={() => setFormData((prev) => ({ ...prev, avatar: avatar.id }))}
-									className={cn(
-										"w-14 h-14 rounded-full flex items-center justify-center border-2 transition-all",
-										isSelected
-											? "border-primary bg-primary/10 scale-110"
-											: "border-border bg-surface-muted hover:border-primary/50"
-									)}
-									title={avatar.label}
-								>
-									<IconComponent
-										className={cn(
-											"w-6 h-6 transition-colors",
-											isSelected ? "text-primary" : "text-foreground/60"
-										)}
-									/>
-								</button>
-							);
-						})}
-					</div>
-				</div>
-
 				{/* Nombre Completo */}
 				<div>
 					<label className="block text-sm font-medium text-foreground mb-1.5">
@@ -685,44 +657,49 @@ function CreateStaffModal({
 					<label className="block text-sm font-medium text-foreground mb-1.5">
 						Rol *
 					</label>
-					<div className="grid grid-cols-2 gap-3">
-						<button
-							type="button"
-							onClick={() => setFormData((prev) => ({ ...prev, role: "cashier" }))}
-							className={cn(
-								"p-4 rounded-lg border-2 transition-all text-left",
-								formData.role === "cashier"
-									? "border-primary bg-primary/5"
-									: "border-border hover:border-primary/50"
-							)}
-						>
-							<div className="flex items-center gap-2 mb-1">
-								<User className="w-4 h-4 text-blue-400" />
-								<span className="font-medium text-foreground">Cajero</span>
-							</div>
-							<p className="text-xs text-foreground/60">
-								Acceso limitado: ver reportes, gestionar ingresos.
-							</p>
-						</button>
-						<button
-							type="button"
-							onClick={() => setFormData((prev) => ({ ...prev, role: "admin" }))}
-							className={cn(
-								"p-4 rounded-lg border-2 transition-all text-left",
-								formData.role === "admin"
-									? "border-primary bg-primary/5"
-									: "border-border hover:border-primary/50"
-							)}
-						>
-							<div className="flex items-center gap-2 mb-1">
-								<Shield className="w-4 h-4 text-green-400" />
-								<span className="font-medium text-foreground">Administrador</span>
-							</div>
-							<p className="text-xs text-foreground/60">
-								Acceso completo al panel de administración.
-							</p>
-						</button>
-					</div>
+					{assignableRoles.length === 0 ? (
+						<p className="text-sm text-foreground/60 p-4 bg-surface-muted rounded-lg">
+							No hay roles disponibles. Crea un rol en "Gestión de Roles" primero.
+						</p>
+					) : (
+						<div className="grid grid-cols-2 gap-3">
+							{assignableRoles.map((role) => (
+								<button
+									key={role.id}
+									type="button"
+									onClick={() => setFormData((prev) => ({ ...prev, role: role.name }))}
+									className={cn(
+										"p-4 rounded-lg border-2 transition-all text-left",
+										formData.role === role.name
+											? "border-primary bg-primary/5"
+											: "border-border hover:border-primary/50"
+									)}
+								>
+									<div className="flex items-center gap-2 mb-1">
+										{role.name === "admin" ? (
+											<Shield className="w-4 h-4 text-green-400" />
+										) : role.name === "cashier" ? (
+											<User className="w-4 h-4 text-blue-400" />
+										) : (
+											<Shield className="w-4 h-4 text-foreground/60" />
+										)}
+										<span className="font-medium text-foreground">{role.displayName}</span>
+									</div>
+									{role.description && (
+										<p className="text-xs text-foreground/60 line-clamp-2">
+											{role.description}
+										</p>
+									)}
+									<p className="text-xs text-foreground/40 mt-1">
+										{role.permissions.length} permisos
+									</p>
+								</button>
+							))}
+						</div>
+					)}
+					{errors.role && (
+						<p className="text-xs text-red-400 mt-1">{errors.role}</p>
+					)}
 				</div>
 
 				{/* Botones */}
@@ -744,11 +721,31 @@ function CreateStaffModal({
 // ============================================================================
 
 export function StaffManager() {
+	const { user } = useAuth();
 	const [staff, setStaff] = useState<StaffMember[]>([]);
+	const [roles, setRoles] = useState<Role[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 	const [selectedMember, setSelectedMember] = useState<StaffMember | null>(null);
 	const [isSheetOpen, setIsSheetOpen] = useState(false);
+	const [memberToDelete, setMemberToDelete] = useState<StaffMember | null>(null);
+	const [isDeleting, setIsDeleting] = useState(false);
+
+	// Verificar si el usuario actual es Super Admin
+	const currentUserIsSuperAdmin = isSuperAdmin(user?.email);
+
+	// Cargar roles desde la API
+	const loadRoles = useCallback(async () => {
+		try {
+			const response = await adminGet<RolesResponse>("/api/admin/roles");
+			setRoles(response.roles);
+		} catch (error) {
+			console.error("Error cargando roles:", error);
+			toast.error("Error al cargar roles", {
+				description: "No se pudieron cargar los roles disponibles",
+			});
+		}
+	}, []);
 
 	// Cargar staff
 	const loadStaff = useCallback(async () => {
@@ -765,9 +762,10 @@ export function StaffManager() {
 		}
 	}, []);
 
+	// Cargar datos iniciales
 	useEffect(() => {
-		loadStaff();
-	}, [loadStaff]);
+		Promise.all([loadRoles(), loadStaff()]);
+	}, [loadRoles, loadStaff]);
 
 	const handleOpenSheet = (member: StaffMember) => {
 		setSelectedMember(member);
@@ -785,6 +783,34 @@ export function StaffManager() {
 
 	const handlePermissionsSaved = () => {
 		loadStaff();
+	};
+
+	const handleDeleteRequest = (member: StaffMember) => {
+		setMemberToDelete(member);
+	};
+
+	const handleDeleteConfirm = async () => {
+		if (!memberToDelete) return;
+
+		setIsDeleting(true);
+		try {
+			await adminDelete(`/api/admin/staff/${memberToDelete.id}`);
+			toast.success("Miembro eliminado", {
+				description: `${memberToDelete.fullName} ha sido eliminado del equipo.`,
+			});
+			setMemberToDelete(null);
+			loadStaff();
+		} catch (error) {
+			toast.error("Error al eliminar", {
+				description: error instanceof Error ? error.message : "Error desconocido",
+			});
+		} finally {
+			setIsDeleting(false);
+		}
+	};
+
+	const handleDeleteCancel = () => {
+		setMemberToDelete(null);
 	};
 
 	return (
@@ -847,17 +873,60 @@ export function StaffManager() {
 						<StaffCard
 							key={member.id}
 							member={member}
+							roles={roles}
 							onClick={() => handleOpenSheet(member)}
+							showDelete={currentUserIsSuperAdmin}
+							onDelete={handleDeleteRequest}
 						/>
 					))}
 				</div>
 			)}
+
+			{/* Modal de Confirmación de Eliminación */}
+			<Modal
+				isOpen={!!memberToDelete}
+				onClose={handleDeleteCancel}
+				title="Confirmar Eliminación"
+			>
+				<div className="space-y-4">
+					<p className="text-foreground/80">
+						¿Estás seguro de que deseas eliminar a{" "}
+						<span className="font-semibold text-foreground">
+							{memberToDelete?.fullName}
+						</span>{" "}
+						del equipo?
+					</p>
+					<p className="text-sm text-foreground/60">
+						Esta acción no se puede deshacer. El usuario perderá acceso al panel
+						de administración.
+					</p>
+					<div className="flex justify-end gap-3 pt-4 border-t border-border">
+						<Button
+							variant="outline"
+							onClick={handleDeleteCancel}
+							disabled={isDeleting}
+						>
+							Cancelar
+						</Button>
+						<Button
+							variant="primary"
+							onClick={handleDeleteConfirm}
+							isLoading={isDeleting}
+							className="bg-red-500 hover:bg-red-600"
+						>
+							<Trash2 className="w-4 h-4" />
+							Eliminar
+						</Button>
+					</div>
+				</div>
+			</Modal>
 
 			{/* Modal de Creación */}
 			<CreateStaffModal
 				isOpen={isCreateModalOpen}
 				onClose={() => setIsCreateModalOpen(false)}
 				onCreated={handleStaffCreated}
+				roles={roles}
 			/>
 
 			{/* Panel de Permisos */}
@@ -865,6 +934,7 @@ export function StaffManager() {
 				isOpen={isSheetOpen}
 				onClose={handleCloseSheet}
 				member={selectedMember}
+				roles={roles}
 				onSaved={handlePermissionsSaved}
 			/>
 		</div>
