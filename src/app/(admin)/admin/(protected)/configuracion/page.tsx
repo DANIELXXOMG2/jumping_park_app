@@ -12,6 +12,7 @@ import {
 	RotateCcw,
 	Save,
 	Settings,
+	Shield,
 	Trash2,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -29,6 +30,7 @@ import {
 	DEFAULT_CONSENT_CONTENT,
 	type ParkRule,
 } from "@/lib/data/legalContent";
+import { PermissionsManager } from "@/components/admin/settings/PermissionsManager";
 
 // ============================================================================
 // TIPOS
@@ -261,9 +263,9 @@ export default function ConfiguracionPage() {
 		type: "idle",
 		message: "",
 	});
-	const [activeSection, setActiveSection] = useState<"consent" | "rules">(
-		"consent",
-	);
+	const [activeSection, setActiveSection] = useState<
+		"consent" | "rules" | "permissions"
+	>("consent");
 
 	// Cargar contenido actual
 	const fetchContent = useCallback(async () => {
@@ -528,6 +530,18 @@ export default function ConfiguracionPage() {
 					<ListOrdered className="w-4 h-4" />
 					Reglas ({content.rules.items.length})
 				</button>
+				<button
+					type="button"
+					onClick={() => setActiveSection("permissions")}
+					className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+						activeSection === "permissions"
+							? "border-primary text-primary"
+							: "border-transparent text-foreground/60 hover:text-foreground"
+					}`}
+				>
+					<Shield className="w-4 h-4" />
+					Permisos
+				</button>
 			</div>
 
 			{/* Consent Section */}
@@ -731,6 +745,9 @@ export default function ConfiguracionPage() {
 					</Card>
 				</div>
 			)}
+
+			{/* Permissions Section */}
+			{activeSection === "permissions" && <PermissionsManager />}
 
 			{/* Tip */}
 			<div className="bg-blue-500/10 text-blue-600 dark:text-blue-400 p-4 rounded-lg text-sm">
