@@ -37,6 +37,8 @@ export async function GET(request: NextRequest) {
 				fullName: data.fullName,
 				email: data.email,
 				phone: data.phone,
+				role: data.role || "visitor",
+				customPermissions: data.customPermissions || [],
 				minorsCount: data.minors?.length || 0,
 				minors: data.minors || [],
 				createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
