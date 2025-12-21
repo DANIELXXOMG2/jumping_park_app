@@ -66,6 +66,8 @@ export interface UserProfile {
 	address?: string;
 	/** Rol del usuario en el sistema (RBAC) */
 	role?: UserRole;
+	/** Permisos adicionales asignados al usuario (modelo aditivo RBAC) */
+	customPermissions?: string[];
 	/** Lista de menores a cargo */
 	minors: Minor[];
 	/** Fecha de creación del registro */
