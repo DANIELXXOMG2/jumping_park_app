@@ -30,7 +30,7 @@ import {
 	DEFAULT_CONSENT_CONTENT,
 	type ParkRule,
 } from "@/lib/data/legalContent";
-import { PermissionsManager } from "@/components/admin/settings/PermissionsManager";
+import { StaffManager } from "@/components/admin/settings/StaffManager";
 
 // ============================================================================
 // TIPOS
@@ -540,7 +540,7 @@ export default function ConfiguracionPage() {
 					}`}
 				>
 					<Shield className="w-4 h-4" />
-					Permisos
+					Equipo y Permisos
 				</button>
 			</div>
 
@@ -747,7 +747,7 @@ export default function ConfiguracionPage() {
 			)}
 
 			{/* Permissions Section */}
-			{activeSection === "permissions" && <PermissionsManager />}
+			{activeSection === "permissions" && <StaffManager />}
 
 			{/* Tip */}
 			<div className="bg-blue-500/10 text-blue-600 dark:text-blue-400 p-4 rounded-lg text-sm">

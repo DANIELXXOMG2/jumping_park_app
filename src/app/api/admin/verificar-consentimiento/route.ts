@@ -81,7 +81,6 @@ export async function GET(request: NextRequest) {
 					uid: cedulaValue,
 				},
 				minorsSnapshot: consentData.minorsSnapshot || [],
-				pdfUrl: consentData.pdfUrl || null,
 				signatureUrl: consentData.signatureUrl || null,
 				signedAt,
 				expiresAt,
