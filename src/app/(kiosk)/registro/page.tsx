@@ -5,6 +5,7 @@ import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useUISound } from "@/hooks";
 import {
 	type VisitorFormValues,
@@ -20,6 +21,9 @@ export default function RegistroPage() {
 
 	// Hook de sonidos para feedback auditivo
 	const { playClick, playSuccess, playError } = useUISound();
+
+	// Hook de traducciones
+	const { t } = useLanguage();
 
 	const cedula = visitorData.uid ?? "";
 	const hasCedula = Boolean(cedula);
@@ -82,7 +86,7 @@ export default function RegistroPage() {
 			playSuccess();
 
 			setStep(2);
-			setServerMessage("Enviamos un código a tu correo");
+			setServerMessage(t("registro.success"));
 			router.push("/otp");
 		} catch (error) {
 			// 🔊 Feedback sonoro de error
@@ -92,7 +96,7 @@ export default function RegistroPage() {
 			setServerError(
 				error instanceof Error
 					? error.message
-					: "No pudimos continuar. Intentá de nuevo.",
+					: t("registro.error.generic"),
 			);
 		}
 	};
@@ -101,21 +105,20 @@ export default function RegistroPage() {
 		message ? <p className="text-sm text-red-300">{message}</p> : null;
 
 	const fieldClasses =
-		"w-full rounded-3xl border border-white/15 bg-black/30 px-6 py-4 text-lg text-white placeholder:text-white/40";
+		"w-full rounded-3xl border border-white/15 bg-black/30 dark:bg-zinc-900 px-6 py-4 text-lg text-foreground placeholder:text-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/50";
 
 	if (!hasCedula) {
 		return (
 			<section className="flex flex-1 items-center justify-center px-6 py-8">
 				<div className="flex w-full max-w-3xl flex-col items-center gap-6 rounded-4xl border border-white/10 bg-white/5 p-10 text-center shadow-[0_40px_140px_rgba(0,0,0,0.45)] backdrop-blur-lg">
 					<p className="text-sm uppercase tracking-[0.4em] text-primary">
-						Paso 1
+						{t("registro.step")}
 					</p>
 					<h1 className="text-4xl font-semibold text-foreground">
-						Empecemos desde el inicio
+						{t("registro.noCedula.title")}
 					</h1>
-					<p className="text-base text-white/70">
-						Necesitamos que ingreses primero tu cédula para continuar con el
-						registro.
+					<p className="text-base text-foreground/70">
+						{t("registro.noCedula.description")}
 					</p>
 					<button
 						type="button"
@@ -125,7 +128,7 @@ export default function RegistroPage() {
 						}}
 						className="rounded-3xl px-10 py-4 text-xl font-semibold uppercase tracking-wide text-[#050505] shadow-[0_20px_70px_rgba(195,255,45,0.35)]"
 					>
-						Volver a Ingreso
+						{t("registro.noCedula.button")}
 					</button>
 				</div>
 			</section>
@@ -140,69 +143,68 @@ export default function RegistroPage() {
 			>
 				<div className="space-y-2 text-center">
 					<p className="text-sm uppercase tracking-[0.4em] text-primary">
-						Paso 1
+						{t("registro.step")}
 					</p>
 					<h1 className="text-4xl font-semibold text-foreground">
-						Ingresá tus datos
+						{t("registro.heading")}
 					</h1>
-					<p className="text-base text-white/70">
-						Necesitamos tu información para generar el consentimiento y enviarte
-						el código de verificación.
+					<p className="text-base text-foreground/70">
+						{t("registro.description")}
 					</p>
 				</div>
 
 				<div className="grid gap-5 md:grid-cols-2">
 					<div className="flex flex-col gap-2">
-						<label htmlFor="fullName" className="text-sm font-semibold uppercase tracking-wide text-white/70">
-							Nombre completo
+						<label htmlFor="fullName" className="text-sm font-semibold uppercase tracking-wide text-gray-900 dark:text-gray-100">
+							{t("registro.form.fullName")}
 						</label>
 						<input
 							id="fullName"
 							type="text"
 							className={fieldClasses}
-							placeholder="Ej. Ana María López"
+							placeholder={t("registro.placeholder.fullName")}
 							{...register("fullName")}
 						/>
 						{renderError(errors.fullName?.message)}
 					</div>
 
 					<div className="flex flex-col gap-2">
-						<label htmlFor="email" className="text-sm font-semibold uppercase tracking-wide text-white/70">
-							Correo electrónico
+						<label htmlFor="email" className="text-sm font-semibold uppercase tracking-wide text-gray-900 dark:text-gray-100">
+							{t("registro.form.email")}
 						</label>
 						<input
 							id="email"
 							type="email"
 							className={fieldClasses}
-							placeholder="nombre@correo.com"
+							placeholder={t("registro.placeholder.email")}
 							{...register("email")}
 						/>
 						{renderError(errors.email?.message)}
 					</div>
 
 					<div className="flex flex-col gap-2">
-						<label htmlFor="phone" className="text-sm font-semibold uppercase tracking-wide text-white/70">
-							Teléfono
+						<label htmlFor="phone" className="text-sm font-semibold uppercase tracking-wide text-gray-900 dark:text-gray-100">
+							{t("registro.form.phone")}
 						</label>
 						<input
 							id="phone"
 							type="tel"
 							className={fieldClasses}
-							placeholder="300 123 4567"
+							placeholder={t("registro.placeholder.phone")}
 							{...register("phone")}
 						/>
 						{renderError(errors.phone?.message)}
 					</div>
 
 					<div className="flex flex-col gap-2">
-						<label htmlFor="address" className="text-sm font-semibold uppercase tracking-wide text-white/70">
-							Dirección (opcional)
+						<label htmlFor="address" className="text-sm font-semibold uppercase tracking-wide text-gray-900 dark:text-gray-100">
+							{t("registro.form.address")}
 						</label>
 						<input
 							id="address"
 							type="text"
 							className={fieldClasses}
-							placeholder="Calle 123 #45-67"
+							placeholder={t("registro.placeholder.address")}
 							{...register("address")}
 						/>
 						{renderError(errors.address?.message)}
@@ -210,13 +212,13 @@ export default function RegistroPage() {
 				</div>
 
 				<div className="flex flex-col gap-2">
-					<label htmlFor="cedula" className="text-sm font-semibold uppercase tracking-wide text-white/70">
-						Cédula
+					<label htmlFor="cedula" className="text-sm font-semibold uppercase tracking-wide text-gray-900 dark:text-gray-100">
+						{t("registro.form.cedula")}
 					</label>
 					<input
 						id="cedula"
 						type="text"
-						className={`${fieldClasses} cursor-not-allowed bg-black/40 text-white/80`}
+						className={`${fieldClasses} cursor-not-allowed bg-black/40 dark:bg-zinc-800/60 text-foreground/80`}
 						readOnly
 						{...register("cedula")}
 					/>
@@ -242,10 +244,10 @@ export default function RegistroPage() {
 				>
 					{isSubmitting ? (
 						<span className="flex items-center gap-3 text-lg">
-							<Loader2 className="h-6 w-6 animate-spin" /> Guardando...
+							<Loader2 className="h-6 w-6 animate-spin" /> {t("registro.saving")}
 						</span>
 					) : (
-						"Guardar y Continuar"
+						t("registro.submit")
 					)}
 				</button>
 			</form>

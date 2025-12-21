@@ -6,6 +6,7 @@ import {
 	ChevronDown,
 	ChevronUp,
 	FileText,
+	Key,
 	ListOrdered,
 	Loader2,
 	Plus,
@@ -23,6 +24,8 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/admin/Card";
+import { RolesManager } from "@/components/admin/settings/RolesManager";
+import { StaffManager } from "@/components/admin/settings/StaffManager";
 import { adminGet, adminPost } from "@/lib/adminApi";
 import {
 	type ConsentClause,
@@ -30,7 +33,6 @@ import {
 	DEFAULT_CONSENT_CONTENT,
 	type ParkRule,
 } from "@/lib/data/legalContent";
-import { StaffManager } from "@/components/admin/settings/StaffManager";
 
 // ============================================================================
 // TIPOS
@@ -264,7 +266,7 @@ export default function ConfiguracionPage() {
 		message: "",
 	});
 	const [activeSection, setActiveSection] = useState<
-		"consent" | "rules" | "permissions"
+		"consent" | "rules" | "permissions" | "roles"
 	>("consent");
 
 	// Cargar contenido actual
@@ -530,18 +532,32 @@ export default function ConfiguracionPage() {
 					<ListOrdered className="w-4 h-4" />
 					Reglas ({content.rules.items.length})
 				</button>
-				<button
-					type="button"
-					onClick={() => setActiveSection("permissions")}
-					className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-						activeSection === "permissions"
-							? "border-primary text-primary"
-							: "border-transparent text-foreground/60 hover:text-foreground"
-					}`}
-				>
-					<Shield className="w-4 h-4" />
-					Equipo y Permisos
-				</button>
+				<div className="ml-auto flex gap-2">
+					<button
+						type="button"
+						onClick={() => setActiveSection("permissions")}
+						className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+							activeSection === "permissions"
+								? "border-primary text-primary"
+								: "border-transparent text-foreground/60 hover:text-foreground"
+						}`}
+					>
+						<Shield className="w-4 h-4" />
+						Equipo y Permisos
+					</button>
+					<button
+						type="button"
+						onClick={() => setActiveSection("roles")}
+						className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+							activeSection === "roles"
+								? "border-primary text-primary"
+								: "border-transparent text-foreground/60 hover:text-foreground"
+						}`}
+					>
+						<Key className="w-4 h-4" />
+						Gestión de Roles
+					</button>
+				</div>
 			</div>
 
 			{/* Consent Section */}
@@ -748,6 +764,9 @@ export default function ConfiguracionPage() {
 
 			{/* Permissions Section */}
 			{activeSection === "permissions" && <StaffManager />}
+
+			{/* Roles Section */}
+			{activeSection === "roles" && <RolesManager />}
 
 			{/* Tip */}
 			<div className="bg-blue-500/10 text-blue-600 dark:text-blue-400 p-4 rounded-lg text-sm">

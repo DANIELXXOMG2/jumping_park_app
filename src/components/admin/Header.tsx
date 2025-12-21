@@ -1,10 +1,10 @@
 "use client";
 
-import Avatar from "boring-avatars";
 import { LogOut } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ThemeToggleCompact } from "@/components/ui/ThemeToggle";
+import { UserAvatar } from "@/components/ui/UserAvatar";
 import { useAuth } from "@/contexts/AuthContext";
 
 export function Header() {
@@ -47,12 +47,7 @@ export function Header() {
 					</div>
 
 					{/* Avatar */}
-					<Avatar
-						size={36}
-						name={user?.email || "admin"}
-						variant="beam"
-						colors={["#1e3a8a", "#3b82f6", "#60a5fa", "#93c5fd", "#f3f4f6"]}
-					/>
+					<UserAvatar name={user?.email || "admin"} size={36} />
 
 					{/* Theme Toggle */}
 					<ThemeToggleCompact />
