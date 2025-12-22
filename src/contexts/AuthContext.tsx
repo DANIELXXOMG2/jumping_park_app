@@ -8,7 +8,6 @@ import {
 	signInWithPopup,
 	type User,
 } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
 import {
 	createContext,
 	type ReactNode,
@@ -16,40 +15,39 @@ import {
 	useEffect,
 	useState,
 } from "react";
-import { auth, firestore } from "@/lib/firebaseClient";
-import type { UserRole } from "@/types/auth";
-import { canAccessAdmin } from "@/types/auth";
+import { auth } from "@/lib/firebaseClient";
+import type { UserRole, CustomClaims, Permission } from "@/types/auth";
+import { canAccessAdmin, getRoleFromClaims, hasPermission, ROLE_PERMISSIONS } from "@/types/auth";
 
 interface AuthContextType {
 	user: User | null;
 	isLoading: boolean;
 	isAdmin: boolean;
 	role: UserRole | null;
+	/** Verifica si el usuario tiene un permiso específico */
+	checkPermission: (permission: Permission) => boolean;
 	signIn: (email: string, password: string) => Promise<void>;
 	signInWithGoogle: () => Promise<void>;
 	signOut: () => Promise<void>;
 	getIdToken: () => Promise<string | null>;
+	/** Fuerza la recarga del token para obtener nuevos claims */
+	refreshToken: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 /**
- * Obtiene el rol del usuario desde la colección admin_users en Firestore.
- * Esta colección es separada de 'users' (visitantes del kiosco).
+ * Obtiene el rol del usuario desde los Custom Claims del token JWT.
+ * Esta es la fuente de verdad para los roles - NO Firestore.
  */
-async function fetchUserRole(uid: string): Promise<UserRole | null> {
+async function fetchRoleFromClaims(user: User): Promise<UserRole | null> {
 	try {
-		const adminUserRef = doc(firestore, "admin_users", uid);
-		const adminUserSnap = await getDoc(adminUserRef);
-
-		if (adminUserSnap.exists()) {
-			const data = adminUserSnap.data();
-			return (data.role as UserRole) || null;
-		}
-
-		return null;
+		// Forzar refresh del token para obtener claims actualizados
+		const tokenResult = await user.getIdTokenResult(true);
+		const claims = tokenResult.claims as CustomClaims;
+		return getRoleFromClaims(claims);
 	} catch (error) {
-		console.error("Error fetching user role:", error);
+		console.error("Error fetching role from claims:", error);
 		return null;
 	}
 }
@@ -62,20 +60,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	// isAdmin ahora se deriva del rol
 	const isAdmin = role !== null && canAccessAdmin(role);
 
+	// Función para verificar permisos
+	const checkPermission = (permission: Permission): boolean => {
+		if (!role) return false;
+		return hasPermission(role, permission);
+	};
+
+	// Función para refrescar el token y obtener nuevos claims
+	const refreshToken = async () => {
+		if (user) {
+			const newRole = await fetchRoleFromClaims(user);
+			setRole(newRole);
+		}
+	};
+
 	useEffect(() => {
 		const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
 			setUser(firebaseUser);
 
 			if (firebaseUser) {
-				// Primero verificar custom claims (legacy)
-				const tokenResult = await firebaseUser.getIdTokenResult();
-				if (tokenResult.claims.admin === true) {
-					setRole("admin");
-				} else {
-					// Buscar rol en Firestore
-					const userRole = await fetchUserRole(firebaseUser.uid);
-					setRole(userRole);
-				}
+				// Obtener rol desde Custom Claims (fuente de verdad)
+				const userRole = await fetchRoleFromClaims(firebaseUser);
+				setRole(userRole);
 			} else {
 				setRole(null);
 			}
@@ -93,40 +99,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			password,
 		);
 
-		// Verificar rol después del login
-		const userRole = await fetchUserRole(userCredential.user.uid);
-		const tokenResult = await userCredential.user.getIdTokenResult();
+		// Obtener rol desde Custom Claims
+		const userRole = await fetchRoleFromClaims(userCredential.user);
 
-		const hasAccess =
-			tokenResult.claims.admin === true ||
-			(userRole && canAccessAdmin(userRole));
-
-		if (!hasAccess) {
+		if (!userRole || !canAccessAdmin(userRole)) {
 			await firebaseSignOut(auth);
-			throw new Error("No tienes permisos de administrador");
+			throw new Error("No tienes permisos para acceder al panel de administración");
 		}
 
-		setRole(userRole || (tokenResult.claims.admin === true ? "admin" : null));
+		setRole(userRole);
 	};
 
 	const signInWithGoogle = async () => {
 		const provider = new GoogleAuthProvider();
 		const userCredential = await signInWithPopup(auth, provider);
 
-		// Verificar rol después del login
-		const userRole = await fetchUserRole(userCredential.user.uid);
-		const tokenResult = await userCredential.user.getIdTokenResult();
+		// Obtener rol desde Custom Claims
+		const userRole = await fetchRoleFromClaims(userCredential.user);
 
-		const hasAccess =
-			tokenResult.claims.admin === true ||
-			(userRole && canAccessAdmin(userRole));
-
-		if (!hasAccess) {
+		if (!userRole || !canAccessAdmin(userRole)) {
 			await firebaseSignOut(auth);
-			throw new Error("No tienes permisos de administrador");
+			throw new Error("No tienes permisos para acceder al panel de administración");
 		}
 
-		setRole(userRole || (tokenResult.claims.admin === true ? "admin" : null));
+		setRole(userRole);
 	};
 
 	const signOut = async () => {
@@ -146,10 +142,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 				isLoading,
 				isAdmin,
 				role,
+				checkPermission,
 				signIn,
 				signInWithGoogle,
 				signOut,
 				getIdToken,
+				refreshToken,
 			}}
 		>
 			{children}

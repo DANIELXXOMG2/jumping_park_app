@@ -1,14 +1,22 @@
 "use client";
 
 import Avatar from "boring-avatars";
-import { LogOut } from "lucide-react";
+import { LogOut, Shield, User } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ThemeToggleCompact } from "@/components/ui/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 
+/**
+ * Mapeo de roles a etiquetas legibles
+ */
+const ROLE_LABELS: Record<string, { label: string; color: string }> = {
+	admin: { label: "Admin", color: "bg-primary/10 text-primary" },
+	trabajador: { label: "Trabajador", color: "bg-yellow-500/10 text-yellow-600" },
+};
+
 export function Header() {
-	const { user, signOut } = useAuth();
+	const { user, signOut, role } = useAuth();
 	const router = useRouter();
 
 	const handleSignOut = async () => {
@@ -19,6 +27,8 @@ export function Header() {
 			// Error silencioso
 		}
 	};
+
+	const roleInfo = role ? ROLE_LABELS[role] : null;
 
 	return (
 		<header className="sticky top-0 z-40 h-16 bg-surface/80 backdrop-blur-md border-b border-border">
@@ -39,6 +49,18 @@ export function Header() {
 
 				{/* Controles de usuario (derecha) */}
 				<div className="flex items-center gap-3">
+					{/* Badge de rol */}
+					{roleInfo && (
+						<div className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${roleInfo.color}`}>
+							{role === "admin" ? (
+								<Shield className="w-3.5 h-3.5" />
+							) : (
+								<User className="w-3.5 h-3.5" />
+							)}
+							<span>{roleInfo.label}</span>
+						</div>
+					)}
+
 					{/* Email del usuario */}
 					<div className="hidden sm:flex items-center">
 						<span className="text-sm text-text-secondary max-w-[180px] truncate">

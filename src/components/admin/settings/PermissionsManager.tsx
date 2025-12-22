@@ -42,13 +42,13 @@ interface UserPermissionsResponse {
 
 const ROLE_LABELS: Record<UserRole, string> = {
 	admin: "Administrador",
-	cashier: "Cajero",
+	trabajador: "Trabajador",
 	visitor: "Visitante",
 };
 
 const ROLE_VARIANTS: Record<UserRole, "success" | "info" | "default"> = {
 	admin: "success",
-	cashier: "info",
+	trabajador: "info",
 	visitor: "default",
 };
 
