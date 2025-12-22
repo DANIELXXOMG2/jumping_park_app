@@ -74,7 +74,7 @@ function ExitoContent() {
 						</span>
 					</div>
 					<p className="text-gray-500 text-sm mt-3">
-						Recibirás una copia del consentimiento por email
+						Consentimiento guardado exitosamente
 					</p>
 				</div>
 

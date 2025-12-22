@@ -1,6 +1,9 @@
+"use client";
+
 import { FileText, Shield, Zap } from "lucide-react";
 import Image from "next/image";
 import { StartActionButton } from "@/components/kiosk/StartActionButton";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 /**
  * Página principal del Kiosko - Landing de Alto Impacto
@@ -9,8 +12,10 @@ import { StartActionButton } from "@/components/kiosk/StartActionButton";
  * Hero centrado con CTA principal y footer minimalista con beneficios.
  */
 export default function HomePage() {
+	const { t } = useLanguage();
+
 	return (
-		<main className="relative min-h-screen w-full overflow-hidden">
+		<main className="relative min-h-screen w-full overflow-hidden bg-background text-foreground">
 			{/* ═══════════════════════════════════════════════════════════════════
           VIDEO DE FONDO - Pantalla completa, loop infinito
       ═══════════════════════════════════════════════════════════════════ */}
@@ -24,7 +29,7 @@ export default function HomePage() {
 			>
 				<source src="/assets/hero-opt.mp4" type="video/mp4" />
 				{/* Fallback para navegadores sin soporte de video */}
-				Tu navegador no soporta videos HTML5.
+				{t("home.videoFallback")}
 			</video>
 
 			{/* ═══════════════════════════════════════════════════════════════════
@@ -66,15 +71,15 @@ export default function HomePage() {
 
 					{/* Título Principal */}
 					<h1 className="font-sora mb-6 text-6xl font-black uppercase leading-none tracking-tight text-white drop-shadow-2xl sm:text-7xl md:text-8xl lg:text-9xl">
-						¿Listo para
+						{t("home.title.line1")}
 						<span className="mt-2 block bg-linear-to-r from-primary via-yellow-300 to-primary bg-clip-text text-transparent">
-							saltar?
+							{t("home.title.line2")}
 						</span>
 					</h1>
 
 					{/* Subtítulo */}
 					<p className="mb-12 max-w-xl text-xl font-light tracking-wide text-white/80 sm:text-2xl md:text-3xl">
-						Tu aventura comienza con un toque.
+						{t("home.subtitle")}
 					</p>
 
 					{/* Botón CTA Principal */}
@@ -99,7 +104,7 @@ export default function HomePage() {
 						<div className="flex items-center gap-3 text-white/60 transition-colors hover:text-white/80">
 							<Shield className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={1.5} />
 							<span className="text-sm font-medium tracking-wide sm:text-base">
-								Registro Seguro
+								{t("home.benefit.secure")}
 							</span>
 						</div>
 
@@ -113,7 +118,7 @@ export default function HomePage() {
 						<div className="flex items-center gap-3 text-white/60 transition-colors hover:text-white/80">
 							<Zap className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={1.5} />
 							<span className="text-sm font-medium tracking-wide sm:text-base">
-								Ingreso Rápido
+								{t("home.benefit.fast")}
 							</span>
 						</div>
 
@@ -127,7 +132,7 @@ export default function HomePage() {
 						<div className="flex items-center gap-3 text-white/60 transition-colors hover:text-white/80">
 							<FileText className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={1.5} />
 							<span className="text-sm font-medium tracking-wide sm:text-base">
-								100% Digital
+								{t("home.benefit.digital")}
 							</span>
 						</div>
 					</div>

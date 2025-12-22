@@ -42,7 +42,6 @@ interface ConsentResult {
 			uid: string;
 		};
 		minorsSnapshot: MinorSnapshot[];
-		pdfUrl?: string;
 		createdAt: string;
 		expiresAt?: string;
 	};
@@ -323,17 +322,27 @@ export default function AdminDashboard() {
 										</div>
 									</div>
 								)}
-								{searchResult.consent.pdfUrl && (
-									<a
-										href={searchResult.consent.pdfUrl}
-										target="_blank"
-										rel="noopener noreferrer"
-										className="mt-6 w-full py-3 bg-green-500 text-white font-semibold rounded-xl hover:bg-green-600 transition-all flex items-center justify-center gap-2"
-									>
-										<FileText className="w-5 h-5" />
-										Ver PDF del Consentimiento
-									</a>
-								)}
+								<button
+									type="button"
+									onClick={async () => {
+										try {
+											const pdfUrl = `/api/admin/consents/${searchResult.consent?.id}/pdf`;
+											const response = await fetch(pdfUrl, {
+												credentials: "include",
+											});
+											if (!response.ok) throw new Error("Error al generar PDF");
+											const blob = await response.blob();
+											const url = URL.createObjectURL(blob);
+											window.open(url, "_blank");
+										} catch (error) {
+											console.error("Error descargando PDF:", error);
+										}
+									}}
+									className="mt-6 w-full py-3 bg-green-500 text-white font-semibold rounded-xl hover:bg-green-600 transition-all flex items-center justify-center gap-2"
+								>
+									<FileText className="w-5 h-5" />
+									Ver PDF del Consentimiento
+								</button>
 							</CardContent>
 						</Card>
 					) : (
