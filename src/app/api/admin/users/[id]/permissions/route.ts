@@ -66,21 +66,21 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
 		const { permissions } = parseResult.data;
 
-		// 3. Buscar el usuario en Firestore
-		let userRef = db.collection("users").doc(id);
+		// 3. Buscar el usuario en admin_users (colección de staff)
+		let userRef = db.collection("admin_users").doc(id);
 		let userDoc = await userRef.get();
 
 		// Si no existe por ID de documento, buscar por campo uid
 		if (!userDoc.exists) {
 			const byUid = await db
-				.collection("users")
+				.collection("admin_users")
 				.where("uid", "==", id)
 				.limit(1)
 				.get();
 
 			if (byUid.empty) {
 				return NextResponse.json(
-					{ error: "Usuario no encontrado" },
+					{ error: "Usuario administrativo no encontrado" },
 					{ status: 404 }
 				);
 			}
@@ -92,12 +92,12 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 		const userData = userDoc.data();
 		if (!userData) {
 			return NextResponse.json(
-				{ error: "Usuario no encontrado" },
+				{ error: "Usuario administrativo no encontrado" },
 				{ status: 404 }
 			);
 		}
 
-		// 4. Actualizar customPermissions en Firestore
+		// 4. Actualizar customPermissions en admin_users
 		await userRef.update({
 			customPermissions: permissions,
 			updatedAt: new Date(),
@@ -142,19 +142,19 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
 		const { id } = await params;
 
-		// 2. Buscar el usuario en Firestore
-		let userDoc = await db.collection("users").doc(id).get();
+		// 2. Buscar el usuario en admin_users (colección de staff)
+		let userDoc = await db.collection("admin_users").doc(id).get();
 
 		if (!userDoc.exists) {
 			const byUid = await db
-				.collection("users")
+				.collection("admin_users")
 				.where("uid", "==", id)
 				.limit(1)
 				.get();
 
 			if (byUid.empty) {
 				return NextResponse.json(
-					{ error: "Usuario no encontrado" },
+					{ error: "Usuario administrativo no encontrado" },
 					{ status: 404 }
 				);
 			}
@@ -165,7 +165,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 		const userData = userDoc.data();
 		if (!userData) {
 			return NextResponse.json(
-				{ error: "Usuario no encontrado" },
+				{ error: "Usuario administrativo no encontrado" },
 				{ status: 404 }
 			);
 		}

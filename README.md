@@ -356,8 +356,8 @@ interface Consent {
   visitorId: string;     // Referencia a users
   signatureUrl: string;  // URL firmada de Storage
   minors: string[];      // IDs de menores incluidos
-  pdfUrl: string;        // URL del PDF generado
   createdAt: Timestamp;
+  // NOTA: El PDF se genera bajo demanda via /api/admin/consents/{id}/pdf
 }
 ```
 

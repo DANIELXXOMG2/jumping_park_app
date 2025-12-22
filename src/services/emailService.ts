@@ -100,6 +100,10 @@ export async function sendOtpEmail(
 // ============================================================================
 
 /**
+ * @deprecated Esta función ya no se usa en el flujo principal (diciembre 2025).
+ * El envío de emails de consentimiento ha sido deshabilitado.
+ * Se mantiene solo para compatibilidad con el endpoint de reenvío manual desde admin.
+ *
  * Envía el correo con el PDF del consentimiento firmado.
  * Template: src/components/emails/ConsentEmail.tsx (paleta azul corporativo)
  *

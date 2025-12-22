@@ -6,13 +6,12 @@
  * 2. Upsert de usuario en Firestore
  * 3. Generación de consecutivo atómico (RF-08)
  * 4. Creación del documento de consentimiento
- * 5. Generación del PDF
- * 6. Envío del email con el PDF adjunto
+ *
+ * NOTA: El PDF NO se guarda en Storage. Se genera bajo demanda via API.
+ * NOTA: El envío de email ha sido deshabilitado (diciembre 2025).
  */
 import { bucket, db } from "@/lib/firebaseAdmin";
 import type { Consent, Minor, UserProfile } from "@/types/firestore";
-import { sendConsentEmail } from "./emailService";
-import { generateConsentPdf } from "./pdfService";
 
 // ============================================================================
 // TYPES
@@ -43,7 +42,6 @@ export interface CreateConsentResult {
 	success: boolean;
 	consentId?: string;
 	consecutivo?: number;
-	emailSent?: boolean;
 	error?: string;
 }
 
@@ -294,11 +292,11 @@ class ConsentService {
 	 * 3. Upsert usuario en Firestore
 	 * 4. Generar consecutivo atómico (RF-08)
 	 * 5. Crear documento de consentimiento
-	 * 6. Generar PDF
-	 * 7. Enviar email con PDF adjunto
+	 *
+	 * NOTA: El PDF se genera bajo demanda via /api/admin/consents/{id}/pdf
 	 *
 	 * @param input - Datos del consentimiento
-	 * @returns Resultado con consentId, consecutivo y estado del email
+	 * @returns Resultado con consentId y consecutivo
 	 */
 	async createConsent(input: CreateConsentInput): Promise<CreateConsentResult> {
 		const { responsibleAdult, minors, signatureBase64, ipAddress } = input;
@@ -309,7 +307,7 @@ class ConsentService {
 
 		try {
 			// 1. Subir firma a Storage
-			const { url: signatureUrl, buffer: signatureBuffer } =
+			const { url: signatureUrl } =
 				await this.uploadSignature(
 					responsibleAdult.documentId,
 					signatureBase64,
@@ -336,48 +334,22 @@ class ConsentService {
 				ipAddress,
 			);
 
-			// 6 & 7. Generar PDF y enviar email (no bloqueante)
-			let emailSent = false;
-			try {
-				console.log(
-					`[ConsentService] Generando PDF para consecutivo: ${consecutivo}`,
-				);
-				const pdfBuffer = await generateConsentPdf(consent, signatureBuffer);
-
-				console.log(
-					`[ConsentService] Enviando email a: ${responsibleAdult.email}`,
-				);
-				const emailResult = await sendConsentEmail({
-					to: responsibleAdult.email,
-					fullName: responsibleAdult.fullName,
-					consecutivo,
-					pdfBuffer,
-				});
-
-				emailSent = emailResult.success;
-
-				if (!emailResult.success) {
-					console.warn(
-						`[ConsentService] Email no enviado: ${emailResult.error}`,
-					);
-				}
-			} catch (emailError) {
-				// El email falla silenciosamente - el consentimiento ya está creado
-				console.error(
-					"[ConsentService] Error en generación/envío de PDF:",
-					emailError,
-				);
-			}
+			// 6. NOTA: El PDF NO se guarda en Storage. Se genera bajo demanda
+			// cuando el admin lo solicita a través de /api/admin/consents/{id}/pdf.
+			// Esto reduce costos de Storage y evita datos duplicados
+			// (la información ya persiste en Firestore).
+			console.log(
+				`[ConsentService] PDF se generará bajo demanda para consecutivo: ${consecutivo}`,
+			);
 
 			console.log(
-				`[ConsentService] Consentimiento completado. ID: ${consent.id}, Consecutivo: ${consecutivo}, Email: ${emailSent}`,
+				`[ConsentService] Consentimiento completado. ID: ${consent.id}, Consecutivo: ${consecutivo}`,
 			);
 
 			return {
 				success: true,
 				consentId: consent.id,
 				consecutivo,
-				emailSent,
 			};
 		} catch (error) {
 			console.error("[ConsentService] Error creando consentimiento:", error);

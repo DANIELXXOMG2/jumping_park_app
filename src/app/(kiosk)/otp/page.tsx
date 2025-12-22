@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { OtpDisplay } from "@/components/kiosk/OtpDisplay";
 import { VirtualKeypad } from "@/components/kiosk/VirtualKeypad";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useKioskStore } from "@/store/kioskStore";
 
 const OTP_LENGTH = 6;
@@ -28,6 +29,9 @@ export default function OtpPage() {
 	const updateVisitorData = useKioskStore((state) => state.updateVisitorData); // Necesitamos actualizar datos
 	const setAuthenticated = useKioskStore((state) => state.setAuthenticated);
 	const setStep = useKioskStore((state) => state.setStep);
+
+	// Hook de traducciones
+	const { t } = useLanguage();
 
 	const email = visitorData.email;
 	const cedula = visitorData.uid;
@@ -220,21 +224,20 @@ export default function OtpPage() {
 			<section className="flex flex-1 items-center justify-center px-3 sm:px-6 py-4 sm:py-8">
 				<div className="flex w-full max-w-3xl flex-col items-center gap-4 sm:gap-6 rounded-2xl sm:rounded-3xl md:rounded-4xl border border-white/10 bg-white/5 p-4 sm:p-6 md:p-10 text-center shadow-[0_40px_140px_rgba(0,0,0,0.45)] backdrop-blur-lg">
 					<p className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.4em] text-primary">
-						Paso 2
+						{t("otp.step")}
 					</p>
 					<h1 className="text-xl sm:text-2xl md:text-4xl font-semibold text-foreground">
-						Necesitamos validar tu correo
+						{t("otp.noData.title")}
 					</h1>
-					<p className="text-sm sm:text-base text-white/70">
-						Para ingresar el código OTP primero tenés que registrar tu cédula y
-						correo en el paso anterior.
+					<p className="text-sm sm:text-base text-foreground/70">
+						{t("otp.noData.description")}
 					</p>
 					<button
 						type="button"
 						onClick={() => router.replace(INGRESO_ROUTE)}
 						className="rounded-xl sm:rounded-2xl md:rounded-3xl px-6 sm:px-8 md:px-10 py-3 sm:py-4 text-base sm:text-lg md:text-xl font-semibold uppercase tracking-wide text-[#050505] shadow-[0_20px_70px_rgba(195,255,45,0.35)]"
 					>
-						Volver a Ingreso
+						{t("otp.noData.button")}
 					</button>
 				</div>
 			</section>
@@ -246,13 +249,13 @@ export default function OtpPage() {
 			<div className="flex w-full max-w-4xl flex-col items-center gap-4 sm:gap-6 md:gap-8 rounded-2xl sm:rounded-3xl md:rounded-4xl border border-white/10 bg-white/5 p-4 sm:p-6 md:p-10 text-center shadow-[0_40px_140px_rgba(0,0,0,0.45)] backdrop-blur-lg">
 				<div className="space-y-2 sm:space-y-3">
 					<p className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.4em] text-primary">
-						Paso 2
+						{t("otp.step")}
 					</p>
 					<h1 className="text-xl sm:text-2xl md:text-4xl font-semibold text-foreground">
-						Ingresá el código de verificación
+						{t("otp.heading")}
 					</h1>
 					<p className="text-sm sm:text-base text-foreground/70">
-						Hemos enviado un código a{" "}
+						{t("otp.sentToEmail")}{" "}
 						<span className="text-primary">{maskedEmail}</span>
 					</p>
 				</div>
@@ -271,7 +274,7 @@ export default function OtpPage() {
 						onChange={(e) => handleInputChange(e.target.value)}
 						onPaste={handlePaste}
 						className="absolute inset-0 h-full w-full opacity-0 cursor-text"
-						aria-label="Ingresar código"
+						aria-label={t("otp.inputLabel")}
 						maxLength={OTP_LENGTH}
 					/>
 				</div>
@@ -308,14 +311,14 @@ export default function OtpPage() {
 							<RefreshCw className="h-4 w-4 sm:h-5 sm:w-5" strokeWidth={1.5} />
 						)}
 						{resendCooldown > 0
-							? `Reenviar (${resendCooldown}s)`
-							: "Reenviar código"}
+							? t("otp.resendCooldown", { seconds: resendCooldown })
+							: t("otp.resend")}
 					</button>
 
 					{isValidating && (
-						<div className="flex items-center gap-2 text-sm sm:text-base text-white/70">
+						<div className="flex items-center gap-2 text-sm sm:text-base text-foreground/70">
 							<Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
-							Validando código...
+							{t("otp.validating")}
 						</div>
 					)}
 				</div>
@@ -326,12 +329,10 @@ export default function OtpPage() {
 						<AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-400 shrink-0 mt-0.5" />
 						<div className="text-left">
 							<p className="text-yellow-200 font-semibold text-sm sm:text-base">
-								⚠️ IMPORTANTE: Medias Antideslizantes
+								⚠️ {t("otp.warning.title")}
 							</p>
 							<p className="text-yellow-100/80 text-xs sm:text-sm mt-1">
-								El uso de medias antideslizantes es <strong>obligatorio</strong>{" "}
-								para ingresar a las atracciones. Puedes traerlas o adquirirlas
-								en taquilla.
+								{t("otp.warning.description")}
 							</p>
 						</div>
 					</div>

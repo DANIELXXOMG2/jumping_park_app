@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { type FormEvent, useCallback, useState } from "react";
 import { VirtualKeypad } from "@/components/kiosk/VirtualKeypad";
 import { useKioskStore } from "@/store/kioskStore";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const MIN_DIGITS = 6;
 const MAX_DIGITS = 15;
@@ -20,6 +21,7 @@ type CheckUserResponse = {
 
 export default function IngresoPage() {
 	const router = useRouter();
+	const { t } = useLanguage();
 	const updateVisitorData = useKioskStore((state) => state.updateVisitorData);
 	const setStep = useKioskStore((state) => state.setStep);
 	const [cedula, setCedula] = useState("");
@@ -42,12 +44,12 @@ export default function IngresoPage() {
 	const handleCheckUser = useCallback(async () => {
 		if (!cedula || isChecking) {
 			if (!cedula)
-				setErrorMessage("Ingresá tu número de cédula para continuar.");
+				setErrorMessage(t("ingreso.error.empty"));
 			return;
 		}
 
 		if (cedula.length < MIN_DIGITS) {
-			setErrorMessage(`Ingresá al menos ${MIN_DIGITS} dígitos.`);
+			setErrorMessage(t("ingreso.error.minDigits", { min: MIN_DIGITS }));
 			return;
 		}
 
@@ -113,7 +115,7 @@ export default function IngresoPage() {
 		} finally {
 			setIsChecking(false);
 		}
-	}, [cedula, isChecking, router, setStep, updateVisitorData]);
+	}, [cedula, isChecking, router, setStep, updateVisitorData, t]);
 
 	const handleSubmit = useCallback(
 		(evt: FormEvent<HTMLFormElement>) => {
@@ -124,21 +126,20 @@ export default function IngresoPage() {
 	);
 
 	return (
-		<section className="flex flex-1 items-center justify-center px-3 sm:px-6 py-4 sm:py-8">
+		<section className="flex flex-1 items-center justify-center px-3 sm:px-6 py-4 sm:py-8 bg-background text-foreground">
 			<form
 				onSubmit={handleSubmit}
-				className="flex w-full max-w-4xl flex-col items-center gap-4 sm:gap-6 md:gap-8 rounded-2xl sm:rounded-3xl md:rounded-4xl border border-white/10 bg-white/5 p-4 sm:p-6 md:p-10 text-center shadow-[0_40px_140px_rgba(0,0,0,0.45)] backdrop-blur-lg"
+				className="relative flex w-full max-w-4xl flex-col items-center gap-4 sm:gap-6 md:gap-8 rounded-2xl sm:rounded-3xl md:rounded-4xl border-2 border-white/10 bg-white/5 dark:bg-zinc-900/80 backdrop-blur-xl p-4 sm:p-6 md:p-10 text-center shadow-[0_40px_140px_rgba(0,0,0,0.45)] before:absolute before:inset-0 before:rounded-2xl sm:before:rounded-3xl md:before:rounded-4xl before:p-[2px] before:bg-gradient-to-br before:from-primary/20 before:via-transparent before:to-primary/10 before:-z-10 before:pointer-events-none"
 			>
 				<div className="space-y-2 sm:space-y-4">
 					<p className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.4em] text-primary">
-						Paso 1
+						{t("ingreso.step")}
 					</p>
 					<h1 className="text-xl sm:text-2xl md:text-4xl font-semibold text-foreground">
-						Ingresá tu cédula para continuar
+						{t("ingreso.title")}
 					</h1>
 					<p className="text-sm sm:text-base text-foreground/70">
-						Usamos este número para validar tu identidad y mostrar tus
-						consentimientos previos.
+						{t("ingreso.subtitle")}
 					</p>
 				</div>
 
@@ -148,16 +149,16 @@ export default function IngresoPage() {
 						inputMode="numeric"
 						readOnly
 						value={cedula}
-						className="w-full rounded-xl sm:rounded-2xl md:rounded-[2.5rem] border border-white/15 bg-black/40 px-4 sm:px-6 md:px-10 py-4 sm:py-6 md:py-8 text-center text-2xl sm:text-3xl md:text-5xl font-bold tracking-[0.15em] sm:tracking-[0.25em] md:tracking-[0.4em] text-white shadow-inner shadow-black/40 focus-visible:outline-none"
-						aria-label="Número de cédula ingresado"
+						className="w-full rounded-xl sm:rounded-2xl md:rounded-[2.5rem] border bg-white dark:bg-zinc-900 text-black dark:text-white border-gray-200 dark:border-zinc-700 px-4 sm:px-6 md:px-10 py-4 sm:py-6 md:py-8 text-center text-2xl sm:text-3xl md:text-5xl font-bold tracking-[0.15em] sm:tracking-[0.25em] md:tracking-[0.4em] shadow-inner focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+						aria-label={t("ingreso.placeholder")}
 					/>
-					<p className="mt-2 sm:mt-3 text-xs sm:text-sm text-white/60">
-						Solo números, sin puntos ni guiones. Mínimo {MIN_DIGITS} dígitos.
+					<p className="mt-2 sm:mt-3 text-xs sm:text-sm text-foreground/60">
+						{t("ingreso.hint", { min: MIN_DIGITS })}
 					</p>
 				</div>
 
 				{errorMessage && (
-					<div className="w-full max-w-3xl rounded-xl sm:rounded-2xl md:rounded-3xl border border-red-500/40 bg-red-500/10 px-4 sm:px-6 py-3 sm:py-4 text-sm sm:text-base md:text-lg text-red-100">
+					<div className="w-full max-w-3xl rounded-xl sm:rounded-2xl md:rounded-3xl border border-red-500/40 bg-red-500/10 px-4 sm:px-6 py-3 sm:py-4 text-sm sm:text-base md:text-lg text-red-600 dark:text-red-100">
 						{errorMessage}
 					</div>
 				)}
@@ -169,13 +170,13 @@ export default function IngresoPage() {
 				/>
 
 				<button type="submit" className="sr-only" aria-hidden tabIndex={-1}>
-					Enviar
+					{t("ingreso.continue")}
 				</button>
 
 				{isChecking && (
-					<div className="flex items-center gap-3 text-lg text-white/80">
+					<div className="flex items-center gap-3 text-lg text-foreground/80">
 						<Loader2 className="h-5 w-5 animate-spin" />
-						Verificando cédula...
+						{t("ingreso.verifying")}
 					</div>
 				)}
 			</form>
