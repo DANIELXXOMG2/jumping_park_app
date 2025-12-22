@@ -1,13 +1,19 @@
 /**
  * ============================================================================
- * TIPOS DE AUTENTICACIÓN Y ROLES - RBAC
+ * TIPOS DE AUTENTICACIÓN Y ROLES - RBAC (Custom Claims)
  * ============================================================================
  *
  * Control de Acceso Basado en Roles (RBAC) para Jumping Park.
+ * 
+ * IMPORTANTE: Los roles se almacenan en Firebase Custom Claims, NO en Firestore.
+ * Esto sigue la mejor práctica recomendada por Firebase:
+ * - Los claims viajan en el token JWT
+ * - Se validan tanto en frontend como en backend
+ * - Se pueden verificar en Firestore Security Rules
  *
  * Roles disponibles:
- * - admin: Acceso completo al panel de administración
- * - cashier: Acceso limitado (ver reportes, gestionar ingresos)
+ * - admin: Acceso completo al panel de administración (todas las secciones)
+ * - trabajador: Acceso limitado (solo Dashboard)
  * - visitor: Usuario final del kiosco (solo puede firmar consentimientos)
  *
  * Modelo de permisos: ADITIVO
@@ -16,8 +22,9 @@
 
 /**
  * Roles de usuario disponibles en el sistema.
+ * Se almacenan como Custom Claims en Firebase Auth.
  */
-export type UserRole = "admin" | "cashier" | "visitor";
+export type UserRole = "admin" | "trabajador" | "visitor";
 
 /**
  * Tipo literal de todos los permisos disponibles en el sistema.
@@ -90,6 +97,7 @@ export interface AuthVerificationResult {
 
 /**
  * Permisos por rol para diferentes acciones.
+ * Admin tiene acceso total, trabajador solo a dashboard.
  */
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
 	admin: [
@@ -106,12 +114,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
 		"settings:manage",
 		"roles:manage",
 	],
-	cashier: [
+	trabajador: [
 		"dashboard:view",
-		"users:view",
-		"consents:view",
-		"minors:view",
-		"statistics:view",
 	],
 	visitor: ["kiosk:access", "consent:sign"],
 };
@@ -169,11 +173,71 @@ export function getEffectivePermissions(
 /**
  * Roles que tienen acceso al panel de administración.
  */
-export const ADMIN_ROLES: UserRole[] = ["admin", "cashier"];
+export const ADMIN_ROLES: UserRole[] = ["admin", "trabajador"];
 
 /**
  * Verifica si un rol puede acceder al panel admin.
  */
 export function canAccessAdmin(role: UserRole): boolean {
 	return ADMIN_ROLES.includes(role);
+}
+
+/**
+ * Rutas del panel admin y los roles que pueden acceder a cada una.
+ * Esto se usa para validar el acceso en el frontend (AdminGuard).
+ */
+export const ROUTE_ACCESS: Record<string, UserRole[]> = {
+	"/admin": ["admin", "trabajador"], // Dashboard - todos
+	"/admin/estadisticas": ["admin"],
+	"/admin/usuarios": ["admin"],
+	"/admin/consentimientos": ["admin"],
+	"/admin/menores": ["admin"],
+	"/admin/configuracion": ["admin"],
+};
+
+/**
+ * Verifica si un rol puede acceder a una ruta específica.
+ */
+export function canAccessRoute(role: UserRole, pathname: string): boolean {
+	// Admin tiene acceso total
+	if (role === "admin") return true;
+	
+	// Buscar la ruta más específica que coincida
+	const sortedRoutes = Object.keys(ROUTE_ACCESS).sort((a, b) => b.length - a.length);
+	
+	for (const route of sortedRoutes) {
+		if (pathname === route || pathname.startsWith(route + "/")) {
+			return ROUTE_ACCESS[route].includes(role);
+		}
+	}
+	
+	// Por defecto, roles no-admin no pueden acceder a rutas no especificadas
+	return false;
+}
+
+/**
+ * Estructura de Custom Claims para Firebase Auth.
+ * Los claims se establecen via Admin SDK y viajan en el token JWT.
+ */
+export interface CustomClaims {
+	role?: UserRole;
+	/** @deprecated Usar 'role' en su lugar. Se mantiene por compatibilidad. */
+	admin?: boolean;
+}
+
+/**
+ * Obtiene el rol desde los custom claims del token.
+ */
+export function getRoleFromClaims(claims: CustomClaims): UserRole | null {
+	// Primero verificar el nuevo campo 'role'
+	if (claims.role && ADMIN_ROLES.includes(claims.role)) {
+		return claims.role;
+	}
+	
+	// Compatibilidad con sistema anterior (admin claim boolean)
+	if (claims.admin === true) {
+		return "admin";
+	}
+	
+	return null;
 }

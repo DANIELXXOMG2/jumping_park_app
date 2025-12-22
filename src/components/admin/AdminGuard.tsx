@@ -1,10 +1,11 @@
 "use client";
 
-import { ShieldAlert, WifiOff } from "lucide-react";
+import { ShieldAlert, WifiOff, Lock } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useSyncExternalStore } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { canAccessAdmin } from "@/types/auth";
+import { canAccessAdmin, canAccessRoute } from "@/types/auth";
+import type { UserRole } from "@/types/auth";
 
 // ============================================================================
 // HOOK: useOnlineStatus
@@ -82,6 +83,39 @@ function UnauthorizedView() {
 }
 
 // ============================================================================
+// COMPONENTE: RestrictedRouteView (Para rutas restringidas por rol)
+// ============================================================================
+
+function RestrictedRouteView() {
+	const router = useRouter();
+
+	return (
+		<div className="min-h-screen bg-background flex items-center justify-center p-4">
+			<div className="flex flex-col items-center gap-6 text-center max-w-md">
+				<div className="w-16 h-16 rounded-full bg-yellow-500/10 flex items-center justify-center">
+					<Lock className="w-8 h-8 text-yellow-600" />
+				</div>
+				<div>
+					<h1 className="text-2xl font-bold text-foreground mb-2">
+						Sección Restringida
+					</h1>
+					<p className="text-foreground/60">
+						Tu rol no tiene acceso a esta sección. Solo puedes acceder al Dashboard.
+					</p>
+				</div>
+				<button
+					type="button"
+					onClick={() => router.push("/admin")}
+					className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
+				>
+					Ir al Dashboard
+				</button>
+			</div>
+		</div>
+	);
+}
+
+// ============================================================================
 // COMPONENTE: AdminGuard
 // ============================================================================
 
@@ -96,10 +130,11 @@ export function AdminGuard({ children }: AdminGuardProps) {
 	const isOnline = useOnlineStatus();
 
 	// Obtener rol cacheado directamente de sessionStorage (sin estado React)
-	const getCachedRole = (): string | null => {
+	const getCachedRole = (): UserRole | null => {
 		if (typeof window === "undefined") return null;
 		try {
-			return sessionStorage.getItem("jp_user_role");
+			const cached = sessionStorage.getItem("jp_user_role");
+			return cached as UserRole | null;
 		} catch {
 			return null;
 		}
@@ -118,6 +153,9 @@ export function AdminGuard({ children }: AdminGuardProps) {
 
 	// Obtener el rol cacheado para la lógica de acceso
 	const cachedRole = getCachedRole();
+	
+	// Determinar el rol efectivo (online: del contexto, offline: del cache)
+	const effectiveRole = isOnline ? role : (cachedRole || role);
 
 	useEffect(() => {
 		if (isLoading) return;
@@ -127,25 +165,7 @@ export function AdminGuard({ children }: AdminGuardProps) {
 			router.replace("/admin/login");
 			return;
 		}
-
-		// Si estamos offline y tenemos cache de rol válido, permitir acceso
-		if (
-			!isOnline &&
-			cachedRole &&
-			canAccessAdmin(cachedRole as "admin" | "cashier" | "visitor")
-		) {
-			return; // Permitir acceso con datos cacheados
-		}
-
-		// Si estamos online y no tiene acceso, mostrar vista de no autorizado
-		if (isOnline && !isAdmin) {
-			// No redirigir inmediatamente, mostrar vista de acceso denegado
-			return;
-		}
-
-		// Si estamos offline sin cache y sin confirmación de admin, esperar
-		// Firebase Auth cachea el token internamente, confiamos en él
-	}, [user, isLoading, isAdmin, isOnline, cachedRole, router]);
+	}, [user, isLoading, router]);
 
 	// Loading state
 	if (isLoading) {
@@ -171,14 +191,18 @@ export function AdminGuard({ children }: AdminGuardProps) {
 		);
 	}
 
-	// Determinar si permitir acceso basado en rol
-	const cachedHasAccess = cachedRole
-		? canAccessAdmin(cachedRole as "admin" | "cashier" | "visitor")
-		: false;
-	const allowAccess = isAdmin || (!isOnline && cachedHasAccess);
-
-	if (!allowAccess) {
+	// Verificar acceso al panel admin
+	const hasAdminAccess = effectiveRole && canAccessAdmin(effectiveRole);
+	
+	if (!hasAdminAccess) {
 		return <UnauthorizedView />;
+	}
+
+	// Verificar acceso a la ruta específica según el rol
+	const canAccessCurrentRoute = effectiveRole && canAccessRoute(effectiveRole, pathname);
+	
+	if (!canAccessCurrentRoute) {
+		return <RestrictedRouteView />;
 	}
 
 	return (

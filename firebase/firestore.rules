@@ -3,21 +3,23 @@ service cloud.firestore {
   match /databases/{database}/documents {
     
     // =========================================================================
-    // FUNCIONES HELPER
+    // FUNCIONES HELPER - RBAC con Custom Claims
     // =========================================================================
     
-    // Verifica si el usuario es admin (via custom claim)
+    // Verifica si el usuario tiene rol admin (via custom claim)
     function isAdmin() {
-      return request.auth != null && request.auth.token.admin == true;
+      return request.auth != null && 
+             (request.auth.token.role == 'admin' || request.auth.token.admin == true);
     }
     
-    // Verifica si el usuario tiene rol admin o cashier en admin_users
-    function hasAdminRole() {
-      return isAdmin() || (
-        request.auth != null && 
-        exists(/databases/$(database)/documents/admin_users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/admin_users/$(request.auth.uid)).data.role in ['admin', 'cashier']
-      );
+    // Verifica si el usuario tiene rol trabajador (via custom claim)
+    function isTrabajador() {
+      return request.auth != null && request.auth.token.role == 'trabajador';
+    }
+    
+    // Verifica si el usuario tiene acceso al panel admin (admin o trabajador)
+    function hasAdminAccess() {
+      return isAdmin() || isTrabajador();
     }
     
     // Verifica si el usuario está autenticado
@@ -26,11 +28,11 @@ service cloud.firestore {
     }
     
     // =========================================================================
-    // COLECCIÓN: admin_users (RBAC)
+    // COLECCIÓN: admin_users (RBAC - Solo lectura para referencia)
     // =========================================================================
     match /admin_users/{userId} {
-      // Solo admins pueden leer usuarios admin
-      allow read: if hasAdminRole();
+      // Solo admins pueden leer usuarios admin (trabajadores NO)
+      allow read: if isAdmin();
       // Solo escritura via Admin SDK (server-side)
       allow write: if false;
     }
@@ -41,7 +43,7 @@ service cloud.firestore {
     match /users/{userId} {
       // Usuarios pueden leer/escribir su propio documento
       // Admins pueden leer cualquier usuario (para panel admin)
-      allow read: if isAuthenticated() && (request.auth.uid == userId || hasAdminRole());
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
       allow write: if isAuthenticated() && request.auth.uid == userId;
     }
 
@@ -57,8 +59,8 @@ service cloud.firestore {
     // =========================================================================
     match /consents/{consentId} {
       // Usuario puede leer sus propios consentimientos
-      // Admins pueden leer cualquier consentimiento
-      allow read: if isAuthenticated() && (request.auth.uid == resource.data.userId || hasAdminRole());
+      // Solo admins pueden leer cualquier consentimiento (trabajadores NO)
+      allow read: if isAuthenticated() && (request.auth.uid == resource.data.userId || isAdmin());
       // Solo escritura via Admin SDK (server-side)
       allow write: if false;
     }
@@ -67,8 +69,8 @@ service cloud.firestore {
     // COLECCIÓN: accesses (registros de ingreso)
     // =========================================================================
     match /accesses/{accessId} {
-      // Solo admins pueden leer/escribir (panel admin)
-      allow read, write: if hasAdminRole();
+      // Solo admins pueden leer/escribir (trabajadores NO)
+      allow read, write: if isAdmin();
     }
 
     // =========================================================================

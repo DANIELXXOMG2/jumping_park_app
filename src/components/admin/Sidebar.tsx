@@ -15,43 +15,65 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { hasPermission, type Permission } from "@/types/auth";
 
-const menuItems = [
+interface MenuItem {
+  href: string;
+  icon: typeof LayoutDashboard;
+  label: string;
+  permission: Permission;
+}
+
+const menuItems: MenuItem[] = [
   {
     href: "/admin",
     icon: LayoutDashboard,
     label: "Dashboard",
+    permission: "dashboard:view",
   },
   {
     href: "/admin/estadisticas",
     icon: BarChart3,
     label: "Estadísticas",
+    permission: "statistics:view",
   },
   {
     href: "/admin/usuarios",
     icon: Users,
     label: "Usuarios",
+    permission: "users:view",
   },
   {
     href: "/admin/consentimientos",
     icon: FileCheck,
     label: "Consentimientos",
+    permission: "consents:view",
   },
   {
     href: "/admin/menores",
     icon: Baby,
     label: "Acompañantes",
+    permission: "minors:view",
   },
   {
     href: "/admin/configuracion",
     icon: Settings,
     label: "Configuración",
+    permission: "settings:manage",
   },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const { role } = useAuth();
+
+  // Filtrar items del menú según permisos del rol
+  const visibleMenuItems = menuItems.filter((item) => {
+    if (!role) return false;
+    return hasPermission(role, item.permission);
+  });
 
   return (
     <>
@@ -91,7 +113,7 @@ export function Sidebar() {
 
         {/* Navigation */}
         <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
-          {menuItems.map((item) => {
+          {visibleMenuItems.map((item) => {
             const isActive =
               pathname === item.href ||
               (item.href !== "/admin" && pathname.startsWith(item.href));
@@ -134,7 +156,7 @@ export function Sidebar() {
       {/* Mobile bottom navigation */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface border-t border-border">
         <div className="flex items-center justify-around py-2">
-          {menuItems.map((item) => {
+          {visibleMenuItems.map((item) => {
             const isActive =
               pathname === item.href ||
               (item.href !== "/admin" && pathname.startsWith(item.href));

@@ -1,19 +1,26 @@
 #!/usr/bin/env bun
 /**
  * ============================================================================
- * SET ADMIN ROLE - Asignar rol de administrador a un usuario
+ * SET ADMIN ROLE - Asignar rol a un usuario mediante Custom Claims
  * ============================================================================
  * 
- * Este script asigna el rol 'admin' a un usuario existente en Firebase Auth.
+ * Este script asigna roles a usuarios en Firebase Auth usando Custom Claims,
+ * que es la mejor práctica recomendada por Firebase.
+ * 
+ * Los Custom Claims:
+ * - Se almacenan en el token JWT del usuario
+ * - Se pueden verificar en Firestore Security Rules
+ * - Se validan tanto en frontend como en backend
+ * - Son la forma más segura de implementar RBAC
  * 
  * Uso:
  *   bun run scripts/set-admin-role.ts <email> [role]
  * 
  * Ejemplos:
- *   bun run scripts/set-admin-role.ts admin@example.com
- *   bun run scripts/set-admin-role.ts cajero@example.com cashier
+ *   bun run scripts/set-admin-role.ts admin@example.com admin
+ *   bun run scripts/set-admin-role.ts empleado@example.com trabajador
  * 
- * Roles disponibles: admin, cashier, visitor
+ * Roles disponibles: admin, trabajador
  */
 
 import { initializeApp, cert, getApps } from "firebase-admin/app";
@@ -25,7 +32,11 @@ import type { UserRole } from "../src/types/auth";
 // CONFIGURACIÓN
 // ============================================================================
 
-const VALID_ROLES: UserRole[] = ['admin', 'cashier', 'visitor'];
+const VALID_ROLES: UserRole[] = ['admin', 'trabajador'];
+const ROLE_DESCRIPTIONS: Record<string, string> = {
+  admin: "Acceso completo al panel de administración",
+  trabajador: "Solo acceso al Dashboard",
+};
 
 // ============================================================================
 // INICIALIZACIÓN FIREBASE ADMIN
@@ -101,8 +112,19 @@ async function setAdminRole(email: string, role: UserRole = 'admin') {
     console.log(`   Email: ${user.email}`);
     console.log(`   Nombre: ${user.displayName || 'N/A'}`);
 
-    // 2. Crear/Actualizar documento en colección admin_users
-    console.log(`\n📝 Asignando rol '${role}' en Firestore...`);
+    // 2. Establecer Custom Claims con el rol
+    // IMPORTANTE: Esta es la fuente de verdad para los roles
+    console.log(`\n🔐 Estableciendo Custom Claims con rol '${role}'...`);
+    
+    await auth.setCustomUserClaims(user.uid, { 
+      role: role,
+      // Mantener 'admin: true' para compatibilidad con sistema anterior
+      admin: role === 'admin'
+    });
+    console.log("✅ Custom Claims establecidos");
+
+    // 3. Crear/Actualizar documento en admin_users (backup/referencia)
+    console.log(`\n📝 Actualizando registro en Firestore (admin_users)...`);
     
     const adminUserRef = db.collection("admin_users").doc(user.uid);
     const adminUserDoc = await adminUserRef.get();
@@ -127,22 +149,16 @@ async function setAdminRole(email: string, role: UserRole = 'admin') {
       console.log(`✅ Documento creado en admin_users/${user.uid}`);
     }
 
-    // 3. También establecer custom claim para compatibilidad con sistema anterior
-    if (role === 'admin') {
-      console.log("\n🔐 Estableciendo custom claim 'admin'...");
-      await auth.setCustomUserClaims(user.uid, { admin: true });
-      console.log("✅ Custom claim establecido");
-    }
-
     // 4. Resumen final
     console.log("\n" + "=".repeat(50));
-    console.log("🎉 ¡Rol asignado exitosamente!");
+    console.log("🎉 ¡Rol asignado exitosamente via Custom Claims!");
     console.log("=".repeat(50));
     console.log(`\n   Usuario: ${user.email}`);
     console.log(`   Rol: ${role}`);
+    console.log(`   Permisos: ${ROLE_DESCRIPTIONS[role]}`);
     console.log(`   UID: ${user.uid}`);
-    console.log("\n⚠️  El usuario debe cerrar sesión y volver a iniciar");
-    console.log("   para que los cambios surtan efecto.\n");
+    console.log("\n⚠️  IMPORTANTE: El usuario debe cerrar sesión y volver");
+    console.log("   a iniciar para que los nuevos claims surtan efecto.\n");
 
   } catch (error) {
     console.error("\n❌ Error al asignar rol:", error);
@@ -162,13 +178,18 @@ if (args.length === 0) {
 
 Argumentos:
   email   Email del usuario en Firebase Auth (requerido)
-  role    Rol a asignar: admin | cashier | visitor (por defecto: admin)
+  role    Rol a asignar: admin | trabajador (por defecto: admin)
+
+Roles disponibles:
+  admin      - Acceso completo al panel de administración
+  trabajador - Solo acceso al Dashboard
 
 Ejemplos:
   bun run scripts/set-admin-role.ts admin@example.com
-  bun run scripts/set-admin-role.ts cajero@example.com cashier
+  bun run scripts/set-admin-role.ts empleado@example.com trabajador
 
 Nota: El usuario debe existir en Firebase Auth antes de ejecutar este script.
+      Después de asignar el rol, el usuario debe re-iniciar sesión.
 `);
   process.exit(0);
 }
