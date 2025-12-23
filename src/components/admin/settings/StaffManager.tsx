@@ -56,7 +56,7 @@ const ROLE_ICONS: Record<UserRole, React.ElementType> = {
 };
 
 export function StaffManager() {
-  const { user, role: currentUserRole } = useAuth();
+  const { user, role: currentUserRole, getIdToken } = useAuth();
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -77,7 +77,16 @@ export function StaffManager() {
       setLoading(true);
       setError(null);
       
-      const response = await fetch('/api/admin/roles');
+      const token = await getIdToken();
+      if (!token) {
+        throw new Error('No se pudo obtener el token de autenticación');
+      }
+      
+      const response = await fetch('/api/admin/roles', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
       if (!response.ok) {
         throw new Error('Error al cargar el personal');
       }
@@ -89,7 +98,7 @@ export function StaffManager() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [getIdToken]);
 
   useEffect(() => {
     fetchStaff();
@@ -105,9 +114,17 @@ export function StaffManager() {
       setSaving(true);
       setError(null);
       
+      const token = await getIdToken();
+      if (!token) {
+        throw new Error('No se pudo obtener el token de autenticación');
+      }
+      
       const response = await fetch('/api/admin/roles', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify(formData),
       });
 
@@ -136,9 +153,17 @@ export function StaffManager() {
       setSaving(true);
       setError(null);
       
+      const token = await getIdToken();
+      if (!token) {
+        throw new Error('No se pudo obtener el token de autenticación');
+      }
+      
       const response = await fetch('/api/admin/roles', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify({
           email: selectedMember.email,
           role: formData.role,
@@ -177,8 +202,16 @@ export function StaffManager() {
       setSaving(true);
       setError(null);
       
+      const token = await getIdToken();
+      if (!token) {
+        throw new Error('No se pudo obtener el token de autenticación');
+      }
+      
       const response = await fetch(`/api/admin/roles?email=${encodeURIComponent(selectedMember.email)}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
       });
 
       if (!response.ok) {
