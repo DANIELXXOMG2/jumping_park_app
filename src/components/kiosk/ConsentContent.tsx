@@ -8,6 +8,8 @@ import {
 	type ParkRule,
 	replaceCompanyName,
 } from "@/lib/data/legalContent";
+import { validateLocalizedContent } from "@/lib/schemas/legalContent.schema";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 
 interface ConsentContentProps {
@@ -106,42 +108,72 @@ function RuleItem({ rule }: { rule: ParkRule }) {
 /**
  * Componente de contenido del consentimiento informado.
  * Lee el contenido desde API (Firestore) con fallback al contenido estático.
+ * Soporta múltiples idiomas (es/en) mediante el contexto de idioma.
  */
 export function ConsentContent({ variant = "compact" }: ConsentContentProps) {
 	const isExpanded = variant === "expanded";
+	const { language } = useLanguage();
 
-	// Contenido inicial estático para carga instantánea
-	const defaultContent = useMemo(() => getConsentContent(), []);
+	// Contenido inicial estático para carga instantánea (basado en idioma actual)
+	const defaultContent = useMemo(() => getConsentContent(language), [language]);
 
 	// Estado para el contenido dinámico
 	const [content, setContent] =
 		useState<ConsentContentStructure>(defaultContent);
 	const [_isLoading, setIsLoading] = useState(true);
 
-	// Fetch del contenido desde API
+	// Actualizar contenido cuando cambie el idioma
+	useEffect(() => {
+		setContent(getConsentContent(language));
+	}, [language]);
+
+	// Fetch del contenido desde API (con soporte de idioma)
+	// Confía en la DB: si los datos tienen estructura válida, los usa.
+	// Solo hace fallback al estático si la estructura está corrupta o hay error.
 	useEffect(() => {
 		const fetchContent = async () => {
 			try {
-				const response = await fetch("/api/settings/consent");
+				const response = await fetch(`/api/settings/consent?lang=${language}`);
 				if (response.ok) {
 					const result = await response.json();
 					if (result.success && result.data) {
+						const apiData = result.data;
+						
+						// Validar ESTRUCTURA de un solo idioma (no cantidad) usando Zod
+						const validation = validateLocalizedContent(apiData);
+						
+						if (!validation.success) {
+							console.warn(
+								`[ConsentContent] API returned invalid structure: ${validation.error}. Using static content.`
+							);
+							// Estructura corrupta → usar contenido estático
+							setIsLoading(false);
+							return;
+						}
+						
+						// Estructura válida → procesar y usar datos de la DB
+						const validData = validation.data;
+						const companyName = validData.meta.companyName;
+						
 						// Procesar el contenido para reemplazar placeholders
-						const companyName = result.data.meta.companyName;
-						const processedClauses = result.data.consent.clauses.map(
-							(clause: ConsentClause) => ({
+						const processedClauses = validData.consent.clauses.map(
+							(clause) => ({
 								...clause,
 								text: replaceCompanyName(clause.text, companyName),
 							}),
 						);
 
 						setContent({
-							...result.data,
+							...validData,
 							consent: {
-								...result.data.consent,
+								...validData.consent,
 								clauses: processedClauses,
 							},
 						});
+						
+						console.info(
+							`[ConsentContent] Using Firestore data (clauses: ${validData.consent.clauses.length}, rules: ${validData.rules.items.length})`
+						);
 					}
 				}
 			} catch (error) {
@@ -153,9 +185,18 @@ export function ConsentContent({ variant = "compact" }: ConsentContentProps) {
 		};
 
 		fetchContent();
-	}, []);
+	}, [language]);
 
 	const { consent, rules, meta } = content;
+
+	// Determinar el texto de "firma" según el idioma para el split de la introducción
+	const signatureText = language === "en" 
+		? "BY MY SIGNATURE, DECLARE THAT:" 
+		: "CON MI FIRMA, MANIFIESTO QUE:";
+	
+	// Dividir la introducción en dos partes para resaltar la firma
+	const introductionParts = consent.introduction.split(signatureText);
+	const hasSignatureSplit = introductionParts.length > 1;
 
 	return (
 		<div className={cn("space-y-4", isExpanded && "space-y-6")}>
@@ -173,10 +214,14 @@ export function ConsentContent({ variant = "compact" }: ConsentContentProps) {
 				&quot;{consent.subtitle}&quot;
 			</p>
 
-			<p>
-				{consent.introduction.split("CON MI FIRMA, MANIFIESTO QUE:")[0]}
-				<strong>CON MI FIRMA, MANIFIESTO QUE:</strong>
-			</p>
+			{hasSignatureSplit ? (
+				<p>
+					{introductionParts[0]}
+					<strong>{signatureText}</strong>
+				</p>
+			) : (
+				<p>{consent.introduction}</p>
+			)}
 
 			<ol
 				className={cn(

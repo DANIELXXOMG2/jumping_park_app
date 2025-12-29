@@ -7,8 +7,8 @@ import { VirtualKeypad } from "@/components/kiosk/VirtualKeypad";
 import { useKioskStore } from "@/store/kioskStore";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-const MIN_DIGITS = 6;
-const MAX_DIGITS = 15;
+const MIN_DIGITS = 5;
+const MAX_DIGITS = 20;
 const OTP_ROUTE = "/otp";
 const REGISTER_ROUTE = "/registro";
 
@@ -34,6 +34,18 @@ export default function IngresoPage() {
 			if (prev.length >= MAX_DIGITS) return prev;
 			return `${prev}${digit}`;
 		});
+	}, []);
+
+	/**
+	 * Maneja la entrada directa desde el teclado físico.
+	 * Permite letras y números para soportar pasaportes.
+	 */
+	const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+		const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+		if (value.length <= MAX_DIGITS) {
+			setCedula(value);
+			setErrorMessage(null);
+		}
 	}, []);
 
 	const handleDelete = useCallback(() => {
@@ -146,11 +158,14 @@ export default function IngresoPage() {
 				<div className="w-full max-w-3xl">
 					<input
 						type="text"
-						inputMode="numeric"
-						readOnly
+						inputMode="text"
 						value={cedula}
-						className="w-full rounded-xl sm:rounded-2xl md:rounded-[2.5rem] border bg-white dark:bg-zinc-900 text-black dark:text-white border-gray-200 dark:border-zinc-700 px-4 sm:px-6 md:px-10 py-4 sm:py-6 md:py-8 text-center text-2xl sm:text-3xl md:text-5xl font-bold tracking-[0.15em] sm:tracking-[0.25em] md:tracking-[0.4em] shadow-inner focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+						onChange={handleInputChange}
+						placeholder={t("ingreso.placeholder")}
+						className="w-full rounded-xl sm:rounded-2xl md:rounded-[2.5rem] border bg-white dark:bg-zinc-900 text-black dark:text-white border-gray-200 dark:border-zinc-700 px-4 sm:px-6 md:px-10 py-4 sm:py-6 md:py-8 text-center text-2xl sm:text-3xl md:text-5xl font-bold tracking-[0.15em] sm:tracking-[0.25em] md:tracking-[0.4em] shadow-inner focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary uppercase"
 						aria-label={t("ingreso.placeholder")}
+						autoComplete="off"
+						autoCapitalize="characters"
 					/>
 					<p className="mt-2 sm:mt-3 text-xs sm:text-sm text-foreground/60">
 						{t("ingreso.hint", { min: MIN_DIGITS })}

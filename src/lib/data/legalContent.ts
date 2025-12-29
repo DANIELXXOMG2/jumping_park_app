@@ -2,11 +2,19 @@
  * Contenido Legal - Consentimiento Informado Jumping Park
  *
  * Este archivo centraliza todo el texto legal del consentimiento informado.
+ * SOPORTA MÚLTIPLES IDIOMAS: Español (es) e Inglés (en).
  * Preparado para ser cargado desde base de datos en el futuro.
  *
- * @version 1.0.0
- * @lastUpdated 2024-12-16
+ * @version 2.0.0
+ * @lastUpdated 2025-12-27
  */
+
+import type { Language } from "@/lib/i18n/dictionary";
+import { 
+	validateLocalizedContent, 
+	detectConsentFormat,
+	type LocalizedConsentValidated 
+} from "@/lib/schemas/legalContent.schema";
 
 // ============================================================================
 // TIPOS
@@ -334,6 +342,290 @@ export const DEFAULT_CONSENT_CONTENT: ConsentContentStructure = {
 };
 
 // ============================================================================
+// CONTENIDO EN INGLÉS
+// ============================================================================
+
+/**
+ * Contenido del consentimiento informado en inglés.
+ * Documento legal completo adaptado para visitantes de habla inglesa.
+ */
+export const ENGLISH_CONSENT_CONTENT: ConsentContentStructure = {
+	meta: {
+		version: "3.0.0",
+		lastUpdated: "2025-12-27",
+		companyName: "Jumping Park",
+	},
+
+	consent: {
+		title: "Informed Consent for Sports Activities",
+		subtitle:
+			"This is a sports activity that may cause minor or serious injuries",
+		introduction:
+			"I, identified as shown in the header, of legal age, acting on my own behalf and/or on behalf of the minors listed in this digital form, BY MY SIGNATURE, DECLARE THAT:",
+
+		clauses: [
+			{
+				id: 1,
+				text: "{COMPANY_NAME} has informed us through various means (screens, bulletin boards, and verbally highlighting the most important ones) about the characteristics of the sports activity we are about to participate in and the physical conditions required for such participation, as shown in the Rules Posted at the establishment.",
+			},
+			{
+				id: 2,
+				text: "{COMPANY_NAME} has sufficiently, thoroughly, and clearly informed me (through screens, bulletin boards, and verbally highlighting the most important ones) about the risks of the physical activities to be practiced within the establishment, the suitability of the guides, and the minimum safety measures to be adopted during the activities.",
+			},
+			{
+				id: 3,
+				text: "I have voluntarily, freely, and sincerely informed that the persons under my care have no medical contraindication or limitation that prevents them from properly performing the activities at {COMPANY_NAME}.",
+			},
+			{
+				id: 4,
+				text: "None are pregnant, and if so, they will practice physical activities at their own risk, exempting {COMPANY_NAME} from any liability for damage or harm that practicing at the establishment may cause.",
+			},
+			{
+				id: 5,
+				text: "NO wearing of accessories (rings, watches, chains, or similar items) that may put the physical integrity of participants at risk.",
+				highlight: true,
+				icon: "⚠️",
+				highlightLabel: "IMPORTANT",
+			},
+			{
+				id: 6,
+				text: "The activities we perform at {COMPANY_NAME} will be under our own responsibility.",
+			},
+			{
+				id: 7,
+				text: "Upon entering {COMPANY_NAME} facilities, I was informed of the regulations (through screens, bulletin boards, and verbally highlighting the most important ones) for performing sports activities, their safety conditions, and inherent risks, which I assume at my own risk and expense regarding any damages that may be caused to any member of the group, and I was able to read all the Regulations posted at the establishment.",
+			},
+			{
+				id: 8,
+				text: "I declare that I know and understand the regulations governing the activities we will perform within the establishment, that I agree with them, and that we will submit to the rules, direction, discipline, and control by authorized {COMPANY_NAME} staff, remaining under my exclusive responsibility to act contrary to them.",
+			},
+			{
+				id: 9,
+				text: "I assume all risks of the group's activity and, consequently, exempt {COMPANY_NAME} from any damage or harm that may be suffered during the activity.",
+			},
+			{
+				id: 10,
+				text: "No one is under the influence of alcohol or any drug, illegal substance, or medications that may affect physical capacity or endanger health to participate in activities within the establishment.",
+			},
+			{
+				id: 11,
+				text: "I authorize {COMPANY_NAME} to use image rights and authorization for personal data processing, to use photographs and/or recordings taken of us during the activity, for advertising and promotion of the establishment, without this implying any type of compensation, for which this document corresponds to an express waiver of any type of financial claim in this regard.",
+			},
+			{
+				id: 12,
+				text: "In accordance with Law 1581 of 2012 or Habeas Data Law, I authorize {COMPANY_NAME} to collect, store, use, and delete the personal data provided here, especially those defined as sensitive data.",
+			},
+			{
+				id: 13,
+				text: "All participants are affiliated with a Health Insurance Provider (EPS), as required by the Colombian Social Security Contributory Regime.",
+			},
+			{
+				id: 14,
+				text: "In case participants are not affiliated with a Health Insurance Provider, I take responsibility with my assets for any unfortunate situation, after being attended by {COMPANY_NAME}'s protected area policy, which provides first aid and takes the injured person (if any) to the clinic of my preference; exempting {COMPANY_NAME} from any liability.",
+			},
+			{
+				id: 15,
+				text: "Staff is not authorized to be responsible for participants in the absence of parents or guardians, or for participants leaving the park facilities as no childcare service is provided.",
+				highlight: true,
+				icon: "⚠️",
+				highlightLabel: "IMPORTANT",
+			},
+			{
+				id: 16,
+				text: "I WILL SUPPORT THE DECISIONS OF THE PARK STAFF TO PRESERVE THE SAFETY OF PARTICIPANTS AND ESPECIALLY THAT OF THE GROUP FOR WHICH I AM RESPONSIBLE.",
+			},
+			{
+				id: 17,
+				text: "The use of non-slip socks is mandatory for entry to the play areas.",
+			},
+		],
+
+		closingStatement:
+			"By my signature, I declare that Jumping Park has made me aware of the informed consent document for practicing physical activities for all persons registered on the back, within its establishment, that I have read it and certify that all information I provide in this form is true and complete, and I also agree with any future rules or regulations established by the establishment.",
+	},
+
+	rules: {
+		title: "Welcome to Jumping Park",
+		introduction:
+			"Make sure to read and watch the video of these rules before entering our trampoline park. As with all sports and physical activities, there is always the possibility of accidents or serious injuries, and we are here to prevent you from hurting yourself or others. Rules are rules, and we are sure you can follow them.",
+
+		items: [
+			{
+				id: 1,
+				text: "Before starting to jump, you must have completed the registration form and signed the consent letter.",
+			},
+			{
+				id: 2,
+				text: "Children under six (6) years with special conditions or in the galactic zone must be accompanied by their parents or a responsible adult.",
+				highlight: true,
+				icon: "👶",
+				highlightLabel: "MINORS",
+			},
+			{
+				id: 3,
+				text: "When entering the park area, do not have anything in your mouth (gum, candy, etc.).",
+			},
+			{
+				id: 4,
+				text: "Remove your shoes and regular socks. You may only enter with socks that have non-slip rubber.",
+			},
+			{
+				id: 5,
+				text: "Remove and store all your jewelry (rings, chains, bracelets, watches, etc.). Empty your pockets completely before jumping.",
+			},
+			{
+				id: 6,
+				text: "Entry is not permitted if you have any health limitations (cardiac, vertigo, lumbar, etc.) or recent injuries.",
+			},
+			{
+				id: 7,
+				text: "Do not jump if you are under the influence of alcohol.",
+			},
+			{
+				id: 8,
+				text: "Entry is not permitted if you are pregnant.",
+			},
+			{
+				id: 9,
+				text: "Do not jump with sharp objects or unauthorized devices (cameras, phones, etc.).",
+			},
+			{
+				id: 10,
+				text: "Do not land on your head or neck in the play area.",
+			},
+			{
+				id: 11,
+				text: "Do not interrupt another person's jump in any way.",
+			},
+			{
+				id: 12,
+				text: "If you are tired, you should exit and rest outside the jump area.",
+			},
+			{
+				id: 13,
+				text: "Do not sit or lie on the trampoline; you should always be jumping while on the trampolines.",
+			},
+			{
+				id: 14,
+				text: "Do not run on the trampolines or aisles, do not race.",
+			},
+			{
+				id: 15,
+				text: "Do not jump on the trampoline protections.",
+			},
+			{
+				id: 16,
+				text: "Do not hang from ladders or grab the trampoline protections, especially on inclined beds.",
+			},
+			{
+				id: 17,
+				text: "Do not push, play rough, or perform dangerous or reckless tricks.",
+			},
+			{
+				id: 18,
+				text: "You must not lose control of your body at any time.",
+			},
+			{
+				id: 19,
+				text: "Do not consume food or drinks on the trampolines or aisles.",
+			},
+			{
+				id: 20,
+				text: "Do not perform double somersaults or any similar stunts.",
+			},
+			{
+				id: 21,
+				text: "Do not jump on a trampoline with more people. Only one person should jump per trampoline.",
+			},
+			{
+				id: 22,
+				text: "Be careful of people next to you, especially smaller ones. You should move to other freer trampolines.",
+			},
+			{
+				id: 23,
+				text: "Be aware of those around you and take turns jumping with people of your same size.",
+			},
+			{
+				id: 24,
+				text: "Do not touch any part of the park's metal structure.",
+			},
+			{
+				id: 25,
+				text: "Do not grab onto the nets or jump on them.",
+			},
+			{
+				id: 26,
+				text: "Do not slide head-first, on your back, or lying down.",
+			},
+			{
+				id: 27,
+				text: "Entry to Galactic World is for heights from 80 cm to 1.30 m (per manufacturer recommendations, there are NO exceptions).",
+			},
+			{
+				id: 28,
+				text: "Do not bring in objects or toys.",
+			},
+			{
+				id: 29,
+				text: "Keep evacuation routes clear.",
+			},
+			{
+				id: 30,
+				text: "Do not pull, hang on, or remove decorative pieces.",
+			},
+			{
+				id: 31,
+				text: "In Galactic World, the minor must always be accompanied by an adult over 18 years old.",
+			},
+			{
+				id: 32,
+				text: "Smoke-free space.",
+			},
+			{
+				id: 33,
+				text: "Follow park staff instructions; failure to do so will result in your activity being interrupted for your safety and that of others.",
+			},
+			{
+				id: 34,
+				text: "Physical or verbal aggression towards other visitors or staff is not permitted and will result in removal from the attraction without a refund.",
+				highlight: true,
+				icon: "🚫",
+				highlightLabel: "PROHIBITED",
+			},
+			{
+				id: 35,
+				text: "Follow each and every rule of the park and avoid being removed from the activity.",
+			},
+		],
+
+		closingMessage: "Have fun! And thank you for visiting Jumping Park.",
+	},
+};
+
+// ============================================================================
+// MAPA DE CONTENIDO POR IDIOMA (FALLBACK ESTÁTICO)
+// ============================================================================
+
+/**
+ * Mapa de contenido legal por idioma.
+ * Se usa como fallback cuando Firestore no tiene datos.
+ */
+export const CONSENT_CONTENT_BY_LANGUAGE: Record<Language, ConsentContentStructure> = {
+	es: DEFAULT_CONSENT_CONTENT,
+	en: ENGLISH_CONSENT_CONTENT,
+};
+
+// ============================================================================
+// TIPOS PARA ESTRUCTURA MULTILENGUAJE EN BD
+// ============================================================================
+
+/**
+ * Estructura del documento en Firestore (multilenguaje).
+ * Ejemplo: { es: {...}, en: {...} }
+ */
+export type MultiLanguageConsentDocument = Record<string, ConsentContentStructure>;
+
+// ============================================================================
 // UTILIDADES
 // ============================================================================
 
@@ -345,16 +637,11 @@ export function replaceCompanyName(text: string, companyName: string): string {
 }
 
 /**
- * Obtiene el contenido del consentimiento con los placeholders reemplazados.
- * En el futuro, esta función puede cargar desde Firestore.
+ * Procesa el contenido de consentimiento reemplazando placeholders.
+ * @param content - Contenido base a procesar
+ * @returns Contenido con placeholders reemplazados
  */
-export function getConsentContent(
-	customContent?: Partial<ConsentContentStructure>,
-): ConsentContentStructure {
-	const content = customContent
-		? { ...DEFAULT_CONSENT_CONTENT, ...customContent }
-		: DEFAULT_CONSENT_CONTENT;
-
+function processConsentContent(content: ConsentContentStructure): ConsentContentStructure {
 	const companyName = content.meta.companyName;
 
 	// Reemplazar placeholders en todas las cláusulas
@@ -370,4 +657,129 @@ export function getConsentContent(
 			clauses: processedClauses,
 		},
 	};
+}
+
+/**
+ * Extrae el contenido para un idioma específico desde datos multilenguaje de Firestore.
+ * Implementa lógica de fallback: idioma solicitado -> español -> null
+ * 
+ * @param firestoreData - Datos crudos de Firestore (puede ser formato antiguo o nuevo)
+ * @param language - Idioma solicitado
+ * @returns Contenido validado para el idioma o null si no existe
+ */
+export function extractLocalizedContent(
+	firestoreData: unknown,
+	language: Language
+): LocalizedConsentValidated | null {
+	if (!firestoreData || typeof firestoreData !== 'object') {
+		return null;
+	}
+
+	const format = detectConsentFormat(firestoreData);
+
+	// Formato antiguo: el documento raíz ES el contenido (sin claves de idioma)
+	if (format === 'legacy') {
+		const validation = validateLocalizedContent(firestoreData);
+		return validation.success ? validation.data : null;
+	}
+
+	// Formato nuevo: buscar por clave de idioma
+	if (format === 'multilang') {
+		const data = firestoreData as Record<string, unknown>;
+
+		// Intentar idioma solicitado
+		if (language in data) {
+			const validation = validateLocalizedContent(data[language]);
+			if (validation.success) {
+				return validation.data;
+			}
+		}
+
+		// Fallback a español si el idioma no existe
+		if (language !== 'es' && 'es' in data) {
+			const validation = validateLocalizedContent(data['es']);
+			if (validation.success) {
+				console.warn(`[LegalContent] Idioma '${language}' no encontrado, usando fallback 'es'`);
+				return validation.data;
+			}
+		}
+	}
+
+	return null;
+}
+
+/**
+ * Obtiene el contenido del consentimiento con los placeholders reemplazados.
+ * Soporta tanto datos de Firestore (multilenguaje) como fallback estático.
+ * 
+ * @param language - Idioma del contenido ('es' | 'en')
+ * @param firestoreData - Datos opcionales de Firestore (documento settings/consent_v1)
+ * @returns Contenido procesado del consentimiento
+ * 
+ * @example
+ * // Uso básico con fallback estático
+ * const content = getConsentContent('es');
+ * 
+ * @example
+ * // Uso con datos de Firestore
+ * const dbData = await getDoc(doc(db, 'settings', 'consent_v1'));
+ * const content = getConsentContent('en', dbData.data());
+ */
+export function getConsentContent(
+	language: Language = "es",
+	firestoreData?: unknown,
+): ConsentContentStructure {
+	// Si hay datos de Firestore, intentar extraer el idioma correcto
+	if (firestoreData) {
+		const extracted = extractLocalizedContent(firestoreData, language);
+		if (extracted) {
+			// Convertir LocalizedConsentValidated a ConsentContentStructure
+			const content: ConsentContentStructure = {
+				meta: extracted.meta,
+				consent: {
+					title: extracted.consent.title,
+					subtitle: extracted.consent.subtitle,
+					introduction: extracted.consent.introduction,
+					clauses: extracted.consent.clauses,
+					closingStatement: extracted.consent.closingStatement,
+				},
+				rules: {
+					title: extracted.rules.title,
+					introduction: extracted.rules.introduction,
+					items: extracted.rules.items,
+					closingMessage: extracted.rules.closingMessage,
+				},
+			};
+			return processConsentContent(content);
+		}
+		console.warn(`[LegalContent] No se pudo extraer contenido de Firestore, usando fallback estático`);
+	}
+
+	// Fallback: usar contenido estático hardcodeado
+	const baseContent = CONSENT_CONTENT_BY_LANGUAGE[language] || DEFAULT_CONSENT_CONTENT;
+	return processConsentContent(baseContent);
+}
+
+/**
+ * Obtiene el contenido del consentimiento de forma asíncrona desde Firestore.
+ * Esta función es el punto de entrada recomendado para componentes server-side.
+ * 
+ * @param language - Idioma del contenido ('es' | 'en')
+ * @param fetchFromFirestore - Función opcional para obtener datos de Firestore
+ * @returns Contenido procesado del consentimiento
+ */
+export async function getConsentContentAsync(
+	language: Language = "es",
+	fetchFromFirestore?: () => Promise<unknown>,
+): Promise<ConsentContentStructure> {
+	if (fetchFromFirestore) {
+		try {
+			const firestoreData = await fetchFromFirestore();
+			return getConsentContent(language, firestoreData);
+		} catch (error) {
+			console.error('[LegalContent] Error al obtener datos de Firestore:', error);
+		}
+	}
+	
+	return getConsentContent(language);
 }

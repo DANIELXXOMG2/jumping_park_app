@@ -12,6 +12,7 @@
 4. [Optimización para Kiosco](#4-optimización-para-kiosco)
 5. [Calidad de Código](#5-calidad-de-código)
 6. [Stack Tecnológico](#6-stack-tecnológico)
+7. [Gestión de Consentimiento (CMS)](#7-gestión-de-consentimiento-cms)
 
 ---
 
@@ -471,6 +472,148 @@ bun run optimize-assets  # Optimizar imágenes
 - [ ] Migrar de Custom Claims a Firestore Rules puras
 - [ ] Añadir rate limiting en API Routes
 - [ ] Implementar audit log para acciones admin
+
+---
+
+## 7. Gestión de Consentimiento (CMS)
+
+### 🌐 Arquitectura Políglota
+
+El sistema de consentimiento soporta múltiples idiomas mediante una estructura de datos jerárquica:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│              ESTRUCTURA MULTILENGUAJE EN FIRESTORE                  │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  settings/consent (documento único)                                 │
+│  {                                                                  │
+│    "es": {                        ◄── Idioma principal (obligatorio)│
+│      "meta": { version, lastUpdated, companyName },                 │
+│      "consent": { title, subtitle, clauses[], closingStatement },   │
+│      "rules": { title, introduction, items[], closingMessage }      │
+│    },                                                               │
+│    "en": {                        ◄── Idiomas secundarios           │
+│      "meta": { ... },                                               │
+│      "consent": { ... },                                            │
+│      "rules": { ... }                                               │
+│    }                                                                │
+│  }                                                                  │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Tipos TypeScript (`lib/data/legalContent.ts`):**
+
+```typescript
+// Estructura para UN idioma
+interface ConsentContentStructure {
+  meta: { version, lastUpdated, companyName };
+  consent: { title, subtitle, introduction, clauses[], closingStatement };
+  rules: { title, introduction, items[], closingMessage };
+}
+
+// Estructura multilenguaje completa
+type MultiLanguageContent = {
+  es: ConsentContentStructure;
+  en: ConsentContentStructure;
+};
+```
+
+### 🤖 Traducción Automática con IA (Gemini)
+
+El panel de administración incluye traducción automática usando Google Gemini:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                 FLUJO DE TRADUCCIÓN CON IA                      │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  [Admin UI]                                                     │
+│      │                                                          │
+│      ├── 1. Usuario edita contenido en Español (es)             │
+│      │                                                          │
+│      ├── 2. Cambia a pestaña "English"                          │
+│      │                                                          │
+│      ├── 3. Click "✨ Traducir desde Español con IA"            │
+│      │                                                          │
+│      ▼                                                          │
+│  [Server Action: translateConsentToEnglish]                     │
+│      │                                                          │
+│      ├── Valida GOOGLE_API_KEY                                  │
+│      │                                                          │
+│      ├── Envía JSON español a Gemini 1.5 Flash                  │
+│      │   └── Prompt: "Traduce SOLO text, title, content..."     │
+│      │                                                          │
+│      ├── Preserva: IDs, claves, placeholders {COMPANY_NAME}     │
+│      │                                                          │
+│      ▼                                                          │
+│  [Respuesta JSON traducida]                                     │
+│      │                                                          │
+│      └── 4. UI actualiza estado de pestaña "en"                 │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Server Action (`app/actions/translate-consent.ts`):**
+
+```typescript
+"use server";
+
+export async function translateConsentToEnglish(
+  spanishContent: ConsentContentStructure
+): Promise<TranslateConsentResult> {
+  const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
+  const model = genAI.getGenerativeModel({ 
+    model: "gemini-1.5-flash",
+    generationConfig: {
+      responseMimeType: "application/json",
+      temperature: 0.1, // Baja temperatura para consistencia
+    },
+  });
+  
+  // Prompt estricto para traducciones legales
+  const result = await model.generateContent([SYSTEM_PROMPT, userPrompt]);
+  return { success: true, data: parsedResponse };
+}
+```
+
+### 🔐 Variables de Entorno Requeridas
+
+| Variable | Descripción | Obligatoria |
+|----------|-------------|-------------|
+| `GOOGLE_API_KEY` | API Key de Google AI Studio para Gemini | Sí (para traducción IA) |
+
+**Obtener API Key:**
+1. Ir a [Google AI Studio](https://aistudio.google.com/)
+2. Crear proyecto o seleccionar existente
+3. Generar API Key
+4. Agregar a `.env.local`: `GOOGLE_API_KEY=tu_api_key`
+
+### ✅ Validación de Datos
+
+La validación usa **Zod** y está en `lib/schemas/legalContent.schema.ts`:
+
+```typescript
+// Valida ESTRUCTURA, no CANTIDAD de elementos
+export const localizedConsentSchema = z.object({
+  meta: consentMetaSchema,
+  consent: consentSectionSchema,
+  rules: rulesSectionSchema,
+});
+
+// Documento multilenguaje
+export const consentContentStructureSchema = z.record(
+  z.string().min(2).max(5), // Claves ISO 639-1
+  localizedConsentSchema
+);
+```
+
+**Características:**
+- ✅ El admin puede agregar/eliminar cláusulas libremente
+- ✅ No hay validación de cantidad mínima/máxima de reglas
+- ✅ Solo se rechaza si la estructura está corrupta (campos faltantes)
+- ✅ Validación por idioma independiente
 
 ---
 

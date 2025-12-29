@@ -2,6 +2,7 @@
 
 import { Check, Delete } from "lucide-react";
 import { useUISound } from "@/hooks";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface VirtualKeypadProps {
 	onKeyPress: (key: string) => void;
@@ -25,6 +26,7 @@ export function VirtualKeypad({
 }: VirtualKeypadProps) {
 	// Hook de sonidos para feedback táctil auditivo
 	const { playClick, playError, playSuccess } = useUISound();
+	const { t } = useLanguage();
 
 	/**
 	 * Handler para presionar un dígito con feedback sonoro
@@ -68,7 +70,7 @@ export function VirtualKeypad({
 						onClick={() => handleKeyPress(digit)}
 						disabled={isLoading}
 						className={`${baseButtonStyles} bg-white/10 backdrop-blur-sm`}
-						aria-label={`Ingresar ${digit}`}
+						aria-label={t("keypad.enterDigit", { digit })}
 					>
 						{digit}
 					</button>
@@ -78,7 +80,7 @@ export function VirtualKeypad({
 					onClick={handleDelete}
 					disabled={isLoading}
 					className={`${baseButtonStyles} col-span-1 flex items-center justify-center text-xl sm:text-2xl md:text-3xl text-primary`}
-					aria-label="Borrar último dígito"
+					aria-label={t("keypad.deleteLastDigit")}
 				>
 					<Delete className="h-6 w-6 sm:h-8 sm:w-8 md:h-12 md:w-12" />
 				</button>
@@ -87,7 +89,7 @@ export function VirtualKeypad({
 					onClick={() => handleKeyPress("0")}
 					disabled={isLoading}
 					className={`${baseButtonStyles} bg-white/10 backdrop-blur-sm`}
-					aria-label="Ingresar 0"
+					aria-label={t("keypad.enterDigit", { digit: "0" })}
 				>
 					0
 				</button>
@@ -96,7 +98,7 @@ export function VirtualKeypad({
 					onClick={handleConfirm}
 					disabled={isLoading}
 					className={`${baseButtonStyles} flex items-center justify-center bg-linear-to-r from-primary to-[#b56cff] text-[#050505]`}
-					aria-label="Confirmar cédula"
+					aria-label={t("keypad.confirmDocument")}
 				>
 					<span className="flex items-center gap-1 sm:gap-2 text-lg sm:text-2xl md:text-3xl font-bold">
 						OK
@@ -115,9 +117,9 @@ export function VirtualKeypad({
 					onClick={handleClear}
 					disabled={isLoading}
 					className="mt-4 w-full py-3 text-sm text-gray-400 hover:text-red-400 transition-colors"
-					aria-label="Limpiar todo"
+					aria-label={t("keypad.clearAll")}
 				>
-					Limpiar todo
+					{t("keypad.clearAll")}
 				</button>
 			)}
 		</div>
