@@ -49,6 +49,12 @@ const ConsentContentSchema = z.object({
 	}),
 });
 
+// Schema para el contenido multilenguaje
+const MultiLanguageContentSchema = z.object({
+	es: ConsentContentSchema,
+	en: ConsentContentSchema,
+});
+
 // ============================================================================
 // HANDLERS
 // ============================================================================
@@ -56,7 +62,7 @@ const ConsentContentSchema = z.object({
 /**
  * GET /api/admin/settings/consent
  *
- * Obtiene el contenido actual del consentimiento desde Firestore.
+ * Obtiene el contenido actual del consentimiento desde Firestore (ambos idiomas).
  * Requiere autenticación de admin.
  */
 export async function GET(request: NextRequest) {
@@ -66,10 +72,14 @@ export async function GET(request: NextRequest) {
 			return authResult.response;
 		}
 
-		const docRef = db.collection("settings").doc("consent_v1");
-		const docSnap = await docRef.get();
+		// Leer ambos documentos en paralelo
+		const [esDocSnap, enDocSnap] = await Promise.all([
+			db.collection("settings").doc("consent_v1").get(),
+			db.collection("settings").doc("consent_v1_en").get(),
+		]);
 
-		if (!docSnap.exists) {
+		// Si no existe ninguno, devolver null
+		if (!esDocSnap.exists && !enDocSnap.exists) {
 			return NextResponse.json({
 				success: true,
 				data: null,
@@ -78,13 +88,21 @@ export async function GET(request: NextRequest) {
 			});
 		}
 
-		const data = docSnap.data();
+		// Construir objeto multilenguaje
+		const esData = esDocSnap.exists ? esDocSnap.data() : null;
+		const enData = enDocSnap.exists ? enDocSnap.data() : null;
+
+		// Si existe al menos uno, construir respuesta
+		const responseData = {
+			...(esData && { es: esData }),
+			...(enData && { en: enData }),
+		};
 
 		return NextResponse.json({
 			success: true,
-			data,
-			updatedAt: data?.updatedAt?.toDate?.()?.toISOString() || null,
-			updatedBy: data?.updatedBy || null,
+			data: responseData,
+			updatedAt: esData?.updatedAt?.toDate?.()?.toISOString() || enData?.updatedAt?.toDate?.()?.toISOString() || null,
+			updatedBy: esData?.updatedBy || enData?.updatedBy || null,
 		});
 	} catch (error) {
 		console.error("Error fetching consent settings:", error);
@@ -98,7 +116,8 @@ export async function GET(request: NextRequest) {
 /**
  * POST /api/admin/settings/consent
  *
- * Guarda/actualiza el contenido del consentimiento en Firestore.
+ * Guarda/actualiza el contenido del consentimiento en Firestore (ambos idiomas).
+ * Acepta estructura { es: ConsentContent, en: ConsentContent }
  * Requiere autenticación de admin.
  */
 export async function POST(request: NextRequest) {
@@ -110,8 +129,8 @@ export async function POST(request: NextRequest) {
 
 		const body = await request.json();
 
-		// Validar estructura del contenido
-		const validation = ConsentContentSchema.safeParse(body);
+		// Validar estructura del contenido multilenguaje
+		const validation = MultiLanguageContentSchema.safeParse(body);
 		if (!validation.success) {
 			return NextResponse.json(
 				{
@@ -123,30 +142,40 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		const contentData = validation.data;
-
-		// Actualizar metadata
-		const dataToSave = {
-			...contentData,
-			meta: {
-				...contentData.meta,
-				lastUpdated: new Date().toISOString().split("T")[0],
-			},
-			updatedAt: Timestamp.now(),
-			updatedBy: {
-				uid: authResult.uid,
-				email: authResult.email,
-			},
+		const { es, en } = validation.data;
+		const now = Timestamp.now();
+		const lastUpdated = new Date().toISOString().split("T")[0];
+		const updatedBy = {
+			uid: authResult.uid,
+			email: authResult.email,
 		};
 
-		// Guardar en Firestore
-		const docRef = db.collection("settings").doc("consent_v1");
-		await docRef.set(dataToSave, { merge: false });
+		// Preparar datos para español
+		const esDataToSave = {
+			...es,
+			meta: { ...es.meta, lastUpdated },
+			updatedAt: now,
+			updatedBy,
+		};
+
+		// Preparar datos para inglés
+		const enDataToSave = {
+			...en,
+			meta: { ...en.meta, lastUpdated },
+			updatedAt: now,
+			updatedBy,
+		};
+
+		// Guardar ambos idiomas en paralelo
+		await Promise.all([
+			db.collection("settings").doc("consent_v1").set(esDataToSave, { merge: false }),
+			db.collection("settings").doc("consent_v1_en").set(enDataToSave, { merge: false }),
+		]);
 
 		return NextResponse.json({
 			success: true,
-			message: "Configuración guardada exitosamente",
-			data: dataToSave,
+			message: "Configuración guardada exitosamente en todos los idiomas",
+			data: { es: esDataToSave, en: enDataToSave },
 		});
 	} catch (error) {
 		console.error("Error saving consent settings:", error);
@@ -160,7 +189,7 @@ export async function POST(request: NextRequest) {
 /**
  * DELETE /api/admin/settings/consent
  *
- * Elimina la configuración personalizada (vuelve a usar el contenido por defecto).
+ * Elimina la configuración personalizada de ambos idiomas.
  * Requiere autenticación de admin.
  */
 export async function DELETE(request: NextRequest) {
@@ -170,8 +199,11 @@ export async function DELETE(request: NextRequest) {
 			return authResult.response;
 		}
 
-		const docRef = db.collection("settings").doc("consent_v1");
-		await docRef.delete();
+		// Eliminar ambos documentos en paralelo
+		await Promise.all([
+			db.collection("settings").doc("consent_v1").delete(),
+			db.collection("settings").doc("consent_v1_en").delete(),
+		]);
 
 		return NextResponse.json({
 			success: true,

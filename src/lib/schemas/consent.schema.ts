@@ -2,6 +2,24 @@ import { z } from "zod";
 import { isValidEPS } from "@/lib/data/epsColombiaData";
 
 // ============================================================================
+// REGEX PARA VALIDACIONES INTERNACIONALES
+// ============================================================================
+
+/**
+ * Regex para validar nombres con soporte UTF-8 completo.
+ * Permite: letras (incluyendo tildes, ñ, ü, caracteres internacionales), espacios, apóstrofes y guiones.
+ * Ejemplos válidos: "María José", "O'Brien", "Jean-Pierre", "Müller", "José Ñoño"
+ */
+const UTF8_NAME_REGEX = /^[\p{L}\p{M}'\-\s]+$/u;
+
+/**
+ * Regex para validar documentos alfanuméricos (soporta pasaportes).
+ * Permite: letras mayúsculas/minúsculas y números.
+ * Ejemplos válidos: "AB123456", "12345678", "PA1234567"
+ */
+const ALPHANUMERIC_DOC_REGEX = /^[a-zA-Z0-9]+$/;
+
+// ============================================================================
 // VALIDACIÓN DE FECHA DE NACIMIENTO
 // ============================================================================
 
@@ -67,16 +85,34 @@ export const epsSchema = z
 // ============================================================================
 
 export const minorSchema = z.object({
-	firstName: z.string().min(2, "El nombre es requerido (mínimo 2 caracteres)"),
+	firstName: z
+		.string()
+		.min(2, "El nombre es requerido (mínimo 2 caracteres)")
+		.regex(
+			UTF8_NAME_REGEX,
+			"Solo letras (incluyendo tildes y ñ), espacios, apóstrofes y guiones",
+		),
 	lastName: z
 		.string()
-		.min(2, "Los apellidos son requeridos (mínimo 2 caracteres)"),
+		.min(2, "Los apellidos son requeridos (mínimo 2 caracteres)")
+		.regex(
+			UTF8_NAME_REGEX,
+			"Solo letras (incluyendo tildes y ñ), espacios, apóstrofes y guiones",
+		),
 	birthDate: birthDateSchema,
 	eps: epsSchema,
 	idType: z.enum(["cc", "ti", "passport", "otro"], {
 		message: "Tipo de identificación inválido",
 	}),
-	idNumber: z.string().min(3, "Número de identificación es requerido"),
+	/** Número de documento: soporta cédulas numéricas y pasaportes alfanuméricos */
+	idNumber: z
+		.string()
+		.min(3, "Número de identificación es requerido")
+		.max(20, "Máximo 20 caracteres")
+		.regex(
+			ALPHANUMERIC_DOC_REGEX,
+			"Solo letras y números (sin espacios ni caracteres especiales)",
+		),
 	relationship: z.enum(["hijo", "sobrino", "nieto", "otro"], {
 		message: "Parentesco inválido",
 	}),

@@ -1,8 +1,9 @@
 "use client";
 
-import { Monitor, Moon, Sun } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useSyncExternalStore } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // Hook para detectar si estamos en el cliente (evita hydration mismatch)
 function useIsMounted() {
@@ -15,10 +16,11 @@ function useIsMounted() {
 
 /**
  * Botón discreto para alternar entre modos de tema.
- * Cicla: system → light → dark → system
+ * Solo 2 estados: light ↔ dark (simplificado)
  */
 export function ThemeToggle() {
-	const { theme, setTheme, resolvedTheme } = useTheme();
+	const { setTheme, resolvedTheme } = useTheme();
+	const { t } = useLanguage();
 	const isMounted = useIsMounted();
 
 	if (!isMounted) {
@@ -26,7 +28,7 @@ export function ThemeToggle() {
 			<button
 				type="button"
 				className="p-2 rounded-lg bg-surface-muted text-text-secondary"
-				aria-label="Cargando tema"
+				aria-label={t("theme.loading")}
 				disabled
 			>
 				<div className="w-5 h-5" />
@@ -34,36 +36,19 @@ export function ThemeToggle() {
 		);
 	}
 
-	const cycleTheme = () => {
-		if (theme === "system") {
-			setTheme("light");
-		} else if (theme === "light") {
-			setTheme("dark");
-		} else {
-			setTheme("system");
-		}
+	const isDark = resolvedTheme === "dark";
+
+	const toggleTheme = () => {
+		setTheme(isDark ? "light" : "dark");
 	};
 
-	const getIcon = () => {
-		if (theme === "system") {
-			return <Monitor className="w-5 h-5" />;
-		}
-		if (resolvedTheme === "dark") {
-			return <Moon className="w-5 h-5" />;
-		}
-		return <Sun className="w-5 h-5" />;
-	};
-
-	const getLabel = () => {
-		if (theme === "system") return "Tema del sistema";
-		if (theme === "dark") return "Modo oscuro";
-		return "Modo claro";
-	};
+	const label = isDark ? t("theme.dark") : t("theme.light");
+	const toggleLabel = isDark ? t("theme.switchToLight") : t("theme.switchToDark");
 
 	return (
 		<button
 			type="button"
-			onClick={cycleTheme}
+			onClick={toggleTheme}
 			className="
         p-2.5 rounded-xl
         bg-surface dark:bg-surface-muted
@@ -75,16 +60,22 @@ export function ThemeToggle() {
         shadow-sm hover:shadow-md
         focus:outline-none focus:ring-2 focus:ring-brand-blue/30
       "
-			aria-label={getLabel()}
-			title={getLabel()}
+			aria-label={toggleLabel}
+			aria-pressed={isDark}
+			title={toggleLabel}
 		>
-			{getIcon()}
+			{isDark ? (
+				<Moon className="w-5 h-5" />
+			) : (
+				<Sun className="w-5 h-5" />
+			)}
 		</button>
 	);
 }
 
 /**
- * Variante compacta para usar en navbars
+ * Variante compacta para usar en navbars (admin)
+ * Nota: No usa LanguageContext porque el admin no tiene i18n
  */
 export function ThemeToggleCompact() {
 	const { setTheme, resolvedTheme } = useTheme();
@@ -94,8 +85,10 @@ export function ThemeToggleCompact() {
 		return <div className="w-9 h-9" />;
 	}
 
+	const isDark = resolvedTheme === "dark";
+
 	const toggleTheme = () => {
-		setTheme(resolvedTheme === "dark" ? "light" : "dark");
+		setTheme(isDark ? "light" : "dark");
 	};
 
 	return (
@@ -108,13 +101,10 @@ export function ThemeToggleCompact() {
         hover:bg-surface-muted dark:hover:bg-surface
         transition-colors duration-150
       "
-			aria-label={
-				resolvedTheme === "dark"
-					? "Cambiar a modo claro"
-					: "Cambiar a modo oscuro"
-			}
+			aria-label={isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+			aria-pressed={isDark}
 		>
-			{resolvedTheme === "dark" ? (
+			{isDark ? (
 				<Sun className="w-5 h-5" />
 			) : (
 				<Moon className="w-5 h-5" />

@@ -72,12 +72,12 @@ export const dictionary = {
 		en: "We use this number to verify your identity and show your previous consents.",
 	},
 	"ingreso.placeholder": {
-		es: "Número de cédula",
-		en: "ID Number",
+		es: "Número de documento",
+		en: "Document Number",
 	},
 	"ingreso.hint": {
-		es: "Solo números, sin puntos ni guiones. Mínimo {min} dígitos.",
-		en: "Numbers only, no dots or dashes. Minimum {min} digits.",
+		es: "Letras y números, sin espacios. Mínimo {min} caracteres.",
+		en: "Letters and numbers, no spaces. Minimum {min} characters.",
 	},
 	"ingreso.verifying": {
 		es: "Verificando cédula...",
@@ -457,6 +457,30 @@ export const dictionary = {
 	},
 
 	// ============================================================================
+	// TEMA / DARK MODE
+	// ============================================================================
+	"theme.loading": {
+		es: "Cargando tema",
+		en: "Loading theme",
+	},
+	"theme.light": {
+		es: "Modo claro",
+		en: "Light mode",
+	},
+	"theme.dark": {
+		es: "Modo oscuro",
+		en: "Dark mode",
+	},
+	"theme.switchToLight": {
+		es: "Cambiar a modo claro",
+		en: "Switch to light mode",
+	},
+	"theme.switchToDark": {
+		es: "Cambiar a modo oscuro",
+		en: "Switch to dark mode",
+	},
+
+	// ============================================================================
 	// TECLADO VIRTUAL
 	// ============================================================================
 	"keypad.delete": {
@@ -466,6 +490,98 @@ export const dictionary = {
 	"keypad.clear": {
 		es: "Limpiar",
 		en: "Clear",
+	},
+	"keypad.clearAll": {
+		es: "Limpiar todo",
+		en: "Clear all",
+	},
+	"keypad.enterDigit": {
+		es: "Ingresar {digit}",
+		en: "Enter {digit}",
+	},
+	"keypad.deleteLastDigit": {
+		es: "Borrar último dígito",
+		en: "Delete last digit",
+	},
+	"keypad.confirmDocument": {
+		es: "Confirmar documento",
+		en: "Confirm document",
+	},
+
+	// ============================================================================
+	// PÁGINA DE CONSENTIMIENTO (COMPLETA)
+	// ============================================================================
+	"consentPage.title": {
+		es: "Consentimiento y Exoneración",
+		en: "Consent and Waiver",
+	},
+	"consentPage.responsible": {
+		es: "Responsable",
+		en: "Responsible Party",
+	},
+	"consentPage.guest": {
+		es: "Invitado",
+		en: "Guest",
+	},
+	"consentPage.expandButton": {
+		es: "Pantalla Completa",
+		en: "Full Screen",
+	},
+	"consentPage.expandButtonAria": {
+		es: "Leer consentimiento en pantalla completa",
+		en: "Read consent in full screen",
+	},
+	"consentPage.acceptTerms": {
+		es: "He leído, entiendo y acepto los términos y condiciones descritos anteriormente, así como la política de tratamiento de datos personales.",
+		en: "I have read, understand, and accept the terms and conditions described above, as well as the personal data processing policy.",
+	},
+	"consentPage.digitalSignature": {
+		es: "Firma Digital",
+		en: "Digital Signature",
+	},
+	"consentPage.signatureRequired": {
+		es: "Firma requerida",
+		en: "Signature required",
+	},
+	"consentPage.signatureRequiredDesc": {
+		es: "Por favor, firme el documento antes de continuar.",
+		en: "Please sign the document before continuing.",
+	},
+	"consentPage.submitButton": {
+		es: "ACEPTAR Y FIRMAR",
+		en: "ACCEPT AND SIGN",
+	},
+	"consentPage.processing": {
+		es: "Procesando...",
+		en: "Processing...",
+	},
+	"consentPage.successTitle": {
+		es: "¡Consentimiento firmado!",
+		en: "Consent signed!",
+	},
+	"consentPage.successConsecutivo": {
+		es: "Consecutivo",
+		en: "Confirmation number",
+	},
+	"consentPage.errorTitle": {
+		es: "Error al guardar",
+		en: "Error saving",
+	},
+	"consentPage.errorDesc": {
+		es: "Hubo un problema al guardar el consentimiento. Intente nuevamente.",
+		en: "There was a problem saving the consent. Please try again.",
+	},
+	"consentPage.termsBoxAria": {
+		es: "Términos y condiciones del consentimiento",
+		en: "Consent terms and conditions",
+	},
+	"consentPage.checkboxAria": {
+		es: "Aceptar términos y condiciones",
+		en: "Accept terms and conditions",
+	},
+	"consentPage.signaturePadAria": {
+		es: "Área de firma digital",
+		en: "Digital signature area",
 	},
 } as const;
 

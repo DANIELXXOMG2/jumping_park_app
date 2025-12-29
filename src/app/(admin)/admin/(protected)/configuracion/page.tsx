@@ -6,17 +6,18 @@ import {
 	ChevronDown,
 	ChevronUp,
 	FileText,
-	Key,
+	Globe,
 	ListOrdered,
 	Loader2,
 	Plus,
-	RotateCcw,
+	RefreshCw,
 	Save,
 	Settings,
 	Shield,
 	Trash2,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/admin/Button";
 import {
 	Card,
@@ -30,8 +31,30 @@ import {
 	type ConsentClause,
 	type ConsentContentStructure,
 	DEFAULT_CONSENT_CONTENT,
+	ENGLISH_CONSENT_CONTENT,
 	type ParkRule,
 } from "@/lib/data/legalContent";
+
+// ============================================================================
+// TIPOS MULTILENGUAJE
+// ============================================================================
+
+type SupportedLanguage = "es" | "en";
+
+interface MultiLanguageContent {
+	es: ConsentContentStructure;
+	en: ConsentContentStructure;
+}
+
+const LANGUAGE_CONFIG: Record<SupportedLanguage, { flag: string; label: string }> = {
+	es: { flag: "🇪🇸", label: "Español" },
+	en: { flag: "🇺🇸", label: "English" },
+};
+
+const DEFAULT_MULTILANG_CONTENT: MultiLanguageContent = {
+	es: DEFAULT_CONSENT_CONTENT,
+	en: ENGLISH_CONSENT_CONTENT,
+};
 
 // ============================================================================
 // TIPOS
@@ -255,9 +278,13 @@ function RuleEditor({ rule, index, onChange, onDelete }: RuleEditorProps) {
 // ============================================================================
 
 export default function ConfiguracionPage() {
-	const [content, setContent] = useState<ConsentContentStructure>(
-		DEFAULT_CONSENT_CONTENT,
+	// Estado multilenguaje
+	const [multiContent, setMultiContent] = useState<MultiLanguageContent>(
+		DEFAULT_MULTILANG_CONTENT
 	);
+	// Contenido original para detectar cambios pendientes
+	const originalContentRef = useRef<MultiLanguageContent>(DEFAULT_MULTILANG_CONTENT);
+	const [activeLanguage, setActiveLanguage] = useState<SupportedLanguage>("es");
 	const [isLoading, setIsLoading] = useState(true);
 	const [isSaving, setIsSaving] = useState(false);
 	const [saveStatus, setSaveStatus] = useState<SaveStatus>({
@@ -268,20 +295,58 @@ export default function ConfiguracionPage() {
 		"consent" | "rules" | "permissions"
 	>("consent");
 
-	// Cargar contenido actual
+	// Detectar si hay cambios pendientes comparando con el contenido original
+	const hasUnsavedChanges = useMemo(() => {
+		return JSON.stringify(multiContent) !== JSON.stringify(originalContentRef.current);
+	}, [multiContent]);
+
+	// Contenido del idioma activo (computed)
+	const content = multiContent[activeLanguage];
+
+	// Actualizar contenido del idioma activo
+	const setContent = useCallback(
+		(newContent: ConsentContentStructure) => {
+			setMultiContent((prev) => ({
+				...prev,
+				[activeLanguage]: newContent,
+			}));
+		},
+		[activeLanguage]
+	);
+
+	// Cargar contenido actual (multilenguaje)
 	const fetchContent = useCallback(async () => {
 		setIsLoading(true);
 		try {
-			const result = await adminGet<{ data: ConsentContentStructure | null }>(
-				"/api/admin/settings/consent",
+			const result = await adminGet<{ data: MultiLanguageContent | ConsentContentStructure | null }>(
+				"/api/admin/settings/consent"
 			);
+			
+			let loadedContent: MultiLanguageContent;
+			
 			if (result.data) {
-				setContent(result.data);
+				// Detectar si es formato antiguo (solo es) o nuevo (multilenguaje)
+				if ('es' in result.data && 'en' in result.data) {
+					// Formato nuevo multilenguaje
+					loadedContent = result.data as MultiLanguageContent;
+				} else if ('meta' in result.data && 'consent' in result.data) {
+					// Formato antiguo: usar como español, inglés por defecto
+					loadedContent = {
+						es: result.data as ConsentContentStructure,
+						en: ENGLISH_CONSENT_CONTENT,
+					};
+				} else {
+					loadedContent = DEFAULT_MULTILANG_CONTENT;
+				}
 			} else {
-				setContent(DEFAULT_CONSENT_CONTENT);
+				loadedContent = DEFAULT_MULTILANG_CONTENT;
 			}
+			
+			setMultiContent(loadedContent);
+			originalContentRef.current = loadedContent;
 		} catch {
-			setContent(DEFAULT_CONSENT_CONTENT);
+			setMultiContent(DEFAULT_MULTILANG_CONTENT);
+			originalContentRef.current = DEFAULT_MULTILANG_CONTENT;
 		} finally {
 			setIsLoading(false);
 		}
@@ -291,16 +356,41 @@ export default function ConfiguracionPage() {
 		fetchContent();
 	}, [fetchContent]);
 
-	// Guardar cambios
+	// Guardar cambios (multilenguaje completo)
 	const handleSave = async () => {
 		setIsSaving(true);
 		setSaveStatus({ type: "idle", message: "" });
 
 		try {
-			await adminPost("/api/admin/settings/consent", content);
+			// Actualizar lastUpdated para ambos idiomas
+			const contentToSave: MultiLanguageContent = {
+				es: {
+					...multiContent.es,
+					meta: {
+						...multiContent.es.meta,
+						lastUpdated: new Date().toISOString().split("T")[0],
+					},
+				},
+				en: {
+					...multiContent.en,
+					meta: {
+						...multiContent.en.meta,
+						lastUpdated: new Date().toISOString().split("T")[0],
+					},
+				},
+			};
+
+			await adminPost("/api/admin/settings/consent", contentToSave);
+			// Sincronizar AMBOS estados para resetear el indicador de cambios
+			// Importante: actualizar multiContent también para que coincida con originalContentRef
+			setMultiContent(contentToSave);
+			originalContentRef.current = contentToSave;
 			setSaveStatus({
 				type: "success",
-				message: "Cambios guardados exitosamente",
+				message: "Cambios guardados exitosamente en todos los idiomas",
+			});
+			toast.success("Cambios guardados", {
+				description: "El contenido se ha actualizado en todos los idiomas.",
 			});
 			setTimeout(() => setSaveStatus({ type: "idle", message: "" }), 3000);
 		} catch (error) {
@@ -313,15 +403,12 @@ export default function ConfiguracionPage() {
 		}
 	};
 
-	// Restaurar valores por defecto
-	const handleReset = () => {
-		if (
-			confirm(
-				"¿Estás seguro de restaurar los valores por defecto? Se perderán todos los cambios.",
-			)
-		) {
-			setContent(DEFAULT_CONSENT_CONTENT);
-		}
+	// Cargar valores predeterminados del sistema
+	const handleLoadDefaults = () => {
+		setMultiContent(DEFAULT_MULTILANG_CONTENT);
+		toast.success("Datos predeterminados cargados", {
+			description: "Revisa el contenido y haz clic en 'Guardar Cambios' para persistir.",
+		});
 	};
 
 	// Handlers para cláusulas
@@ -401,7 +488,7 @@ export default function ConfiguracionPage() {
 	}
 
 	return (
-		<div className="space-y-6">
+		<div className="space-y-6 pb-24">
 			{/* Header */}
 			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 				<div>
@@ -413,20 +500,6 @@ export default function ConfiguracionPage() {
 						Edita el contenido del consentimiento informado y las reglas del
 						parque
 					</p>
-				</div>
-				<div className="flex items-center gap-2">
-					<Button variant="outline" onClick={handleReset} disabled={isSaving}>
-						<RotateCcw className="w-4 h-4 mr-2" />
-						Restaurar
-					</Button>
-					<Button onClick={handleSave} disabled={isSaving}>
-						{isSaving ? (
-							<Loader2 className="w-4 h-4 mr-2 animate-spin" />
-						) : (
-							<Save className="w-4 h-4 mr-2" />
-						)}
-						Guardar Cambios
-					</Button>
 				</div>
 			</div>
 
@@ -447,6 +520,52 @@ export default function ConfiguracionPage() {
 					<span className="text-sm font-medium">{saveStatus.message}</span>
 				</div>
 			)}
+
+			{/* Language Tabs */}
+			<Card>
+				<CardHeader>
+					<CardTitle className="text-lg flex items-center gap-2">
+						<Globe className="w-5 h-5" />
+						Idioma del Contenido
+					</CardTitle>
+				</CardHeader>
+				<CardContent>
+					<div className="flex flex-wrap gap-3 items-center">
+						{(Object.keys(LANGUAGE_CONFIG) as SupportedLanguage[]).map((lang) => (
+							<button
+								key={lang}
+								type="button"
+								onClick={() => setActiveLanguage(lang)}
+								className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
+									activeLanguage === lang
+										? "bg-primary text-primary-foreground shadow-md"
+										: "bg-surface-muted text-foreground/70 hover:bg-surface-muted/80 hover:text-foreground"
+								}`}
+							>
+								<span className="text-lg">{LANGUAGE_CONFIG[lang].flag}</span>
+								<span>{LANGUAGE_CONFIG[lang].label}</span>
+							</button>
+						))}
+
+						{/* Botón para cargar defaults del sistema */}
+						<div className="ml-auto">
+							<Button
+								variant="outline"
+								onClick={handleLoadDefaults}
+								className="border-blue-500/30 hover:border-blue-500/50 hover:bg-blue-500/10"
+							>
+								<RefreshCw className="w-4 h-4 mr-2" />
+								🔄 Restaurar Defaults del Sistema
+							</Button>
+						</div>
+					</div>
+					<p className="text-xs text-foreground/50 mt-3">
+						{activeLanguage === "es" 
+							? "Edita el contenido en español. Este es el idioma principal."
+							: "Edita el contenido en inglés."}
+					</p>
+				</CardContent>
+			</Card>
 
 			{/* Metadata */}
 			<Card>
@@ -752,17 +871,83 @@ export default function ConfiguracionPage() {
 			{/* Staff & Roles Section */}
 			{activeSection === "permissions" && <StaffManager />}
 
-			{/* Tip */}
-			<div className="bg-blue-500/10 text-blue-600 dark:text-blue-400 p-4 rounded-lg text-sm">
-				<p className="font-medium mb-1">💡 Tip: Uso de placeholders</p>
-				<p className="text-foreground/70">
-					Usa{" "}
-					<code className="bg-blue-500/20 px-1 rounded">
-						{"{COMPANY_NAME}"}
-					</code>{" "}
-					en el texto de las cláusulas para que se reemplace automáticamente por
-					el nombre de la empresa.
-				</p>
+			{/* Tips */}
+			<div className="space-y-3">
+				<div className="bg-blue-500/10 text-blue-600 dark:text-blue-400 p-4 rounded-lg text-sm">
+					<p className="font-medium mb-1">💡 Tip: Uso de placeholders</p>
+					<p className="text-foreground/70">
+						Usa{" "}
+						<code className="bg-blue-500/20 px-1 rounded">
+							{"{COMPANY_NAME}"}
+						</code>{" "}
+						en el texto de las cláusulas para que se reemplace automáticamente por
+						el nombre de la empresa.
+					</p>
+				</div>
+
+				<div className="bg-green-500/10 text-green-600 dark:text-green-400 p-4 rounded-lg text-sm">
+					<p className="font-medium mb-1 flex items-center gap-2">
+						<RefreshCw className="w-4 h-4" />
+						Restaurar Defaults
+					</p>
+					<p className="text-foreground/70">
+						Usa el botón &quot;Restaurar Defaults del Sistema&quot; para cargar 
+						las traducciones predeterminadas (Español e Inglés). Luego haz clic 
+						en &quot;Guardar Cambios&quot; para persistirlas en la base de datos.
+					</p>
+				</div>
+			</div>
+
+			{/* Floating Save Button - Fixed at bottom right */}
+			<div className="fixed bottom-6 right-6 z-50">
+				<div className="flex items-center gap-3">
+					{/* Indicator de cambios pendientes */}
+					{hasUnsavedChanges && !isSaving && saveStatus.type === "idle" && (
+						<div className="bg-amber-500/90 text-white px-3 py-2 rounded-lg shadow-lg text-sm font-medium animate-pulse">
+							Cambios sin guardar
+						</div>
+					)}
+					
+					{/* Success indicator */}
+					{saveStatus.type === "success" && (
+						<div className="bg-green-500/90 text-white px-3 py-2 rounded-lg shadow-lg text-sm font-medium flex items-center gap-2">
+							<CheckCircle className="w-4 h-4" />
+							Guardado
+						</div>
+					)}
+					
+					{/* Error indicator */}
+					{saveStatus.type === "error" && (
+						<div className="bg-red-500/90 text-white px-3 py-2 rounded-lg shadow-lg text-sm font-medium flex items-center gap-2">
+							<AlertCircle className="w-4 h-4" />
+							Error
+						</div>
+					)}
+					
+					{/* Save button */}
+					<Button
+						onClick={handleSave}
+						disabled={isSaving || !hasUnsavedChanges}
+						size="lg"
+						className={`shadow-lg transition-all duration-300 ${
+							hasUnsavedChanges && !isSaving
+								? "bg-primary hover:bg-primary/90 scale-105"
+								: "bg-primary/50 cursor-not-allowed"
+						}`}
+					>
+						{isSaving ? (
+							<>
+								<Loader2 className="w-5 h-5 mr-2 animate-spin" />
+								Guardando...
+							</>
+						) : (
+							<>
+								<Save className="w-5 h-5 mr-2" />
+								{hasUnsavedChanges ? "Guardar Cambios" : "Sin cambios"}
+							</>
+						)}
+					</Button>
+				</div>
 			</div>
 		</div>
 	);

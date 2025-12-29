@@ -6,12 +6,32 @@ import { z } from "zod";
 import { birthDateSchema, epsSchema } from "./consent.schema";
 
 // ============================================================================
+// REGEX PARA VALIDACIONES INTERNACIONALES
+// ============================================================================
+
+/**
+ * Regex para validar nombres con soporte UTF-8 completo.
+ * Permite: letras (incluyendo tildes, ñ, ü, caracteres internacionales), espacios, apóstrofes y guiones.
+ */
+const UTF8_NAME_REGEX = /^[\p{L}\p{M}'\-\s]+$/u;
+
+/**
+ * Regex para validar documentos alfanuméricos (soporta pasaportes).
+ * Permite: letras mayúsculas/minúsculas y números.
+ */
+const ALPHANUMERIC_DOC_REGEX = /^[a-zA-Z0-9]+$/;
+
+// ============================================================================
 // ACCESOS - Registro de entradas/salidas al parque
 // ============================================================================
 
 export const accesoCreateSchema = z.object({
-	/** ID del usuario (cédula) */
-	userId: z.string().min(6, "El ID de usuario es requerido"),
+	/** ID del usuario (documento de identidad) */
+	userId: z
+		.string()
+		.min(5, "El ID de usuario es requerido")
+		.max(20, "Máximo 20 caracteres")
+		.regex(ALPHANUMERIC_DOC_REGEX, "Solo letras y números"),
 
 	/** ID del consentimiento asociado */
 	consentId: z.string().min(1, "El ID de consentimiento es requerido"),
@@ -34,10 +54,22 @@ export type AccesoCreate = z.infer<typeof accesoCreateSchema>;
 
 export const menorCreateSchema = z.object({
 	/** Nombre del menor */
-	firstName: z.string().min(2, "El nombre es requerido"),
+	firstName: z
+		.string()
+		.min(2, "El nombre es requerido")
+		.regex(
+			UTF8_NAME_REGEX,
+			"Solo letras (incluyendo tildes y ñ), espacios, apóstrofes y guiones",
+		),
 
 	/** Apellidos del menor */
-	lastName: z.string().min(2, "Los apellidos son requeridos"),
+	lastName: z
+		.string()
+		.min(2, "Los apellidos son requeridos")
+		.regex(
+			UTF8_NAME_REGEX,
+			"Solo letras (incluyendo tildes y ñ), espacios, apóstrofes y guiones",
+		),
 
 	/** Fecha de nacimiento con validación robusta */
 	birthDate: birthDateSchema,
@@ -48,14 +80,25 @@ export const menorCreateSchema = z.object({
 	/** Tipo de identificación */
 	idType: z.enum(["cc", "ti", "passport", "otro"]),
 
-	/** Número de identificación */
-	idNumber: z.string().min(3, "Número de identificación es requerido"),
+	/** Número de identificación: soporta cédulas y pasaportes alfanuméricos */
+	idNumber: z
+		.string()
+		.min(3, "Número de identificación es requerido")
+		.max(20, "Máximo 20 caracteres")
+		.regex(
+			ALPHANUMERIC_DOC_REGEX,
+			"Solo letras y números (sin espacios ni caracteres especiales)",
+		),
 
 	/** Parentesco con el responsable */
 	relationship: z.enum(["hijo", "sobrino", "nieto", "otro"]),
 
-	/** ID del adulto responsable (cédula) */
-	responsableId: z.string().min(6, "ID del responsable es requerido"),
+	/** ID del adulto responsable (documento) */
+	responsableId: z
+		.string()
+		.min(5, "ID del responsable es requerido")
+		.max(20, "Máximo 20 caracteres")
+		.regex(ALPHANUMERIC_DOC_REGEX, "Solo letras y números"),
 });
 
 export type MenorCreate = z.infer<typeof menorCreateSchema>;
@@ -65,11 +108,21 @@ export type MenorCreate = z.infer<typeof menorCreateSchema>;
 // ============================================================================
 
 export const usuarioCreateSchema = z.object({
-	/** Cédula del usuario (también es el UID) */
-	uid: z.string().min(6, "La cédula debe tener al menos 6 dígitos"),
+	/** Documento del usuario (también es el UID): soporta cédulas y pasaportes */
+	uid: z
+		.string()
+		.min(5, "El documento debe tener al menos 5 caracteres")
+		.max(20, "Máximo 20 caracteres")
+		.regex(ALPHANUMERIC_DOC_REGEX, "Solo letras y números"),
 
-	/** Nombre completo */
-	fullName: z.string().min(3, "El nombre debe tener al menos 3 caracteres"),
+	/** Nombre completo con soporte UTF-8 */
+	fullName: z
+		.string()
+		.min(3, "El nombre debe tener al menos 3 caracteres")
+		.regex(
+			UTF8_NAME_REGEX,
+			"Solo letras (incluyendo tildes y ñ), espacios, apóstrofes y guiones",
+		),
 
 	/** Correo electrónico */
 	email: z.string().email("Correo electrónico inválido"),
