@@ -69,7 +69,7 @@ function ExitoContent() {
 						Tu número de registro
 					</p>
 					<div className="flex items-center justify-center gap-2">
-						<span className="text-5xl font-bold bg-linear-to-r from-neon-blue to-neon-pink bg-clip-text text-transparent">
+						<span className="text-5xl font-bold text-white">
 							#{consecutivo}
 						</span>
 					</div>
