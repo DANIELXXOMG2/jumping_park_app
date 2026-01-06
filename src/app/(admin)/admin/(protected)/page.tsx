@@ -22,7 +22,7 @@ import {
 	CardTitle,
 } from "@/components/admin/Card";
 import { StatCard } from "@/components/admin/StatCard";
-import { adminGet } from "@/lib/adminApi";
+import { adminGet, adminFetch } from "@/lib/adminApi";
 import { formatRelativeTime } from "@/lib/utils";
 
 interface MinorSnapshot {
@@ -327,9 +327,7 @@ export default function AdminDashboard() {
 									onClick={async () => {
 										try {
 											const pdfUrl = `/api/admin/consents/${searchResult.consent?.id}/pdf`;
-											const response = await fetch(pdfUrl, {
-												credentials: "include",
-											});
+											const response = await adminFetch(pdfUrl);
 											if (!response.ok) throw new Error("Error al generar PDF");
 											const blob = await response.blob();
 											const url = URL.createObjectURL(blob);
