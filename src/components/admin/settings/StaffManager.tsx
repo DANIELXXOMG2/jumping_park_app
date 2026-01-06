@@ -342,37 +342,37 @@ export function StaffManager() {
               return (
                 <div
                   key={member.uid}
-                  className="flex items-center justify-between py-4 first:pt-0 last:pb-0"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between py-4 first:pt-0 last:pb-0 gap-3 sm:gap-4"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
-                      <RoleIcon className="h-5 w-5 text-primary-600" />
+                  <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                    <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0">
+                      <RoleIcon className="h-4 w-4 sm:h-5 sm:w-5 text-primary-600" />
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium text-gray-900">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-medium text-gray-900 text-sm sm:text-base truncate max-w-[180px] sm:max-w-none">
                           {member.displayName || member.email}
                         </p>
                         {isCurrentUser && (
                           <Badge variant="success">Tú</Badge>
                         )}
                       </div>
-                      <div className="flex items-center gap-3 text-sm text-gray-500">
-                        <span className="flex items-center gap-1">
-                          <Mail className="h-3.5 w-3.5" />
-                          {member.email}
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-xs sm:text-sm text-gray-500 mt-0.5">
+                        <span className="flex items-center gap-1 truncate">
+                          <Mail className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
+                          <span className="truncate">{member.email}</span>
                         </span>
                         {member.lastSignIn && (
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-3.5 w-3.5" />
-                            Último acceso: {new Date(member.lastSignIn).toLocaleDateString()}
+                          <span className="flex items-center gap-1 text-[10px] sm:text-sm">
+                            <Calendar className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
+                            <span className="hidden xs:inline">Último acceso:</span> {new Date(member.lastSignIn).toLocaleDateString()}
                           </span>
                         )}
                       </div>
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 sm:gap-3 pl-12 sm:pl-0">
                     <Badge variant={ROLE_COLORS[member.role] || 'default'}>
                       {ROLE_LABELS[member.role] || member.role}
                     </Badge>

@@ -524,42 +524,45 @@ export default function ConfiguracionPage() {
 			{/* Language Tabs */}
 			<Card>
 				<CardHeader>
-					<CardTitle className="text-lg flex items-center gap-2">
-						<Globe className="w-5 h-5" />
+					<CardTitle className="text-base sm:text-lg flex items-center gap-2">
+						<Globe className="w-4 h-4 sm:w-5 sm:h-5" />
 						Idioma del Contenido
 					</CardTitle>
 				</CardHeader>
 				<CardContent>
-					<div className="flex flex-wrap gap-3 items-center">
-						{(Object.keys(LANGUAGE_CONFIG) as SupportedLanguage[]).map((lang) => (
-							<button
-								key={lang}
-								type="button"
-								onClick={() => setActiveLanguage(lang)}
-								className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
-									activeLanguage === lang
-										? "bg-primary text-primary-foreground shadow-md"
-										: "bg-surface-muted text-foreground/70 hover:bg-surface-muted/80 hover:text-foreground"
-								}`}
-							>
-								<span className="text-lg">{LANGUAGE_CONFIG[lang].flag}</span>
-								<span>{LANGUAGE_CONFIG[lang].label}</span>
-							</button>
-						))}
+					<div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3 sm:items-center">
+						<div className="flex gap-2">
+							{(Object.keys(LANGUAGE_CONFIG) as SupportedLanguage[]).map((lang) => (
+								<button
+									key={lang}
+									type="button"
+									onClick={() => setActiveLanguage(lang)}
+									className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium transition-all text-sm sm:text-base ${
+										activeLanguage === lang
+											? "bg-primary text-primary-foreground shadow-md"
+											: "bg-surface-muted text-foreground/70 hover:bg-surface-muted/80 hover:text-foreground"
+									}`}
+								>
+									<span className="text-base sm:text-lg">{LANGUAGE_CONFIG[lang].flag}</span>
+									<span>{LANGUAGE_CONFIG[lang].label}</span>
+								</button>
+							))}
+						</div>
 
 						{/* Botón para cargar defaults del sistema */}
-						<div className="ml-auto">
+						<div className="sm:ml-auto mt-2 sm:mt-0">
 							<Button
 								variant="outline"
 								onClick={handleLoadDefaults}
-								className="border-blue-500/30 hover:border-blue-500/50 hover:bg-blue-500/10"
+								className="border-blue-500/30 hover:border-blue-500/50 hover:bg-blue-500/10 text-xs sm:text-sm w-full sm:w-auto"
 							>
-								<RefreshCw className="w-4 h-4 mr-2" />
-								🔄 Restaurar Defaults del Sistema
+								<RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+								<span className="hidden sm:inline">🔄 Restaurar Defaults del Sistema</span>
+								<span className="sm:hidden">🔄 Restaurar</span>
 							</Button>
 						</div>
 					</div>
-					<p className="text-xs text-foreground/50 mt-3">
+					<p className="text-[10px] sm:text-xs text-foreground/50 mt-2 sm:mt-3">
 						{activeLanguage === "es" 
 							? "Edita el contenido en español. Este es el idioma principal."
 							: "Edita el contenido en inglés."}
@@ -625,43 +628,46 @@ export default function ConfiguracionPage() {
 			</Card>
 
 			{/* Section Tabs */}
-			<div className="flex gap-2 border-b border-border">
+			<div className="flex flex-wrap gap-1 sm:gap-2 border-b border-border overflow-x-auto pb-px">
 				<button
 					type="button"
 					onClick={() => setActiveSection("consent")}
-					className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+					className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
 						activeSection === "consent"
 							? "border-primary text-primary"
 							: "border-transparent text-foreground/60 hover:text-foreground"
 					}`}
 				>
-					<FileText className="w-4 h-4" />
-					Consentimiento ({content.consent.clauses.length})
+					<FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+					<span className="hidden xs:inline">Consentimiento</span>
+					<span className="xs:hidden">Consent.</span>
+					({content.consent.clauses.length})
 				</button>
 				<button
 					type="button"
 					onClick={() => setActiveSection("rules")}
-					className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+					className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
 						activeSection === "rules"
 							? "border-primary text-primary"
 							: "border-transparent text-foreground/60 hover:text-foreground"
 					}`}
 				>
-					<ListOrdered className="w-4 h-4" />
+					<ListOrdered className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
 					Reglas ({content.rules.items.length})
 				</button>
-				<div className="ml-auto flex gap-2">
+				<div className="ml-auto">
 					<button
 						type="button"
 						onClick={() => setActiveSection("permissions")}
-						className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+						className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
 							activeSection === "permissions"
 								? "border-primary text-primary"
 								: "border-transparent text-foreground/60 hover:text-foreground"
 						}`}
 					>
-						<Shield className="w-4 h-4" />
-						Equipo y Roles
+						<Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+						<span className="hidden sm:inline">Equipo y Roles</span>
+						<span className="sm:hidden">Equipo</span>
 					</button>
 				</div>
 			</div>
@@ -899,27 +905,27 @@ export default function ConfiguracionPage() {
 			</div>
 
 			{/* Floating Save Button - Fixed at bottom right */}
-			<div className="fixed bottom-6 right-6 z-50">
-				<div className="flex items-center gap-3">
+			<div className="fixed bottom-20 sm:bottom-6 right-3 sm:right-6 z-50">
+				<div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-3">
 					{/* Indicator de cambios pendientes */}
 					{hasUnsavedChanges && !isSaving && saveStatus.type === "idle" && (
-						<div className="bg-amber-500/90 text-white px-3 py-2 rounded-lg shadow-lg text-sm font-medium animate-pulse">
+						<div className="bg-amber-500/90 text-white px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg shadow-lg text-xs sm:text-sm font-medium animate-pulse">
 							Cambios sin guardar
 						</div>
 					)}
 					
 					{/* Success indicator */}
 					{saveStatus.type === "success" && (
-						<div className="bg-green-500/90 text-white px-3 py-2 rounded-lg shadow-lg text-sm font-medium flex items-center gap-2">
-							<CheckCircle className="w-4 h-4" />
+						<div className="bg-green-500/90 text-white px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg shadow-lg text-xs sm:text-sm font-medium flex items-center gap-1.5 sm:gap-2">
+							<CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
 							Guardado
 						</div>
 					)}
 					
 					{/* Error indicator */}
 					{saveStatus.type === "error" && (
-						<div className="bg-red-500/90 text-white px-3 py-2 rounded-lg shadow-lg text-sm font-medium flex items-center gap-2">
-							<AlertCircle className="w-4 h-4" />
+						<div className="bg-red-500/90 text-white px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg shadow-lg text-xs sm:text-sm font-medium flex items-center gap-1.5 sm:gap-2">
+							<AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
 							Error
 						</div>
 					)}
@@ -929,7 +935,7 @@ export default function ConfiguracionPage() {
 						onClick={handleSave}
 						disabled={isSaving || !hasUnsavedChanges}
 						size="lg"
-						className={`shadow-lg transition-all duration-300 ${
+						className={`shadow-lg transition-all duration-300 text-sm sm:text-base px-4 sm:px-6 ${
 							hasUnsavedChanges && !isSaving
 								? "bg-primary hover:bg-primary/90 scale-105"
 								: "bg-primary/50 cursor-not-allowed"
@@ -937,13 +943,15 @@ export default function ConfiguracionPage() {
 					>
 						{isSaving ? (
 							<>
-								<Loader2 className="w-5 h-5 mr-2 animate-spin" />
-								Guardando...
+								<Loader2 className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2 animate-spin" />
+								<span className="hidden sm:inline">Guardando...</span>
+								<span className="sm:hidden">...</span>
 							</>
 						) : (
 							<>
-								<Save className="w-5 h-5 mr-2" />
-								{hasUnsavedChanges ? "Guardar Cambios" : "Sin cambios"}
+								<Save className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
+								<span className="hidden sm:inline">{hasUnsavedChanges ? "Guardar Cambios" : "Sin cambios"}</span>
+								<span className="sm:hidden">{hasUnsavedChanges ? "Guardar" : ""}</span>
 							</>
 						)}
 					</Button>
