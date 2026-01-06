@@ -10,7 +10,7 @@ export function Card({ children, className }: CardProps) {
 	return (
 		<div
 			className={cn(
-				"bg-surface rounded-xl border border-border p-4 lg:p-6",
+				"bg-surface rounded-xl border border-border p-3 sm:p-4 lg:p-6",
 				className,
 			)}
 		>
@@ -26,7 +26,7 @@ interface CardHeaderProps {
 
 export function CardHeader({ children, className }: CardHeaderProps) {
 	return (
-		<div className={cn("flex items-center justify-between mb-4", className)}>
+		<div className={cn("flex items-center justify-between mb-3 sm:mb-4", className)}>
 			{children}
 		</div>
 	);
@@ -39,7 +39,7 @@ interface CardTitleProps {
 
 export function CardTitle({ children, className }: CardTitleProps) {
 	return (
-		<h3 className={cn("text-lg font-semibold text-foreground", className)}>
+		<h3 className={cn("text-base sm:text-lg font-semibold text-foreground", className)}>
 			{children}
 		</h3>
 	);

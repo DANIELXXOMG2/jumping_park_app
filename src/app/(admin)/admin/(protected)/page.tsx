@@ -134,13 +134,13 @@ export default function AdminDashboard() {
 	};
 
 	return (
-		<div className="min-h-[80vh] flex flex-col items-center justify-start pt-8 px-4 pb-20 lg:pb-6">
+		<div className="min-h-[80vh] flex flex-col items-center justify-start pt-4 sm:pt-8 px-3 sm:px-4 pb-20 lg:pb-6">
 			{/* Header */}
-			<div className="text-center mb-6">
-				<h1 className="text-2xl lg:text-3xl font-bold text-foreground">
+			<div className="text-center mb-4 sm:mb-6">
+				<h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">
 					Visor de Verificación
 				</h1>
-				<p className="text-foreground/60 mt-2">
+				<p className="text-foreground/60 mt-1.5 sm:mt-2 text-sm sm:text-base px-2">
 					Ingresa la cédula para verificar el consentimiento vigente
 				</p>
 			</div>
@@ -148,24 +148,24 @@ export default function AdminDashboard() {
 			{/* Stats del día */}
 			<div className="w-full max-w-2xl mb-6">
 				<div className="flex items-center justify-between mb-3">
-					<h2 className="text-sm font-semibold text-foreground/60 uppercase flex items-center gap-2">
-						<Clock className="w-4 h-4" />
+					<h2 className="text-xs sm:text-sm font-semibold text-foreground/60 uppercase flex items-center gap-1.5 sm:gap-2">
+						<Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
 						Actividad de Hoy
 					</h2>
 					<button
 						type="button"
 						onClick={() => fetchActivity(true)}
 						disabled={isRefreshing}
-						className="p-2 hover:bg-surface-muted rounded-lg transition-colors"
+						className="p-1.5 sm:p-2 hover:bg-surface-muted rounded-lg transition-colors"
 						title="Actualizar"
 						aria-label="Actualizar actividad"
 					>
 						<RefreshCw
-							className={`w-4 h-4 text-foreground/60 ${isRefreshing ? "animate-spin" : ""}`}
+							className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-foreground/60 ${isRefreshing ? "animate-spin" : ""}`}
 						/>
 					</button>
 				</div>
-				<div className="grid grid-cols-2 gap-4">
+				<div className="grid grid-cols-2 gap-2 sm:gap-4">
 					<StatCard
 						title="Consentimientos"
 						value={
@@ -174,7 +174,7 @@ export default function AdminDashboard() {
 						icon={FileCheck}
 					/>
 					<StatCard
-						title="Acompañantes Registrados"
+						title="Acompañantes"
 						value={
 							activityLoading ? "..." : activityData?.stats.minorsToday || 0
 						}

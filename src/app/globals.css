@@ -293,7 +293,7 @@ body {
    COMPONENTES FORM (ESTILO CLEAN PRO)
    ============================================================================ */
 
-button,
+button:not([class*="min-h-"]):not([class*="p-"]),
 input,
 select,
 textarea {
@@ -311,9 +311,24 @@ textarea {
     background-color var(--transition-base);
 }
 
+/* Botones con clases de padding personalizadas */
+button[class*="p-"] {
+  min-height: auto;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background-color: var(--surface);
+  color: var(--foreground);
+  font-family: inherit;
+  transition: 
+    border-color var(--transition-base), 
+    box-shadow var(--transition-base), 
+    transform var(--transition-fast),
+    background-color var(--transition-base);
+}
+
 /* Responsive min-height para inputs en dispositivos pequeños */
 @media (min-width: 640px) {
-  button,
+  button:not([class*="min-h-"]):not([class*="p-"]),
   input,
   select,
   textarea {
@@ -338,8 +353,8 @@ textarea:focus-visible {
   box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
 }
 
-/* Primary Button Style */
-button {
+/* Primary Button Style - Solo para botones sin clases de background/hover personalizadas */
+button:not([class*="bg-"]):not([class*="hover:"]):not([class*="p-"]) {
   background-color: var(--brand-green);
   color: var(--text-on-primary);
   font-weight: 600;
@@ -347,13 +362,13 @@ button {
   border: none;
 }
 
-button:hover {
+button:not([class*="bg-"]):not([class*="hover:"]):not([class*="p-"]):hover {
   background-color: var(--primary-hover);
   box-shadow: var(--shadow-button-hover);
   transform: translateY(-1px);
 }
 
-button:active {
+button:not([class*="bg-"]):not([class*="hover:"]):not([class*="p-"]):active {
   transform: translateY(0) scale(0.98);
 }
 

@@ -322,17 +322,17 @@ export default function EstadisticasPage() {
 			) : data ? (
 				<>
 					{/* Main KPIs */}
-					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
 						{/* Consentimientos */}
 						<Card className="relative overflow-hidden">
-							<div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -mr-8 -mt-8" />
-							<CardContent className="pt-6">
-								<div className="flex items-start justify-between">
-									<div>
-										<p className="text-sm text-foreground/60 font-medium">
+							<div className="absolute top-0 right-0 w-16 h-16 sm:w-24 sm:h-24 bg-primary/5 rounded-full -mr-6 -mt-6 sm:-mr-8 sm:-mt-8" />
+							<CardContent className="pt-4 sm:pt-6">
+								<div className="flex items-start justify-between gap-2">
+									<div className="min-w-0 flex-1">
+										<p className="text-xs sm:text-sm text-foreground/60 font-medium">
 											Consentimientos
 										</p>
-										<p className="text-3xl font-bold text-foreground mt-1">
+										<p className="text-2xl sm:text-3xl font-bold text-foreground mt-1">
 											{data.kpis.consents.value.toLocaleString()}
 										</p>
 										{data.kpis.consents.change !== undefined &&
@@ -369,14 +369,14 @@ export default function EstadisticasPage() {
 
 						{/* Usuarios */}
 						<Card className="relative overflow-hidden">
-							<div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full -mr-8 -mt-8" />
-							<CardContent className="pt-6">
-								<div className="flex items-start justify-between">
-									<div>
-										<p className="text-sm text-foreground/60 font-medium">
+							<div className="absolute top-0 right-0 w-16 h-16 sm:w-24 sm:h-24 bg-blue-500/5 rounded-full -mr-6 -mt-6 sm:-mr-8 sm:-mt-8" />
+							<CardContent className="pt-4 sm:pt-6">
+								<div className="flex items-start justify-between gap-2">
+									<div className="min-w-0 flex-1">
+										<p className="text-xs sm:text-sm text-foreground/60 font-medium">
 											Nuevos Usuarios
 										</p>
-										<p className="text-3xl font-bold text-foreground mt-1">
+										<p className="text-2xl sm:text-3xl font-bold text-foreground mt-1">
 											{data.kpis.users.value.toLocaleString()}
 										</p>
 										{data.kpis.users.change !== undefined &&
@@ -404,8 +404,8 @@ export default function EstadisticasPage() {
 												</div>
 											)}
 									</div>
-									<div className="p-3 bg-blue-500/10 rounded-xl">
-										<Users className="w-6 h-6 text-blue-500" />
+									<div className="p-2 sm:p-3 bg-blue-500/10 rounded-lg sm:rounded-xl flex-shrink-0">
+										<Users className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" />
 									</div>
 								</div>
 							</CardContent>
@@ -413,14 +413,14 @@ export default function EstadisticasPage() {
 
 						{/* Acompañantes */}
 						<Card className="relative overflow-hidden">
-							<div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full -mr-8 -mt-8" />
-							<CardContent className="pt-6">
-								<div className="flex items-start justify-between">
-									<div>
-										<p className="text-sm text-foreground/60 font-medium">
-											Acompañantes Registrados
+							<div className="absolute top-0 right-0 w-16 h-16 sm:w-24 sm:h-24 bg-amber-500/5 rounded-full -mr-6 -mt-6 sm:-mr-8 sm:-mt-8" />
+							<CardContent className="pt-4 sm:pt-6">
+								<div className="flex items-start justify-between gap-2">
+									<div className="min-w-0 flex-1">
+										<p className="text-xs sm:text-sm text-foreground/60 font-medium">
+											Acompañantes
 										</p>
-										<p className="text-3xl font-bold text-foreground mt-1">
+										<p className="text-2xl sm:text-3xl font-bold text-foreground mt-1">
 											{data.kpis.minors.value.toLocaleString()}
 										</p>
 										{data.kpis.minors.change !== undefined &&
@@ -448,8 +448,8 @@ export default function EstadisticasPage() {
 												</div>
 											)}
 									</div>
-									<div className="p-3 bg-amber-500/10 rounded-xl">
-										<Baby className="w-6 h-6 text-amber-500" />
+									<div className="p-2 sm:p-3 bg-amber-500/10 rounded-lg sm:rounded-xl flex-shrink-0">
+										<Baby className="w-5 h-5 sm:w-6 sm:h-6 text-amber-500" />
 									</div>
 								</div>
 							</CardContent>
@@ -457,41 +457,41 @@ export default function EstadisticasPage() {
 					</div>
 
 					{/* Secondary Stats Row */}
-					<div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+					<div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
 						<Card>
-							<CardContent className="pt-4 pb-4 text-center">
-								<Target className="w-5 h-5 text-green-500 mx-auto mb-2" />
-								<p className="text-2xl font-bold text-foreground">
+							<CardContent className="pt-3 pb-3 sm:pt-4 sm:pb-4 text-center">
+								<Target className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 mx-auto mb-1 sm:mb-2" />
+								<p className="text-lg sm:text-2xl font-bold text-foreground">
 									{data.kpis.activeConsents.value}
 								</p>
-								<p className="text-xs text-foreground/60">Vigentes</p>
+								<p className="text-[10px] sm:text-xs text-foreground/60">Vigentes</p>
 							</CardContent>
 						</Card>
 						<Card>
-							<CardContent className="pt-4 pb-4 text-center">
-								<Clock className="w-5 h-5 text-red-500 mx-auto mb-2" />
-								<p className="text-2xl font-bold text-foreground">
+							<CardContent className="pt-3 pb-3 sm:pt-4 sm:pb-4 text-center">
+								<Clock className="w-4 h-4 sm:w-5 sm:h-5 text-red-500 mx-auto mb-1 sm:mb-2" />
+								<p className="text-lg sm:text-2xl font-bold text-foreground">
 									{data.kpis.expiredConsents.value}
 								</p>
-								<p className="text-xs text-foreground/60">Vencidos</p>
+								<p className="text-[10px] sm:text-xs text-foreground/60">Vencidos</p>
 							</CardContent>
 						</Card>
 						<Card>
-							<CardContent className="pt-4 pb-4 text-center">
-								<Calendar className="w-5 h-5 text-primary mx-auto mb-2" />
-								<p className="text-2xl font-bold text-foreground">
+							<CardContent className="pt-3 pb-3 sm:pt-4 sm:pb-4 text-center">
+								<Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-primary mx-auto mb-1 sm:mb-2" />
+								<p className="text-lg sm:text-2xl font-bold text-foreground">
 									{data.averages.consentsPerDay}
 								</p>
-								<p className="text-xs text-foreground/60">Promedio/día</p>
+								<p className="text-[10px] sm:text-xs text-foreground/60">Prom/día</p>
 							</CardContent>
 						</Card>
 						<Card>
-							<CardContent className="pt-4 pb-4 text-center">
-								<Baby className="w-5 h-5 text-amber-500 mx-auto mb-2" />
-								<p className="text-2xl font-bold text-foreground">
+							<CardContent className="pt-3 pb-3 sm:pt-4 sm:pb-4 text-center">
+								<Baby className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 mx-auto mb-1 sm:mb-2" />
+								<p className="text-lg sm:text-2xl font-bold text-foreground">
 									{data.averages.minorsPerConsent}
 								</p>
-								<p className="text-xs text-foreground/60">Acomp./consent.</p>
+								<p className="text-[10px] sm:text-xs text-foreground/60">Ac./cons.</p>
 							</CardContent>
 						</Card>
 					</div>
@@ -509,36 +509,40 @@ export default function EstadisticasPage() {
 							<CardContent>
 								<div className="space-y-1">
 									{/* Legend */}
-									<div className="flex items-center gap-4 mb-4 text-xs">
+									<div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-3 sm:mb-4 text-[10px] sm:text-xs">
 										<div className="flex items-center gap-1">
-											<div className="w-3 h-3 rounded bg-primary" />
+											<div className="w-2 h-2 sm:w-3 sm:h-3 rounded bg-primary" />
 											<span className="text-foreground/60">
-												Consentimientos
+												<span className="hidden sm:inline">Consentimientos</span>
+												<span className="sm:hidden">Cons.</span>
 											</span>
 										</div>
 										<div className="flex items-center gap-1">
-											<div className="w-3 h-3 rounded bg-blue-500" />
+											<div className="w-2 h-2 sm:w-3 sm:h-3 rounded bg-blue-500" />
 											<span className="text-foreground/60">Usuarios</span>
 										</div>
 										<div className="flex items-center gap-1">
-											<div className="w-3 h-3 rounded bg-amber-500" />
-												<span className="text-foreground/60">Acompañantes</span>
+											<div className="w-2 h-2 sm:w-3 sm:h-3 rounded bg-amber-500" />
+											<span className="text-foreground/60">
+												<span className="hidden sm:inline">Acompañantes</span>
+												<span className="sm:hidden">Acomp.</span>
+											</span>
 										</div>
 									</div>
 
 									{/* Bars */}
-									<div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
+									<div className="space-y-1.5 sm:space-y-2 max-h-[250px] sm:max-h-[300px] overflow-y-auto pr-1 sm:pr-2">
 										{data.chartData.map((item, index) => (
-											<div key={index} className="space-y-1">
-												<div className="flex items-center justify-between text-xs">
-													<span className="text-foreground/60 w-16 shrink-0">
+											<div key={index} className="space-y-0.5 sm:space-y-1">
+												<div className="flex items-center justify-between text-[10px] sm:text-xs">
+													<span className="text-foreground/60 w-12 sm:w-16 shrink-0 truncate">
 														{item.date}
 													</span>
-													<span className="text-foreground/40 text-[10px]">
+													<span className="text-foreground/40 text-[9px] sm:text-[10px]">
 														{item.consents}c / {item.users}u / {item.minors}m
 													</span>
 												</div>
-												<div className="flex gap-1 h-5">
+												<div className="flex gap-0.5 sm:gap-1 h-4 sm:h-5">
 													<div
 														className="bg-primary rounded-sm transition-all duration-300"
 														style={{
