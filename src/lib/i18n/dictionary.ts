@@ -327,6 +327,64 @@ export const dictionary = {
 		es: "Número de Documento",
 		en: "Document Number",
 	},
+	// Tipos de documento de identificación colombianos
+	"documentType.rc": {
+		es: "Registro Civil",
+		en: "Civil Registration",
+	},
+	"documentType.ti": {
+		es: "Tarjeta de Identidad",
+		en: "Identity Card",
+	},
+	"documentType.cc": {
+		es: "Cédula de Ciudadanía",
+		en: "Citizenship ID",
+	},
+	"documentType.ce": {
+		es: "Cédula de Extranjería",
+		en: "Foreigner ID",
+	},
+	"documentType.pa": {
+		es: "Pasaporte",
+		en: "Passport",
+	},
+	"documentType.ppt": {
+		es: "Permiso por Protección Temporal",
+		en: "Temporary Protection Permit",
+	},
+	"documentType.otro": {
+		es: "Otro",
+		en: "Other",
+	},
+	// Abreviaturas de tipos de documento (para tablas y badges)
+	"documentType.rc.short": {
+		es: "R.C.",
+		en: "CR",
+	},
+	"documentType.ti.short": {
+		es: "T.I.",
+		en: "TI",
+	},
+	"documentType.cc.short": {
+		es: "C.C.",
+		en: "CC",
+	},
+	"documentType.ce.short": {
+		es: "C.E.",
+		en: "CE",
+	},
+	"documentType.pa.short": {
+		es: "PA",
+		en: "PA",
+	},
+	"documentType.ppt.short": {
+		es: "PPT",
+		en: "PPT",
+	},
+	"documentType.otro.short": {
+		es: "Otro",
+		en: "Other",
+	},
 	"minors.relationship.hijo": {
 		es: "Hijo/a",
 		en: "Son/Daughter",
@@ -343,6 +401,59 @@ export const dictionary = {
 		es: "Otro",
 		en: "Other",
 	},
+	// Sección de acompañantes
+	"minors.section.title": {
+		es: "Acompañantes",
+		en: "Companions",
+	},
+	"minors.section.historyBtn": {
+		es: "Historial",
+		en: "History",
+	},
+	"minors.section.addBtn": {
+		es: "Agregar",
+		en: "Add",
+	},
+	"minors.section.addBtnNew": {
+		es: "Nuevo",
+		en: "New",
+	},
+	"minors.section.emptyTitle": {
+		es: "No has agregado acompañantes aún",
+		en: "No companions added yet",
+	},
+	"minors.section.emptySubtitle": {
+		es: "Usa los botones de arriba para agregar acompañantes",
+		en: "Use the buttons above to add companions",
+	},
+	"minors.section.noEps": {
+		es: "Sin EPS",
+		en: "No Health Insurance",
+	},
+	"minors.section.noName": {
+		es: "Sin nombre",
+		en: "No name",
+	},
+	"minors.section.noDoc": {
+		es: "Sin documento",
+		en: "No document",
+	},
+	"minors.section.years": {
+		es: "años",
+		en: "years",
+	},
+	"minors.section.editTooltip": {
+		es: "Editar acompañante",
+		en: "Edit companion",
+	},
+	"minors.section.removeTooltip": {
+		es: "Eliminar acompañante",
+		en: "Remove companion",
+	},
+	"minors.section.hasMedicalCondition": {
+		es: "Tiene condición médica",
+		en: "Has medical condition",
+	},
 	"minors.save": {
 		es: "Guardar",
 		en: "Save",
@@ -354,6 +465,68 @@ export const dictionary = {
 	"minors.remove": {
 		es: "Eliminar",
 		en: "Remove",
+	},
+	"minors.update": {
+		es: "Actualizar",
+		en: "Update",
+	},
+	// Modal de acompañantes
+	"minors.modal.addTitle": {
+		es: "Agregar Acompañante",
+		en: "Add Minor",
+	},
+	"minors.modal.editTitle": {
+		es: "Editar Acompañante",
+		en: "Edit Minor",
+	},
+	"minors.form.medicalCondition": {
+		es: "Condición Médica / Alergias",
+		en: "Medical Condition / Allergies",
+	},
+	"minors.form.medicalCondition.optional": {
+		es: "(opcional)",
+		en: "(optional)",
+	},
+	"minors.form.medicalCondition.placeholder": {
+		es: "Ninguna o especificar...",
+		en: "None or specify...",
+	},
+	"minors.form.medicalCondition.hint": {
+		es: "⚠️ Información importante para la seguridad del acompañante.",
+		en: "⚠️ Important information for the minor's safety.",
+	},
+	"minors.form.idNumber.placeholder": {
+		es: "Número",
+		en: "Number",
+	},
+	// Descripciones extendidas para tipos de documento (para select)
+	"documentType.rc.desc": {
+		es: "Registro Civil (< 7 años)",
+		en: "Civil Registration (< 7 years)",
+	},
+	"documentType.ti.desc": {
+		es: "Tarjeta de Identidad (7-17 años)",
+		en: "Identity Card (7-17 years)",
+	},
+	"documentType.cc.desc": {
+		es: "Cédula de Ciudadanía",
+		en: "Citizenship ID",
+	},
+	"documentType.ce.desc": {
+		es: "Cédula de Extranjería",
+		en: "Foreigner ID",
+	},
+	"documentType.pa.desc": {
+		es: "Pasaporte",
+		en: "Passport",
+	},
+	"documentType.ppt.desc": {
+		es: "Permiso por Protección Temporal",
+		en: "Temporary Protection Permit",
+	},
+	"documentType.otro.desc": {
+		es: "Otro",
+		en: "Other",
 	},
 
 	// ============================================================================
@@ -454,6 +627,46 @@ export const dictionary = {
 	"common.close": {
 		es: "Cerrar",
 		en: "Close",
+	},
+
+	// ============================================================================
+	// FEEDBACK / ALERTAS (TOASTS)
+	// ============================================================================
+	"feedback.success": {
+		es: "Operación exitosa",
+		en: "Success",
+	},
+	"feedback.error": {
+		es: "Ocurrió un error",
+		en: "An error occurred",
+	},
+	"feedback.saved": {
+		es: "Guardado correctamente",
+		en: "Saved successfully",
+	},
+	"feedback.deleted": {
+		es: "Eliminado correctamente",
+		en: "Deleted successfully",
+	},
+	"feedback.updated": {
+		es: "Actualizado correctamente",
+		en: "Updated successfully",
+	},
+	"feedback.emailSent": {
+		es: "Email reenviado",
+		en: "Email resent",
+	},
+	"feedback.emailError": {
+		es: "Error al reenviar",
+		en: "Error resending",
+	},
+	"feedback.exportSuccess": {
+		es: "Exportación completada",
+		en: "Export completed",
+	},
+	"feedback.exportError": {
+		es: "Error al exportar",
+		en: "Error exporting",
 	},
 
 	// ============================================================================

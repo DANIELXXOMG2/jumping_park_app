@@ -31,7 +31,7 @@ export interface CreateConsentInput {
 		birthDate: string;
 		relationship: "hijo" | "sobrino" | "nieto" | "otro";
 		eps?: string;
-		idType?: "cc" | "ti" | "passport" | "otro";
+		idType?: "rc" | "ti" | "cc" | "ce" | "pa" | "ppt" | "otro";
 		idNumber?: string;
 	}>;
 	signatureBase64: string;

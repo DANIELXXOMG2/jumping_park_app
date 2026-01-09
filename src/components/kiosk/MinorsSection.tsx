@@ -17,6 +17,8 @@ import type {
 	UseFormGetValues,
 	UseFormSetValue,
 } from "react-hook-form";
+import { useLanguage } from "@/contexts/LanguageContext";
+import type { DictionaryKey } from "@/lib/i18n/dictionary";
 import { useUISound } from "@/hooks";
 import { getEPSLabel } from "@/lib/data/epsColombiaData";
 import type { ConsentFormData, Minor } from "@/lib/schemas/consent.schema";
@@ -47,6 +49,7 @@ export function MinorsSection({
 	const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
 	const { playClick, playSuccess } = useUISound();
+	const { t } = useLanguage();
 
 	const handleAddMinor = useCallback(() => {
 		playClick();
@@ -139,34 +142,33 @@ export function MinorsSection({
 		) {
 			age--;
 		}
-		return `${age} años`;
+		return `${age} ${t("minors.section.years")}`;
 	};
 
 	// Formatear tipo de documento
 	const formatIdType = (type: string): string => {
-		const types: Record<string, string> = {
-			ti: "T.I.",
-			cc: "C.C.",
-			passport: "Pasaporte",
-			otro: "Otro",
-		};
-		return types[type] || type;
+		const key = `documentType.${type}.short` as const;
+		// Fallback para tipos legacy o desconocidos
+		try {
+			return t(key as Parameters<typeof t>[0]);
+		} catch {
+			return type.toUpperCase();
+		}
 	};
 
 	// Formatear parentesco
 	const formatRelationship = (rel: string): string => {
-		const rels: Record<string, string> = {
-			hijo: "Hijo/a",
-			sobrino: "Sobrino/a",
-			nieto: "Nieto/a",
-			otro: "Otro",
-		};
-		return rels[rel] || rel;
+		const key = `minors.relationship.${rel}` as const;
+		try {
+			return t(key as Parameters<typeof t>[0]);
+		} catch {
+			return rel;
+		}
 	};
 
 	// Obtener label de EPS
 	const getEPSDisplayLabel = (epsValue: string): string => {
-		if (!epsValue) return "Sin EPS";
+		if (!epsValue) return t("minors.section.noEps");
 		if (epsValue.startsWith("otra_manual:")) {
 			return epsValue.replace("otra_manual:", "");
 		}
@@ -180,7 +182,7 @@ export function MinorsSection({
 				<div className="flex items-center gap-2">
 					<Baby className="w-6 h-6 text-neon-green" />
 					<h2 className="text-xl font-semibold text-neon-green">
-						Acompañantes
+						{t("minors.section.title")}
 						{fields.length > 0 && (
 							<span className="ml-2 text-sm font-normal text-gray-400">
 								({fields.length})
@@ -199,7 +201,7 @@ export function MinorsSection({
 							className="flex items-center gap-2 px-4 py-2.5 bg-neon-blue/20 hover:bg-neon-blue/30 text-neon-blue font-semibold rounded-xl transition-all transform hover:scale-105 active:scale-95 border border-neon-blue/50 flex-1 sm:flex-none justify-center"
 						>
 							<History size={18} />
-							<span className="hidden sm:inline">Historial</span>
+							<span className="hidden sm:inline">{t("minors.section.historyBtn")}</span>
 						</button>
 					)}
 
@@ -210,7 +212,7 @@ export function MinorsSection({
 						className="flex items-center gap-2 px-4 py-2.5 bg-neon-green/20 hover:bg-neon-green/30 text-neon-green font-semibold rounded-xl transition-all transform hover:scale-105 active:scale-95 border border-neon-green/50 flex-1 sm:flex-none justify-center"
 					>
 						<Plus size={18} />
-						<span className="hidden sm:inline">Agregar</span> Nuevo
+						<span className="hidden sm:inline">{t("minors.section.addBtn")}</span> {t("minors.section.addBtnNew")}
 					</button>
 				</div>
 			</div>
@@ -231,6 +233,7 @@ export function MinorsSection({
 								formatIdType={formatIdType}
 								formatRelationship={formatRelationship}
 								getEPSDisplayLabel={getEPSDisplayLabel}
+								t={t}
 							/>
 						);
 					})}
@@ -241,9 +244,9 @@ export function MinorsSection({
 			{fields.length === 0 && (
 				<div className="text-center py-6 border-2 border-dashed border-gray-700 rounded-2xl bg-gray-900/30">
 					<Baby className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-					<p className="text-gray-400 text-sm">No has agregado acompañantes aún</p>
+					<p className="text-gray-400 text-sm">{t("minors.section.emptyTitle")}</p>
 					<p className="text-gray-500 text-xs mt-1">
-						Usa los botones de arriba para agregar acompañantes
+						{t("minors.section.emptySubtitle")}
 					</p>
 				</div>
 			)}
@@ -286,6 +289,7 @@ interface MinorCompactCardProps {
 	formatIdType: (type: string) => string;
 	formatRelationship: (rel: string) => string;
 	getEPSDisplayLabel: (eps: string) => string;
+	t: (key: DictionaryKey, replacements?: Record<string, string | number>) => string;
 }
 
 function MinorCompactCard({
@@ -297,13 +301,14 @@ function MinorCompactCard({
 	formatIdType,
 	formatRelationship,
 	getEPSDisplayLabel,
+	t,
 }: MinorCompactCardProps) {
 	const fullName =
-		`${minor.firstName} ${minor.lastName}`.trim() || "Sin nombre";
+		`${minor.firstName} ${minor.lastName}`.trim() || t("minors.section.noName");
 	const age = calculateAge(minor.birthDate);
 	const docInfo = minor.idNumber
 		? `${formatIdType(minor.idType)} ${minor.idNumber}`
-		: "Sin documento";
+		: t("minors.section.noDoc");
 	const relationship = formatRelationship(minor.relationship);
 	const eps = getEPSDisplayLabel(minor.eps);
 	const hasMedicalCondition =
@@ -313,7 +318,7 @@ function MinorCompactCard({
 		<div className="bg-gray-900/80 border border-gray-700 rounded-xl overflow-hidden hover:border-gray-600 transition-all">
 			<div className="flex items-center gap-3 p-3">
 				{/* Avatar/Número */}
-				<div className="w-10 h-10 rounded-full bg-neon-green/20 flex items-center justify-center flex-shrink-0">
+				<div className="w-10 h-10 rounded-full bg-neon-green/20 flex items-center justify-center shrink-0">
 					<span className="text-neon-green font-bold text-sm">{index + 1}</span>
 				</div>
 
@@ -324,8 +329,8 @@ function MinorCompactCard({
 							{fullName}
 						</h3>
 						{hasMedicalCondition && (
-							<span title="Tiene condición médica">
-								<Heart size={12} className="text-red-400 flex-shrink-0" />
+							<span title={t("minors.section.hasMedicalCondition")}>
+								<Heart size={12} className="text-red-400 shrink-0" />
 							</span>
 						)}
 					</div>
@@ -349,12 +354,12 @@ function MinorCompactCard({
 				</div>
 
 				{/* Acciones */}
-				<div className="flex items-center gap-1 flex-shrink-0">
+				<div className="flex items-center gap-1 shrink-0">
 					<button
 						type="button"
 						onClick={onEdit}
 						className="p-2 text-gray-400 hover:text-neon-blue hover:bg-neon-blue/10 rounded-lg transition-all"
-						title="Editar acompañante"
+						title={t("minors.section.editTooltip")}
 					>
 						<Edit3 size={16} />
 					</button>
@@ -362,7 +367,7 @@ function MinorCompactCard({
 						type="button"
 						onClick={onRemove}
 						className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
-						title="Eliminar acompañante"
+						title={t("minors.section.removeTooltip")}
 					>
 						<Trash2 size={16} />
 					</button>

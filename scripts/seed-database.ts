@@ -102,7 +102,7 @@ const EPS_VALUES = [
   "particular",
 ];
 
-const ID_TYPES = ["cc", "ti", "passport", "otro"] as const;
+const ID_TYPES = ["rc", "ti", "cc", "ce", "pa", "ppt", "otro"] as const;
 const RELATIONSHIPS = ["hijo", "sobrino", "nieto", "otro"] as const;
 
 // ============================================================================
