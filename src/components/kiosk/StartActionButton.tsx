@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useTransition } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useUISound } from "@/hooks";
 import { useKioskStore } from "@/store/kioskStore";
 
@@ -23,6 +24,7 @@ export function StartActionButton({
 	const resetFlow = useKioskStore((state) => state.resetFlow);
 	const setStep = useKioskStore((state) => state.setStep);
 	const [isPending, startTransition] = useTransition();
+	const { t } = useLanguage();
 
 	// Hook de sonidos UI
 	const { playClick } = useUISound();
@@ -43,7 +45,7 @@ export function StartActionButton({
 			type="button"
 			onClick={handlePress}
 			disabled={isPending}
-			aria-label="Toca para iniciar tu registro en Jumping Park"
+			aria-label={t("common.tapToStartAria")}
 			className={`
         group
         relative
@@ -129,11 +131,11 @@ export function StartActionButton({
 								d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
 							/>
 						</svg>
-						<span>CARGANDO...</span>
+						<span>{t("common.loading").toUpperCase()}</span>
 					</>
 				) : (
 					<>
-						<span>TOCA PARA INICIAR</span>
+						<span>{t("common.tapToStart")}</span>
 						<span
 							className="text-3xl sm:text-4xl"
 							role="img"
