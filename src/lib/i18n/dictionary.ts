@@ -761,6 +761,14 @@ export const dictionary = {
 		es: "Cerrar",
 		en: "Close",
 	},
+	"common.tapToStart": {
+		es: "TOCA PARA INICIAR",
+		en: "TAP TO START",
+	},
+	"common.tapToStartAria": {
+		es: "Toca para iniciar tu registro en Jumping Park",
+		en: "Tap to start your registration at Jumping Park",
+	},
 
 	// ============================================================================
 	// FEEDBACK / ALERTAS (TOASTS)
