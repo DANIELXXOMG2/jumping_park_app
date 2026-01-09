@@ -101,7 +101,7 @@ export const minorSchema = z.object({
 		),
 	birthDate: birthDateSchema,
 	eps: epsSchema,
-	idType: z.enum(["cc", "ti", "passport", "otro"], {
+	idType: z.enum(["rc", "ti", "cc", "ce", "pa", "ppt", "otro"], {
 		message: "Tipo de identificación inválido",
 	}),
 	/** Número de documento: soporta cédulas numéricas y pasaportes alfanuméricos */

@@ -12,8 +12,20 @@ export type FirestoreDateValue = Date | Timestamp;
 
 /**
  * Tipos de identificación válidos en Colombia.
+ * - RC: Registro Civil (menores de 7 años)
+ * - TI: Tarjeta de Identidad (7-17 años)
+ * - CC: Cédula de Ciudadanía (adultos colombianos)
+ * - CE: Cédula de Extranjería
+ * - PA: Pasaporte
+ * - PPT: Permiso por Protección Temporal (población migrante)
+ * - OTRO: Otro documento válido
  */
-export type DocumentIdType = "cc" | "ti" | "passport" | "otro";
+export type DocumentIdType = "rc" | "ti" | "cc" | "ce" | "pa" | "ppt" | "otro";
+
+/**
+ * Constante con todos los tipos de documento para iteración en UI.
+ */
+export const DOCUMENT_ID_TYPES = ["rc", "ti", "cc", "ce", "pa", "ppt", "otro"] as const;
 
 /**
  * Relaciones de parentesco válidas.

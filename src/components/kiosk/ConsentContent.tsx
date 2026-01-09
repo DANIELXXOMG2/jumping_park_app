@@ -19,7 +19,8 @@ interface ConsentContentProps {
 
 /**
  * Componente interno para resaltar texto crítico del consentimiento.
- * Aplica estilo visual de advertencia (fondo suave + borde lateral fucsia).
+ * Aplica estilo visual de advertencia con alto contraste para ambos modos (light/dark).
+ * AAA Compliant: texto oscuro sobre fondo claro en light mode, texto claro sobre fondo oscuro en dark mode.
  */
 function Highlight({
 	children,
@@ -31,7 +32,10 @@ function Highlight({
 	return (
 		<span
 			className={cn(
-				"block bg-pink-500/10 border-l-4 border-pink-500 text-pink-200 pl-3 py-2 my-1 rounded-r-md",
+				// Light mode: fondo rosa suave con texto MUY oscuro para alto contraste
+				"block bg-rose-100 border-l-4 border-rose-500 text-rose-950 pl-3 py-2 my-1 rounded-r-md",
+				// Dark mode: fondo semi-transparente oscuro con texto claro
+				"dark:bg-rose-900/30 dark:text-rose-100 dark:border-rose-400",
 				className,
 			)}
 		>

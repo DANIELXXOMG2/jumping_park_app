@@ -78,7 +78,7 @@ export const menorCreateSchema = z.object({
 	eps: epsSchema,
 
 	/** Tipo de identificación */
-	idType: z.enum(["cc", "ti", "passport", "otro"]),
+	idType: z.enum(["rc", "ti", "cc", "ce", "pa", "ppt", "otro"]),
 
 	/** Número de identificación: soporta cédulas y pasaportes alfanuméricos */
 	idNumber: z

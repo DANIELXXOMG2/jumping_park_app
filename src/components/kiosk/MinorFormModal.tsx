@@ -13,7 +13,9 @@ import {
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Controller, useForm } from "react-hook-form";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { type Minor, minorSchema } from "@/lib/schemas/consent.schema";
+import { DOCUMENT_ID_TYPES } from "@/types/firestore";
 import { cn } from "@/lib/utils";
 import { EPSSelector } from "./EPSSelector";
 
@@ -30,7 +32,7 @@ const defaultMinor: Minor = {
 	lastName: "",
 	birthDate: "",
 	eps: "",
-	idType: "ti",
+	idType: "rc", // Registro Civil por defecto (más común en menores)
 	idNumber: "",
 	relationship: "hijo",
 	medicalCondition: "",
@@ -44,6 +46,7 @@ export function MinorFormModal({
 	minorNumber,
 }: MinorFormModalProps) {
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const { t } = useLanguage();
 
 	const {
 		register,
@@ -97,8 +100,8 @@ export function MinorFormModal({
 						</div>
 						<span className="text-sm font-semibold text-white">
 							{initialData
-								? `Editar Acompañante #${minorNumber}`
-								: `Agregar Acompañante #${minorNumber}`}
+								? `${t("minors.modal.editTitle")} #${minorNumber}`
+								: `${t("minors.modal.addTitle")} #${minorNumber}`}
 						</span>
 					</div>
 					<button
@@ -124,12 +127,12 @@ export function MinorFormModal({
 							<div>
 								<label htmlFor="minorFirstName" className="flex items-center gap-1 text-xs text-gray-400 mb-1.5">
 									<User size={12} />
-									Nombre *
+									{t("minors.form.firstName")} *
 								</label>
 								<input
 									id="minorFirstName"
 									{...register("firstName")}
-									placeholder="Nombre"
+									placeholder={t("minors.form.firstName")}
 									className={cn(
 										inputClass,
 										errors.firstName && "border-red-500",
@@ -146,12 +149,12 @@ export function MinorFormModal({
 							<div>
 								<label htmlFor="minorLastName" className="flex items-center gap-1 text-xs text-gray-400 mb-1.5">
 									<User size={12} />
-									Apellidos *
+									{t("minors.form.lastName")} *
 								</label>
 								<input
 									id="minorLastName"
 									{...register("lastName")}
-									placeholder="Apellidos"
+									placeholder={t("minors.form.lastName")}
 									className={cn(
 										inputClass,
 										errors.lastName && "border-red-500",
@@ -170,7 +173,7 @@ export function MinorFormModal({
 						<div>
 							<label htmlFor="minorBirthDate" className="flex items-center gap-1 text-xs text-gray-400 mb-1.5">
 								<Calendar size={12} />
-								Fecha de Nacimiento *
+								{t("minors.form.birthDate")} *
 							</label>
 							<input
 								id="minorBirthDate"
@@ -206,29 +209,30 @@ export function MinorFormModal({
 							<div>
 								<label htmlFor="minorIdType" className="flex items-center gap-1 text-xs text-gray-400 mb-1.5">
 									<CreditCard size={12} />
-									Tipo ID *
+									{t("minors.form.idType")} *
 								</label>
 								<select
 									id="minorIdType"
 									{...register("idType")}
 									className={cn(inputClass, "appearance-none cursor-pointer")}
 								>
-									<option value="ti">Tarjeta Identidad</option>
-									<option value="cc">Cédula</option>
-									<option value="passport">Pasaporte</option>
-									<option value="otro">Otro</option>
+									{DOCUMENT_ID_TYPES.map((type) => (
+										<option key={type} value={type}>
+											{t(`documentType.${type}.desc`)}
+										</option>
+									))}
 								</select>
 							</div>
 
 							<div>
 								<label htmlFor="minorIdNumber" className="flex items-center gap-1 text-xs text-gray-400 mb-1.5">
 									<CreditCard size={12} />
-									Número ID *
+									{t("minors.form.idNumber")} *
 								</label>
 								<input
 									id="minorIdNumber"
 									{...register("idNumber")}
-									placeholder="Número"
+									placeholder={t("minors.form.idNumber.placeholder")}
 									className={cn(
 										inputClass,
 										errors.idNumber && "border-red-500",
@@ -247,17 +251,17 @@ export function MinorFormModal({
 						<div>
 							<label htmlFor="minorRelationship" className="flex items-center gap-1 text-xs text-gray-400 mb-1.5">
 								<Heart size={12} />
-								Parentesco *
+								{t("minors.form.relationship")} *
 							</label>
 							<select
 								id="minorRelationship"
 								{...register("relationship")}
 								className={cn(inputClass, "appearance-none cursor-pointer")}
 							>
-								<option value="hijo">Hijo/a</option>
-								<option value="sobrino">Sobrino/a</option>
-								<option value="nieto">Nieto/a</option>
-								<option value="otro">Otro</option>
+								<option value="hijo">{t("minors.relationship.hijo")}</option>
+								<option value="sobrino">{t("minors.relationship.sobrino")}</option>
+								<option value="nieto">{t("minors.relationship.nieto")}</option>
+								<option value="otro">{t("minors.relationship.otro")}</option>
 							</select>
 						</div>
 
@@ -265,18 +269,18 @@ export function MinorFormModal({
 						<div>
 							<label htmlFor="minorMedicalCondition" className="flex items-center gap-1 text-xs text-gray-400 mb-1.5">
 								<Heart size={12} className="text-red-400" />
-								Condición Médica / Alergias
-								<span className="text-gray-600 ml-1">(opcional)</span>
+								{t("minors.form.medicalCondition")}
+								<span className="text-gray-600 ml-1">{t("minors.form.medicalCondition.optional")}</span>
 							</label>
 							<input
 								id="minorMedicalCondition"
 								{...register("medicalCondition")}
-								placeholder="Ninguna o especificar..."
+								placeholder={t("minors.form.medicalCondition.placeholder")}
 								maxLength={200}
 								className={cn(inputClass, "placeholder:text-gray-600")}
 							/>
 							<p className="text-gray-600 text-xs mt-1">
-								⚠️ Información importante para la seguridad del acompañante.
+								{t("minors.form.medicalCondition.hint")}
 							</p>
 						</div>
 					</div>
@@ -289,7 +293,7 @@ export function MinorFormModal({
 								onClick={onClose}
 								className="flex-1 py-3 px-4 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-xl transition-all"
 							>
-								Cancelar
+								{t("minors.cancel")}
 							</button>
 							<button
 								type="submit"
@@ -297,7 +301,7 @@ export function MinorFormModal({
 								className="flex-1 py-3 px-4 bg-neon-green hover:bg-green-500 text-black font-bold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50"
 							>
 								<Save size={18} />
-								{initialData ? "Actualizar" : "Guardar"}
+								{initialData ? t("minors.update") : t("minors.save")}
 							</button>
 						</div>
 					</div>
