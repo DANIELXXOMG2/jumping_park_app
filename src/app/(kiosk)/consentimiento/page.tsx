@@ -14,7 +14,7 @@ import SignaturePad, {
 } from "@/components/kiosk/SignaturePad";
 import {
 	type ConsentFormData,
-	consentSchema,
+	getConsentSchema,
 } from "@/lib/schemas/consent.schema";
 import { useKioskStore } from "@/store/kioskStore";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -22,7 +22,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 export default function ConsentPage() {
 	const router = useRouter();
 	const { visitorData } = useKioskStore();
-	const { t } = useLanguage();
+	const { t, language } = useLanguage();
 	const signatureRef = useRef<SignaturePadRef>(null);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isReadingModalOpen, setIsReadingModalOpen] = useState(false);
@@ -35,7 +35,7 @@ export default function ConsentPage() {
 		getValues,
 		formState: { errors },
 	} = useForm<ConsentFormData>({
-		resolver: zodResolver(consentSchema),
+		resolver: zodResolver(getConsentSchema(language)),
 		defaultValues: {
 			acceptedPolicy: false,
 			minors: [],

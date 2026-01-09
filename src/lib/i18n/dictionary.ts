@@ -293,11 +293,11 @@ export const dictionary = {
 	// ============================================================================
 	"minors.title": {
 		es: "Menores a tu cargo",
-		en: "Minors under your care",
+		en: "Companions under your care",
 	},
 	"minors.add": {
 		es: "Agregar Menor",
-		en: "Add Minor",
+		en: "Add Companion",
 	},
 	"minors.form.firstName": {
 		es: "Nombres",
@@ -473,11 +473,11 @@ export const dictionary = {
 	// Modal de acompañantes
 	"minors.modal.addTitle": {
 		es: "Agregar Acompañante",
-		en: "Add Minor",
+		en: "Add Companion",
 	},
 	"minors.modal.editTitle": {
 		es: "Editar Acompañante",
-		en: "Edit Minor",
+		en: "Edit Companion",
 	},
 	"minors.form.medicalCondition": {
 		es: "Condición Médica / Alergias",
@@ -493,20 +493,65 @@ export const dictionary = {
 	},
 	"minors.form.medicalCondition.hint": {
 		es: "⚠️ Información importante para la seguridad del acompañante.",
-		en: "⚠️ Important information for the minor's safety.",
+		en: "⚠️ Important information for the companion's safety.",
 	},
 	"minors.form.idNumber.placeholder": {
 		es: "Número",
 		en: "Number",
 	},
+	// Modal de historial de acompañantes
+	"minors.history.title": {
+		es: "Historial de Acompañantes",
+		en: "Companion History",
+	},
+	"minors.history.subtitle": {
+		es: "Selecciona acompañantes registrados previamente",
+		en: "Select previously registered companions",
+	},
+	"minors.history.loading": {
+		es: "Cargando historial...",
+		en: "Loading history...",
+	},
+	"minors.history.retry": {
+		es: "Reintentar",
+		en: "Retry",
+	},
+	"minors.history.allAdded": {
+		es: "Todos los acompañantes del historial ya están agregados",
+		en: "All companions from history are already added",
+	},
+	"minors.history.empty": {
+		es: "No hay acompañantes registrados previamente",
+		en: "No previously registered companions",
+	},
+	"minors.history.useAddNew": {
+		es: "Usa \"Agregar Nuevo\" para registrar nuevos acompañantes",
+		en: "Use \"Add New\" to register new companions",
+	},
+	"minors.history.selectPrompt": {
+		es: "Toca para seleccionar los acompañantes de hoy:",
+		en: "Tap to select today's companions:",
+	},
+	"minors.history.lastVisit": {
+		es: "Última visita:",
+		en: "Last visit:",
+	},
+	"minors.history.noRecord": {
+		es: "Sin registro previo",
+		en: "No previous record",
+	},
+	"minors.history.addCount": {
+		es: "Agregar",
+		en: "Add",
+	},
 	// Descripciones extendidas para tipos de documento (para select)
 	"documentType.rc.desc": {
-		es: "Registro Civil (< 7 años)",
-		en: "Civil Registration (< 7 years)",
+		es: "Registro Civil",
+		en: "Civil Registration",
 	},
 	"documentType.ti.desc": {
-		es: "Tarjeta de Identidad (7-17 años)",
-		en: "Identity Card (7-17 years)",
+		es: "Tarjeta de Identidad)",
+		en: "Identity Card)",
 	},
 	"documentType.cc.desc": {
 		es: "Cédula de Ciudadanía",
@@ -527,6 +572,78 @@ export const dictionary = {
 	"documentType.otro.desc": {
 		es: "Otro",
 		en: "Other",
+	},
+
+	// ============================================================================
+	// FORMULARIOS DE SALUD / EPS
+	// ============================================================================
+	"forms.health.affiliationType": {
+		es: "Tipo de Afiliación",
+		en: "Affiliation Type",
+	},
+	"forms.health.coverageType": {
+		es: "Tipo de Cobertura",
+		en: "Coverage Type",
+	},
+	"forms.health.companionEps": {
+		es: "EPS del Acompañante",
+		en: "Companion's Health Insurance",
+	},
+	"forms.health.epsName": {
+		es: "Nombre de la EPS",
+		en: "Health Insurance Name",
+	},
+	"forms.health.selectEps": {
+		es: "Selecciona la EPS",
+		en: "Select Health Insurance",
+	},
+	"forms.health.selectPlaceholder": {
+		es: "Selecciona una opción",
+		en: "Select an option",
+	},
+	"forms.health.writeEpsName": {
+		es: "Escribe el nombre de la EPS",
+		en: "Enter the health insurance name",
+	},
+	"forms.health.writeExactName": {
+		es: "Escribe el nombre exacto de la EPS",
+		en: "Enter the exact name of the health insurance",
+	},
+	"forms.health.options.contributivo": {
+		es: "Contributivo",
+		en: "Contributive",
+	},
+	"forms.health.options.subsidiado": {
+		es: "Subsidiado",
+		en: "Subsidized",
+	},
+	"forms.health.options.especial": {
+		es: "Especial / Excepción",
+		en: "Special / Exception",
+	},
+	"forms.health.options.particular": {
+		es: "Particular / Sin EPS",
+		en: "Private / No Insurance",
+	},
+	"forms.health.options.prepagada": {
+		es: "Medicina Prepagada",
+		en: "Prepaid Medicine",
+	},
+	"forms.health.options.noEps": {
+		es: "Sin EPS (Particular)",
+		en: "No Insurance (Private)",
+	},
+
+	// ============================================================================
+	// VALIDACIONES DE FORMULARIOS
+	// ============================================================================
+	"validation.consent.acceptRequired": {
+		es: "Debes aceptar los términos y condiciones",
+		en: "You must accept the terms and conditions",
+	},
+	"validation.consent.signatureRequired": {
+		es: "La firma es obligatoria",
+		en: "Signature is required",
 	},
 
 	// ============================================================================
@@ -568,6 +685,14 @@ export const dictionary = {
 		es: "Al firmar, acepto las normas del parque y libero de responsabilidad a Jumping Park por lesiones que puedan ocurrir durante el uso de las instalaciones.",
 		en: "By signing, I accept the park rules and release Jumping Park from liability for injuries that may occur during the use of the facilities.",
 	},
+	"consent.modal.title": {
+		es: "📄 Consentimiento Completo",
+		en: "📄 Full Consent",
+	},
+	"consent.modal.closeBtn": {
+		es: "Cerrar y Volver a Firmar",
+		en: "Close and Return to Sign",
+	},
 
 	// ============================================================================
 	// PÁGINA DE ÉXITO
@@ -599,6 +724,14 @@ export const dictionary = {
 	"exito.backToStart": {
 		es: "Volver al Inicio",
 		en: "Back to Start",
+	},
+	"exito.autoRedirect": {
+		es: "Regresando automáticamente en",
+		en: "Returning automatically in",
+	},
+	"exito.loading": {
+		es: "Cargando...",
+		en: "Loading...",
 	},
 
 	// ============================================================================

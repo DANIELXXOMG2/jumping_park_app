@@ -8,6 +8,7 @@ import {
 	type RegimenType,
 	regimenesOptions,
 } from "@/lib/data/epsColombiaData";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 
 interface EPSSelectorProps {
@@ -71,6 +72,8 @@ export function EPSSelector({
 	error,
 	className,
 }: EPSSelectorProps) {
+	const { t, language } = useLanguage();
+	
 	// Lazy initialization: parsear valor inicial una sola vez
 	const [selectedRegimen, setSelectedRegimen] = useState<RegimenType | "">(
 		() => parseInitialValue(value).regimen,
@@ -87,6 +90,12 @@ export function EPSSelector({
 		if (!selectedRegimen) return [];
 		return getEPSByRegimen(selectedRegimen);
 	}, [selectedRegimen]);
+
+	// Obtener labels traducidos para los regímenes
+	const getRegimenLabel = (regimen: RegimenType): string => {
+		const key = `forms.health.options.${regimen}` as const;
+		return t(key as Parameters<typeof t>[0]);
+	};
 
 	// Manejar cambio de régimen
 	const handleRegimenChange = (regimen: RegimenType) => {
@@ -127,7 +136,7 @@ export function EPSSelector({
 			<div>
 				<span className="flex items-center gap-1 text-xs text-gray-500 mb-2">
 					<Building2 size={12} />
-					Tipo de Afiliación
+					{t("forms.health.affiliationType")}
 				</span>
 				<div className="grid grid-cols-2 gap-2">
 					{regimenesOptions.map((regimen) => (
@@ -144,7 +153,7 @@ export function EPSSelector({
 						>
 							<span className="text-lg">{regimen.icon}</span>
 							<span className="text-xs font-medium text-center">
-								{regimen.label}
+								{getRegimenLabel(regimen.value)}
 							</span>
 						</button>
 					))}
@@ -156,7 +165,7 @@ export function EPSSelector({
 				<div className="animate-in slide-in-from-top-2 duration-200">
 					<label htmlFor="epsSelect" className="flex items-center gap-1 text-xs text-gray-500 mb-1">
 						<Heart size={12} />
-						EPS del Acompañante
+						{t("forms.health.companionEps")}
 					</label>
 					<div className="relative">
 						<select
@@ -168,7 +177,7 @@ export function EPSSelector({
 								"appearance-none cursor-pointer pr-10",
 							)}
 						>
-							<option value="">Selecciona la EPS</option>
+							<option value="">{t("forms.health.selectEps")}</option>
 							{availableEPS.map((eps) => (
 								<option key={eps.value} value={eps.value}>
 									{eps.label}
@@ -188,7 +197,7 @@ export function EPSSelector({
 				<div className="animate-in slide-in-from-top-2 duration-200">
 					<label htmlFor="coverageSelect" className="flex items-center gap-1 text-xs text-gray-500 mb-1">
 						<Heart size={12} />
-						Tipo de Cobertura
+						{t("forms.health.coverageType")}
 					</label>
 					<div className="relative">
 						<select
@@ -200,9 +209,9 @@ export function EPSSelector({
 								"appearance-none cursor-pointer pr-10",
 							)}
 						>
-							<option value="">Selecciona una opción</option>
-							<option value="particular">Sin EPS (Particular)</option>
-							<option value="prepagada">Medicina Prepagada</option>
+							<option value="">{t("forms.health.selectPlaceholder")}</option>
+							<option value="particular">{t("forms.health.options.noEps")}</option>
+							<option value="prepagada">{t("forms.health.options.prepagada")}</option>
 						</select>
 						<ChevronDown
 							size={18}
@@ -217,19 +226,19 @@ export function EPSSelector({
 				<div className="animate-in slide-in-from-top-2 duration-200">
 					<label htmlFor="customEps" className="flex items-center gap-1 text-xs text-gray-500 mb-1">
 						<Heart size={12} />
-						Nombre de la EPS
+						{t("forms.health.epsName")}
 					</label>
 					<input
 						id="customEps"
 						type="text"
 						value={customEPS}
 						onChange={(e) => handleCustomEPSChange(e.target.value)}
-						placeholder="Escribe el nombre de la EPS"
+						placeholder={t("forms.health.writeEpsName")}
 						className={inputBaseClass}
 						autoFocus
 					/>
 					<p className="text-gray-600 text-xs mt-1">
-						Escribe el nombre exacto de la EPS
+						{t("forms.health.writeExactName")}
 					</p>
 				</div>
 			)}
@@ -247,8 +256,8 @@ export function EPSSelector({
 							? customEPS
 							: availableEPS.find((e) => e.value === selectedEPS)?.label ||
 								(selectedEPS === "particular"
-									? "Sin EPS (Particular)"
-									: "Medicina Prepagada")}
+									? t("forms.health.options.noEps")
+									: t("forms.health.options.prepagada"))}
 					</span>
 				</div>
 			) : null}
