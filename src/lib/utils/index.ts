@@ -4,6 +4,7 @@
 
 export * from "./dateUtils";
 export * from "./formatters";
+export * from "./kioskSession";
 
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";

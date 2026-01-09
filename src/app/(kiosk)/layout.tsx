@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { LanguageToggle } from "@/components/kiosk/LanguageToggle";
+import { KioskSessionRestorer } from "@/components/kiosk/KioskSessionRestorer";
 import { LanguageProvider, useLanguage } from "@/contexts/LanguageContext";
 
 interface KioskLayoutProps {
@@ -17,6 +18,9 @@ function KioskLayoutContent({ children }: { children: ReactNode }) {
 
 	return (
 		<div className="kiosk-bg min-h-screen text-foreground">
+			{/* Restaurador de sesión - invisible, maneja la lógica de persistencia */}
+			<KioskSessionRestorer />
+			
 			{/* Botón de idioma flotante - esquina inferior izquierda */}
 			<div className="fixed bottom-4 left-4 z-50">
 				<LanguageToggle />

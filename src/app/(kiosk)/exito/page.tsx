@@ -4,6 +4,7 @@ import { ArrowRight, CheckCircle2, PartyPopper } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { useKioskStore } from "@/store/kioskStore";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 /**
  * Componente interno que contiene la lógica de useSearchParams y el renderizado visual.
@@ -11,15 +12,17 @@ import { useKioskStore } from "@/store/kioskStore";
 function ExitoContent() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
-	const { resetFlow } = useKioskStore();
+	const { clearSession } = useKioskStore();
+	const { t, language } = useLanguage();
 	const [countdown, setCountdown] = useState(8);
 
 	const consecutivo = searchParams.get("consecutivo") || "---";
-	const nombre = searchParams.get("nombre") || "Visitante";
+	const nombre = searchParams.get("nombre") || (language === "es" ? "Visitante" : "Visitor");
 
 	useEffect(() => {
-		// Limpiar el estado del kiosko inmediatamente
-		resetFlow();
+		// Limpiar el estado del kiosko Y localStorage inmediatamente
+		// Esto evita que el siguiente usuario herede la sesión
+		clearSession();
 
 		// Countdown para volver al inicio
 		const interval = setInterval(() => {
@@ -34,7 +37,7 @@ function ExitoContent() {
 		}, 1000);
 
 		return () => clearInterval(interval);
-	}, [resetFlow, router]);
+	}, [clearSession, router]);
 
 	const handleContinue = () => {
 		router.push("/ingreso");
@@ -54,19 +57,19 @@ function ExitoContent() {
 			<div className="text-center max-w-md">
 				<div className="flex items-center justify-center gap-2 mb-4">
 					<PartyPopper className="text-yellow-400" size={28} />
-					<h1 className="text-3xl font-bold text-white">¡Registro Exitoso!</h1>
+					<h1 className="text-3xl font-bold text-white">{t("exito.title")}</h1>
 					<PartyPopper className="text-yellow-400 scale-x-[-1]" size={28} />
 				</div>
 
 				<p className="text-gray-400 text-lg mb-6">
-					Gracias por completar el registro,{" "}
+					{t("exito.greeting")}{" "}
 					<span className="text-neon-blue font-semibold">{nombre}</span>
 				</p>
 
 				{/* Número de consecutivo */}
 				<div className="bg-gray-800/50 border border-gray-700 rounded-2xl p-6 mb-8">
 					<p className="text-gray-400 text-sm uppercase tracking-wider mb-2">
-						Tu número de registro
+						{t("exito.registerNumber")}
 					</p>
 					<div className="flex items-center justify-center gap-2">
 						<span className="text-5xl font-bold text-white">
@@ -74,17 +77,17 @@ function ExitoContent() {
 						</span>
 					</div>
 					<p className="text-gray-500 text-sm mt-3">
-						Consentimiento guardado exitosamente
+						{t("exito.saved")}
 					</p>
 				</div>
 
 				{/* Mensaje de instrucción */}
 				<div className="bg-neon-blue/10 border border-neon-blue/30 rounded-xl p-4 mb-8">
 					<p className="text-neon-blue font-medium">
-						¡Ya puedes pasar a las atracciones! 🎉
+						{t("exito.canPass")} 🎉
 					</p>
 					<p className="text-gray-400 text-sm mt-1">
-						No olvides revisar las reglas del parque
+						{t("exito.checkRules")}
 					</p>
 				</div>
 
@@ -94,13 +97,13 @@ function ExitoContent() {
 					onClick={handleContinue}
 					className="w-full py-4 bg-gray-800 hover:bg-gray-700 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-3 border border-gray-700"
 				>
-					<span>Volver al Inicio</span>
+					<span>{t("exito.backToStart")}</span>
 					<ArrowRight size={20} />
 				</button>
 
 				{/* Countdown */}
 				<p className="text-gray-600 text-sm mt-4">
-					Regresando automáticamente en{" "}
+					{t("exito.autoRedirect")}{" "}
 					<span className="text-gray-400 font-mono">{countdown}s</span>
 				</p>
 			</div>
@@ -116,11 +119,13 @@ function ExitoContent() {
  * Proporciona feedback visual positivo antes de volver al inicio.
  */
 export default function ExitoPage() {
+	const { t } = useLanguage();
+	
 	return (
 		<Suspense
 			fallback={
 				<div className="flex h-screen items-center justify-center text-white">
-					Cargando...
+					{t("exito.loading")}
 				</div>
 			}
 		>

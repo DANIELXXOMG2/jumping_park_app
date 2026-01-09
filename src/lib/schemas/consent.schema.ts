@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { isValidEPS } from "@/lib/data/epsColombiaData";
+import { getTranslation, type Language } from "@/lib/i18n/dictionary";
 
 // ============================================================================
 // REGEX PARA VALIDACIONES INTERNACIONALES
@@ -119,13 +120,21 @@ export const minorSchema = z.object({
 	medicalCondition: z.string().max(200, "Máximo 200 caracteres").optional(),
 });
 
-export const consentSchema = z.object({
-	acceptedPolicy: z.boolean().refine((val) => val === true, {
-		message: "Debes aceptar los términos y condiciones",
-	}),
-	minors: z.array(minorSchema),
-	signature: z.string().min(1, "La firma es obligatoria"), // Base64 string
-});
+/**
+ * Genera el schema de consentimiento con mensajes traducidos
+ */
+export function getConsentSchema(language: Language = "es") {
+	return z.object({
+		acceptedPolicy: z.boolean().refine((val) => val === true, {
+			message: getTranslation("validation.consent.acceptRequired", language),
+		}),
+		minors: z.array(minorSchema),
+		signature: z.string().min(1, getTranslation("validation.consent.signatureRequired", language)),
+	});
+}
+
+// Schema por defecto (español) para compatibilidad
+export const consentSchema = getConsentSchema("es");
 
 export const consentSubmissionSchema = consentSchema.extend({
 	responsibleAdult: z.object({

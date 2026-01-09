@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { getEPSLabel } from "@/lib/data/epsColombiaData";
 import type { Minor } from "@/lib/schemas/consent.schema";
 import { cn } from "@/lib/utils";
@@ -45,6 +46,7 @@ export function MinorHistoryModal({
 	userId,
 	alreadyAddedIds,
 }: MinorHistoryModalProps) {
+	const { t, language } = useLanguage();
 	const [historicalMinors, setHistoricalMinors] = useState<HistoricalMinor[]>(
 		[],
 	);
@@ -130,7 +132,7 @@ export function MinorHistoryModal({
 		) {
 			age--;
 		}
-		return `${age} años`;
+		return `${age} ${t("minors.section.years")}`;
 	};
 
 	// Formatear tipo de documento
@@ -146,7 +148,7 @@ export function MinorHistoryModal({
 
 	// Obtener label de EPS
 	const getEPSDisplayLabel = (epsValue?: string): string => {
-		if (!epsValue) return "Sin EPS";
+		if (!epsValue) return t("minors.section.noEps");
 		if (epsValue.startsWith("otra_manual:")) {
 			return epsValue.replace("otra_manual:", "");
 		}
@@ -155,9 +157,10 @@ export function MinorHistoryModal({
 
 	// Formatear última visita
 	const formatLastUsed = (dateStr?: string): string => {
-		if (!dateStr) return "Sin registro previo";
+		if (!dateStr) return t("minors.history.noRecord");
 		const date = new Date(dateStr);
-		return `Última visita: ${date.toLocaleDateString("es-CO", {
+		const locale = language === "en" ? "en-US" : "es-CO";
+		return `${t("minors.history.lastVisit")} ${date.toLocaleDateString(locale, {
 			day: "numeric",
 			month: "short",
 			year: "numeric",
@@ -189,10 +192,10 @@ export function MinorHistoryModal({
 						</div>
 						<div>
 							<span className="text-sm font-semibold text-white">
-								Historial de Acompañantes
+								{t("minors.history.title")}
 							</span>
 							<p className="text-xs text-gray-400">
-								Selecciona acompañantes registrados previamente
+								{t("minors.history.subtitle")}
 							</p>
 						</div>
 					</div>
@@ -210,7 +213,7 @@ export function MinorHistoryModal({
 					{isLoading ? (
 						<div className="flex flex-col items-center justify-center py-12 text-gray-400">
 							<Loader2 className="w-8 h-8 animate-spin mb-3" />
-							<p>Cargando historial...</p>
+							<p>{t("minors.history.loading")}</p>
 						</div>
 					) : error ? (
 						<div className="flex flex-col items-center justify-center py-12 text-red-400">
@@ -221,7 +224,7 @@ export function MinorHistoryModal({
 								onClick={fetchHistoricalMinors}
 								className="mt-3 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm"
 							>
-								Reintentar
+								{t("minors.history.retry")}
 							</button>
 						</div>
 					) : availableMinors.length === 0 ? (
@@ -229,17 +232,17 @@ export function MinorHistoryModal({
 							<UserPlus className="w-12 h-12 mb-3 opacity-50" />
 							<p className="text-center">
 								{historicalMinors.length > 0
-									? "Todos los acompañantes del historial ya están agregados"
-									: "No hay acompañantes registrados previamente"}
+									? t("minors.history.allAdded")
+									: t("minors.history.empty")}
 							</p>
 							<p className="text-xs text-gray-500 mt-2 text-center">
-								Usa &quot;Agregar Nuevo&quot; para registrar nuevos acompañantes
+								{t("minors.history.useAddNew")}
 							</p>
 						</div>
 					) : (
 						<div className="space-y-3">
 							<p className="text-xs text-gray-400 mb-4">
-								Toca para seleccionar los acompañantes de hoy:
+								{t("minors.history.selectPrompt")}
 							</p>
 
 							{availableMinors.map((minor) => {
@@ -319,7 +322,7 @@ export function MinorHistoryModal({
 								onClick={onClose}
 								className="flex-1 py-3 px-4 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-xl transition-all"
 							>
-								Cancelar
+								{t("minors.cancel")}
 							</button>
 							<button
 								type="button"
@@ -333,7 +336,7 @@ export function MinorHistoryModal({
 								)}
 							>
 								<CheckCircle2 size={18} />
-								Agregar ({selectedIds.size})
+								{t("minors.history.addCount")} ({selectedIds.size})
 							</button>
 						</div>
 					</div>
