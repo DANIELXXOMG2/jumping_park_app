@@ -78,6 +78,11 @@ export function generateOtpEmailHtml({ otp }: OtpEmailProps): string {
                 Usa este código para completar tu registro o ingreso en el Kiosko de ${companyName}.
               </p>
               
+              <!-- Texto plano para parsers de notificaciones (iOS/Android) -->
+              <p style="margin: 0 0 12px 0; color: ${textLight}; font-size: 14px; text-align: center; font-weight: 600;">
+                Tu código de seguridad es: <strong style="color: ${primary}; font-size: 16px; letter-spacing: 2px;">${otp}</strong>
+              </p>
+              
               <!-- Caja del Código OTP -->
               <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 24px 0;">
                 <tr>
