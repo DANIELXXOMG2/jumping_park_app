@@ -30,4 +30,16 @@ INSTRUCCIONES_PROYECTO:
 - Linting limpio (ESLint/Prettier).
 - Validación Zod implementada.
 - Compatible con Dark Mode (verificar contrastes).
-- Manejo de errores try/catch en Server Actions/API Routes.
+
+## Arquitectura Offline (Nuevo)
+- **Motor PWA:** `@serwist/next`. Configuración compatible con Next.js 16.
+- **Persistencia de Datos:** Firestore SDK v12 con `persistentLocalCache` y `persistentMultipleTabManager`.
+- **Estrategia de Queries:** "Offline First". Las vistas críticas (lista de usuarios, validación de acceso) deben consultar por defecto caché local o suscribirse a ventanas de tiempo cortas (ej. 3-7 días) para minimizar descargas.
+- **Indicadores UI:**
+  - Si la data viene de caché (`fromCache: true`), mostrar badge amarillo warning.
+  - Si hay escrituras pendientes (`hasPendingWrites: true`), mostrar indicador de "Sincronizando...".
+- **Instalación:** Habilitar botón "Instalar App" en desktop (Chrome/Edge) interceptando `beforeinstallprompt`.
+
+## Auth & OTP
+- **WebOTP API:** Implementar hook progresivo. Prioridad a lectura automática de SMS en Android.
+- **Fallback:** Inputs de OTP deben tener siempre `autocomplete="one-time-code"` y `inputMode="numeric"`.

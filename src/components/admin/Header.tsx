@@ -4,6 +4,8 @@ import Avatar from "boring-avatars";
 import { LogOut, Shield, User } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { InstallAppButton } from "@/components/admin/InstallAppButton";
+import { NetworkStatus } from "@/components/admin/NetworkStatus";
 import { ThemeToggleCompact } from "@/components/ui/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -49,6 +51,9 @@ export function Header() {
 
 				{/* Controles de usuario (derecha) */}
 				<div className="flex items-center gap-3">
+					{/* Estado de conexión */}
+					<NetworkStatus />
+
 					{/* Badge de rol */}
 					{roleInfo && (
 						<div className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${roleInfo.color}`}>
@@ -75,6 +80,9 @@ export function Header() {
 						variant="beam"
 						colors={["#1e3a8a", "#3b82f6", "#60a5fa", "#93c5fd", "#f3f4f6"]}
 					/>
+
+					{/* Botón instalar PWA */}
+					<InstallAppButton />
 
 					{/* Theme Toggle */}
 					<ThemeToggleCompact />

@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, CloudOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Column<T> {
@@ -17,6 +17,8 @@ interface DataTableProps<T> {
 	onRowClick?: (item: T) => void;
 	isLoading?: boolean;
 	emptyMessage?: string;
+	/** Indica si los datos provienen de caché local (modo offline) */
+	fromCache?: boolean;
 	pagination?: {
 		total: number;
 		limit: number;
@@ -32,6 +34,7 @@ export function DataTable<T extends object>({
 	onRowClick,
 	isLoading,
 	emptyMessage = "No hay datos disponibles",
+	fromCache = false,
 	pagination,
 }: DataTableProps<T>) {
 	const totalPages = pagination
@@ -63,8 +66,25 @@ export function DataTable<T extends object>({
 
 	return (
 		<div className="w-full">
+			{/* Cache Warning Banner */}
+			{fromCache && (
+				<div
+					className="flex items-center gap-2 px-3 py-2 mb-3 rounded-lg bg-warning/10 border border-warning/20 text-sm text-warning"
+					role="alert"
+				>
+					<CloudOff className="w-4 h-4 shrink-0" />
+					<p>
+						<strong>Datos locales:</strong> Esta información podría no estar
+						actualizada. Se sincronizará cuando vuelva la conexión.
+					</p>
+				</div>
+			)}
+
 			{/* Desktop Table */}
-			<div className="hidden lg:block overflow-x-auto">
+			<div className={cn(
+				"hidden lg:block overflow-x-auto",
+				fromCache && "ring-2 ring-warning/30 rounded-lg"
+			)}>
 				<table className="w-full">
 					<thead>
 						<tr className="border-b border-border">
@@ -111,7 +131,10 @@ export function DataTable<T extends object>({
 			</div>
 
 			{/* Mobile Cards */}
-			<div className="lg:hidden space-y-3">
+			<div className={cn(
+				"lg:hidden space-y-3",
+				fromCache && "ring-2 ring-warning/30 rounded-lg p-2"
+			)}>
 				{data.map((item) => (
 					<div
 						key={keyExtractor(item)}
