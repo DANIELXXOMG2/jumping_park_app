@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { LanguageToggle } from "@/components/kiosk/LanguageToggle";
 import { KioskSessionRestorer } from "@/components/kiosk/KioskSessionRestorer";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { LanguageProvider, useLanguage } from "@/contexts/LanguageContext";
 
 interface KioskLayoutProps {
@@ -47,8 +48,10 @@ function KioskLayoutContent({ children }: { children: ReactNode }) {
 
 export default function KioskLayout({ children }: KioskLayoutProps) {
 	return (
-		<LanguageProvider>
-			<KioskLayoutContent>{children}</KioskLayoutContent>
-		</LanguageProvider>
+		<AuthProvider>
+			<LanguageProvider>
+				<KioskLayoutContent>{children}</KioskLayoutContent>
+			</LanguageProvider>
+		</AuthProvider>
 	);
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, RefreshCw, WifiOff } from "lucide-react";
+import { ArrowLeft, Home, RefreshCw, Sparkles, WifiOff } from "lucide-react";
 import Link from "next/link";
 
 export default function OfflinePage() {
@@ -9,61 +9,112 @@ export default function OfflinePage() {
 	};
 
 	return (
-		<div
-			className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4"
-			style={{ minHeight: "100vh", backgroundColor: "#1e293b", display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}
-		>
-			<div
-				className="max-w-md w-full bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-8 text-center shadow-2xl"
-				style={{ maxWidth: "28rem", width: "100%", backgroundColor: "rgba(30, 41, 59, 0.8)", border: "1px solid #334155", borderRadius: "1rem", padding: "2rem", textAlign: "center" }}
+		<div className="min-h-screen bg-gradient-to-br from-background via-background to-background/90 flex items-center justify-center p-4 sm:p-6">
+			{/* ═══ PARTÍCULAS DECORATIVAS DE FONDO ═══ */}
+			<div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+				<span className="absolute top-[10%] left-[15%] w-2 h-2 rounded-full bg-red-500/20 animate-pulse" />
+				<span className="absolute top-[25%] right-[20%] w-3 h-3 rounded-full bg-orange-500/15 animate-pulse delay-300" />
+				<span className="absolute bottom-[30%] left-[25%] w-1.5 h-1.5 rounded-full bg-red-500/25 animate-pulse delay-500" />
+				<span className="absolute bottom-[15%] right-[15%] w-2.5 h-2.5 rounded-full bg-orange-500/20 animate-pulse delay-700" />
+			</div>
+
+			{/* ═══ TARJETA PRINCIPAL ═══ */}
+			<div className="group/card relative max-w-md w-full overflow-hidden rounded-2xl sm:rounded-3xl
+				bg-gradient-to-br from-white/10 via-white/5 to-white/10
+				dark:from-zinc-900/90 dark:via-zinc-950/80 dark:to-zinc-900/90
+				border-2 border-white/20 dark:border-zinc-700/50
+				p-6 sm:p-8 text-center
+				shadow-[0_40px_140px_rgba(0,0,0,0.45)] backdrop-blur-lg"
 			>
-				{/* Icono */}
-				<div className="mb-6 flex justify-center" style={{ marginBottom: "1.5rem", display: "flex", justifyContent: "center" }}>
-					<div className="p-4 bg-red-500/20 rounded-full" style={{ padding: "1rem", backgroundColor: "rgba(239, 68, 68, 0.2)", borderRadius: "9999px" }}>
-						<WifiOff className="w-16 h-16 text-red-400" style={{ width: "4rem", height: "4rem", color: "#f87171" }} strokeWidth={1.5} />
+				{/* Shimmer de fondo */}
+				<div className="absolute inset-0 bg-gradient-to-r from-transparent via-red-500/5 to-transparent translate-x-[-100%] group-hover/card:translate-x-[100%] transition-transform duration-1000 pointer-events-none" aria-hidden="true" />
+				
+				{/* ═══ ÍCONO ANIMADO ═══ */}
+				<div className="relative mb-6 flex justify-center">
+					{/* Glow pulsante */}
+					<div className="absolute inset-0 flex items-center justify-center">
+						<div className="w-24 h-24 rounded-full bg-red-500/20 blur-xl animate-pulse" />
+					</div>
+					
+					{/* Contenedor del ícono */}
+					<div className="relative p-5 rounded-full 
+						bg-gradient-to-br from-red-500/20 via-red-500/10 to-orange-500/20 
+						border-2 border-red-500/30
+						shadow-[0_0_30px_rgba(239,68,68,0.3)]
+						group-hover/card:shadow-[0_0_40px_rgba(239,68,68,0.4)]
+						transition-all duration-500"
+					>
+						<WifiOff 
+							className="w-12 h-12 sm:w-16 sm:h-16 text-red-400 
+								group-hover/card:rotate-12 transition-transform duration-500" 
+							strokeWidth={1.5} 
+						/>
 					</div>
 				</div>
 
-				{/* Título */}
-				<h1 className="text-2xl font-bold text-white mb-3" style={{ fontSize: "1.5rem", fontWeight: "700", color: "#fff", marginBottom: "0.75rem" }}>
+				{/* ═══ TÍTULO ═══ */}
+				<h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-red-400 via-orange-400 to-red-400 bg-clip-text text-transparent mb-3">
 					Sin conexión a Internet
 				</h1>
 
-				{/* Mensaje */}
-				<p className="text-slate-400 mb-8 leading-relaxed" style={{ color: "#94a3b8", marginBottom: "2rem", lineHeight: "1.625" }}>
+				{/* ═══ MENSAJE ═══ */}
+				<p className="text-foreground/70 mb-8 leading-relaxed text-sm sm:text-base">
 					No tienes conexión a internet. Revisa tu conexión para continuar o
 					intenta recargar la página.
 				</p>
 
-				{/* Botones */}
-				<div className="flex flex-col sm:flex-row gap-3 justify-center" style={{ display: "flex", flexDirection: "column", gap: "0.75rem", justifyContent: "center" }}>
-					{/* Botón Volver al Admin */}
+				{/* ═══ BOTONES PREMIUM ═══ */}
+				<div className="flex flex-col sm:flex-row gap-3 justify-center">
+					{/* Botón Volver al Inicio */}
 					<Link
-						href="/admin/usuarios"
-						className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 focus:ring-offset-slate-800"
-						style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", padding: "0.75rem 1.5rem", backgroundColor: "#334155", color: "#fff", fontWeight: "500", borderRadius: "0.5rem", textDecoration: "none" }}
+						href="/"
+						className="group relative overflow-hidden inline-flex items-center justify-center gap-2 px-5 sm:px-6 py-3 sm:py-3.5
+							bg-gradient-to-br from-white/10 via-white/5 to-white/10
+							dark:from-zinc-800/90 dark:via-zinc-900/80 dark:to-zinc-800/90
+							text-foreground font-semibold rounded-xl sm:rounded-2xl
+							border-2 border-white/20 dark:border-zinc-700/50
+							shadow-[0_8px_30px_rgba(0,0,0,0.2)]
+							transition-all duration-300
+							hover:shadow-[0_12px_40px_rgba(0,0,0,0.3)] hover:scale-[1.02] hover:border-primary/30
+							active:scale-[0.98]"
 					>
-						<ArrowLeft className="w-5 h-5" style={{ width: "1.25rem", height: "1.25rem" }} />
-						Volver al Admin
+						<span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none" aria-hidden="true" />
+						<Home className="relative w-5 h-5 group-hover:-translate-x-0.5 transition-transform duration-300" />
+						<span className="relative">Volver al Inicio</span>
 					</Link>
 
 					{/* Botón de recarga */}
 					<button
 						type="button"
 						onClick={handleReload}
-						className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-800"
-						style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", padding: "0.75rem 1.5rem", backgroundColor: "#2563eb", color: "#fff", fontWeight: "500", borderRadius: "0.5rem", border: "none", cursor: "pointer" }}
+						className="group relative overflow-hidden inline-flex items-center justify-center gap-2 px-5 sm:px-6 py-3 sm:py-3.5
+							bg-gradient-to-r from-primary via-emerald-400 to-primary
+							text-zinc-900 font-semibold rounded-xl sm:rounded-2xl
+							border-2 border-white/30
+							shadow-[0_8px_30px_rgba(46,204,113,0.4)]
+							transition-all duration-300
+							hover:shadow-[0_12px_40px_rgba(46,204,113,0.5)] hover:scale-[1.02]
+							active:scale-[0.98]"
 					>
-						<RefreshCw className="w-5 h-5" style={{ width: "1.25rem", height: "1.25rem" }} />
-						Recargar página
+						<span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none" aria-hidden="true" />
+						<RefreshCw className="relative w-5 h-5 group-hover:rotate-180 transition-transform duration-500" />
+						<span className="relative">Recargar página</span>
 					</button>
 				</div>
 
-				{/* Indicador de estado */}
-				<div className="mt-8 pt-6 border-t border-slate-700" style={{ marginTop: "2rem", paddingTop: "1.5rem", borderTop: "1px solid #334155" }}>
-					<div className="flex items-center justify-center gap-2 text-sm text-slate-500" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", fontSize: "0.875rem", color: "#64748b" }}>
-						<span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" style={{ width: "0.5rem", height: "0.5rem", backgroundColor: "#ef4444", borderRadius: "9999px" }} />
-						Modo offline activo
+				{/* ═══ INDICADOR DE ESTADO ═══ */}
+				<div className="mt-8 pt-6 border-t border-white/10 dark:border-zinc-700/50">
+					<div className="inline-flex items-center gap-2 px-4 py-2 rounded-full
+						bg-gradient-to-r from-red-500/10 via-red-500/5 to-red-500/10
+						border border-red-500/20"
+					>
+						<span className="relative flex h-2.5 w-2.5">
+							<span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+							<span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
+						</span>
+						<span className="text-sm font-medium text-red-400">
+							Modo offline activo
+						</span>
 					</div>
 				</div>
 			</div>

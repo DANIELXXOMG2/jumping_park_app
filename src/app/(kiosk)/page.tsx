@@ -2,8 +2,12 @@
 
 import { FileText, Shield, Zap } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { SpaceBackground } from "@/components/kiosk/SpaceBackground";
 import { StartActionButton } from "@/components/kiosk/StartActionButton";
+import { SecretAdminTrigger } from "@/components/ui/SecretAdminTrigger";
+import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 /**
@@ -14,6 +18,15 @@ import { useLanguage } from "@/contexts/LanguageContext";
  */
 export default function HomePage() {
 	const { t } = useLanguage();
+	const { isAdmin, isLoading } = useAuth();
+	const router = useRouter();
+
+	// Redirección automática para administradores con sesión activa
+	useEffect(() => {
+		if (!isLoading && isAdmin) {
+			router.replace("/admin/usuarios");
+		}
+	}, [isAdmin, isLoading, router]);
 
 	return (
 		<main className="relative min-h-screen w-full overflow-hidden bg-background text-foreground">
@@ -93,14 +106,16 @@ export default function HomePage() {
 
 					{/* ═══ LOGO DE LA EMPRESA ═══ */}
 					<div className="mb-8 animate-fade-in">
-						<Image
-							src="/assets/jumping-park-logo.webp"
-							alt="Jumping Park - Logo"
-							width={280}
-							height={100}
+						<SecretAdminTrigger redirectTo="/admin/login">
+							<Image
+								src="/assets/jumping-park-logo.webp"
+								alt="Jumping Park - Logo"
+								width={280}
+								height={100}
 							priority
 							className="h-auto w-48 drop-shadow-[0_0_30px_rgba(255,255,255,0.3)] sm:w-56 md:w-64 lg:w-72"
 						/>
+						</SecretAdminTrigger>
 					</div>
 
 					{/* Título Principal */}

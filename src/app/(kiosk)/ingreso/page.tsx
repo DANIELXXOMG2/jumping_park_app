@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { Loader2, Fingerprint, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useCallback, useState } from "react";
 import { VirtualKeypad } from "@/components/kiosk/VirtualKeypad";
@@ -141,12 +141,41 @@ export default function IngresoPage() {
 		<section className="flex flex-1 items-center justify-center px-3 sm:px-6 py-4 sm:py-8 bg-background text-foreground">
 			<form
 				onSubmit={handleSubmit}
-				className="relative flex w-full max-w-4xl flex-col items-center gap-4 sm:gap-6 md:gap-8 rounded-2xl sm:rounded-3xl md:rounded-4xl border-2 border-white/10 bg-white/5 dark:bg-zinc-900/80 backdrop-blur-xl p-4 sm:p-6 md:p-10 text-center shadow-[0_40px_140px_rgba(0,0,0,0.45)] before:absolute before:inset-0 before:rounded-2xl sm:before:rounded-3xl md:before:rounded-4xl before:p-[2px] before:bg-gradient-to-br before:from-primary/20 before:via-transparent before:to-primary/10 before:-z-10 before:pointer-events-none"
+				className="group/form relative flex w-full max-w-4xl flex-col items-center gap-4 sm:gap-6 md:gap-8 rounded-2xl sm:rounded-3xl md:rounded-4xl overflow-hidden
+					/* ═══ FONDO CON GRADIENTE ═══ */
+					bg-gradient-to-br from-white/10 via-white/5 to-white/10
+					dark:from-zinc-900/90 dark:via-zinc-950/80 dark:to-zinc-900/90
+					backdrop-blur-xl
+					/* ═══ BORDE PREMIUM ═══ */
+					border-2 border-white/20 dark:border-zinc-700/50
+					/* ═══ SOMBRA ═══ */
+					shadow-[0_40px_140px_rgba(0,0,0,0.45)]
+					/* ═══ PADDING ═══ */
+					p-4 sm:p-6 md:p-10 text-center
+				"
 			>
-				<div className="space-y-2 sm:space-y-4">
-					<p className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.4em] text-primary">
-						{t("ingreso.step")}
-					</p>
+				{/* ═══ EFECTO SHIMMER DE FONDO ═══ */}
+				<div 
+					className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent translate-x-[-100%] group-hover/form:translate-x-[100%] transition-transform duration-1000 ease-in-out pointer-events-none" 
+					aria-hidden="true" 
+				/>
+				
+				{/* ═══ PARTÍCULAS DECORATIVAS ═══ */}
+				<span className="absolute top-4 left-6 w-2 h-2 rounded-full bg-primary/20 animate-pulse" aria-hidden="true" />
+				<span className="absolute top-8 right-8 w-1.5 h-1.5 rounded-full bg-purple-500/20 animate-pulse delay-150" aria-hidden="true" />
+				<span className="absolute bottom-6 left-10 w-1 h-1 rounded-full bg-emerald-500/20 animate-pulse delay-300" aria-hidden="true" />
+				<span className="absolute bottom-4 right-6 w-2.5 h-2.5 rounded-full bg-primary/15 animate-pulse delay-500" aria-hidden="true" />
+
+				{/* ═══ ENCABEZADO ═══ */}
+				<div className="relative space-y-2 sm:space-y-4">
+					{/* Badge de paso */}
+					<div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 border border-primary/20">
+						<Fingerprint className="w-4 h-4 text-primary" strokeWidth={2} />
+						<p className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.4em] text-primary font-semibold">
+							{t("ingreso.step")}
+						</p>
+					</div>
+					
 					<h1 className="text-xl sm:text-2xl md:text-4xl font-semibold text-foreground">
 						{t("ingreso.title")}
 					</h1>
@@ -155,29 +184,63 @@ export default function IngresoPage() {
 					</p>
 				</div>
 
-				<div className="w-full max-w-3xl">
-					<input
-						type="text"
-						inputMode="text"
-						value={cedula}
-						onChange={handleInputChange}
-						placeholder={t("ingreso.placeholder")}
-						className="w-full rounded-xl sm:rounded-2xl md:rounded-[2.5rem] border bg-white dark:bg-zinc-900 text-black dark:text-white border-gray-200 dark:border-zinc-700 px-4 sm:px-6 md:px-10 py-4 sm:py-6 md:py-8 text-center text-2xl sm:text-3xl md:text-5xl font-bold tracking-[0.15em] sm:tracking-[0.25em] md:tracking-[0.4em] shadow-inner focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary uppercase"
-						aria-label={t("ingreso.placeholder")}
-						autoComplete="off"
-						autoCapitalize="characters"
-					/>
-					<p className="mt-2 sm:mt-3 text-xs sm:text-sm text-foreground/60">
+				{/* ═══ CAMPO DE ENTRADA ═══ */}
+				<div className="relative w-full max-w-3xl">
+					{/* Input con estilo premium */}
+					<div className="relative group">
+						<input
+							type="text"
+							inputMode="text"
+							value={cedula}
+							onChange={handleInputChange}
+							placeholder={t("ingreso.placeholder")}
+							className="
+								w-full rounded-xl sm:rounded-2xl md:rounded-[2.5rem]
+								/* ═══ FONDO ═══ */
+								bg-gradient-to-br from-white via-gray-50 to-white
+								dark:from-zinc-900 dark:via-zinc-950 dark:to-zinc-900
+								/* ═══ BORDE ═══ */
+								border-2 border-gray-200/50 dark:border-zinc-700/50
+								/* ═══ TEXTO ═══ */
+								text-zinc-900 dark:text-white
+								placeholder:text-gray-400 dark:placeholder:text-zinc-600
+								/* ═══ DIMENSIONES ═══ */
+								px-4 sm:px-6 md:px-10 py-4 sm:py-6 md:py-8
+								text-center text-2xl sm:text-3xl md:text-5xl font-bold
+								tracking-[0.15em] sm:tracking-[0.25em] md:tracking-[0.4em]
+								/* ═══ SOMBRA ═══ */
+								shadow-inner shadow-gray-200/50 dark:shadow-black/30
+								/* ═══ TRANSICIONES ═══ */
+								transition-all duration-300
+								/* ═══ FOCUS ═══ */
+								focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/30
+								focus-visible:border-primary/50 focus-visible:shadow-[0_0_30px_rgba(46,204,113,0.15)]
+								/* ═══ HOVER ═══ */
+								hover:border-primary/30
+								uppercase
+							"
+							aria-label={t("ingreso.placeholder")}
+							autoComplete="off"
+							autoCapitalize="characters"
+						/>
+						{/* Efecto glow al focus */}
+						<div className="absolute inset-0 rounded-xl sm:rounded-2xl md:rounded-[2.5rem] bg-primary/0 group-focus-within:bg-primary/5 transition-colors duration-300 pointer-events-none" aria-hidden="true" />
+					</div>
+					
+					<p className="mt-2 sm:mt-3 text-xs sm:text-sm text-foreground/60 flex items-center justify-center gap-1.5">
+						<Sparkles className="w-3 h-3 text-primary/60" />
 						{t("ingreso.hint", { min: MIN_DIGITS })}
 					</p>
 				</div>
 
+				{/* ═══ MENSAJE DE ERROR ═══ */}
 				{errorMessage && (
-					<div className="w-full max-w-3xl rounded-xl sm:rounded-2xl md:rounded-3xl border border-red-500/40 bg-red-500/10 px-4 sm:px-6 py-3 sm:py-4 text-sm sm:text-base md:text-lg text-red-600 dark:text-red-100">
+					<div className="w-full max-w-3xl rounded-xl sm:rounded-2xl md:rounded-3xl border-2 border-red-500/30 bg-gradient-to-r from-red-500/10 via-red-500/5 to-red-500/10 px-4 sm:px-6 py-3 sm:py-4 text-sm sm:text-base md:text-lg text-red-500 dark:text-red-300 animate-shake">
 						{errorMessage}
 					</div>
 				)}
 
+				{/* ═══ TECLADO VIRTUAL ═══ */}
 				<VirtualKeypad
 					onKeyPress={appendDigit}
 					onDelete={handleDelete}
@@ -188,10 +251,11 @@ export default function IngresoPage() {
 					{t("ingreso.continue")}
 				</button>
 
+				{/* ═══ INDICADOR DE CARGA ═══ */}
 				{isChecking && (
-					<div className="flex items-center gap-3 text-lg text-foreground/80">
-						<Loader2 className="h-5 w-5 animate-spin" />
-						{t("ingreso.verifying")}
+					<div className="flex items-center gap-3 text-lg text-foreground/80 px-6 py-3 rounded-full bg-primary/10 border border-primary/20">
+						<Loader2 className="h-5 w-5 animate-spin text-primary" />
+						<span>{t("ingreso.verifying")}</span>
 					</div>
 				)}
 			</form>
