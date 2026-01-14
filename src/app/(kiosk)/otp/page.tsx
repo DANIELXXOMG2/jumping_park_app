@@ -2,9 +2,8 @@
 
 import { AlertTriangle, Loader2, RefreshCw, ShieldCheck, Mail, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { OtpDisplay } from "@/components/kiosk/OtpDisplay";
-import { VirtualKeypad } from "@/components/kiosk/VirtualKeypad";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { SmartOtpInput } from "@/components/ui/SmartOtpInput";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useKioskStore } from "@/store/kioskStore";
 
@@ -45,45 +44,11 @@ export default function OtpPage() {
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 	const [isResending, setIsResending] = useState(false);
 	const [resendMessage, setResendMessage] = useState<string | null>(null);
-	const inputRef = useRef<HTMLInputElement | null>(null);
+	const [shouldClearOtp, setShouldClearOtp] = useState(false);
 	const RESEND_SECONDS = 20;
 	const [resendCooldown, setResendCooldown] = useState(RESEND_SECONDS);
 
 	const maskedEmail = useMemo(() => (email ? maskEmail(email) : ""), [email]);
-
-	const handleDigit = useCallback((digit: string) => {
-		if (!/^[0-9]$/.test(digit)) return;
-		setErrorMessage(null);
-		setOtp((prev) => {
-			if (prev.length >= OTP_LENGTH) return prev;
-			return `${prev}${digit}`;
-		});
-	}, []);
-
-	const handleDelete = useCallback(() => {
-		setOtp((prev) => prev.slice(0, -1));
-		setErrorMessage(null);
-	}, []);
-
-	const handleInputChange = useCallback((value: string) => {
-		const digits = value.replace(/\D/g, "").slice(0, OTP_LENGTH);
-		setOtp(digits);
-		setErrorMessage(null);
-	}, []);
-
-	const handlePaste = useCallback(
-		(e: React.ClipboardEvent<HTMLInputElement>) => {
-			const pasted = e.clipboardData?.getData("text") ?? "";
-			const digits = pasted.replace(/\D/g, "").slice(0, OTP_LENGTH);
-			if (digits.length) {
-				setOtp(digits);
-				setErrorMessage(null);
-			}
-			// Prevent the default to avoid any unexpected text insertion
-			e.preventDefault();
-		},
-		[],
-	);
 
 	const validateCode = useCallback(
 		async (code: string) => {
@@ -93,6 +58,7 @@ export default function OtpPage() {
 			setIsValidating(true);
 			setErrorMessage(null);
 			setResendMessage(null);
+			setShouldClearOtp(false);
 
 			try {
 				const isEmailMasked = email?.includes("*");
@@ -137,6 +103,7 @@ export default function OtpPage() {
 					error instanceof Error ? error.message : "Código incorrecto",
 				);
 				setOtp("");
+				setShouldClearOtp(true);
 				setIsValidating(false);
 			}
 		},
@@ -151,17 +118,12 @@ export default function OtpPage() {
 		],
 	);
 
-	useEffect(() => {
-		if (otp.length === OTP_LENGTH && !isValidating) {
-			void validateCode(otp);
-		}
-	}, [otp, isValidating, validateCode]);
-
-	const handleConfirm = useCallback(() => {
-		if (otp.length === OTP_LENGTH && !isValidating) {
-			void validateCode(otp);
-		}
-	}, [otp, isValidating, validateCode]);
+	// Handler para cambio de OTP
+	const handleOtpChange = useCallback((value: string) => {
+		setOtp(value);
+		setErrorMessage(null);
+		setShouldClearOtp(false);
+	}, []);
 
 	const handleResend = useCallback(async () => {
 		if (isResending) return;
@@ -214,10 +176,6 @@ export default function OtpPage() {
 		}, 1000);
 		return () => clearInterval(timer);
 	}, [resendCooldown]);
-
-	useEffect(() => {
-		inputRef.current?.focus();
-	}, []);
 
 	if (!isReady) {
 		return (
@@ -305,25 +263,26 @@ export default function OtpPage() {
 					</p>
 				</div>
 
-				{/* ═══ DISPLAY OTP ═══ */}
-				<div
-					className="relative w-full cursor-text"
-					onClick={() => inputRef.current?.focus()}
-				>
-					<OtpDisplay value={otp} length={OTP_LENGTH} />
-					<input
-						ref={inputRef}
-						type="text"
-						inputMode="numeric"
-						autoComplete="one-time-code"
+				{/* ═══ SMART OTP INPUT ═══ */}
+				<div className="w-full max-w-md py-4">
+					<SmartOtpInput
+						length={OTP_LENGTH}
 						value={otp}
-						onChange={(e) => handleInputChange(e.target.value)}
-						onPaste={handlePaste}
-						className="absolute inset-0 h-full w-full opacity-0 cursor-text"
-						aria-label={t("otp.inputLabel")}
-						maxLength={OTP_LENGTH}
+						onChange={handleOtpChange}
+						onComplete={validateCode}
+						disabled={isValidating}
+						hasError={!!errorMessage}
+						shouldClear={shouldClearOtp}
 					/>
 				</div>
+
+				{/* ═══ INDICADOR DE VALIDACIÓN ═══ */}
+				{isValidating && (
+					<div className="flex items-center gap-3 text-base sm:text-lg text-primary px-6 py-3 rounded-2xl bg-primary/10 border-2 border-primary/30 shadow-[0_0_30px_rgba(46,204,113,0.15)]">
+						<Loader2 className="h-5 w-5 sm:h-6 sm:w-6 animate-spin" />
+						<span className="font-semibold">{t("otp.validating")}</span>
+					</div>
+				)}
 
 				{/* ═══ MENSAJE DE ERROR ═══ */}
 				{errorMessage && (
@@ -341,21 +300,13 @@ export default function OtpPage() {
 					</div>
 				)}
 
-				{/* ═══ TECLADO VIRTUAL ═══ */}
-				<VirtualKeypad
-					onKeyPress={handleDigit}
-					onDelete={handleDelete}
-					onConfirm={handleConfirm}
-					isLoading={isValidating}
-				/>
-
 				{/* ═══ ACCIONES SECUNDARIAS ═══ */}
-				<div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
+				<div className="flex flex-col items-center gap-3 sm:gap-4">
 					{/* Botón de reenviar */}
 					<button
 						type="button"
 						onClick={handleResend}
-						disabled={isResending || resendCooldown > 0}
+						disabled={isResending || resendCooldown > 0 || isValidating}
 						className="group relative flex items-center gap-2 rounded-xl overflow-hidden border-2 border-white/20 dark:border-zinc-700/50 bg-gradient-to-r from-white/5 via-white/10 to-white/5 dark:from-zinc-800/50 dark:via-zinc-800/30 dark:to-zinc-800/50 px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-semibold text-foreground transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_20px_rgba(46,204,113,0.15)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-white/20"
 					>
 						{/* Shimmer */}
@@ -372,14 +323,6 @@ export default function OtpPage() {
 								: t("otp.resend")}
 						</span>
 					</button>
-
-					{/* Indicador de validación */}
-					{isValidating && (
-						<div className="flex items-center gap-2 text-sm sm:text-base text-primary px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
-							<Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
-							{t("otp.validating")}
-						</div>
-					)}
 				</div>
 
 				{/* ═══ WARNING BANNER ═══ */}
