@@ -19,6 +19,10 @@ export const dictionary = {
 		es: "Kiosko de Registro",
 		en: "Registration Kiosk",
 	},
+	"layout.homeButton": {
+		es: "Volver al inicio",
+		en: "Back to home",
+	},
 
 	// ============================================================================
 	// PÁGINA PRINCIPAL (HOME)
