@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
+import { Loader2, UserPlus, Mail, Phone, MapPin, IdCard, AlertCircle, Sparkles, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
@@ -102,22 +102,44 @@ export default function RegistroPage() {
 	};
 
 	const renderError = (message?: string) =>
-		message ? <p className="text-sm text-red-300">{message}</p> : null;
+		message ? (
+			<p className="flex items-center gap-1.5 text-sm text-red-400 mt-1">
+				<AlertCircle className="w-3.5 h-3.5" />
+				{message}
+			</p>
+		) : null;
 
 	const fieldClasses =
-		"w-full rounded-3xl border border-white/15 bg-black/30 dark:bg-zinc-900 px-6 py-4 text-lg text-foreground placeholder:text-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/50";
+		"w-full rounded-xl sm:rounded-2xl border-2 border-white/15 dark:border-zinc-700/50 bg-gradient-to-br from-white/5 via-white/10 to-white/5 dark:from-zinc-900 dark:via-zinc-950 dark:to-zinc-900 px-4 sm:px-6 py-3 sm:py-4 text-base sm:text-lg text-foreground placeholder:text-foreground/40 focus:outline-none focus:ring-4 focus:ring-primary/30 focus:border-primary/50 transition-all duration-300 hover:border-primary/30";
 
 	if (!hasCedula) {
 		return (
-			<section className="flex flex-1 items-center justify-center px-6 py-8">
-				<div className="flex w-full max-w-3xl flex-col items-center gap-6 rounded-4xl border border-white/10 bg-white/5 p-10 text-center shadow-[0_40px_140px_rgba(0,0,0,0.45)] backdrop-blur-lg">
-					<p className="text-sm uppercase tracking-[0.4em] text-primary">
+			<section className="flex flex-1 items-center justify-center px-4 sm:px-6 py-6 sm:py-8">
+				<div className="group/card relative flex w-full max-w-3xl flex-col items-center gap-4 sm:gap-6 rounded-2xl sm:rounded-3xl overflow-hidden
+					bg-gradient-to-br from-white/10 via-white/5 to-white/10
+					dark:from-zinc-900/90 dark:via-zinc-950/80 dark:to-zinc-900/90
+					border-2 border-white/20 dark:border-zinc-700/50
+					p-6 sm:p-8 md:p-10 text-center
+					shadow-[0_40px_140px_rgba(0,0,0,0.45)] backdrop-blur-lg"
+				>
+					{/* Shimmer de fondo */}
+					<div className="absolute inset-0 bg-gradient-to-r from-transparent via-red-500/5 to-transparent translate-x-[-100%] group-hover/card:translate-x-[100%] transition-transform duration-1000 pointer-events-none" aria-hidden="true" />
+					
+					{/* Ícono de error */}
+					<div className="relative mb-2">
+						<div className="absolute inset-0 bg-red-500/20 rounded-full blur-xl animate-pulse" />
+						<div className="relative p-4 rounded-full bg-gradient-to-br from-red-500/20 via-red-500/10 to-red-500/20 border border-red-500/30">
+							<IdCard className="w-10 h-10 text-red-400" strokeWidth={1.5} />
+						</div>
+					</div>
+					
+					<p className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.4em] text-red-400 font-semibold">
 						{t("registro.step")}
 					</p>
-					<h1 className="text-4xl font-semibold text-foreground">
+					<h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground">
 						{t("registro.noCedula.title")}
 					</h1>
-					<p className="text-base text-foreground/70">
+					<p className="text-sm sm:text-base text-foreground/70 max-w-md">
 						{t("registro.noCedula.description")}
 					</p>
 					<button
@@ -126,9 +148,17 @@ export default function RegistroPage() {
 							playClick();
 							router.replace("/ingreso");
 						}}
-						className="rounded-3xl px-10 py-4 text-xl font-semibold uppercase tracking-wide text-[#050505] shadow-[0_20px_70px_rgba(195,255,45,0.35)]"
+						className="group relative mt-2 overflow-hidden rounded-xl sm:rounded-2xl px-6 sm:px-8 md:px-10 py-3 sm:py-4 text-base sm:text-lg font-semibold uppercase tracking-wide
+							bg-gradient-to-r from-primary via-emerald-400 to-primary
+							text-zinc-900 border-2 border-white/30
+							shadow-[0_8px_30px_rgba(46,204,113,0.4)]
+							transition-all duration-300
+							hover:shadow-[0_12px_40px_rgba(46,204,113,0.5)] hover:scale-[1.02]
+							active:scale-[0.98] flex items-center gap-2"
 					>
-						{t("registro.noCedula.button")}
+						<span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" aria-hidden="true" />
+						<ArrowLeft className="relative w-5 h-5" />
+						<span className="relative">{t("registro.noCedula.button")}</span>
 					</button>
 				</div>
 			</section>
@@ -136,26 +166,49 @@ export default function RegistroPage() {
 	}
 
 	return (
-		<section className="flex flex-1 items-center justify-center px-6 py-8">
+		<section className="flex flex-1 items-center justify-center px-4 sm:px-6 py-6 sm:py-8">
 			<form
 				onSubmit={handleSubmit(onSubmit)}
-				className="flex w-full max-w-4xl flex-col gap-6 rounded-4xl border border-white/10 bg-white/5 p-10 text-left shadow-[0_40px_140px_rgba(0,0,0,0.45)] backdrop-blur-lg"
+				className="group/form relative flex w-full max-w-4xl flex-col gap-5 sm:gap-6 rounded-2xl sm:rounded-3xl overflow-hidden
+					bg-gradient-to-br from-white/10 via-white/5 to-white/10
+					dark:from-zinc-900/90 dark:via-zinc-950/80 dark:to-zinc-900/90
+					border-2 border-white/20 dark:border-zinc-700/50
+					p-5 sm:p-8 md:p-10 text-left
+					shadow-[0_40px_140px_rgba(0,0,0,0.45)] backdrop-blur-lg"
 			>
-				<div className="space-y-2 text-center">
-					<p className="text-sm uppercase tracking-[0.4em] text-primary">
-						{t("registro.step")}
-					</p>
-					<h1 className="text-4xl font-semibold text-foreground">
+				{/* ═══ SHIMMER DE FONDO ═══ */}
+				<div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent translate-x-[-100%] group-hover/form:translate-x-[100%] transition-transform duration-1000 pointer-events-none" aria-hidden="true" />
+				
+				{/* ═══ PARTÍCULAS DECORATIVAS ═══ */}
+				<span className="absolute top-4 left-6 w-2 h-2 rounded-full bg-primary/20 animate-pulse" aria-hidden="true" />
+				<span className="absolute top-8 right-8 w-1.5 h-1.5 rounded-full bg-purple-500/20 animate-pulse delay-150" aria-hidden="true" />
+				<span className="absolute bottom-6 left-10 w-1 h-1 rounded-full bg-emerald-500/20 animate-pulse delay-300" aria-hidden="true" />
+				<span className="absolute bottom-4 right-6 w-2.5 h-2.5 rounded-full bg-primary/15 animate-pulse delay-500" aria-hidden="true" />
+
+				{/* ═══ ENCABEZADO ═══ */}
+				<div className="relative space-y-2 text-center">
+					{/* Badge de paso */}
+					<div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 border border-primary/20">
+						<UserPlus className="w-4 h-4 text-primary" strokeWidth={2} />
+						<p className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.4em] text-primary font-semibold">
+							{t("registro.step")}
+						</p>
+					</div>
+					
+					<h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground">
 						{t("registro.heading")}
 					</h1>
-					<p className="text-base text-foreground/70">
+					<p className="text-sm sm:text-base text-foreground/70">
 						{t("registro.description")}
 					</p>
 				</div>
 
-				<div className="grid gap-5 md:grid-cols-2">
+				{/* ═══ CAMPOS DEL FORMULARIO ═══ */}
+				<div className="relative grid gap-4 sm:gap-5 md:grid-cols-2">
+					{/* Nombre completo */}
 					<div className="flex flex-col gap-2">
-						<label htmlFor="fullName" className="text-sm font-semibold uppercase tracking-wide text-gray-900 dark:text-gray-100">
+						<label htmlFor="fullName" className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-foreground/80">
+							<UserPlus className="w-4 h-4 text-primary/70" />
 							{t("registro.form.fullName")}
 						</label>
 						<input
@@ -168,8 +221,10 @@ export default function RegistroPage() {
 						{renderError(errors.fullName?.message)}
 					</div>
 
+					{/* Email */}
 					<div className="flex flex-col gap-2">
-						<label htmlFor="email" className="text-sm font-semibold uppercase tracking-wide text-gray-900 dark:text-gray-100">
+						<label htmlFor="email" className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-foreground/80">
+							<Mail className="w-4 h-4 text-primary/70" />
 							{t("registro.form.email")}
 						</label>
 						<input
@@ -182,8 +237,10 @@ export default function RegistroPage() {
 						{renderError(errors.email?.message)}
 					</div>
 
+					{/* Teléfono */}
 					<div className="flex flex-col gap-2">
-						<label htmlFor="phone" className="text-sm font-semibold uppercase tracking-wide text-gray-900 dark:text-gray-100">
+						<label htmlFor="phone" className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-foreground/80">
+							<Phone className="w-4 h-4 text-primary/70" />
 							{t("registro.form.phone")}
 						</label>
 						<input
@@ -196,8 +253,10 @@ export default function RegistroPage() {
 						{renderError(errors.phone?.message)}
 					</div>
 
+					{/* Dirección */}
 					<div className="flex flex-col gap-2">
-						<label htmlFor="address" className="text-sm font-semibold uppercase tracking-wide text-gray-900 dark:text-gray-100">
+						<label htmlFor="address" className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-foreground/80">
+							<MapPin className="w-4 h-4 text-primary/70" />
 							{t("registro.form.address")}
 						</label>
 						<input
@@ -211,43 +270,68 @@ export default function RegistroPage() {
 					</div>
 				</div>
 
-				<div className="flex flex-col gap-2">
-					<label htmlFor="cedula" className="text-sm font-semibold uppercase tracking-wide text-gray-900 dark:text-gray-100">
+				{/* ═══ CAMPO DE CÉDULA (READONLY) ═══ */}
+				<div className="relative flex flex-col gap-2">
+					<label htmlFor="cedula" className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-foreground/80">
+						<IdCard className="w-4 h-4 text-primary/70" />
 						{t("registro.form.cedula")}
 					</label>
 					<input
 						id="cedula"
 						type="text"
-						className={`${fieldClasses} cursor-not-allowed bg-black/40 dark:bg-zinc-800/60 text-foreground/80`}
+						className={`${fieldClasses} cursor-not-allowed bg-zinc-800/40 dark:bg-zinc-800/60 text-foreground/60 border-dashed`}
 						readOnly
 						{...register("cedula")}
 					/>
 					{renderError(errors.cedula?.message)}
 				</div>
 
+				{/* ═══ MENSAJES DE ERROR/ÉXITO ═══ */}
 				{serverError && (
-					<div className="rounded-3xl border border-red-500/40 bg-red-500/10 px-6 py-4 text-lg text-red-100">
+					<div className="rounded-xl sm:rounded-2xl border-2 border-red-500/30 bg-gradient-to-r from-red-500/10 via-red-500/5 to-red-500/10 px-4 sm:px-6 py-3 sm:py-4 text-base sm:text-lg text-red-400 flex items-center gap-3">
+						<AlertCircle className="w-5 h-5 shrink-0" />
 						{serverError}
 					</div>
 				)}
 
 				{serverMessage && !serverError && (
-					<div className="rounded-3xl border border-green-500/40 bg-green-500/10 px-6 py-4 text-lg text-green-100">
+					<div className="rounded-xl sm:rounded-2xl border-2 border-primary/30 bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 px-4 sm:px-6 py-3 sm:py-4 text-base sm:text-lg text-primary flex items-center gap-3">
+						<Sparkles className="w-5 h-5 shrink-0" />
 						{serverMessage}
 					</div>
 				)}
 
+				{/* ═══ BOTÓN DE ENVÍO ═══ */}
 				<button
 					type="submit"
 					disabled={isSubmitting}
-					className="mt-2 flex w-full items-center justify-center rounded-3xl px-10 py-4 text-xl font-semibold uppercase tracking-wide text-[#050505] shadow-[0_20px_70px_rgba(195,255,45,0.35)] disabled:opacity-70"
+					className="group relative mt-2 w-full overflow-hidden rounded-xl sm:rounded-2xl py-4 sm:py-5 text-lg sm:text-xl font-bold uppercase tracking-wide
+						bg-gradient-to-r from-primary via-emerald-400 to-primary
+						text-zinc-900 border-2 border-white/30
+						shadow-[0_8px_30px_rgba(46,204,113,0.4)]
+						transition-all duration-300
+						hover:shadow-[0_12px_40px_rgba(46,204,113,0.5)] hover:scale-[1.01]
+						active:scale-[0.99]
+						disabled:opacity-70 disabled:hover:scale-100 disabled:cursor-not-allowed
+						flex items-center justify-center gap-3"
 				>
+					{/* Shimmer */}
+					<span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 group-disabled:hidden" aria-hidden="true" />
+					
+					{/* Partículas */}
+					<span className="absolute top-2 left-4 w-1.5 h-1.5 rounded-full bg-white/40 group-hover:bg-white/60 animate-pulse group-disabled:hidden" aria-hidden="true" />
+					<span className="absolute bottom-2 right-4 w-2 h-2 rounded-full bg-white/30 group-hover:bg-white/50 animate-pulse delay-150 group-disabled:hidden" aria-hidden="true" />
+					
 					{isSubmitting ? (
-						<span className="flex items-center gap-3 text-lg">
-							<Loader2 className="h-6 w-6 animate-spin" /> {t("registro.saving")}
+						<span className="relative flex items-center gap-3">
+							<Loader2 className="h-6 w-6 animate-spin" /> 
+							{t("registro.saving")}
 						</span>
 					) : (
-						t("registro.submit")
+						<span className="relative flex items-center gap-2">
+							<Sparkles className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
+							{t("registro.submit")}
+						</span>
 					)}
 				</button>
 			</form>

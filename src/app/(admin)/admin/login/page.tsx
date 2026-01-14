@@ -1,7 +1,8 @@
 "use client";
 
-import { AlertCircle, Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { AlertCircle, Eye, EyeOff, Lock, Mail, Rocket } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/admin/Button";
@@ -162,6 +163,43 @@ export default function AdminLoginPage() {
 				<p className="text-center text-xs text-foreground/40 mt-6">
 					Acceso restringido a personal autorizado
 				</p>
+
+				{/* Botón dinámico para volver al Kiosco */}
+				<div className="mt-8 flex justify-center">
+					<Link
+						href="/"
+						className="group relative inline-flex items-center gap-3 px-6 py-3 rounded-full bg-gradient-to-r from-primary/10 via-purple-500/10 to-primary/10 border border-primary/20 hover:border-primary/40 transition-all duration-500 hover:shadow-[0_0_30px_rgba(46,204,113,0.3)] overflow-hidden"
+					>
+						{/* Fondo animado */}
+						<span className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/20 to-primary/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out" />
+						
+						{/* Cohete con animación de despegue */}
+						<span className="relative flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 group-hover:bg-primary/30 transition-colors duration-300">
+							<Rocket 
+								className="w-4 h-4 text-primary transform -rotate-45 group-hover:animate-bounce group-hover:scale-110 transition-transform duration-300" 
+								strokeWidth={2.5}
+							/>
+							{/* Partículas de propulsión */}
+							<span className="absolute -bottom-1 -left-1 w-2 h-2 rounded-full bg-yellow-400/0 group-hover:bg-yellow-400 group-hover:animate-ping transition-all duration-300" />
+							<span className="absolute -bottom-0.5 -left-0.5 w-1.5 h-1.5 rounded-full bg-orange-400/0 group-hover:bg-orange-400 group-hover:animate-pulse transition-all duration-300 delay-75" />
+						</span>
+
+						{/* Texto */}
+						<span className="relative flex flex-col items-start">
+							<span className="text-xs text-foreground/50 group-hover:text-foreground/70 transition-colors duration-300">
+								¿Eres visitante?
+							</span>
+							<span className="text-sm font-semibold text-foreground/80 group-hover:text-primary transition-colors duration-300">
+								Ir al Kiosco
+							</span>
+						</span>
+
+						{/* Flecha animada */}
+						<span className="relative text-foreground/40 group-hover:text-primary group-hover:translate-x-1 transition-all duration-300">
+							→
+						</span>
+					</Link>
+				</div>
 			</div>
 		</div>
 	);

@@ -1,5 +1,6 @@
 "use client";
 
+import { Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useTransition } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -13,9 +14,8 @@ interface StartActionButtonProps {
 /**
  * StartActionButton - Botón principal del Kiosko
  *
- * Diseñado para ser el disparador principal de la experiencia.
- * Implementa un efecto de "latido" constante para llamar la atención
- * y feedback visual al ser presionado.
+ * Diseño premium con gradientes, partículas y animaciones fluidas.
+ * Implementa efectos de glow, shimmer y feedback visual al ser presionado.
  */
 export function StartActionButton({
 	href = "/ingreso",
@@ -46,73 +46,83 @@ export function StartActionButton({
 			onClick={handlePress}
 			disabled={isPending}
 			aria-label={t("common.tapToStartAria")}
-			className={`
-        group
-        relative
-        overflow-hidden
-        
-        /* ═══ FORMA Y TAMAÑO ═══ */
-        rounded-full
-        px-16 py-8
-        sm:px-20 sm:py-10
-        
-        /* ═══ COLORES ═══ */
-        bg-brand-green
-        text-surface
-        
-        /* ═══ TIPOGRAFÍA ═══ */
-        text-2xl sm:text-3xl
-        font-bold
-        uppercase
-        tracking-wider
-        
-        /* ═══ SOMBRA BRILLANTE (GLOW) ═══ */
-        shadow-[0_0_40px_rgba(46,204,113,0.5),0_0_80px_rgba(46,204,113,0.3),0_8px_32px_rgba(0,0,0,0.3)]
-        
-        /* ═══ ANIMACIÓN DE LATIDO ═══ */
-        animate-[heartbeat_1.5s_ease-in-out_infinite]
-        
-        /* ═══ TRANSICIONES ═══ */
-        transition-all
-        duration-200
-        ease-out
-        
-        /* ═══ ESTADOS ═══ */
-        hover:shadow-[0_0_60px_rgba(46,204,113,0.6),0_0_100px_rgba(46,204,113,0.4),0_12px_40px_rgba(0,0,0,0.4)]
-        hover:brightness-110
-        
-        active:scale-95
-        active:shadow-[0_0_20px_rgba(46,204,113,0.4),0_4px_16px_rgba(0,0,0,0.3)]
-        active:brightness-95
-        
-        disabled:opacity-70
-        disabled:cursor-not-allowed
-        disabled:animate-none
-        
-        /* ═══ FOCUS ACCESIBLE ═══ */
-        focus-visible:outline-none
-        focus-visible:ring-4
-        focus-visible:ring-brand-green/40
-        focus-visible:ring-offset-4
-        focus-visible:ring-offset-black
-      `}
-			style={{
-				// Keyframes inline para el efecto heartbeat
-				animation: isPending ? "none" : "heartbeat 1.5s ease-in-out infinite",
-			}}
+			className="
+				group
+				relative
+				overflow-hidden
+				
+				/* ═══ FORMA Y TAMAÑO ═══ */
+				w-full
+				rounded-2xl
+				px-8 py-6
+				sm:px-12 sm:py-8
+				
+				/* ═══ GRADIENTE DE FONDO ═══ */
+				bg-gradient-to-r from-primary via-emerald-400 to-primary
+				dark:from-primary dark:via-emerald-500 dark:to-primary
+				
+				/* ═══ TIPOGRAFÍA ═══ */
+				text-xl sm:text-2xl md:text-3xl
+				font-bold
+				uppercase
+				tracking-wider
+				text-zinc-900
+				
+				/* ═══ SOMBRA Y GLOW ═══ */
+				shadow-[0_0_40px_rgba(46,204,113,0.4),0_8px_32px_rgba(0,0,0,0.3)]
+				
+				/* ═══ BORDE BRILLANTE ═══ */
+				border-2 border-white/30
+				
+				/* ═══ TRANSICIONES ═══ */
+				transition-all
+				duration-300
+				ease-out
+				
+				/* ═══ ANIMACIÓN DE LATIDO ═══ */
+				animate-[heartbeat_2s_ease-in-out_infinite]
+				
+				/* ═══ ESTADOS HOVER ═══ */
+				hover:shadow-[0_0_60px_rgba(46,204,113,0.6),0_0_100px_rgba(46,204,113,0.3),0_12px_40px_rgba(0,0,0,0.4)]
+				hover:scale-[1.02]
+				hover:border-white/50
+				
+				/* ═══ ESTADOS ACTIVE ═══ */
+				active:scale-[0.98]
+				active:shadow-[0_0_20px_rgba(46,204,113,0.5),0_4px_16px_rgba(0,0,0,0.3)]
+				
+				/* ═══ DISABLED ═══ */
+				disabled:opacity-70
+				disabled:cursor-not-allowed
+				disabled:animate-none
+				disabled:hover:scale-100
+				
+				/* ═══ FOCUS ACCESIBLE ═══ */
+				focus-visible:outline-none
+				focus-visible:ring-4
+				focus-visible:ring-primary/40
+				focus-visible:ring-offset-4
+				focus-visible:ring-offset-black
+			"
 		>
-			{/* Efecto de brillo interno (shimmer) */}
+			{/* ═══ EFECTO SHIMMER ═══ */}
 			<span
-				className="absolute inset-0 -translate-x-full animate-[shimmer_3s_ease-in-out_infinite] bg-linear-to-r from-transparent via-white/20 to-transparent"
+				className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out bg-gradient-to-r from-transparent via-white/40 to-transparent"
 				aria-hidden="true"
 			/>
 
-			{/* Contenido del botón */}
-			<span className="relative z-10 flex items-center justify-center gap-3">
+			{/* ═══ PARTÍCULAS DECORATIVAS ═══ */}
+			<span className="absolute top-2 left-4 w-2 h-2 rounded-full bg-white/40 group-hover:bg-white/60 animate-pulse" aria-hidden="true" />
+			<span className="absolute top-4 right-6 w-1.5 h-1.5 rounded-full bg-white/30 group-hover:bg-white/50 animate-pulse delay-150" aria-hidden="true" />
+			<span className="absolute bottom-3 left-8 w-1 h-1 rounded-full bg-white/20 group-hover:bg-white/40 animate-pulse delay-300" aria-hidden="true" />
+			<span className="absolute bottom-2 right-4 w-2.5 h-2.5 rounded-full bg-white/25 group-hover:bg-white/45 animate-pulse delay-500" aria-hidden="true" />
+
+			{/* ═══ CONTENIDO DEL BOTÓN ═══ */}
+			<span className="relative z-10 flex items-center justify-center gap-3 sm:gap-4">
 				{isPending ? (
 					<>
 						<svg
-							className="h-7 w-7 animate-spin"
+							className="h-6 w-6 sm:h-7 sm:w-7 animate-spin"
 							viewBox="0 0 24 24"
 							fill="none"
 							aria-hidden="true"
@@ -135,9 +145,19 @@ export function StartActionButton({
 					</>
 				) : (
 					<>
-						<span>{t("common.tapToStart")}</span>
+						{/* Ícono con animación */}
+						<span className="relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-zinc-900/20 group-hover:bg-zinc-900/30 transition-colors duration-300">
+							<Sparkles 
+								className="w-5 h-5 sm:w-6 sm:h-6 group-hover:scale-110 group-hover:rotate-12 transition-transform duration-300" 
+								strokeWidth={2.5}
+							/>
+							{/* Ping de atención */}
+							<span className="absolute inset-0 rounded-full bg-white/20 animate-ping opacity-0 group-hover:opacity-100" aria-hidden="true" />
+						</span>
+						<span className="drop-shadow-sm">{t("common.tapToStart")}</span>
+						{/* Cohete con animación de despegue */}
 						<span
-							className="text-3xl sm:text-4xl"
+							className="text-2xl sm:text-3xl md:text-4xl group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform duration-300"
 							role="img"
 							aria-label="cohete"
 						>
@@ -147,24 +167,11 @@ export function StartActionButton({
 				)}
 			</span>
 
-			{/* Anillo exterior pulsante */}
+			{/* ═══ ANILLO EXTERIOR PULSANTE ═══ */}
 			<span
-				className="absolute inset-0 -z-10 animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite] rounded-full border-4 border-brand-green/30"
+				className="absolute inset-0 -z-10 animate-[ping_2.5s_cubic-bezier(0,0,0.2,1)_infinite] rounded-2xl border-2 border-primary/20"
 				aria-hidden="true"
 			/>
 		</button>
 	);
 }
-
-// Nota: Agregar estos keyframes al archivo globals.css o tailwind.config.ts:
-// @keyframes heartbeat {
-//   0%, 100% { transform: scale(1); }
-//   14% { transform: scale(1.05); }
-//   28% { transform: scale(1); }
-//   42% { transform: scale(1.05); }
-//   70% { transform: scale(1); }
-// }
-// @keyframes shimmer {
-//   0% { transform: translateX(-100%); }
-//   100% { transform: translateX(100%); }
-// }
