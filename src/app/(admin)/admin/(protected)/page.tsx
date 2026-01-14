@@ -141,7 +141,7 @@ export default function AdminDashboard() {
 					Visor de Verificación
 				</h1>
 				<p className="text-foreground/60 mt-1.5 sm:mt-2 text-sm sm:text-base px-2">
-					Ingresa la cédula para verificar el consentimiento vigente
+					Ingresa el documento de identidad para verificar el consentimiento vigente
 				</p>
 			</div>
 

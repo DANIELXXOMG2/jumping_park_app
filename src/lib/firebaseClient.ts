@@ -1,6 +1,15 @@
 import { getApp, getApps, initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import {
+	type Firestore,
+	getFirestore,
+	initializeFirestore,
+	persistentLocalCache,
+	persistentMultipleTabManager,
+	CACHE_SIZE_UNLIMITED,
+	enableNetwork,
+	disableNetwork,
+} from "firebase/firestore";
 
 const firebaseConfig = {
 	apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -14,6 +23,59 @@ const firebaseConfig = {
 // Initialize Firebase (singleton pattern)
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
-const firestore = getFirestore(app);
+
+/**
+ * Inicializa Firestore con persistencia offline avanzada.
+ * En el navegador: usa persistentLocalCache con persistentMultipleTabManager
+ * para soportar múltiples pestañas del recepcionista.
+ * En el servidor: usa getFirestore básico.
+ */
+function initializeFirestoreWithPersistence(): Firestore {
+	// Si ya hay apps inicializadas, Firestore ya existe - usar getFirestore
+	if (getApps().length > 1) {
+		return getFirestore(app);
+	}
+
+	// En el servidor (SSR), usar inicialización básica
+	if (typeof window === "undefined") {
+		return getFirestore(app);
+	}
+
+	// En el cliente: inicializar con persistencia multi-tab
+	try {
+		return initializeFirestore(app, {
+			localCache: persistentLocalCache({
+				tabManager: persistentMultipleTabManager(),
+				cacheSizeBytes: CACHE_SIZE_UNLIMITED,
+			}),
+		});
+	} catch (error) {
+		// Si Firestore ya fue inicializado (Fast Refresh), retornar instancia existente
+		console.warn("[Firestore] Ya inicializado, usando instancia existente:", error);
+		return getFirestore(app);
+	}
+}
+
+const firestore = initializeFirestoreWithPersistence();
+
+/**
+ * Utilidad para pruebas de conectividad.
+ * Permite habilitar/deshabilitar la red manualmente.
+ * @param enable - true para habilitar red, false para deshabilitar (modo offline)
+ */
+export async function checkConnectivity(enable: boolean): Promise<void> {
+	if (typeof window === "undefined") {
+		console.warn("[Firestore] checkConnectivity solo funciona en el cliente");
+		return;
+	}
+
+	if (enable) {
+		await enableNetwork(firestore);
+		console.log("[Firestore] Red habilitada");
+	} else {
+		await disableNetwork(firestore);
+		console.log("[Firestore] Red deshabilitada (modo offline)");
+	}
+}
 
 export { app, auth, firestore };

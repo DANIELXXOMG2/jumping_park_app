@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Badge } from "@/components/admin/Badge";
 import { DataTable } from "@/components/admin/DataTable";
+import { useNetworkStatus } from "@/components/admin/NetworkStatus";
 import { SearchInput } from "@/components/admin/SearchInput";
 import { adminGet } from "@/lib/adminApi";
 
@@ -32,6 +33,7 @@ interface Pagination {
 
 export default function MinorsPage() {
 	const router = useRouter();
+	const { isOffline } = useNetworkStatus();
 	const [minors, setMinors] = useState<Minor[]>([]);
 	const [pagination, setPagination] = useState<Pagination>({
 		total: 0,
@@ -189,6 +191,7 @@ export default function MinorsPage() {
 						router.push(`/admin/usuarios/${minor.parentId}`)
 					}
 					isLoading={isLoading}
+					fromCache={isOffline}
 					emptyMessage="No se encontraron acompañantes"
 					pagination={{
 						...pagination,

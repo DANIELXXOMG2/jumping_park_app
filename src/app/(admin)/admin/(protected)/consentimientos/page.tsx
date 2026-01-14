@@ -18,6 +18,7 @@ import { Badge } from "@/components/admin/Badge";
 import { Button } from "@/components/admin/Button";
 import { DataTable } from "@/components/admin/DataTable";
 import { Modal } from "@/components/admin/Modal";
+import { useNetworkStatus } from "@/components/admin/NetworkStatus";
 import { SearchInput } from "@/components/admin/SearchInput";
 import {
 	DropdownMenu,
@@ -31,6 +32,7 @@ import { formatRelativeTime } from "@/lib/utils";
 
 export default function ConsentsPage() {
 	const router = useRouter();
+	const { isOffline } = useNetworkStatus();
 	const [search, setSearch] = useState("");
 	const [offset, setOffset] = useState(0);
 	const [selectedConsent, setSelectedConsent] = useState<Consent | null>(null);
@@ -271,6 +273,7 @@ export default function ConsentsPage() {
 					keyExtractor={(consent) => consent.id}
 					onRowClick={(consent) => setSelectedConsent(consent)}
 					isLoading={isLoading}
+					fromCache={isOffline}
 					emptyMessage="No se encontraron consentimientos"
 					pagination={{
 						...pagination,

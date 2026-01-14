@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useKioskStore } from "@/store/kioskStore";
 
@@ -20,12 +20,12 @@ export function KioskSessionRestorer() {
 	const restoreSession = useKioskStore((state) => state.restoreSession);
 	const wasRestored = useKioskStore((state) => state.wasRestored);
 	const isAuthenticated = useKioskStore((state) => state.isAuthenticated);
-	const [hasChecked, setHasChecked] = useState(false);
+	const hasCheckedRef = useRef(false);
 
 	useEffect(() => {
-		// Solo ejecutar una vez al montar
-		if (hasChecked) return;
-		setHasChecked(true);
+		// Solo ejecutar una vez al montar usando ref (evita cascading renders)
+		if (hasCheckedRef.current) return;
+		hasCheckedRef.current = true;
 
 		// No restaurar si ya está autenticado (evita loops)
 		if (isAuthenticated) return;
@@ -45,7 +45,7 @@ export function KioskSessionRestorer() {
 				router.replace("/consentimiento");
 			}
 		}
-	}, [hasChecked, isAuthenticated, pathname, restoreSession, router]);
+	}, [isAuthenticated, pathname, restoreSession, router]);
 
 	// Este componente no renderiza nada visible
 	return null;

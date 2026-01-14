@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, Loader2 } from "lucide-react";
+import { Download, Loader2, RefreshCw, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -8,8 +8,10 @@ import { Badge } from "@/components/admin/Badge";
 import { Button } from "@/components/admin/Button";
 import { DataTable } from "@/components/admin/DataTable";
 import { SearchInput } from "@/components/admin/SearchInput";
+import { useRecentRegistrations } from "@/hooks";
 import { adminDownload, adminGet } from "@/lib/adminApi";
 import { formatRelativeTime } from "@/lib/utils";
+import { toJsDate } from "@/lib/utils/dateUtils";
 
 interface User {
 	id: string;
@@ -30,7 +32,18 @@ interface Pagination {
 
 export default function UsersPage() {
 	const router = useRouter();
-	const [users, setUsers] = useState<User[]>([]);
+	
+	// Hook con soporte offline - trae últimos 7 días
+	const {
+		data: recentUsers,
+		loading: recentLoading,
+		fromCache,
+		hasPendingWrites,
+		refresh,
+	} = useRecentRegistrations(7);
+
+	// Estado para búsqueda (usa API tradicional)
+	const [searchResults, setSearchResults] = useState<User[]>([]);
 	const [pagination, setPagination] = useState<Pagination>({
 		total: 0,
 		limit: 20,
@@ -38,38 +51,76 @@ export default function UsersPage() {
 		hasMore: false,
 	});
 	const [search, setSearch] = useState("");
-	const [isLoading, setIsLoading] = useState(true);
+	const [isSearching, setIsSearching] = useState(false);
 	const [isExporting, setIsExporting] = useState(false);
 
-	const fetchUsers = useCallback(async (searchTerm: string, offset: number) => {
+	// Determinar qué datos mostrar: búsqueda o recientes
+	const isSearchActive = search.trim().length > 0;
+	
+	// Mapear usuarios recientes al formato esperado
+	const mappedRecentUsers: User[] = recentUsers.map((user) => {
+		let createdAtISO: string | null = null;
 		try {
-			setIsLoading(true);
+			if (user.createdAt) {
+				const date = toJsDate(user.createdAt);
+				if (date && !Number.isNaN(date.getTime())) {
+					createdAtISO = date.toISOString();
+				}
+			}
+		} catch {
+			// Fecha inválida, mantener null
+		}
+		
+		return {
+			id: user.uid,
+			uid: user.uid,
+			fullName: user.fullName,
+			email: user.email,
+			phone: user.phone,
+			minorsCount: user.minors?.length || 0,
+			createdAt: createdAtISO,
+		};
+	});
+
+	const displayedUsers = isSearchActive ? searchResults : mappedRecentUsers;
+	const isLoading = isSearchActive ? isSearching : recentLoading;
+
+	const fetchSearchResults = useCallback(async (searchTerm: string, offset: number) => {
+		if (!searchTerm.trim()) return;
+		
+		try {
+			setIsSearching(true);
 			const params = new URLSearchParams({
 				limit: "20",
 				offset: offset.toString(),
+				search: searchTerm,
 			});
-			if (searchTerm) {
-				params.set("search", searchTerm);
-			}
 
 			const data = await adminGet<{ users: User[]; pagination: Pagination }>(
 				`/api/admin/users?${params}`,
 			);
-			setUsers(data.users);
+			setSearchResults(data.users);
 			setPagination(data.pagination);
 		} catch {
-			// Error silencioso
+			toast.error("Error al buscar usuarios");
 		} finally {
-			setIsLoading(false);
+			setIsSearching(false);
 		}
 	}, []);
 
 	useEffect(() => {
-		fetchUsers(search, 0);
-	}, [search, fetchUsers]);
+		if (search.trim()) {
+			fetchSearchResults(search, 0);
+		} else {
+			setSearchResults([]);
+			setPagination({ total: 0, limit: 20, offset: 0, hasMore: false });
+		}
+	}, [search, fetchSearchResults]);
 
 	const handlePageChange = (newOffset: number) => {
-		fetchUsers(search, newOffset);
+		if (isSearchActive) {
+			fetchSearchResults(search, newOffset);
+		}
 	};
 
 	const handleExport = async () => {
@@ -101,7 +152,7 @@ export default function UsersPage() {
 			header: "Nombre",
 			render: (user: User) => (
 				<div className="flex items-center gap-2">
-					<div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/30 to-primary-contrast/30 flex items-center justify-center">
+					<div className="w-8 h-8 rounded-full bg-linear-to-br from-primary/30 to-primary-contrast/30 flex items-center justify-center">
 						<span className="text-xs font-bold text-primary">
 							{user.fullName?.charAt(0)?.toUpperCase() || "U"}
 						</span>
@@ -149,25 +200,41 @@ export default function UsersPage() {
 			{/* Page Header */}
 			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 				<div>
-					<h1 className="text-2xl lg:text-3xl font-bold text-foreground">
+					<h1 className="text-2xl lg:text-3xl font-bold text-foreground flex items-center gap-3">
+						<Users className="w-8 h-8 text-primary" />
 						Usuarios
 					</h1>
 					<p className="text-foreground/60 mt-1">
-						{pagination.total} usuarios registrados
+						{isSearchActive 
+							? `${pagination.total} resultados encontrados`
+							: `${mappedRecentUsers.length} usuarios en los últimos 7 días`
+						}
 					</p>
 				</div>
-				<Button
-					variant="secondary"
-					onClick={handleExport}
-					disabled={isExporting}
-				>
-					{isExporting ? (
-						<Loader2 className="w-4 h-4 mr-2 animate-spin" />
-					) : (
-						<Download className="w-4 h-4 mr-2" />
-					)}
-					Exportar CSV
-				</Button>
+				<div className="flex items-center gap-2">
+					{/* Botón de recargar */}
+					<Button
+						variant="ghost"
+						size="sm"
+						onClick={() => refresh()}
+						disabled={recentLoading}
+						title="Recargar datos"
+					>
+						<RefreshCw className={`w-4 h-4 ${recentLoading ? "animate-spin" : ""}`} />
+					</Button>
+					<Button
+						variant="secondary"
+						onClick={handleExport}
+						disabled={isExporting}
+					>
+						{isExporting ? (
+							<Loader2 className="w-4 h-4 mr-2 animate-spin" />
+						) : (
+							<Download className="w-4 h-4 mr-2" />
+						)}
+						Exportar CSV
+					</Button>
+				</div>
 			</div>
 
 			{/* Search and Filters */}
@@ -186,16 +253,17 @@ export default function UsersPage() {
 			{/* Users Table */}
 			<div className="bg-surface rounded-xl border border-border p-4 lg:p-6">
 				<DataTable
-					data={users}
+					data={displayedUsers}
 					columns={columns}
 					keyExtractor={(user) => user.id}
 					onRowClick={(user) => router.push(`/admin/usuarios/${user.uid}`)}
 					isLoading={isLoading}
-					emptyMessage="No se encontraron usuarios"
-					pagination={{
+					fromCache={!isSearchActive && fromCache}
+					emptyMessage={isSearchActive ? "No se encontraron usuarios" : "No hay usuarios registrados en los últimos 7 días"}
+					pagination={isSearchActive ? {
 						...pagination,
 						onPageChange: handlePageChange,
-					}}
+					} : undefined}
 				/>
 			</div>
 		</div>

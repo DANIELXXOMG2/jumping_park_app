@@ -22,6 +22,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/admin/Card";
+import { CacheWarningBanner, useNetworkStatus } from "@/components/admin/NetworkStatus";
 import { adminGet } from "@/lib/adminApi";
 import { cn } from "@/lib/utils";
 
@@ -120,6 +121,9 @@ function SmallStatSkeleton() {
 	);
 }
 
+// Anchos deterministas para el skeleton del gráfico (evita errores de hidratación)
+const SKELETON_WIDTHS = [65, 42, 78, 55, 89, 35, 72, 48];
+
 function ChartSkeleton() {
 	return (
 		<Card className="lg:col-span-2">
@@ -128,7 +132,7 @@ function ChartSkeleton() {
 			</CardHeader>
 			<CardContent>
 				<div className="space-y-3">
-					{[...Array(8)].map((_, i) => (
+					{SKELETON_WIDTHS.map((width, i) => (
 						<div key={i} className="space-y-1">
 							<div className="flex justify-between">
 								<div className="h-3 w-12 bg-surface-muted rounded animate-pulse" />
@@ -136,7 +140,7 @@ function ChartSkeleton() {
 							</div>
 							<div
 								className="h-5 bg-surface-muted rounded animate-pulse"
-								style={{ width: `${Math.random() * 50 + 30}%` }}
+								style={{ width: `${width}%` }}
 							/>
 						</div>
 					))}
@@ -152,6 +156,7 @@ export default function EstadisticasPage() {
 	const [isLoading, setIsLoading] = useState(true);
 	const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 	const abortControllerRef = useRef<AbortController | null>(null);
+	const { isOffline } = useNetworkStatus();
 
 	const fetchStats = useCallback(
 		async (forceFresh = false) => {
@@ -258,6 +263,9 @@ export default function EstadisticasPage() {
 					</Button>
 				))}
 			</div>
+
+			{/* Offline Warning Banner */}
+			{isOffline && <CacheWarningBanner />}
 
 			{showSkeleton ? (
 				<>
