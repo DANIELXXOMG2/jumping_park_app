@@ -88,38 +88,3 @@ export function clearKioskSession(): void {
 		console.warn("[KioskSession] Error eliminando sesión:", error);
 	}
 }
-
-/**
- * Verifica si existe una sesión válida (no expirada).
- */
-export function hasValidKioskSession(): boolean {
-	return getKioskSession() !== null;
-}
-
-/**
- * Extiende la expiración de la sesión actual (útil en interacciones del usuario).
- */
-export function extendKioskSession(): void {
-	const session = getKioskSession();
-	if (session) {
-		saveKioskSession({
-			uid: session.uid,
-			visitorData: session.visitorData,
-			consent: session.consent,
-			step: session.step,
-			isAuthenticated: session.isAuthenticated,
-		});
-	}
-}
-
-/**
- * Obtiene el tiempo restante de la sesión en milisegundos.
- * Retorna 0 si no hay sesión o ya expiró.
- */
-export function getSessionTimeRemaining(): number {
-	const session = getKioskSession();
-	if (!session) return 0;
-	
-	const remaining = session.expiresAt - Date.now();
-	return remaining > 0 ? remaining : 0;
-}

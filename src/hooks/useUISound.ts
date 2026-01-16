@@ -170,5 +170,3 @@ export function useUISound() {
 		isReady,
 	};
 }
-
-export default useUISound;

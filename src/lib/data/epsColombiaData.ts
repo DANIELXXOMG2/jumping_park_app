@@ -260,14 +260,6 @@ export function getEPSLabel(value: string): string {
 }
 
 /**
- * Obtiene el label del régimen por su value
- */
-export function getRegimenLabel(value: RegimenType): string {
-	const regimen = regimenesOptions.find((r) => r.value === value);
-	return regimen?.label || value;
-}
-
-/**
  * Valida si un valor de EPS es válido
  * Acepta EPS de la lista oficial o valores personalizados con prefijo "otra_manual:"
  */
@@ -277,17 +269,3 @@ export function isValidEPS(value: string): boolean {
 		value.startsWith("otra_manual:")
 	);
 }
-
-/**
- * Lista simple de valores de EPS para usar con Zod
- * Incluye todas las EPS válidas como array de strings
- */
-export const EPS_LIST = epsOptions.map((eps) => eps.value) as [
-	string,
-	...string[],
-];
-
-/**
- * Lista de labels de EPS para mostrar en UI
- */
-export const EPS_LABELS = epsOptions.map((eps) => eps.label);

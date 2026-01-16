@@ -76,7 +76,7 @@ export const AVAILABLE_PERMISSIONS: Permission[] = Object.values(ALL_PERMISSIONS
 /**
  * Información del usuario autenticado con su rol.
  */
-export interface AuthenticatedUser {
+interface AuthenticatedUser {
 	uid: string;
 	email: string;
 	displayName?: string;
@@ -84,15 +84,6 @@ export interface AuthenticatedUser {
 	role: UserRole;
 	/** Permisos adicionales asignados al usuario (modelo aditivo) */
 	customPermissions?: Permission[];
-}
-
-/**
- * Resultado de verificación de autenticación.
- */
-export interface AuthVerificationResult {
-	isAuthenticated: boolean;
-	user?: AuthenticatedUser;
-	error?: string;
 }
 
 /**

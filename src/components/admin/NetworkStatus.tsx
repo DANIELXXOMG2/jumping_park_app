@@ -133,26 +133,6 @@ export function useNetworkStatus() {
 }
 
 /**
- * Badge pequeño para indicar que los datos vienen de caché.
- * Útil para colocar junto a tablas o listas de datos.
- */
-export function CacheBadge({ className }: { className?: string }) {
-	return (
-		<span
-			className={cn(
-				"inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs",
-				"bg-warning/10 text-warning font-medium",
-				className
-			)}
-			title="Estos datos podrían no estar actualizados"
-		>
-			<CloudOff className="w-3 h-3" />
-			Caché
-		</span>
-	);
-}
-
-/**
  * Banner de advertencia para mostrar cuando los datos vienen de caché.
  */
 export function CacheWarningBanner({ className }: { className?: string }) {

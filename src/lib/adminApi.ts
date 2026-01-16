@@ -59,30 +59,7 @@ export async function adminPost<T>(url: string, data: unknown): Promise<T> {
 	return response.json();
 }
 
-export async function adminPut<T>(url: string, data: unknown): Promise<T> {
-	const response = await adminFetch(url, {
-		method: "PUT",
-		body: JSON.stringify(data),
-	});
 
-	if (!response.ok) {
-		const error = await response.json().catch(() => ({}));
-		throw new Error(error.error || "Error al actualizar datos");
-	}
-
-	return response.json();
-}
-
-export async function adminDelete<T>(url: string): Promise<T> {
-	const response = await adminFetch(url, { method: "DELETE" });
-
-	if (!response.ok) {
-		const error = await response.json().catch(() => ({}));
-		throw new Error(error.error || "Error al eliminar");
-	}
-
-	return response.json();
-}
 
 /**
  * Descarga un archivo desde una URL protegida.

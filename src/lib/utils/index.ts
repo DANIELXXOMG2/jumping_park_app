@@ -32,8 +32,3 @@ export function formatRelativeTime(date: Date | string | number): string {
 		day: "numeric",
 	});
 }
-
-export function truncateText(text: string, maxLength: number): string {
-	if (text.length <= maxLength) return text;
-	return text.slice(0, maxLength) + "...";
-}

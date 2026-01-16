@@ -7,15 +7,11 @@ export type {
 	Pagination,
 } from "./useConsents";
 export { useConsents } from "./useConsents";
-export type { OCRResult, OCRScannerState } from "./useOCRScanner";
-export { useOCRScanner } from "./useOCRScanner";
 export type {
 	ConnectionState,
-	OfflineQueryOptions,
 	RecentRegistrationsResult,
 } from "./useOfflineData";
 export {
-	useOfflineAwareQuery,
 	useOfflineConnection,
 	useRecentRegistrations,
 } from "./useOfflineData";

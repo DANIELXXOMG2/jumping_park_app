@@ -164,16 +164,4 @@ export async function verifyOtpSession(userId: string): Promise<boolean> {
 	}
 }
 
-/**
- * Elimina la sesión OTP de un usuario (logout o expiración manual).
- *
- * @param userId - Cédula del usuario
- */
-export async function deleteOtpSession(userId: string): Promise<void> {
-	try {
-		await deleteDoc("otp_sessions", userId);
-		console.log(`[AuthService] Sesión OTP eliminada para usuario: ${userId}`);
-	} catch (error) {
-		console.error("[AuthService] Error eliminando sesión OTP:", error);
-	}
-}
+

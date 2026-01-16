@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Sora } from "next/font/google";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/ui/ThemeProvider";
-import { SerwistProvider } from "./serwist";
 import "./globals.css";
 
 const sora = Sora({
@@ -112,20 +111,18 @@ export default function RootLayout({
 	return (
 		<html lang="es" suppressHydrationWarning>
 			<body className={`${sora.variable} font-sans antialiased`}>
-				<SerwistProvider swUrl="/serwist/sw.js">
-					<ThemeProvider>{children}</ThemeProvider>
-					<Toaster
-						position="top-center"
-						richColors
-						closeButton
-						toastOptions={{
-							duration: 4000,
-							classNames: {
-								toast: "font-sans",
-							},
-						}}
-					/>
-				</SerwistProvider>
+				<ThemeProvider>{children}</ThemeProvider>
+				<Toaster
+					position="top-center"
+					richColors
+					closeButton
+					toastOptions={{
+						duration: 4000,
+						classNames: {
+							toast: "font-sans",
+						},
+					}}
+				/>
 			</body>
 		</html>
 	);

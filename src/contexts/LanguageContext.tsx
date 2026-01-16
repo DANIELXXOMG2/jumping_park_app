@@ -163,11 +163,3 @@ export function useLanguage(): LanguageContextValue {
 
 	return context;
 }
-
-/**
- * Hook simplificado que solo retorna la función de traducción.
- */
-export function useTranslation() {
-	const { t, language } = useLanguage();
-	return { t, language };
-}

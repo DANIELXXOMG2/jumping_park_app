@@ -73,24 +73,3 @@ export function isExpired(value: FirestoreDateValue): boolean {
 	const date = toJsDate(value);
 	return date <= new Date();
 }
-
-/**
- * Formatea una fecha de Firestore a un string legible en español (Colombia).
- *
- * @param value - El valor de fecha a formatear
- * @param options - Opciones de formateo (por defecto incluye hora)
- * @returns String formateado en español
- */
-export function formatFirestoreDate(
-	value: FirestoreDateValue,
-	options: Intl.DateTimeFormatOptions = {
-		year: "numeric",
-		month: "long",
-		day: "numeric",
-		hour: "2-digit",
-		minute: "2-digit",
-	},
-): string {
-	const date = toJsDate(value);
-	return date.toLocaleDateString("es-CO", options);
-}
