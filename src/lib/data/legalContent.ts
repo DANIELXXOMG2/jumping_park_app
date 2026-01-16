@@ -616,16 +616,6 @@ export const CONSENT_CONTENT_BY_LANGUAGE: Record<Language, ConsentContentStructu
 };
 
 // ============================================================================
-// TIPOS PARA ESTRUCTURA MULTILENGUAJE EN BD
-// ============================================================================
-
-/**
- * Estructura del documento en Firestore (multilenguaje).
- * Ejemplo: { es: {...}, en: {...} }
- */
-export type MultiLanguageConsentDocument = Record<string, ConsentContentStructure>;
-
-// ============================================================================
 // UTILIDADES
 // ============================================================================
 
@@ -758,28 +748,4 @@ export function getConsentContent(
 	// Fallback: usar contenido estático hardcodeado
 	const baseContent = CONSENT_CONTENT_BY_LANGUAGE[language] || DEFAULT_CONSENT_CONTENT;
 	return processConsentContent(baseContent);
-}
-
-/**
- * Obtiene el contenido del consentimiento de forma asíncrona desde Firestore.
- * Esta función es el punto de entrada recomendado para componentes server-side.
- * 
- * @param language - Idioma del contenido ('es' | 'en')
- * @param fetchFromFirestore - Función opcional para obtener datos de Firestore
- * @returns Contenido procesado del consentimiento
- */
-export async function getConsentContentAsync(
-	language: Language = "es",
-	fetchFromFirestore?: () => Promise<unknown>,
-): Promise<ConsentContentStructure> {
-	if (fetchFromFirestore) {
-		try {
-			const firestoreData = await fetchFromFirestore();
-			return getConsentContent(language, firestoreData);
-		} catch (error) {
-			console.error('[LegalContent] Error al obtener datos de Firestore:', error);
-		}
-	}
-	
-	return getConsentContent(language);
 }

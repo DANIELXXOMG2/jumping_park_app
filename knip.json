@@ -10,8 +10,7 @@
   ],
   "ignoreDependencies": [
     "@tailwindcss/postcss",
-    "sharp",
-    "baseline-browser-mapping"
+    "sharp"
   ],
   "ignoreExportsUsedInFile": true,
   "next": {

@@ -110,26 +110,14 @@ export const consentContentStructureSchema = z.record(
 	{ message: "Debe existir al menos un idioma configurado" }
 );
 
-/**
- * Esquema alternativo con idiomas obligatorios (ES) y opcionales.
- * Útil si se quiere forzar que siempre exista español.
- */
-export const consentContentWithRequiredLanguagesSchema = z.object({
-	es: localizedConsentSchema, // Español es obligatorio
-}).catchall(localizedConsentSchema); // Otros idiomas son opcionales
-
 // ============================================================================
 // TIPOS INFERIDOS
 // ============================================================================
 
-export type ConsentClauseValidated = z.infer<typeof consentClauseSchema>;
-export type ParkRuleValidated = z.infer<typeof parkRuleSchema>;
 /** Tipo para el contenido de UN idioma */
 export type LocalizedConsentValidated = z.infer<typeof localizedConsentSchema>;
 /** Tipo para el documento completo multilenguaje */
 export type ConsentContentStructureValidated = z.infer<typeof consentContentStructureSchema>;
-/** Tipo alternativo con español obligatorio */
-export type ConsentContentWithRequiredLanguages = z.infer<typeof consentContentWithRequiredLanguagesSchema>;
 
 // ============================================================================
 // FUNCIÓN DE VALIDACIÓN
@@ -182,14 +170,14 @@ export function validateLocalizedContent(data: unknown):
  * Type Guard para verificar si un objeto tiene la estructura multilenguaje.
  * Usa validación Zod internamente.
  */
-export function isValidConsentContent(data: unknown): data is ConsentContentStructureValidated {
+function isValidConsentContent(data: unknown): data is ConsentContentStructureValidated {
 	return validateConsentContent(data).success;
 }
 
 /**
  * Type Guard para verificar si un objeto tiene la estructura de UN idioma.
  */
-export function isValidLocalizedContent(data: unknown): data is LocalizedConsentValidated {
+function isValidLocalizedContent(data: unknown): data is LocalizedConsentValidated {
 	return validateLocalizedContent(data).success;
 }
 

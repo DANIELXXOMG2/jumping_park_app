@@ -57,33 +57,6 @@ export class NotFoundError extends ApiError {
 	}
 }
 
-/**
- * Error 400 - Datos inválidos
- */
-export class ValidationError extends ApiError {
-	constructor(message: string = "Datos inválidos", details?: unknown) {
-		super(message, 400, "VALIDATION_ERROR", details);
-	}
-}
-
-/**
- * Error 401 - No autorizado
- */
-export class UnauthorizedError extends ApiError {
-	constructor(message: string = "No autorizado") {
-		super(message, 401, "UNAUTHORIZED");
-	}
-}
-
-/**
- * Error 409 - Conflicto (ej. recurso duplicado)
- */
-export class ConflictError extends ApiError {
-	constructor(message: string = "El recurso ya existe") {
-		super(message, 409, "CONFLICT");
-	}
-}
-
 // ============================================================================
 // VALIDATED BODY STORAGE
 // ============================================================================

@@ -58,24 +58,4 @@ function initializeFirestoreWithPersistence(): Firestore {
 
 const firestore = initializeFirestoreWithPersistence();
 
-/**
- * Utilidad para pruebas de conectividad.
- * Permite habilitar/deshabilitar la red manualmente.
- * @param enable - true para habilitar red, false para deshabilitar (modo offline)
- */
-export async function checkConnectivity(enable: boolean): Promise<void> {
-	if (typeof window === "undefined") {
-		console.warn("[Firestore] checkConnectivity solo funciona en el cliente");
-		return;
-	}
-
-	if (enable) {
-		await enableNetwork(firestore);
-		console.log("[Firestore] Red habilitada");
-	} else {
-		await disableNetwork(firestore);
-		console.log("[Firestore] Red deshabilitada (modo offline)");
-	}
-}
-
 export { app, auth, firestore };
