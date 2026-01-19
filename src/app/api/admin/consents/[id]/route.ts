@@ -77,3 +77,44 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 		);
 	}
 }
+
+/**
+ * DELETE /api/admin/consents/[id]
+ * Elimina un consentimiento.
+ * Solo accesible por usuarios con rol 'admin'.
+ */
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
+	try {
+		// Verificar autenticación de admin con rol específico
+		const authResult = await verifyAdminToken(request, "admin");
+		if (!authResult.success) {
+			return authResult.response;
+		}
+
+		const { id } = await params;
+
+		// Verificar que el consentimiento existe
+		const consentDoc = await db.collection("consents").doc(id).get();
+
+		if (!consentDoc.exists) {
+			return NextResponse.json(
+				{ error: "Consentimiento no encontrado" },
+				{ status: 404 },
+			);
+		}
+
+		// Eliminar el consentimiento
+		await db.collection("consents").doc(id).delete();
+
+		return NextResponse.json({
+			success: true,
+			message: "Consentimiento eliminado correctamente",
+			deletedId: id,
+		});
+	} catch {
+		return NextResponse.json(
+			{ error: "Error al eliminar el consentimiento" },
+			{ status: 500 },
+		);
+	}
+}

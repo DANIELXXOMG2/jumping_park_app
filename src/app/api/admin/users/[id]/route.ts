@@ -99,3 +99,63 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 		);
 	}
 }
+
+/**
+ * DELETE /api/admin/users/[id]
+ * Elimina un usuario y opcionalmente sus datos relacionados.
+ * Solo accesible por usuarios con rol 'admin'.
+ */
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
+	try {
+		// Verificar autenticación de admin con rol específico
+		const authResult = await verifyAdminToken(request, "admin");
+		if (!authResult.success) {
+			return authResult.response;
+		}
+
+		const { id } = await params;
+
+		// Buscar usuario por ID o UID
+		let userDoc = await db.collection("users").doc(id).get();
+		let userId = id;
+
+		if (!userDoc.exists) {
+			const byUid = await db
+				.collection("users")
+				.where("uid", "==", id)
+				.limit(1)
+				.get();
+
+			if (byUid.empty) {
+				return NextResponse.json(
+					{ error: "Usuario no encontrado" },
+					{ status: 404 },
+				);
+			}
+			userDoc = byUid.docs[0];
+			userId = userDoc.id;
+		}
+
+		const userData = userDoc.data();
+		if (!userData) {
+			return NextResponse.json(
+				{ error: "Usuario no encontrado" },
+				{ status: 404 },
+			);
+		}
+
+		// Eliminar el usuario
+		await db.collection("users").doc(userId).delete();
+
+		return NextResponse.json({
+			success: true,
+			message: "Usuario eliminado correctamente",
+			deletedId: userId,
+		});
+	} catch {
+		return NextResponse.json(
+			{ error: "Error al eliminar el usuario" },
+			{ status: 500 },
+		);
+	}
+}

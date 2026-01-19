@@ -1,15 +1,22 @@
 "use client";
 
-import { Download, Loader2, RefreshCw, Users } from "lucide-react";
+import { Download, Loader2, MoreHorizontal, RefreshCw, Trash2, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/admin/Badge";
 import { Button } from "@/components/admin/Button";
 import { DataTable } from "@/components/admin/DataTable";
+import { DeleteConfirmModal } from "@/components/admin/DeleteConfirmModal";
 import { SearchInput } from "@/components/admin/SearchInput";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useRecentRegistrations } from "@/hooks";
-import { adminDownload, adminGet } from "@/lib/adminApi";
+import { adminDelete, adminDownload, adminGet } from "@/lib/adminApi";
 import { formatRelativeTime } from "@/lib/utils";
 import { toJsDate } from "@/lib/utils/dateUtils";
 
@@ -53,6 +60,10 @@ export default function UsersPage() {
 	const [search, setSearch] = useState("");
 	const [isSearching, setIsSearching] = useState(false);
 	const [isExporting, setIsExporting] = useState(false);
+
+	// Estado para eliminar usuarios
+	const [userToDelete, setUserToDelete] = useState<User | null>(null);
+	const [isDeleting, setIsDeleting] = useState(false);
 
 	// Determinar qué datos mostrar: búsqueda o recientes
 	const isSearchActive = search.trim().length > 0;
@@ -139,6 +150,31 @@ export default function UsersPage() {
 		}
 	};
 
+	const handleDeleteUser = async () => {
+		if (!userToDelete) return;
+
+		setIsDeleting(true);
+		try {
+			await adminDelete(`/api/admin/users/${userToDelete.uid}`);
+			toast.success("Usuario eliminado", {
+				description: `${userToDelete.fullName} ha sido eliminado correctamente`,
+			});
+			// Refrescar la lista
+			refresh();
+			if (isSearchActive) {
+				fetchSearchResults(search, pagination.offset);
+			}
+		} catch (error) {
+			toast.error("Error al eliminar", {
+				description:
+					error instanceof Error ? error.message : "Intente nuevamente",
+			});
+		} finally {
+			setIsDeleting(false);
+			setUserToDelete(null);
+		}
+	};
+
 	const columns = [
 		{
 			key: "uid",
@@ -191,6 +227,36 @@ export default function UsersPage() {
 				<span className="text-foreground/50 text-xs">
 					{user.createdAt ? formatRelativeTime(user.createdAt) : "-"}
 				</span>
+			),
+		},
+		{
+			key: "actions",
+			header: "",
+			render: (user: User) => (
+				<DropdownMenu>
+					<DropdownMenuTrigger asChild>
+						<button
+							type="button"
+							className="p-2 rounded-lg hover:bg-surface-muted transition-colors"
+							onClick={(e) => e.stopPropagation()}
+							aria-label="Abrir menú de acciones"
+						>
+							<MoreHorizontal className="w-4 h-4 text-foreground/60" />
+						</button>
+					</DropdownMenuTrigger>
+					<DropdownMenuContent align="end" className="w-48">
+						<DropdownMenuItem
+							onClick={(e) => {
+								e.stopPropagation();
+								setUserToDelete(user);
+							}}
+							className="text-red-600 focus:text-red-600"
+						>
+							<Trash2 className="w-4 h-4" />
+							Eliminar usuario
+						</DropdownMenuItem>
+					</DropdownMenuContent>
+				</DropdownMenu>
 			),
 		},
 	];
@@ -266,6 +332,17 @@ export default function UsersPage() {
 					} : undefined}
 				/>
 			</div>
+
+			{/* Modal de confirmación de eliminación */}
+			<DeleteConfirmModal
+				isOpen={!!userToDelete}
+				onClose={() => setUserToDelete(null)}
+				onConfirm={handleDeleteUser}
+				isDeleting={isDeleting}
+				title="Eliminar Usuario"
+				description="¿Estás seguro de que deseas eliminar este usuario?"
+				itemName={userToDelete?.fullName}
+			/>
 		</div>
 	);
 }
