@@ -558,8 +558,8 @@ export const dictionary = {
 		en: "Civil Registration",
 	},
 	"documentType.ti.desc": {
-		es: "Tarjeta de Identidad)",
-		en: "Identity Card)",
+		es: "Tarjeta de Identidad",
+		en: "Identity Card",
 	},
 	"documentType.cc.desc": {
 		es: "Cédula de Ciudadanía",
