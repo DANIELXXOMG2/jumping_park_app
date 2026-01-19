@@ -73,3 +73,155 @@ export function isExpired(value: FirestoreDateValue): boolean {
 	const date = toJsDate(value);
 	return date <= new Date();
 }
+
+// ============================================================================
+// ZONA HORARIA DE COLOMBIA
+// ============================================================================
+
+/**
+ * Offset de Colombia en horas respecto a UTC.
+ * Colombia no tiene horario de verano, siempre es UTC-5.
+ */
+const COLOMBIA_OFFSET_HOURS = -5;
+
+/**
+ * Obtiene la fecha/hora actual en zona horaria de Colombia.
+ * Útil para mostrar la hora local al usuario.
+ *
+ * @returns Date object representando la hora actual en Colombia
+ *
+ * @example
+ * const colombiaTime = getNowColombia();
+ * console.log(colombiaTime.toLocaleString()); // Hora de Colombia
+ */
+export function getNowColombia(): Date {
+	const now = new Date();
+	const utcTime = now.getTime() + now.getTimezoneOffset() * 60000;
+	return new Date(utcTime + COLOMBIA_OFFSET_HOURS * 3600000);
+}
+
+/**
+ * Obtiene el inicio del día actual (medianoche) en zona horaria de Colombia,
+ * retornando un Date que puede ser usado en queries de Firestore.
+ *
+ * CRÍTICO: Esta función es esencial para que los reportes de "hoy" funcionen
+ * correctamente tanto en desarrollo local como en producción (Vercel usa UTC).
+ *
+ * @returns Date object representando la medianoche de Colombia en formato UTC
+ *
+ * @example
+ * // En un API route
+ * const todayStart = getTodayStartColombia();
+ * const snapshot = await db.collection("consents")
+ *   .where("signedAt", ">=", todayStart)
+ *   .get();
+ */
+export function getTodayStartColombia(): Date {
+	const now = new Date();
+
+	// Obtener la hora actual en Colombia
+	const utcTime = now.getTime() + now.getTimezoneOffset() * 60000;
+	const colombiaTime = new Date(utcTime + COLOMBIA_OFFSET_HOURS * 3600000);
+
+	// Obtener medianoche de Colombia
+	const colombiaMidnight = new Date(colombiaTime);
+	colombiaMidnight.setHours(0, 0, 0, 0);
+
+	// Convertir medianoche de Colombia de vuelta a UTC para la query
+	const midnightUtc = new Date(
+		colombiaMidnight.getTime() -
+			COLOMBIA_OFFSET_HOURS * 3600000 -
+			now.getTimezoneOffset() * 60000,
+	);
+
+	return midnightUtc;
+}
+
+/**
+ * Obtiene el fin del día actual (23:59:59.999) en zona horaria de Colombia.
+ *
+ * @returns Date object representando el fin del día en Colombia en formato UTC
+ */
+export function getTodayEndColombia(): Date {
+	const now = new Date();
+
+	// Obtener la hora actual en Colombia
+	const utcTime = now.getTime() + now.getTimezoneOffset() * 60000;
+	const colombiaTime = new Date(utcTime + COLOMBIA_OFFSET_HOURS * 3600000);
+
+	// Obtener fin del día en Colombia
+	const colombiaEndOfDay = new Date(colombiaTime);
+	colombiaEndOfDay.setHours(23, 59, 59, 999);
+
+	// Convertir a UTC para la query
+	const endOfDayUtc = new Date(
+		colombiaEndOfDay.getTime() -
+			COLOMBIA_OFFSET_HOURS * 3600000 -
+			now.getTimezoneOffset() * 60000,
+	);
+
+	return endOfDayUtc;
+}
+
+/**
+ * Obtiene un rango de fechas ajustado a la zona horaria de Colombia.
+ *
+ * @param period - El período a calcular ('today', 'week', 'month', 'year', 'all')
+ * @returns Objeto con fechas start y end en formato UTC compatible con Firestore
+ */
+export function getDateRangeColombia(
+	period: "today" | "week" | "month" | "year" | "all",
+): { start: Date; end: Date } {
+	const now = new Date();
+
+	// Obtener la hora actual en Colombia
+	const utcTime = now.getTime() + now.getTimezoneOffset() * 60000;
+	const colombiaTime = new Date(utcTime + COLOMBIA_OFFSET_HOURS * 3600000);
+
+	// Calcular fin del día en Colombia y convertir a UTC
+	const colombiaEndOfDay = new Date(colombiaTime);
+	colombiaEndOfDay.setHours(23, 59, 59, 999);
+	const end = new Date(
+		colombiaEndOfDay.getTime() -
+			COLOMBIA_OFFSET_HOURS * 3600000 -
+			now.getTimezoneOffset() * 60000,
+	);
+
+	// Calcular inicio según el período
+	let colombiaStart: Date;
+
+	switch (period) {
+		case "today":
+			colombiaStart = new Date(colombiaTime);
+			colombiaStart.setHours(0, 0, 0, 0);
+			break;
+		case "week":
+			colombiaStart = new Date(colombiaTime);
+			colombiaStart.setDate(colombiaTime.getDate() - 7);
+			colombiaStart.setHours(0, 0, 0, 0);
+			break;
+		case "month":
+			colombiaStart = new Date(colombiaTime);
+			colombiaStart.setMonth(colombiaTime.getMonth() - 1);
+			colombiaStart.setHours(0, 0, 0, 0);
+			break;
+		case "year":
+			colombiaStart = new Date(colombiaTime);
+			colombiaStart.setFullYear(colombiaTime.getFullYear() - 1);
+			colombiaStart.setHours(0, 0, 0, 0);
+			break;
+		case "all":
+		default:
+			colombiaStart = new Date(2020, 0, 1);
+			break;
+	}
+
+	// Convertir start a UTC
+	const start = new Date(
+		colombiaStart.getTime() -
+			COLOMBIA_OFFSET_HOURS * 3600000 -
+			now.getTimezoneOffset() * 60000,
+	);
+
+	return { start, end };
+}

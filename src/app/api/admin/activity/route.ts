@@ -5,6 +5,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { verifyAdminToken } from "@/lib/adminAuth";
 import { db } from "@/lib/firebaseAdmin";
+import { getTodayStartColombia } from "@/lib/utils/dateUtils";
 
 export async function GET(request: NextRequest) {
 	try {
@@ -14,10 +15,9 @@ export async function GET(request: NextRequest) {
 			return authResult.response;
 		}
 
-		// Fecha de inicio del día (medianoche hora Colombia)
+		// Fecha de inicio del día (medianoche hora Colombia - compatible con UTC del servidor)
 		const now = new Date();
-		const todayStart = new Date(now);
-		todayStart.setHours(0, 0, 0, 0);
+		const todayStart = getTodayStartColombia();
 
 		// Obtener estadísticas del día
 		const todaySnapshot = await db

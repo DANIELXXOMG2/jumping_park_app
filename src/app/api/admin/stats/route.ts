@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { verifyAdminToken } from "@/lib/adminAuth";
 import { db } from "@/lib/firebaseAdmin";
+import { getTodayStartColombia } from "@/lib/utils/dateUtils";
 
 export async function GET(request: NextRequest) {
 	try {
@@ -9,8 +10,8 @@ export async function GET(request: NextRequest) {
 			return authResult.response;
 		}
 
-		const today = new Date();
-		today.setHours(0, 0, 0, 0);
+		// Usar zona horaria de Colombia para "hoy"
+		const today = getTodayStartColombia();
 
 		const weekAgo = new Date();
 		weekAgo.setDate(weekAgo.getDate() - 7);
