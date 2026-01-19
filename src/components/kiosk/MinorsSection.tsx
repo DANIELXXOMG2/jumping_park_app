@@ -176,50 +176,65 @@ export function MinorsSection({
 	};
 
 	return (
-		<section className="space-y-4">
-			{/* Header */}
-			<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-				<div className="flex items-center gap-2">
-					<Baby className="w-6 h-6 text-neon-green" />
-					<h2 className="text-xl font-semibold text-neon-green">
-						{t("minors.section.title")}
-						{fields.length > 0 && (
-							<span className="ml-2 text-sm font-normal text-gray-400">
-								({fields.length})
-							</span>
-						)}
-					</h2>
-				</div>
+		<section className="space-y-5">
+			{/* Header con gradiente y efecto glass */}
+			<div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-cyan-500/10 border border-emerald-500/20 p-4 backdrop-blur-sm">
+				{/* Efecto de brillo decorativo */}
+				<div className="absolute -top-10 -right-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl" />
+				<div className="absolute -bottom-10 -left-10 w-24 h-24 bg-cyan-500/10 rounded-full blur-2xl" />
+				
+				<div className="relative flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+					<div className="flex flex-col gap-1.5">
+						<div className="flex items-center gap-3">
+							<div className="p-2.5 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 shadow-lg shadow-emerald-500/10">
+								<Baby className="w-6 h-6 text-emerald-400 animate-bounce-jump" />
+							</div>
+							<div>
+								<h2 className="text-xl font-bold bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 bg-clip-text text-transparent">
+									{t("minors.section.title")}
+									{fields.length > 0 && (
+										<span className="ml-2 inline-flex items-center justify-center min-w-[1.5rem] h-6 px-2 text-sm font-semibold rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+											{fields.length}
+										</span>
+									)}
+								</h2>
+								<p className="text-xs text-gray-400 mt-0.5">
+									{t("minors.section.tooltip")}
+								</p>
+							</div>
+						</div>
+					</div>
 
-				{/* Botones de acción */}
-				<div className="flex gap-2 w-full sm:w-auto">
-					{/* Botón de Historial - solo si hay userId */}
-					{userId && (
+					{/* Botones de acción con efectos modernos */}
+					<div className="flex gap-2.5 w-full sm:w-auto">
+						{/* Botón de Historial */}
+						{userId && (
+							<button
+								type="button"
+								onClick={handleOpenHistory}
+								className="group relative flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 hover:from-blue-500/20 hover:to-indigo-500/20 text-blue-400 font-semibold rounded-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] border border-blue-500/30 hover:border-blue-400/50 flex-1 sm:flex-none justify-center shadow-lg shadow-blue-500/5 hover:shadow-blue-500/20"
+							>
+								<History size={18} className="group-hover:rotate-[-20deg] transition-transform duration-300" />
+								<span className="hidden sm:inline">{t("minors.section.historyBtn")}</span>
+							</button>
+						)}
+
+						{/* Botón de Agregar Nuevo */}
 						<button
 							type="button"
-							onClick={handleOpenHistory}
-							className="flex items-center gap-2 px-4 py-2.5 bg-neon-blue/20 hover:bg-neon-blue/30 text-neon-blue font-semibold rounded-xl transition-all transform hover:scale-105 active:scale-95 border border-neon-blue/50 flex-1 sm:flex-none justify-center"
+							onClick={handleAddMinor}
+							className="group relative flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 hover:from-emerald-500/25 hover:to-teal-500/25 text-emerald-400 font-semibold rounded-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] border border-emerald-500/30 hover:border-emerald-400/50 flex-1 sm:flex-none justify-center shadow-lg shadow-emerald-500/5 hover:shadow-emerald-500/20"
 						>
-							<History size={18} />
-							<span className="hidden sm:inline">{t("minors.section.historyBtn")}</span>
+							<Plus size={18} className="group-hover:rotate-90 transition-transform duration-300" />
+							<span className="hidden sm:inline">{t("minors.section.addBtn")}</span> {t("minors.section.addBtnNew")}
 						</button>
-					)}
-
-					{/* Botón de Agregar Nuevo */}
-					<button
-						type="button"
-						onClick={handleAddMinor}
-						className="flex items-center gap-2 px-4 py-2.5 bg-neon-green/20 hover:bg-neon-green/30 text-neon-green font-semibold rounded-xl transition-all transform hover:scale-105 active:scale-95 border border-neon-green/50 flex-1 sm:flex-none justify-center"
-					>
-						<Plus size={18} />
-						<span className="hidden sm:inline">{t("minors.section.addBtn")}</span> {t("minors.section.addBtnNew")}
-					</button>
+					</div>
 				</div>
 			</div>
 
-			{/* Lista de Menores - Tarjetas Compactas */}
+			{/* Lista de Participantes - Tarjetas con animaciones */}
 			{fields.length > 0 && (
-				<div className="space-y-2">
+				<div className="space-y-3">
 					{fields.map((field, index) => {
 						const minor = getValues(`minors.${index}`);
 						return (
@@ -240,14 +255,25 @@ export function MinorsSection({
 				</div>
 			)}
 
-			{/* Estado vacío */}
+			{/* Estado vacío mejorado */}
 			{fields.length === 0 && (
-				<div className="text-center py-6 border-2 border-dashed border-gray-700 rounded-2xl bg-gray-900/30">
-					<Baby className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-					<p className="text-gray-400 text-sm">{t("minors.section.emptyTitle")}</p>
-					<p className="text-gray-500 text-xs mt-1">
-						{t("minors.section.emptySubtitle")}
-					</p>
+				<div className="relative overflow-hidden text-center py-10 border-2 border-dashed border-gray-700/50 rounded-2xl bg-gradient-to-b from-gray-900/50 to-gray-800/30 backdrop-blur-sm group hover:border-emerald-500/30 transition-all duration-500">
+					{/* Efecto de partículas decorativas */}
+					<div className="absolute inset-0 opacity-30">
+						<div className="absolute top-4 left-1/4 w-2 h-2 bg-emerald-500/40 rounded-full animate-pulse" />
+						<div className="absolute top-8 right-1/3 w-1.5 h-1.5 bg-cyan-500/40 rounded-full animate-pulse delay-300" />
+						<div className="absolute bottom-6 left-1/3 w-1 h-1 bg-teal-500/40 rounded-full animate-pulse delay-500" />
+					</div>
+					
+					<div className="relative">
+						<div className="inline-flex p-4 rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-700/50 border border-gray-600/30 mb-4 group-hover:scale-110 group-hover:border-emerald-500/30 transition-all duration-500">
+							<Baby className="w-10 h-10 text-gray-500 group-hover:text-emerald-400 transition-colors duration-500" />
+						</div>
+						<p className="text-gray-300 font-medium">{t("minors.section.emptyTitle")}</p>
+						<p className="text-gray-500 text-sm mt-1.5 max-w-xs mx-auto">
+							{t("minors.section.emptySubtitle")}
+						</p>
+					</div>
 				</div>
 			)}
 
@@ -315,61 +341,76 @@ function MinorCompactCard({
 		minor.medicalCondition && minor.medicalCondition.trim().length > 0;
 
 	return (
-		<div className="bg-gray-900/80 border border-gray-700 rounded-xl overflow-hidden hover:border-gray-600 transition-all">
-			<div className="flex items-center gap-3 p-3">
-				{/* Avatar/Número */}
-				<div className="w-10 h-10 rounded-full bg-neon-green/20 flex items-center justify-center shrink-0">
-					<span className="text-neon-green font-bold text-sm">{index + 1}</span>
+		<div className="group relative overflow-hidden bg-gradient-to-r from-gray-900/90 via-gray-800/80 to-gray-900/90 border border-gray-700/50 rounded-2xl hover:border-emerald-500/40 transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/10">
+			{/* Efecto de brillo al hover */}
+			<div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+			
+			{/* Línea de acento lateral */}
+			<div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 via-teal-500 to-cyan-500 opacity-60 group-hover:opacity-100 transition-opacity duration-300" />
+			
+			<div className="relative flex items-center gap-4 p-4 pl-5">
+				{/* Avatar/Número con gradiente */}
+				<div className="relative">
+					<div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 via-teal-500/15 to-cyan-500/20 flex items-center justify-center border border-emerald-500/30 shadow-lg shadow-emerald-500/10 group-hover:scale-105 transition-transform duration-300">
+						<span className="text-emerald-400 font-bold text-lg">{index + 1}</span>
+					</div>
+					{hasMedicalCondition && (
+						<div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500/20 border border-red-500/50 flex items-center justify-center" title={t("minors.section.hasMedicalCondition")}>
+							<Heart size={10} className="text-red-400 fill-red-400" />
+						</div>
+					)}
 				</div>
 
 				{/* Info Principal */}
 				<div className="flex-1 min-w-0">
 					<div className="flex items-center gap-2">
-						<h3 className="text-white font-medium text-sm truncate">
+						<h3 className="text-white font-semibold text-base truncate group-hover:text-emerald-200 transition-colors duration-300">
 							{fullName}
 						</h3>
-						{hasMedicalCondition && (
-							<span title={t("minors.section.hasMedicalCondition")}>
-								<Heart size={12} className="text-red-400 shrink-0" />
-							</span>
-						)}
 					</div>
-					<div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-gray-400 mt-0.5">
+					
+					{/* Info Pills */}
+					<div className="flex flex-wrap items-center gap-2 mt-2">
 						{age && (
-							<span className="flex items-center gap-1">
-								<Calendar size={10} />
+							<span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-lg bg-gray-800/80 text-gray-300 border border-gray-700/50">
+								<Calendar size={11} className="text-emerald-400" />
 								{age}
 							</span>
 						)}
-						<span className="flex items-center gap-1">
-							<CreditCard size={10} />
+						<span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-lg bg-gray-800/80 text-gray-300 border border-gray-700/50">
+							<CreditCard size={11} className="text-cyan-400" />
 							{docInfo}
 						</span>
-						<span className="flex items-center gap-1">
-							<User size={10} />
+						<span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-lg bg-gray-800/80 text-gray-300 border border-gray-700/50">
+							<User size={11} className="text-blue-400" />
 							{relationship}
 						</span>
 					</div>
-					<p className="text-xs text-gray-500 mt-0.5 truncate">EPS: {eps}</p>
+					
+					{/* EPS Info */}
+					<p className="text-xs text-gray-500 mt-2 flex items-center gap-1.5">
+						<span className="inline-block w-1.5 h-1.5 rounded-full bg-teal-500/60" />
+						EPS: <span className="text-gray-400">{eps}</span>
+					</p>
 				</div>
 
-				{/* Acciones */}
-				<div className="flex items-center gap-1 shrink-0">
+				{/* Acciones con efectos hover */}
+				<div className="flex items-center gap-1.5 shrink-0">
 					<button
 						type="button"
 						onClick={onEdit}
-						className="p-2 text-gray-400 hover:text-neon-blue hover:bg-neon-blue/10 rounded-lg transition-all"
+						className="p-2.5 text-gray-400 hover:text-blue-400 bg-transparent hover:bg-blue-500/10 rounded-xl transition-all duration-200 hover:scale-110 active:scale-95 border border-transparent hover:border-blue-500/30"
 						title={t("minors.section.editTooltip")}
 					>
-						<Edit3 size={16} />
+						<Edit3 size={17} />
 					</button>
 					<button
 						type="button"
 						onClick={onRemove}
-						className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+						className="p-2.5 text-gray-400 hover:text-red-400 bg-transparent hover:bg-red-500/10 rounded-xl transition-all duration-200 hover:scale-110 active:scale-95 border border-transparent hover:border-red-500/30"
 						title={t("minors.section.removeTooltip")}
 					>
-						<Trash2 size={16} />
+						<Trash2 size={17} />
 					</button>
 				</div>
 			</div>

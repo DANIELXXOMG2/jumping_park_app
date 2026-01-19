@@ -3,7 +3,7 @@
  * Obtiene los menores asociados a un usuario específico.
  *
  * PROTEGIDO: Requiere sesión OTP válida (el usuario debe haber validado su identidad).
- * Usado para el historial de acompañantes en el kiosko.
+ * Usado para el historial de participantes en el kiosko.
  */
 import { type NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/firebaseAdmin";

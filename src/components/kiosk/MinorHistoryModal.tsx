@@ -59,17 +59,36 @@ export function MinorHistoryModal({
 		setError(null);
 
 		try {
-			const response = await fetch(`/api/usuarios/${userId}/menores`);
-			const data = await response.json();
-
+			// Usar cache: 'no-store' para evitar problemas con el Service Worker
+			const response = await fetch(`/api/usuarios/${userId}/menores`, {
+				cache: 'no-store',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+			});
+			
 			if (!response.ok) {
-				throw new Error(data.error || "Error al cargar historial");
+				const data = await response.json().catch(() => ({}));
+				
+				// Manejar error 401 de forma especial
+				if (response.status === 401) {
+					throw new Error("La sesión ha expirado. Por favor, vuelve a verificar tu identidad.");
+				}
+				
+				throw new Error(data.error || `Error del servidor (${response.status})`);
 			}
-
+			
+			const data = await response.json();
 			setHistoricalMinors(data.minors || []);
 		} catch (err) {
 			console.error("[MinorHistoryModal] Error:", err);
-			setError(err instanceof Error ? err.message : "Error desconocido");
+			
+			// Detectar errores de red específicos
+			if (err instanceof TypeError && err.message === 'Failed to fetch') {
+				setError("Error de conexión. Verifica tu internet e intenta de nuevo.");
+			} else {
+				setError(err instanceof Error ? err.message : "Error al cargar historial");
+			}
 		} finally {
 			setIsLoading(false);
 		}

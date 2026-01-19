@@ -245,7 +245,7 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
 					<div className="text-center">
 						<div className="flex items-center justify-center gap-2 text-foreground/60">
 							<Baby className="w-4 h-4" />
-							<span className="text-xs uppercase">Acompañantes</span>
+							<span className="text-xs uppercase">Participantes</span>
 						</div>
 						<p className="text-2xl font-bold text-foreground mt-1">
 							{stats.minorsCount}
@@ -257,7 +257,7 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
 			{/* Minors */}
 			<Card>
 				<CardHeader>
-					<CardTitle>Acompañantes Asociados ({user.minors.length})</CardTitle>
+					<CardTitle>Participantes Asociados ({user.minors.length})</CardTitle>
 				</CardHeader>
 				<CardContent>
 					{user.minors.length > 0 ? (
@@ -291,7 +291,7 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
 						</div>
 					) : (
 						<p className="text-center text-foreground/50 py-8">
-							No hay acompañantes registrados
+							No hay participantes registrados
 						</p>
 					)}
 				</CardContent>
@@ -317,7 +317,7 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
 											<Badge variant="info">#{consent.consecutivo}</Badge>
 											<div>
 												<p className="text-sm font-medium text-foreground">
-													{consent.minorsCount} acompañante(s)
+													{consent.minorsCount} participante(s)
 												</p>
 												<p className="text-xs text-foreground/50">
 													Versión {consent.policyVersion}
@@ -353,7 +353,7 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
 			<Modal
 				isOpen={!!selectedMinor}
 				onClose={() => setSelectedMinor(null)}
-				title="Información del Acompañante"
+				title="Información del Participante"
 			>
 				{selectedMinor && (
 					<div className="space-y-6">
@@ -507,7 +507,7 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
 						{selectedConsent.minors && selectedConsent.minors.length > 0 && (
 							<div>
 								<h4 className="text-sm font-semibold text-foreground/60 uppercase mb-3">
-									Acompañantes ({selectedConsent.minors.length})
+									Participantes ({selectedConsent.minors.length})
 								</h4>
 								<div className="space-y-2">
 									{selectedConsent.minors.map((minor, index) => (

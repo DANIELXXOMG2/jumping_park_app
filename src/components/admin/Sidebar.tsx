@@ -53,7 +53,7 @@ const menuItems: MenuItem[] = [
   {
     href: "/admin/menores",
     icon: Baby,
-    label: "Acompañantes",
+    label: "Participantes",
     permission: "minors:view",
   },
   {

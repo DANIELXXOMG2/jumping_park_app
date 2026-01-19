@@ -160,10 +160,10 @@ export default function MinorsPage() {
 			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 				<div>
 					<h1 className="text-2xl lg:text-3xl font-bold text-foreground">
-						Acompañantes
+						Participantes
 					</h1>
 					<p className="text-foreground/60 mt-1">
-						{pagination.total} acompañantes registrados
+						{pagination.total} participantes registrados
 					</p>
 				</div>
 			</div>
@@ -192,7 +192,7 @@ export default function MinorsPage() {
 					}
 					isLoading={isLoading}
 					fromCache={isOffline}
-					emptyMessage="No se encontraron acompañantes"
+					emptyMessage="No se encontraron participantes"
 					pagination={{
 						...pagination,
 						onPageChange: handlePageChange,

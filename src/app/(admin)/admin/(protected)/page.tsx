@@ -174,7 +174,7 @@ export default function AdminDashboard() {
 						icon={FileCheck}
 					/>
 					<StatCard
-						title="Acompañantes"
+						title="Participantes"
 						value={
 							activityLoading ? "..." : activityData?.stats.minorsToday || 0
 						}
@@ -273,18 +273,18 @@ export default function AdminDashboard() {
 										<div className="inline-flex items-center gap-2 px-3 py-1.5 bg-surface rounded-lg">
 											<Baby className="w-4 h-4 text-foreground/60" />
 											<span className="text-sm text-foreground/70">
-												{searchResult.consent.minorsSnapshot.length} acompañante(s)
+												{searchResult.consent.minorsSnapshot.length} participante(s)
 											</span>
 										</div>
 									</div>
 								</div>
 								
-								{/* Lista de Acompañantes */}
+								{/* Lista de Participantes */}
 								{searchResult.consent.minorsSnapshot.length > 0 && (
 									<div className="mt-4">
 										<p className="text-sm font-semibold text-foreground/60 mb-3 flex items-center gap-2">
 											<Baby className="w-4 h-4" />
-											Acompañantes Autorizados
+											Participantes Autorizados
 										</p>
 										<div className="space-y-2">
 											{searchResult.consent.minorsSnapshot.map((minor, idx) => (
@@ -403,7 +403,7 @@ export default function AdminDashboard() {
 													</p>
 													<p className="text-xs text-foreground/50">
 														#{consent.consecutivo} • {consent.minorsCount}{" "}
-														acompañante(s)
+														participante(s)
 													</p>
 												</div>
 											</div>
