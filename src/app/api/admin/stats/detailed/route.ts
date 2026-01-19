@@ -324,7 +324,7 @@ export async function GET(request: NextRequest) {
 				},
 				uniqueMinors: {
 					value: uniqueMinorsIds.size,
-					label: "Acompañantes únicos",
+					label: "Participantes únicos",
 				},
 				activeConsents: {
 					value: activeConsents,

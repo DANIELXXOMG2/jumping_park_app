@@ -5,14 +5,14 @@ import { ThemeProvider as NextThemesProvider } from "next-themes";
 
 /**
  * Proveedor de tema para Dark Mode.
- * Envuelve la aplicación y persiste la preferencia del usuario.
+ * Dark mode es el tema predeterminado. El usuario puede cambiar a light mode con el switch.
  */
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
 	return (
 		<NextThemesProvider
 			attribute="class"
-			defaultTheme="system"
-			enableSystem
+			defaultTheme="dark"
+			enableSystem={false}
 			disableTransitionOnChange
 			{...props}
 		>

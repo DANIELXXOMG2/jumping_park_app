@@ -419,14 +419,14 @@ export default function EstadisticasPage() {
 							</CardContent>
 						</Card>
 
-						{/* Acompañantes */}
-						<Card className="relative overflow-hidden">
-							<div className="absolute top-0 right-0 w-16 h-16 sm:w-24 sm:h-24 bg-amber-500/5 rounded-full -mr-6 -mt-6 sm:-mr-8 sm:-mt-8" />
-							<CardContent className="pt-4 sm:pt-6">
-								<div className="flex items-start justify-between gap-2">
-									<div className="min-w-0 flex-1">
-										<p className="text-xs sm:text-sm text-foreground/60 font-medium">
-											Acompañantes
+{/* Participantes */}
+							<Card className="relative overflow-hidden">
+								<div className="absolute top-0 right-0 w-16 h-16 sm:w-24 sm:h-24 bg-amber-500/5 rounded-full -mr-6 -mt-6 sm:-mr-8 sm:-mt-8" />
+								<CardContent className="pt-4 sm:pt-6">
+									<div className="flex items-start justify-between gap-2">
+										<div className="min-w-0 flex-1">
+											<p className="text-xs sm:text-sm text-foreground/60 font-medium">
+												Participantes
 										</p>
 										<p className="text-2xl sm:text-3xl font-bold text-foreground mt-1">
 											{data.kpis.minors.value.toLocaleString()}
@@ -532,8 +532,8 @@ export default function EstadisticasPage() {
 										<div className="flex items-center gap-1">
 											<div className="w-2 h-2 sm:w-3 sm:h-3 rounded bg-amber-500" />
 											<span className="text-foreground/60">
-												<span className="hidden sm:inline">Acompañantes</span>
-												<span className="sm:hidden">Acomp.</span>
+												<span className="hidden sm:inline">Participantes</span>
+												<span className="sm:hidden">Part.</span>
 											</span>
 										</div>
 									</div>
@@ -654,7 +654,7 @@ export default function EstadisticasPage() {
 										</div>
 										<div className="flex items-center justify-between">
 											<span className="text-sm text-foreground/70">
-												Total Acompañantes
+												Total Participantes
 											</span>
 											<span className="text-lg font-bold text-foreground">
 												{data.totals.minors.toLocaleString()}
@@ -683,7 +683,7 @@ export default function EstadisticasPage() {
 										<div className="text-foreground/50 text-xs">
 											Período anterior: {data.kpis.consents.previousValue}{" "}
 											consentimientos, {data.kpis.users.previousValue} usuarios,{" "}
-											{data.kpis.minors.previousValue} acompañantes
+											{data.kpis.minors.previousValue} participantes
 										</div>
 									)}
 							</div>

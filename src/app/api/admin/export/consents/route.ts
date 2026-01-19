@@ -92,8 +92,8 @@ export async function GET(request: NextRequest) {
 			"Nombre Responsable",
 			"Email",
 			"Teléfono",
-			"Cantidad Acompañantes",
-			"Acompañantes",
+			"Cantidad Participantes",
+			"Participantes",
 			"Válido Hasta",
 			"Estado",
 		];

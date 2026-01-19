@@ -296,12 +296,12 @@ export const dictionary = {
 	// MENORES
 	// ============================================================================
 	"minors.title": {
-		es: "Menores a tu cargo",
-		en: "Companions under your care",
+		es: "Participantes a tu cargo",
+		en: "Participants under your care",
 	},
 	"minors.add": {
-		es: "Agregar Menor",
-		en: "Add Companion",
+		es: "Agregar Participante",
+		en: "Add Participant",
 	},
 	"minors.form.firstName": {
 		es: "Nombres",
@@ -405,10 +405,14 @@ export const dictionary = {
 		es: "Otro",
 		en: "Other",
 	},
-	// Sección de acompañantes
+	// Sección de participantes
 	"minors.section.title": {
-		es: "Acompañantes",
-		en: "Companions",
+		es: "Participantes",
+		en: "Participants",
+	},
+	"minors.section.tooltip": {
+		es: "Personas que usarán las atracciones del parque",
+		en: "People who will use the park attractions",
 	},
 	"minors.section.historyBtn": {
 		es: "Historial",
@@ -423,12 +427,12 @@ export const dictionary = {
 		en: "New",
 	},
 	"minors.section.emptyTitle": {
-		es: "No has agregado acompañantes aún",
-		en: "No companions added yet",
+		es: "No has agregado participantes aún",
+		en: "No participants added yet",
 	},
 	"minors.section.emptySubtitle": {
-		es: "Usa los botones de arriba para agregar acompañantes",
-		en: "Use the buttons above to add companions",
+		es: "Usa los botones de arriba para agregar participantes",
+		en: "Use the buttons above to add participants",
 	},
 	"minors.section.noEps": {
 		es: "Sin EPS",
@@ -447,12 +451,12 @@ export const dictionary = {
 		en: "years",
 	},
 	"minors.section.editTooltip": {
-		es: "Editar acompañante",
-		en: "Edit companion",
+		es: "Editar participante",
+		en: "Edit participant",
 	},
 	"minors.section.removeTooltip": {
-		es: "Eliminar acompañante",
-		en: "Remove companion",
+		es: "Eliminar participante",
+		en: "Remove participant",
 	},
 	"minors.section.hasMedicalCondition": {
 		es: "Tiene condición médica",
@@ -474,14 +478,14 @@ export const dictionary = {
 		es: "Actualizar",
 		en: "Update",
 	},
-	// Modal de acompañantes
+	// Modal de participantes
 	"minors.modal.addTitle": {
-		es: "Agregar Acompañante",
-		en: "Add Companion",
+		es: "Agregar Participante",
+		en: "Add Participant",
 	},
 	"minors.modal.editTitle": {
-		es: "Editar Acompañante",
-		en: "Edit Companion",
+		es: "Editar Participante",
+		en: "Edit Participant",
 	},
 	"minors.form.medicalCondition": {
 		es: "Condición Médica / Alergias",
@@ -496,21 +500,21 @@ export const dictionary = {
 		en: "None or specify...",
 	},
 	"minors.form.medicalCondition.hint": {
-		es: "⚠️ Información importante para la seguridad del acompañante.",
-		en: "⚠️ Important information for the companion's safety.",
+		es: "⚠️ Información importante para la seguridad del participante.",
+		en: "⚠️ Important information for the participant's safety.",
 	},
 	"minors.form.idNumber.placeholder": {
 		es: "Número",
 		en: "Number",
 	},
-	// Modal de historial de acompañantes
+	// Modal de historial de participantes
 	"minors.history.title": {
-		es: "Historial de Acompañantes",
-		en: "Companion History",
+		es: "Historial de Participantes",
+		en: "Participant History",
 	},
 	"minors.history.subtitle": {
-		es: "Selecciona acompañantes registrados previamente",
-		en: "Select previously registered companions",
+		es: "Selecciona participantes registrados previamente",
+		en: "Select previously registered participants",
 	},
 	"minors.history.loading": {
 		es: "Cargando historial...",
@@ -521,20 +525,20 @@ export const dictionary = {
 		en: "Retry",
 	},
 	"minors.history.allAdded": {
-		es: "Todos los acompañantes del historial ya están agregados",
-		en: "All companions from history are already added",
+		es: "Todos los participantes del historial ya están agregados",
+		en: "All participants from history are already added",
 	},
 	"minors.history.empty": {
-		es: "No hay acompañantes registrados previamente",
-		en: "No previously registered companions",
+		es: "No hay participantes registrados previamente",
+		en: "No previously registered participants",
 	},
 	"minors.history.useAddNew": {
-		es: "Usa \"Agregar Nuevo\" para registrar nuevos acompañantes",
-		en: "Use \"Add New\" to register new companions",
+		es: "Usa \"Agregar Nuevo\" para registrar nuevos participantes",
+		en: "Use \"Add New\" to register new participants",
 	},
 	"minors.history.selectPrompt": {
-		es: "Toca para seleccionar los acompañantes de hoy:",
-		en: "Tap to select today's companions:",
+		es: "Toca para seleccionar los participantes de hoy:",
+		en: "Tap to select today's participants:",
 	},
 	"minors.history.lastVisit": {
 		es: "Última visita:",
@@ -590,8 +594,8 @@ export const dictionary = {
 		en: "Coverage Type",
 	},
 	"forms.health.companionEps": {
-		es: "EPS del Acompañante",
-		en: "Companion's Health Insurance",
+		es: "EPS del Participante",
+		en: "Participant's Health Insurance",
 	},
 	"forms.health.epsName": {
 		es: "Nombre de la EPS",
