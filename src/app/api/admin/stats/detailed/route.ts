@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { verifyAdminToken } from "@/lib/adminAuth";
 import { db } from "@/lib/firebaseAdmin";
+import { getDateRangeColombia } from "@/lib/utils/dateUtils";
 
 type Period = "today" | "week" | "month" | "year" | "all";
 
@@ -11,44 +12,8 @@ interface DailyData {
 	minors: number;
 }
 
-function getDateRange(period: Period): { start: Date; end: Date } {
-	const now = new Date();
-	const end = new Date(now);
-	end.setHours(23, 59, 59, 999);
-
-	let start: Date;
-
-	switch (period) {
-		case "today":
-			start = new Date(now);
-			start.setHours(0, 0, 0, 0);
-			break;
-		case "week":
-			start = new Date(now);
-			start.setDate(now.getDate() - 7);
-			start.setHours(0, 0, 0, 0);
-			break;
-		case "month":
-			start = new Date(now);
-			start.setMonth(now.getMonth() - 1);
-			start.setHours(0, 0, 0, 0);
-			break;
-		case "year":
-			start = new Date(now);
-			start.setFullYear(now.getFullYear() - 1);
-			start.setHours(0, 0, 0, 0);
-			break;
-		case "all":
-		default:
-			start = new Date(2020, 0, 1);
-			break;
-	}
-
-	return { start, end };
-}
-
 function getPreviousPeriodRange(period: Period): { start: Date; end: Date } {
-	const { start: currentStart, end: currentEnd } = getDateRange(period);
+	const { start: currentStart, end: currentEnd } = getDateRangeColombia(period);
 	const duration = currentEnd.getTime() - currentStart.getTime();
 
 	return {
@@ -68,7 +33,8 @@ export async function GET(request: NextRequest) {
 		const { searchParams } = new URL(request.url);
 		const period = (searchParams.get("period") || "month") as Period;
 
-		const { start, end } = getDateRange(period);
+		// Usar zona horaria de Colombia para los rangos de fecha
+		const { start, end } = getDateRangeColombia(period);
 		const previousRange = getPreviousPeriodRange(period);
 		const now = new Date();
 
