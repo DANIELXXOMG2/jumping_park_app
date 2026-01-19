@@ -9,6 +9,7 @@ import {
 	MoreHorizontal,
 	PenTool,
 	Send,
+	Trash2,
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -17,6 +18,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/admin/Badge";
 import { Button } from "@/components/admin/Button";
 import { DataTable } from "@/components/admin/DataTable";
+import { DeleteConfirmModal } from "@/components/admin/DeleteConfirmModal";
 import { Modal } from "@/components/admin/Modal";
 import { useNetworkStatus } from "@/components/admin/NetworkStatus";
 import { SearchInput } from "@/components/admin/SearchInput";
@@ -27,7 +29,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { type Consent, useConsents } from "@/hooks";
-import { adminDownload, adminPost, getAuthToken } from "@/lib/adminApi";
+import { adminDelete, adminDownload, adminPost, getAuthToken } from "@/lib/adminApi";
 import { formatRelativeTime } from "@/lib/utils";
 
 export default function ConsentsPage() {
@@ -38,6 +40,10 @@ export default function ConsentsPage() {
 	const [selectedConsent, setSelectedConsent] = useState<Consent | null>(null);
 	const [isResending, setIsResending] = useState(false);
 	const [isExporting, setIsExporting] = useState(false);
+
+	// Estado para eliminar consentimientos
+	const [consentToDelete, setConsentToDelete] = useState<Consent | null>(null);
+	const [isDeleting, setIsDeleting] = useState(false);
 
 	// Usar SWR para caché y revalidación automática
 	const { consents, pagination, isLoading } = useConsents({
@@ -90,6 +96,29 @@ export default function ConsentsPage() {
 			});
 		} finally {
 			setIsExporting(false);
+		}
+	};
+
+	// Eliminar consentimiento
+	const handleDeleteConsent = async () => {
+		if (!consentToDelete) return;
+
+		setIsDeleting(true);
+		try {
+			await adminDelete(`/api/admin/consents/${consentToDelete.id}`);
+			toast.success("Consentimiento eliminado", {
+				description: `Consentimiento #${consentToDelete.consecutivo} ha sido eliminado`,
+			});
+			// La revalidación se hace automáticamente con SWR
+			window.location.reload();
+		} catch (error) {
+			toast.error("Error al eliminar", {
+				description:
+					error instanceof Error ? error.message : "Intente nuevamente",
+			});
+		} finally {
+			setIsDeleting(false);
+			setConsentToDelete(null);
 		}
 	};
 
@@ -220,6 +249,16 @@ export default function ConsentsPage() {
 								Ver Firma
 							</DropdownMenuItem>
 						)}
+						<DropdownMenuItem
+							onClick={(e) => {
+								e.stopPropagation();
+								setConsentToDelete(consent);
+							}}
+							className="text-red-600 focus:text-red-600"
+						>
+							<Trash2 className="w-4 h-4" />
+							Eliminar
+						</DropdownMenuItem>
 					</DropdownMenuContent>
 				</DropdownMenu>
 			),
@@ -485,6 +524,17 @@ export default function ConsentsPage() {
 					</div>
 				)}
 			</Modal>
+
+			{/* Modal de confirmación de eliminación */}
+			<DeleteConfirmModal
+				isOpen={!!consentToDelete}
+				onClose={() => setConsentToDelete(null)}
+				onConfirm={handleDeleteConsent}
+				isDeleting={isDeleting}
+				title="Eliminar Consentimiento"
+				description="¿Estás seguro de que deseas eliminar este consentimiento?"
+				itemName={consentToDelete ? `#${consentToDelete.consecutivo} - ${consentToDelete.adultName}` : undefined}
+			/>
 		</div>
 	);
 }

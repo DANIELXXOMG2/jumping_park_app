@@ -1,12 +1,21 @@
 "use client";
 
+import { MoreHorizontal, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Badge } from "@/components/admin/Badge";
 import { DataTable } from "@/components/admin/DataTable";
+import { DeleteConfirmModal } from "@/components/admin/DeleteConfirmModal";
 import { useNetworkStatus } from "@/components/admin/NetworkStatus";
 import { SearchInput } from "@/components/admin/SearchInput";
-import { adminGet } from "@/lib/adminApi";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { adminDelete, adminGet } from "@/lib/adminApi";
 
 interface Minor {
 	id: string;
@@ -44,6 +53,10 @@ export default function MinorsPage() {
 	const [search, setSearch] = useState("");
 	const [isLoading, setIsLoading] = useState(true);
 
+	// Estado para eliminar menores
+	const [minorToDelete, setMinorToDelete] = useState<Minor | null>(null);
+	const [isDeleting, setIsDeleting] = useState(false);
+
 	const fetchMinors = useCallback(
 		async (searchTerm: string, offset: number) => {
 			try {
@@ -77,6 +90,28 @@ export default function MinorsPage() {
 
 	const handlePageChange = (newOffset: number) => {
 		fetchMinors(search, newOffset);
+	};
+
+	const handleDeleteMinor = async () => {
+		if (!minorToDelete) return;
+
+		setIsDeleting(true);
+		try {
+			await adminDelete(`/api/admin/minors/${minorToDelete.id}`);
+			toast.success("Participante eliminado", {
+				description: `${minorToDelete.fullName} ha sido eliminado correctamente`,
+			});
+			// Refrescar la lista
+			fetchMinors(search, pagination.offset);
+		} catch (error) {
+			toast.error("Error al eliminar", {
+				description:
+					error instanceof Error ? error.message : "Intente nuevamente",
+			});
+		} finally {
+			setIsDeleting(false);
+			setMinorToDelete(null);
+		}
 	};
 
 	const calculateAge = (birthDate: string) => {
@@ -152,6 +187,36 @@ export default function MinorsPage() {
 				</div>
 			),
 		},
+		{
+			key: "actions",
+			header: "",
+			render: (minor: Minor) => (
+				<DropdownMenu>
+					<DropdownMenuTrigger asChild>
+						<button
+							type="button"
+							className="p-2 rounded-lg hover:bg-surface-muted transition-colors"
+							onClick={(e) => e.stopPropagation()}
+							aria-label="Abrir menú de acciones"
+						>
+							<MoreHorizontal className="w-4 h-4 text-foreground/60" />
+						</button>
+					</DropdownMenuTrigger>
+					<DropdownMenuContent align="end" className="w-48">
+						<DropdownMenuItem
+							onClick={(e) => {
+								e.stopPropagation();
+								setMinorToDelete(minor);
+							}}
+							className="text-red-600 focus:text-red-600"
+						>
+							<Trash2 className="w-4 h-4" />
+							Eliminar participante
+						</DropdownMenuItem>
+					</DropdownMenuContent>
+				</DropdownMenu>
+			),
+		},
 	];
 
 	return (
@@ -182,6 +247,7 @@ export default function MinorsPage() {
 			</div>
 
 			{/* Minors Table */}
+			{/* Minors Table */}
 			<div className="bg-surface rounded-xl border border-border p-4 lg:p-6">
 				<DataTable
 					data={minors}
@@ -199,6 +265,17 @@ export default function MinorsPage() {
 					}}
 				/>
 			</div>
+
+			{/* Modal de confirmación de eliminación */}
+			<DeleteConfirmModal
+				isOpen={!!minorToDelete}
+				onClose={() => setMinorToDelete(null)}
+				onConfirm={handleDeleteMinor}
+				isDeleting={isDeleting}
+				title="Eliminar Participante"
+				description="¿Estás seguro de que deseas eliminar este participante?"
+				itemName={minorToDelete?.fullName}
+			/>
 		</div>
 	);
 }
