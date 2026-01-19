@@ -121,16 +121,29 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
 
 		return (
 			<div
-				className="relative w-full border-2 border-neon-blue/50 rounded-xl bg-white overflow-hidden shadow-[0_0_15px_rgba(0,255,255,0.1)]"
+				className="relative w-full rounded-xl sm:rounded-2xl overflow-hidden
+					/* Fondo con gradiente sutil */
+					bg-gradient-to-br from-white via-gray-50 to-white
+					/* Borde premium */
+					border-2 border-blue-400/40 
+					/* Sombra con glow */
+					shadow-[0_4px_24px_rgba(52,152,219,0.15),inset_0_1px_0_rgba(255,255,255,0.5)]
+					/* Transiciones */
+					transition-all duration-300
+					/* Hover */
+					hover:border-blue-500/60 hover:shadow-[0_8px_32px_rgba(52,152,219,0.2)]
+					/* Focus within */
+					focus-within:border-blue-500/70 focus-within:shadow-[0_0_40px_rgba(52,152,219,0.2),0_12px_40px_rgba(52,152,219,0.15)]
+					focus-within:ring-4 focus-within:ring-blue-500/15"
 				ref={containerRef}
 			>
 				<SignatureCanvas
 					ref={sigCanvas}
-					penColor="black"
+					penColor="#1e3a5f"
 					canvasProps={{
 						width: canvasSize.width,
 						height: canvasSize.height,
-						className: "cursor-crosshair block",
+						className: "cursor-crosshair block touch-none",
 					}}
 					onEnd={handleSignatureEnd}
 				/>
@@ -138,14 +151,36 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
 				<button
 					type="button"
 					onClick={clearSignature}
-					className="absolute top-2 right-2 p-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full transition-colors z-10"
+					className="absolute top-2 right-2 p-2.5 sm:p-3
+						/* Fondo glass */
+						bg-white/80 backdrop-blur-sm
+						/* Borde */
+						border border-gray-200/50
+						/* Texto y colores */
+						text-gray-500
+						/* Bordes redondeados */
+						rounded-xl
+						/* Sombra */
+						shadow-md
+						/* Transiciones */
+						transition-all duration-200
+						/* Hover */
+						hover:bg-red-50 hover:text-red-500 hover:border-red-200 hover:scale-105 hover:shadow-lg
+						/* Active (móvil) */
+						active:scale-95
+						/* Focus */
+						focus:outline-none focus:ring-2 focus:ring-red-400/30
+						z-10"
 					title="Limpiar firma"
 				>
 					<Eraser size={18} />
 				</button>
 
-				<div className="absolute bottom-2 left-4 text-xs text-gray-400 pointer-events-none select-none">
-					Firme aquí
+				{/* Línea guía para la firma */}
+				<div className="absolute bottom-8 left-4 right-4 border-b border-dashed border-gray-300/60 pointer-events-none" />
+
+				<div className="absolute bottom-2 left-4 text-xs text-gray-400 pointer-events-none select-none font-medium">
+					Firme aquí ↑
 				</div>
 			</div>
 		);

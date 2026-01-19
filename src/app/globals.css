@@ -568,3 +568,293 @@ button:active {
     @apply bg-background text-foreground;
   }
 }
+
+/* ============================================================================
+   KIOSK INPUTS - ESTILOS PREMIUM MOBILE-FIRST
+   ============================================================================ */
+
+/* === BASE: Reset para inputs del kiosk === */
+.kiosk-input-base {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  font-family: inherit;
+  
+  /* Optimizaciones táctiles móvil */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  
+  /* Transiciones suaves */
+  transition: 
+    border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* === VARIANTE: Premium Glass === */
+.kiosk-input-premium {
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.08) 0%, 
+    rgba(255, 255, 255, 0.04) 50%,
+    rgba(255, 255, 255, 0.08) 100%
+  );
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: 1rem;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* Hover Premium */
+.kiosk-input-premium:hover:not(:disabled):not(:focus) {
+  border-color: rgba(46, 204, 113, 0.4);
+  background: linear-gradient(135deg, 
+    rgba(46, 204, 113, 0.08) 0%, 
+    rgba(255, 255, 255, 0.06) 50%,
+    rgba(46, 204, 113, 0.08) 100%
+  );
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    0 8px 24px rgba(46, 204, 113, 0.15),
+    0 0 0 1px rgba(46, 204, 113, 0.1);
+}
+
+/* Focus Premium */
+.kiosk-input-premium:focus {
+  outline: none;
+  border-color: rgba(46, 204, 113, 0.6);
+  background: linear-gradient(135deg, 
+    rgba(46, 204, 113, 0.12) 0%, 
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(46, 204, 113, 0.12) 100%
+  );
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 0 0 4px rgba(46, 204, 113, 0.2),
+    0 12px 32px rgba(46, 204, 113, 0.2);
+}
+
+/* Active/Pressed (móvil) */
+.kiosk-input-premium:active:not(:disabled) {
+  transform: scale(0.99);
+  box-shadow: 
+    inset 0 2px 4px rgba(0, 0, 0, 0.1),
+    0 0 0 4px rgba(46, 204, 113, 0.25);
+}
+
+/* Error State */
+.kiosk-input-premium.has-error {
+  border-color: rgba(239, 68, 68, 0.6);
+  background: linear-gradient(135deg, 
+    rgba(239, 68, 68, 0.08) 0%, 
+    rgba(255, 255, 255, 0.04) 50%,
+    rgba(239, 68, 68, 0.08) 100%
+  );
+}
+
+.kiosk-input-premium.has-error:focus {
+  box-shadow: 
+    0 0 0 4px rgba(239, 68, 68, 0.2),
+    0 12px 32px rgba(239, 68, 68, 0.15);
+}
+
+/* === DARK MODE OVERRIDES === */
+.dark .kiosk-input-premium {
+  background: linear-gradient(135deg, 
+    rgba(39, 39, 42, 0.9) 0%, 
+    rgba(24, 24, 27, 0.8) 50%,
+    rgba(39, 39, 42, 0.9) 100%
+  );
+  border-color: rgba(113, 113, 122, 0.4);
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.dark .kiosk-input-premium:hover:not(:disabled):not(:focus) {
+  background: linear-gradient(135deg, 
+    rgba(46, 204, 113, 0.1) 0%, 
+    rgba(39, 39, 42, 0.9) 50%,
+    rgba(46, 204, 113, 0.1) 100%
+  );
+  border-color: rgba(46, 204, 113, 0.5);
+}
+
+.dark .kiosk-input-premium:focus {
+  background: linear-gradient(135deg, 
+    rgba(46, 204, 113, 0.15) 0%, 
+    rgba(39, 39, 42, 0.95) 50%,
+    rgba(46, 204, 113, 0.15) 100%
+  );
+  border-color: rgba(46, 204, 113, 0.7);
+}
+
+/* === ANIMACIÓN: Glow pulsante en focus === */
+@keyframes kiosk-input-glow {
+  0%, 100% {
+    box-shadow: 
+      0 0 0 4px rgba(46, 204, 113, 0.15),
+      0 12px 32px rgba(46, 204, 113, 0.15);
+  }
+  50% {
+    box-shadow: 
+      0 0 0 6px rgba(46, 204, 113, 0.2),
+      0 16px 40px rgba(46, 204, 113, 0.2);
+  }
+}
+
+.kiosk-input-premium:focus-visible {
+  animation: kiosk-input-glow 2s ease-in-out infinite;
+}
+
+/* === SELECT: Estilos específicos === */
+.kiosk-select-premium {
+  cursor: pointer;
+  padding-right: 3rem !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 1.25rem;
+}
+
+.kiosk-select-premium:focus {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%232ecc71' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+}
+
+/* Rotación del chevron en focus */
+.kiosk-select-premium:focus {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%232ecc71' stroke-width='2' style='transform:rotate(180deg)'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+}
+
+/* === OTP INPUT: Estilos especiales === */
+.kiosk-otp-digit {
+  background: linear-gradient(180deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.875rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  caret-color: var(--brand-green);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.kiosk-otp-digit:hover:not(:disabled):not(:focus) {
+  border-color: rgba(52, 152, 219, 0.5);
+  background: linear-gradient(180deg, 
+    rgba(52, 152, 219, 0.1) 0%, 
+    rgba(255, 255, 255, 0.08) 100%
+  );
+}
+
+.kiosk-otp-digit:focus {
+  outline: none;
+  border-color: var(--brand-blue);
+  background: linear-gradient(180deg, 
+    rgba(52, 152, 219, 0.15) 0%, 
+    rgba(255, 255, 255, 0.1) 100%
+  );
+  box-shadow: 
+    0 0 0 4px rgba(52, 152, 219, 0.2),
+    0 8px 24px rgba(52, 152, 219, 0.15);
+  transform: scale(1.05);
+}
+
+.kiosk-otp-digit.has-value {
+  border-color: var(--brand-green);
+  background: linear-gradient(180deg, 
+    rgba(46, 204, 113, 0.15) 0%, 
+    rgba(46, 204, 113, 0.08) 100%
+  );
+  color: var(--brand-green);
+}
+
+.kiosk-otp-digit.has-error {
+  border-color: rgba(239, 68, 68, 0.7);
+  background: linear-gradient(180deg, 
+    rgba(239, 68, 68, 0.1) 0%, 
+    rgba(239, 68, 68, 0.05) 100%
+  );
+  animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+/* Dark mode OTP */
+.dark .kiosk-otp-digit {
+  background: linear-gradient(180deg, 
+    rgba(39, 39, 42, 0.95) 0%, 
+    rgba(24, 24, 27, 0.9) 100%
+  );
+  border-color: rgba(113, 113, 122, 0.5);
+}
+
+.dark .kiosk-otp-digit:focus {
+  background: linear-gradient(180deg, 
+    rgba(52, 152, 219, 0.2) 0%, 
+    rgba(39, 39, 42, 0.95) 100%
+  );
+}
+
+.dark .kiosk-otp-digit.has-value {
+  background: linear-gradient(180deg, 
+    rgba(46, 204, 113, 0.2) 0%, 
+    rgba(39, 39, 42, 0.95) 100%
+  );
+}
+
+/* === ANIMACIÓN: Shake para errores === */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+.animate-shake {
+  animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+/* === MOBILE OPTIMIZATIONS === */
+@media (max-width: 640px) {
+  .kiosk-input-premium {
+    min-height: 52px;
+    font-size: 1rem;
+    padding: 0.875rem 1rem;
+  }
+  
+  .kiosk-otp-digit {
+    width: 2.75rem;
+    height: 3.25rem;
+    font-size: 1.5rem;
+  }
+}
+
+@media (min-width: 641px) {
+  .kiosk-input-premium {
+    min-height: 56px;
+    font-size: 1.125rem;
+    padding: 1rem 1.25rem;
+  }
+  
+  .kiosk-otp-digit {
+    width: 3.5rem;
+    height: 4rem;
+    font-size: 1.875rem;
+  }
+}
+
+/* === ACCESIBILIDAD: Respeta preferencias de movimiento reducido === */
+@media (prefers-reduced-motion: reduce) {
+  .kiosk-input-premium,
+  .kiosk-otp-digit {
+    transition: none;
+    animation: none;
+  }
+  
+  .kiosk-input-premium:focus-visible {
+    animation: none;
+  }
+}

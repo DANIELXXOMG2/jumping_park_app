@@ -188,27 +188,61 @@ export function SmartOtpInput({
 						disabled={disabled}
 						aria-label={`Dígito ${index + 1} de ${length}`}
 						className={cn(
-							// Base styles
-							"h-14 w-12 sm:h-16 sm:w-14 rounded-xl text-center text-2xl sm:text-3xl font-bold",
-							"transition-all duration-200 ease-in-out",
-							"border-2 outline-none ring-offset-2",
+							// Base styles - Mobile First
+							"kiosk-otp-digit",
+							"h-14 w-12 sm:h-16 sm:w-14 md:h-18 md:w-16",
+							"rounded-xl sm:rounded-2xl",
+							"text-center text-2xl sm:text-3xl md:text-4xl font-bold",
+							"outline-none",
 							
-							// Estados normales
-							!hasError && !isFocused && "border-gray-300 bg-white",
-							!hasError && isFocused && "border-blue-500 ring-2 ring-blue-200 scale-105",
+							// Fondo con gradiente premium
+							"bg-gradient-to-b from-white/10 via-white/5 to-white/10",
+							"dark:from-zinc-800/90 dark:via-zinc-900/80 dark:to-zinc-800/90",
 							
-							// Estado con valor
-							digit && !hasError && "border-blue-600 bg-blue-50",
+							// Borde con transición suave
+							"border-2 border-white/20 dark:border-zinc-600/50",
+							
+							// Transiciones
+							"transition-all duration-300 ease-out",
+							
+							// Sombra base
+							"shadow-[0_4px_16px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.1)]",
+							"dark:shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]",
+							
+							// Hover state
+							!disabled && !hasError && "hover:border-blue-400/60 hover:bg-gradient-to-b hover:from-blue-500/10 hover:via-white/8 hover:to-blue-500/10",
+							!disabled && !hasError && "dark:hover:border-blue-400/50 dark:hover:from-blue-500/15 dark:hover:via-zinc-800/90 dark:hover:to-blue-500/15",
+							
+							// Focus state - premium glow
+							!hasError && isFocused && [
+								"border-blue-500 dark:border-blue-400",
+								"bg-gradient-to-b from-blue-500/15 via-white/10 to-blue-500/15",
+								"dark:from-blue-500/20 dark:via-zinc-800/95 dark:to-blue-500/20",
+								"ring-4 ring-blue-500/25 dark:ring-blue-400/20",
+								"shadow-[0_8px_32px_rgba(59,130,246,0.2),inset_0_1px_0_rgba(255,255,255,0.15)]",
+								"scale-105"
+							],
+							
+							// Estado con valor - verde de éxito
+							digit && !hasError && !isFocused && [
+								"border-emerald-500/60 dark:border-emerald-400/50",
+								"bg-gradient-to-b from-emerald-500/15 via-emerald-500/8 to-emerald-500/15",
+								"dark:from-emerald-500/20 dark:via-zinc-800/90 dark:to-emerald-500/20",
+								"text-emerald-600 dark:text-emerald-400"
+							],
 							
 							// Estado de error
-							hasError && "border-red-500 bg-red-50 text-red-700",
-							hasError && isFocused && "ring-2 ring-red-200",
+							hasError && [
+								"border-red-500/70 dark:border-red-400/60",
+								"bg-gradient-to-b from-red-500/10 via-red-500/5 to-red-500/10",
+								"dark:from-red-500/15 dark:via-zinc-800/90 dark:to-red-500/15",
+								"text-red-600 dark:text-red-400",
+								"animate-shake"
+							],
+							hasError && isFocused && "ring-4 ring-red-500/25 dark:ring-red-400/20",
 							
 							// Estado deshabilitado
-							disabled && "opacity-50 cursor-not-allowed bg-gray-100",
-							
-							// Hover (solo si no está deshabilitado)
-							!disabled && "hover:border-blue-400"
+							disabled && "opacity-50 cursor-not-allowed bg-zinc-200/50 dark:bg-zinc-800/50"
 						)}
 					/>
 				);

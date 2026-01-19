@@ -12,6 +12,7 @@ import {
 	visitorSchema,
 } from "@/lib/schemas/visitor.schema";
 import { useKioskStore } from "@/store/kioskStore";
+import { cn } from "@/lib/utils";
 
 export default function RegistroPage() {
 	const router = useRouter();
@@ -103,14 +104,46 @@ export default function RegistroPage() {
 
 	const renderError = (message?: string) =>
 		message ? (
-			<p className="flex items-center gap-1.5 text-sm text-red-400 mt-1">
-				<AlertCircle className="w-3.5 h-3.5" />
+			<p className="flex items-center gap-1.5 text-sm text-red-400 mt-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
+				<AlertCircle className="w-3.5 h-3.5 shrink-0" />
 				{message}
 			</p>
 		) : null;
 
-	const fieldClasses =
-		"w-full rounded-xl sm:rounded-2xl border-2 border-white/15 dark:border-zinc-700/50 bg-gradient-to-br from-white/5 via-white/10 to-white/5 dark:from-zinc-900 dark:via-zinc-950 dark:to-zinc-900 px-4 sm:px-6 py-3 sm:py-4 text-base sm:text-lg text-foreground placeholder:text-foreground/40 focus:outline-none focus:ring-4 focus:ring-primary/30 focus:border-primary/50 transition-all duration-300 hover:border-primary/30";
+	// Estilos premium para inputs del formulario de registro
+	const fieldClasses = cn(
+		// Base
+		"kiosk-input-base",
+		"w-full text-base sm:text-lg text-foreground",
+		"rounded-xl sm:rounded-2xl",
+		"px-4 sm:px-6 py-3 sm:py-4",
+		// Placeholder
+		"placeholder:text-foreground/40",
+		// Fondo premium glass
+		"bg-gradient-to-br from-white/8 via-white/5 to-white/8",
+		"dark:from-zinc-800/80 dark:via-zinc-900/70 dark:to-zinc-800/80",
+		"backdrop-blur-sm",
+		// Borde
+		"border-2 border-white/15 dark:border-zinc-600/40",
+		// Sombra
+		"shadow-[inset_0_1px_2px_rgba(0,0,0,0.1),0_4px_16px_rgba(0,0,0,0.08)]",
+		"dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.2),0_4px_16px_rgba(0,0,0,0.25)]",
+		// Transiciones
+		"transition-all duration-300 ease-out",
+		// Hover
+		"hover:border-primary/40 hover:bg-gradient-to-br",
+		"hover:from-primary/8 hover:via-white/8 hover:to-primary/8",
+		"dark:hover:from-primary/10 dark:hover:via-zinc-800/80 dark:hover:to-primary/10",
+		"hover:shadow-[inset_0_1px_2px_rgba(0,0,0,0.1),0_8px_24px_rgba(46,204,113,0.12)]",
+		// Focus
+		"focus:outline-none focus:ring-4 focus:ring-primary/20",
+		"focus:border-primary/60",
+		"focus:bg-gradient-to-br focus:from-primary/12 focus:via-white/10 focus:to-primary/12",
+		"dark:focus:from-primary/15 dark:focus:via-zinc-800/90 dark:focus:to-primary/15",
+		"focus:shadow-[0_0_32px_rgba(46,204,113,0.15),0_12px_32px_rgba(46,204,113,0.12)]",
+		// Active (móvil)
+		"active:scale-[0.99]"
+	);
 
 	if (!hasCedula) {
 		return (

@@ -195,28 +195,39 @@ export default function IngresoPage() {
 							onChange={handleInputChange}
 							placeholder={t("ingreso.placeholder")}
 							className="
+								kiosk-input-base
 								w-full rounded-xl sm:rounded-2xl md:rounded-[2.5rem]
-								/* ═══ FONDO ═══ */
-								bg-gradient-to-br from-white via-gray-50 to-white
-								dark:from-zinc-900 dark:via-zinc-950 dark:to-zinc-900
-								/* ═══ BORDE ═══ */
-								border-2 border-gray-200/50 dark:border-zinc-700/50
+								/* ═══ FONDO PREMIUM GLASS ═══ */
+								bg-gradient-to-br from-white/10 via-white/5 to-white/10
+								dark:from-zinc-900/95 dark:via-zinc-950/90 dark:to-zinc-900/95
+								backdrop-blur-xl
+								/* ═══ BORDE CON GRADIENTE SUTIL ═══ */
+								border-2 border-white/15 dark:border-zinc-600/40
 								/* ═══ TEXTO ═══ */
 								text-zinc-900 dark:text-white
-								placeholder:text-gray-400 dark:placeholder:text-zinc-600
+								placeholder:text-gray-400/70 dark:placeholder:text-zinc-500
 								/* ═══ DIMENSIONES ═══ */
 								px-4 sm:px-6 md:px-10 py-4 sm:py-6 md:py-8
 								text-center text-2xl sm:text-3xl md:text-5xl font-bold
 								tracking-[0.15em] sm:tracking-[0.25em] md:tracking-[0.4em]
-								/* ═══ SOMBRA ═══ */
-								shadow-inner shadow-gray-200/50 dark:shadow-black/30
+								/* ═══ SOMBRA PREMIUM ═══ */
+								shadow-[inset_0_2px_4px_rgba(0,0,0,0.1),0_8px_32px_rgba(0,0,0,0.12)]
+								dark:shadow-[inset_0_2px_4px_rgba(0,0,0,0.3),0_8px_32px_rgba(0,0,0,0.4)]
 								/* ═══ TRANSICIONES ═══ */
-								transition-all duration-300
-								/* ═══ FOCUS ═══ */
-								focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/30
-								focus-visible:border-primary/50 focus-visible:shadow-[0_0_30px_rgba(46,204,113,0.15)]
+								transition-all duration-300 ease-out
 								/* ═══ HOVER ═══ */
-								hover:border-primary/30
+								hover:border-primary/40 hover:bg-gradient-to-br 
+								hover:from-primary/8 hover:via-white/8 hover:to-primary/8
+								dark:hover:from-primary/10 dark:hover:via-zinc-900/95 dark:hover:to-primary/10
+								hover:shadow-[inset_0_2px_4px_rgba(0,0,0,0.1),0_12px_40px_rgba(46,204,113,0.15)]
+								/* ═══ FOCUS ═══ */
+								focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/25
+								focus-visible:border-primary/60 
+								focus-visible:bg-gradient-to-br focus-visible:from-primary/12 focus-visible:via-white/10 focus-visible:to-primary/12
+								dark:focus-visible:from-primary/15 dark:focus-visible:via-zinc-900/98 dark:focus-visible:to-primary/15
+								focus-visible:shadow-[0_0_40px_rgba(46,204,113,0.2),0_16px_48px_rgba(46,204,113,0.15)]
+								/* ═══ ACTIVE (MÓVIL) ═══ */
+								active:scale-[0.99]
 								uppercase
 							"
 							aria-label={t("ingreso.placeholder")}
@@ -224,7 +235,13 @@ export default function IngresoPage() {
 							autoCapitalize="characters"
 						/>
 						{/* Efecto glow al focus */}
-						<div className="absolute inset-0 rounded-xl sm:rounded-2xl md:rounded-[2.5rem] bg-primary/0 group-focus-within:bg-primary/5 transition-colors duration-300 pointer-events-none" aria-hidden="true" />
+						<div 
+							className="absolute inset-0 rounded-xl sm:rounded-2xl md:rounded-[2.5rem] opacity-0 group-focus-within:opacity-100 transition-opacity duration-500 pointer-events-none"
+							style={{
+								background: "radial-gradient(ellipse at center, rgba(46,204,113,0.1) 0%, transparent 70%)"
+							}}
+							aria-hidden="true" 
+						/>
 					</div>
 					
 					<p className="mt-2 sm:mt-3 text-xs sm:text-sm text-foreground/60 flex items-center justify-center gap-1.5">
