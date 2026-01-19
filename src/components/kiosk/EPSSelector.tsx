@@ -127,32 +127,66 @@ export function EPSSelector({
 		}
 	};
 
-	const inputBaseClass =
-		"w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white text-sm focus:border-neon-blue focus:outline-none focus:ring-1 focus:ring-neon-blue/50 transition-all";
+	// Clase base premium para inputs y selects
+	const inputBaseClass = cn(
+		// Base
+		"kiosk-input-base kiosk-input-premium",
+		"w-full text-sm sm:text-base text-white",
+		"bg-gradient-to-br from-zinc-800/90 via-zinc-900/80 to-zinc-800/90",
+		"border-2 border-zinc-600/50 rounded-xl",
+		"px-3 py-3 sm:px-4 sm:py-3.5",
+		// Placeholder
+		"placeholder:text-zinc-500",
+		// Hover
+		"hover:border-emerald-500/40 hover:bg-gradient-to-br hover:from-emerald-500/10 hover:via-zinc-900/90 hover:to-emerald-500/10",
+		// Focus
+		"focus:border-emerald-500/60 focus:outline-none focus:ring-4 focus:ring-emerald-500/20",
+		"focus:bg-gradient-to-br focus:from-emerald-500/15 focus:via-zinc-900/95 focus:to-emerald-500/15",
+		"focus:shadow-[0_0_24px_rgba(46,204,113,0.15)]",
+		// Active (móvil)
+		"active:scale-[0.99]",
+		// Transiciones
+		"transition-all duration-300 ease-out"
+	);
+
+	// Clase para botones de selección de régimen
+	const regimenButtonClass = (isSelected: boolean) => cn(
+		// Base
+		"flex flex-col items-center gap-1.5 p-3 sm:p-4 rounded-xl border-2 transition-all duration-300 text-center",
+		// Touch friendly
+		"touch-manipulation active:scale-[0.97]",
+		// Estado seleccionado
+		isSelected && [
+			"border-emerald-500/70 bg-gradient-to-br from-emerald-500/15 via-emerald-500/10 to-emerald-500/15",
+			"text-white shadow-[0_4px_20px_rgba(46,204,113,0.2)]",
+			"ring-2 ring-emerald-500/20"
+		],
+		// Estado no seleccionado
+		!isSelected && [
+			"border-zinc-600/40 bg-zinc-800/50 text-zinc-400",
+			"hover:border-zinc-500/60 hover:bg-zinc-800/70 hover:text-zinc-300",
+			"hover:shadow-[0_4px_16px_rgba(0,0,0,0.2)]"
+		]
+	);
 
 	return (
 		<div className={cn("space-y-3", className)}>
 			{/* Paso 1: Selección de Régimen */}
 			<div>
-				<span className="flex items-center gap-1 text-xs text-gray-500 mb-2">
-					<Building2 size={12} />
+				<span className="flex items-center gap-1.5 text-xs text-zinc-400 mb-2.5 font-medium uppercase tracking-wider">
+					<Building2 size={12} className="text-emerald-500/70" />
 					{t("forms.health.affiliationType")}
 				</span>
-				<div className="grid grid-cols-2 gap-2">
+				<div className="grid grid-cols-2 gap-2.5 sm:gap-3">
 					{regimenesOptions.map((regimen) => (
 						<button
 							key={regimen.value}
 							type="button"
 							onClick={() => handleRegimenChange(regimen.value)}
-							className={cn(
-								"flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all text-left",
-								selectedRegimen === regimen.value
-									? "border-neon-blue bg-neon-blue/10 text-white"
-									: "border-gray-700 bg-gray-800/50 text-gray-400 hover:border-gray-600 hover:bg-gray-800",
-							)}
+							className={regimenButtonClass(selectedRegimen === regimen.value)}
 						>
-							<span className="text-lg">{regimen.icon}</span>
-							<span className="text-xs font-medium text-center">
+							<span className="text-xl sm:text-2xl">{regimen.icon}</span>
+							<span className="text-xs sm:text-sm font-semibold">
 								{getRegimenLabel(regimen.value)}
 							</span>
 						</button>
@@ -163,18 +197,18 @@ export function EPSSelector({
 			{/* Paso 2: Selección de EPS (solo si hay régimen seleccionado) */}
 			{selectedRegimen && selectedRegimen !== "particular" && (
 				<div className="animate-in slide-in-from-top-2 duration-200">
-					<label htmlFor="epsSelect" className="flex items-center gap-1 text-xs text-gray-500 mb-1">
-						<Heart size={12} />
+					<label htmlFor="epsSelect" className="flex items-center gap-1.5 text-xs text-zinc-400 mb-2 font-medium uppercase tracking-wider">
+						<Heart size={12} className="text-emerald-500/70" />
 						{t("forms.health.companionEps")}
 					</label>
-					<div className="relative">
+					<div className="relative group">
 						<select
 							id="epsSelect"
 							value={selectedEPS}
 							onChange={(e) => handleEPSChange(e.target.value)}
 							className={cn(
 								inputBaseClass,
-								"appearance-none cursor-pointer pr-10",
+								"appearance-none cursor-pointer pr-12",
 							)}
 						>
 							<option value="">{t("forms.health.selectEps")}</option>
@@ -186,7 +220,7 @@ export function EPSSelector({
 						</select>
 						<ChevronDown
 							size={18}
-							className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
+							className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none transition-all duration-300 group-hover:text-emerald-500/70 group-focus-within:text-emerald-500 group-focus-within:rotate-180"
 						/>
 					</div>
 				</div>
@@ -195,18 +229,18 @@ export function EPSSelector({
 			{/* Paso 2b: Si es régimen particular, mostrar opciones directamente */}
 			{selectedRegimen === "particular" && (
 				<div className="animate-in slide-in-from-top-2 duration-200">
-					<label htmlFor="coverageSelect" className="flex items-center gap-1 text-xs text-gray-500 mb-1">
-						<Heart size={12} />
+					<label htmlFor="coverageSelect" className="flex items-center gap-1.5 text-xs text-zinc-400 mb-2 font-medium uppercase tracking-wider">
+						<Heart size={12} className="text-emerald-500/70" />
 						{t("forms.health.coverageType")}
 					</label>
-					<div className="relative">
+					<div className="relative group">
 						<select
 							id="coverageSelect"
 							value={selectedEPS}
 							onChange={(e) => handleEPSChange(e.target.value)}
 							className={cn(
 								inputBaseClass,
-								"appearance-none cursor-pointer pr-10",
+								"appearance-none cursor-pointer pr-12",
 							)}
 						>
 							<option value="">{t("forms.health.selectPlaceholder")}</option>
@@ -215,7 +249,7 @@ export function EPSSelector({
 						</select>
 						<ChevronDown
 							size={18}
-							className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
+							className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none transition-all duration-300 group-hover:text-emerald-500/70 group-focus-within:text-emerald-500 group-focus-within:rotate-180"
 						/>
 					</div>
 				</div>
@@ -224,8 +258,8 @@ export function EPSSelector({
 			{/* Paso 3: Input manual si seleccionó "Otra" */}
 			{selectedEPS === "otra" && (
 				<div className="animate-in slide-in-from-top-2 duration-200">
-					<label htmlFor="customEps" className="flex items-center gap-1 text-xs text-gray-500 mb-1">
-						<Heart size={12} />
+					<label htmlFor="customEps" className="flex items-center gap-1.5 text-xs text-zinc-400 mb-2 font-medium uppercase tracking-wider">
+						<Heart size={12} className="text-emerald-500/70" />
 						{t("forms.health.epsName")}
 					</label>
 					<input
@@ -237,21 +271,30 @@ export function EPSSelector({
 						className={inputBaseClass}
 						autoFocus
 					/>
-					<p className="text-gray-600 text-xs mt-1">
+					<p className="text-zinc-500 text-xs mt-1.5">
 						{t("forms.health.writeExactName")}
 					</p>
 				</div>
 			)}
 
 			{/* Mensaje de error */}
-			{error && <span className="text-red-500 text-xs block">{error}</span>}
+			{error && (
+				<span className="flex items-center gap-1.5 text-red-400 text-xs animate-in fade-in slide-in-from-top-1 duration-200">
+					<span className="w-1 h-1 rounded-full bg-red-400" />
+					{error}
+				</span>
+			)}
 
 			{/* Preview de selección */}
 			{(selectedEPS && selectedEPS !== "otra") ||
 			(selectedEPS === "otra" && customEPS) ? (
-				<div className="flex items-center gap-2 p-2 bg-neon-green/10 border border-neon-green/30 rounded-lg">
-					<Heart size={14} className="text-neon-green" />
-					<span className="text-neon-green text-xs font-medium">
+				<div className="flex items-center gap-2.5 px-3 py-2.5 
+					bg-gradient-to-r from-emerald-500/15 via-emerald-500/10 to-emerald-500/15 
+					border border-emerald-500/30 rounded-xl
+					shadow-[0_2px_12px_rgba(46,204,113,0.1)]
+					animate-in fade-in slide-in-from-bottom-2 duration-300">
+					<Heart size={14} className="text-emerald-500" />
+					<span className="text-emerald-400 text-sm font-medium">
 						{selectedEPS === "otra" && customEPS
 							? customEPS
 							: availableEPS.find((e) => e.value === selectedEPS)?.label ||

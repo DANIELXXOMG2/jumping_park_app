@@ -78,8 +78,27 @@ export function MinorFormModal({
 
 	if (!isOpen) return null;
 
-	const inputClass =
-		"w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white text-sm focus:border-neon-blue focus:outline-none focus:ring-1 focus:ring-neon-blue/50 transition-all";
+	// Clase base premium para inputs del modal
+	const inputClass = cn(
+		// Base
+		"kiosk-input-base kiosk-input-premium",
+		"w-full text-sm sm:text-base text-white",
+		"bg-gradient-to-br from-zinc-800/90 via-zinc-900/80 to-zinc-800/90",
+		"border-2 border-zinc-600/50 rounded-xl",
+		"px-3 py-3 sm:px-4 sm:py-3.5",
+		// Placeholder
+		"placeholder:text-zinc-500",
+		// Hover
+		"hover:border-emerald-500/40 hover:bg-gradient-to-br hover:from-emerald-500/10 hover:via-zinc-900/90 hover:to-emerald-500/10",
+		// Focus
+		"focus:border-emerald-500/60 focus:outline-none focus:ring-4 focus:ring-emerald-500/20",
+		"focus:bg-gradient-to-br focus:from-emerald-500/15 focus:via-zinc-900/95 focus:to-emerald-500/15",
+		"focus:shadow-[0_0_24px_rgba(46,204,113,0.15)]",
+		// Active (móvil)
+		"active:scale-[0.99]",
+		// Transiciones
+		"transition-all duration-300 ease-out"
+	);
 
 	// Use portal to render outside of parent form - fixes nested form issue
 	const modalContent = (
