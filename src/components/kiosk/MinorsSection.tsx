@@ -3,6 +3,7 @@
 import {
 	Baby,
 	Calendar,
+	ChevronDown,
 	CreditCard,
 	Edit3,
 	Heart,
@@ -11,7 +12,7 @@ import {
 	Trash2,
 	User,
 } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import type {
 	UseFieldArrayReturn,
 	UseFormGetValues,
@@ -24,6 +25,7 @@ import { getEPSLabel } from "@/lib/data/epsColombiaData";
 import type { ConsentFormData, Minor } from "@/lib/schemas/consent.schema";
 import { MinorFormModal } from "./MinorFormModal";
 import { MinorHistoryModal } from "./MinorHistoryModal";
+import { MinorInlineForm } from "./MinorInlineForm";
 
 interface MinorsSectionProps {
 	fields: UseFieldArrayReturn<ConsentFormData, "minors", "id">["fields"];
@@ -47,6 +49,20 @@ export function MinorsSection({
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
 	const [editingIndex, setEditingIndex] = useState<number | null>(null);
+	// Estado para controlar si el usuario cerró manualmente el formulario inline
+	const [wasInlineManuallyMinimized, setWasInlineManuallyMinimized] = useState(false);
+	// Estado para evitar problemas de hidratación - solo renderizar después de montar en cliente
+	const [hasMounted, setHasMounted] = useState(false);
+	
+	// Marcar como montado después del primer render en el cliente
+	useEffect(() => {
+		setHasMounted(true);
+	}, []);
+	
+	// El formulario inline está minimizado si:
+	// 1. Ya hay al menos un participante, O
+	// 2. El usuario lo minimizó manualmente
+	const isInlineMinimized = fields.length > 0 || wasInlineManuallyMinimized;
 
 	const { playClick, playSuccess } = useUISound();
 	const { t } = useLanguage();
@@ -105,6 +121,27 @@ export function MinorsSection({
 		},
 		[editingIndex, update, append, playSuccess, handleCloseModal],
 	);
+
+	// Handler para guardar desde el formulario inline
+	const handleSaveInlineMinor = useCallback(
+		(data: Minor) => {
+			append(data);
+			playSuccess();
+			// No necesitamos setear nada porque fields.length > 0 automaticamente minimiza
+		},
+		[append, playSuccess],
+	);
+
+	// Handler para minimizar el formulario inline manualmente
+	const handleMinimizeInline = useCallback(() => {
+		setWasInlineManuallyMinimized(true);
+	}, []);
+
+	// Handler para expandir el formulario inline (mostrar mensaje vacío con botón)
+	const handleExpandInline = useCallback(() => {
+		playClick();
+		setWasInlineManuallyMinimized(false);
+	}, [playClick]);
 
 	const handleRemoveMinor = useCallback(
 		(index: number) => {
@@ -232,6 +269,47 @@ export function MinorsSection({
 				</div>
 			</div>
 
+			{/* Formulario Inline - Se muestra cuando no hay participantes y no está minimizado */}
+			{/* Solo se renderiza después de montar para evitar errores de hidratación */}
+			{hasMounted && fields.length === 0 && !isInlineMinimized && (
+				<MinorInlineForm
+					onSave={handleSaveInlineMinor}
+					onMinimize={handleMinimizeInline}
+					isMinimized={isInlineMinimized}
+				/>
+			)}
+
+			{/* Estado vacío con botón para expandir formulario inline */}
+			{/* En SSR o antes de montar, mostramos el estado vacío por defecto */}
+			{((!hasMounted && fields.length === 0) || (hasMounted && fields.length === 0 && isInlineMinimized)) && (
+				<div className="relative overflow-hidden text-center py-10 border-2 border-dashed border-gray-700/50 rounded-2xl bg-gradient-to-b from-gray-900/50 to-gray-800/30 backdrop-blur-sm group hover:border-emerald-500/30 transition-all duration-500">
+					{/* Efecto de partículas decorativas */}
+					<div className="absolute inset-0 opacity-30">
+						<div className="absolute top-4 left-1/4 w-2 h-2 bg-emerald-500/40 rounded-full animate-pulse" />
+						<div className="absolute top-8 right-1/3 w-1.5 h-1.5 bg-cyan-500/40 rounded-full animate-pulse delay-300" />
+						<div className="absolute bottom-6 left-1/3 w-1 h-1 bg-teal-500/40 rounded-full animate-pulse delay-500" />
+					</div>
+					
+					<div className="relative">
+						<div className="inline-flex p-4 rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-700/50 border border-gray-600/30 mb-4 group-hover:scale-110 group-hover:border-emerald-500/30 transition-all duration-500">
+							<Baby className="w-10 h-10 text-gray-500 group-hover:text-emerald-400 transition-colors duration-500" />
+						</div>
+						<p className="text-gray-300 font-medium">{t("minors.section.emptyTitle")}</p>
+						<p className="text-gray-500 text-sm mt-1.5 max-w-xs mx-auto">
+							{t("minors.section.emptySubtitle")}
+						</p>
+						<button
+							type="button"
+							onClick={handleExpandInline}
+							className="mt-4 inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 hover:from-emerald-500/25 hover:to-teal-500/25 text-emerald-400 font-semibold rounded-xl transition-all duration-300 transform hover:scale-[1.02] border border-emerald-500/30 hover:border-emerald-400/50"
+						>
+							<ChevronDown size={18} />
+							{t("minors.inline.expand")}
+						</button>
+					</div>
+				</div>
+			)}
+
 			{/* Lista de Participantes - Tarjetas con animaciones */}
 			{fields.length > 0 && (
 				<div className="space-y-3">
@@ -252,28 +330,6 @@ export function MinorsSection({
 							/>
 						);
 					})}
-				</div>
-			)}
-
-			{/* Estado vacío mejorado */}
-			{fields.length === 0 && (
-				<div className="relative overflow-hidden text-center py-10 border-2 border-dashed border-gray-700/50 rounded-2xl bg-gradient-to-b from-gray-900/50 to-gray-800/30 backdrop-blur-sm group hover:border-emerald-500/30 transition-all duration-500">
-					{/* Efecto de partículas decorativas */}
-					<div className="absolute inset-0 opacity-30">
-						<div className="absolute top-4 left-1/4 w-2 h-2 bg-emerald-500/40 rounded-full animate-pulse" />
-						<div className="absolute top-8 right-1/3 w-1.5 h-1.5 bg-cyan-500/40 rounded-full animate-pulse delay-300" />
-						<div className="absolute bottom-6 left-1/3 w-1 h-1 bg-teal-500/40 rounded-full animate-pulse delay-500" />
-					</div>
-					
-					<div className="relative">
-						<div className="inline-flex p-4 rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-700/50 border border-gray-600/30 mb-4 group-hover:scale-110 group-hover:border-emerald-500/30 transition-all duration-500">
-							<Baby className="w-10 h-10 text-gray-500 group-hover:text-emerald-400 transition-colors duration-500" />
-						</div>
-						<p className="text-gray-300 font-medium">{t("minors.section.emptyTitle")}</p>
-						<p className="text-gray-500 text-sm mt-1.5 max-w-xs mx-auto">
-							{t("minors.section.emptySubtitle")}
-						</p>
-					</div>
 				</div>
 			)}
 
