@@ -478,6 +478,31 @@ export const dictionary = {
 		es: "Actualizar",
 		en: "Update",
 	},
+	// Formulario inline de participantes
+	"minors.inline.title": {
+		es: "Registrar Primer Participante",
+		en: "Register First Participant",
+	},
+	"minors.inline.subtitle": {
+		es: "Completa los datos del participante para continuar",
+		en: "Fill in the participant data to continue",
+	},
+	"minors.inline.minimize": {
+		es: "Minimizar formulario",
+		en: "Minimize form",
+	},
+	"minors.inline.expand": {
+		es: "Mostrar formulario",
+		en: "Show form",
+	},
+	"minors.inline.saveButton": {
+		es: "Guardar Participante",
+		en: "Save Participant",
+	},
+	"minors.inline.saving": {
+		es: "Guardando...",
+		en: "Saving...",
+	},
 	// Modal de participantes
 	"minors.modal.addTitle": {
 		es: "Agregar Participante",
