@@ -83,21 +83,30 @@ export function MinorFormModal({
 		// Base
 		"kiosk-input-base kiosk-input-premium",
 		"w-full text-sm sm:text-base text-white",
-		"bg-gradient-to-br from-zinc-800/90 via-zinc-900/80 to-zinc-800/90",
+		"bg-zinc-800 dark:bg-zinc-800",
 		"border-2 border-zinc-600/50 rounded-xl",
 		"px-3 py-3 sm:px-4 sm:py-3.5",
 		// Placeholder
 		"placeholder:text-zinc-500",
 		// Hover
-		"hover:border-emerald-500/40 hover:bg-gradient-to-br hover:from-emerald-500/10 hover:via-zinc-900/90 hover:to-emerald-500/10",
+		"hover:border-emerald-500/40 hover:bg-zinc-700",
 		// Focus
 		"focus:border-emerald-500/60 focus:outline-none focus:ring-4 focus:ring-emerald-500/20",
-		"focus:bg-gradient-to-br focus:from-emerald-500/15 focus:via-zinc-900/95 focus:to-emerald-500/15",
+		"focus:bg-zinc-700",
 		"focus:shadow-[0_0_24px_rgba(46,204,113,0.15)]",
 		// Active (móvil)
 		"active:scale-[0.99]",
 		// Transiciones
-		"transition-all duration-300 ease-out"
+		"transition-all duration-300 ease-out",
+		// Estilos para options de select
+		"[&_option]:bg-zinc-800 [&_option]:text-white"
+	);
+
+	// Clase específica para selects con opciones legibles
+	const selectClass = cn(
+		inputClass,
+		"appearance-none cursor-pointer",
+		"bg-zinc-800 text-white"
 	);
 
 	// Use portal to render outside of parent form - fixes nested form issue
@@ -233,7 +242,7 @@ export function MinorFormModal({
 								<select
 									id="minorIdType"
 									{...register("idType")}
-									className={cn(inputClass, "appearance-none cursor-pointer")}
+									className={selectClass}
 								>
 									{DOCUMENT_ID_TYPES.map((type) => (
 										<option key={type} value={type}>
@@ -275,7 +284,7 @@ export function MinorFormModal({
 							<select
 								id="minorRelationship"
 								{...register("relationship")}
-								className={cn(inputClass, "appearance-none cursor-pointer")}
+								className={selectClass}
 							>
 								<option value="hijo">{t("minors.relationship.hijo")}</option>
 								<option value="sobrino">{t("minors.relationship.sobrino")}</option>
