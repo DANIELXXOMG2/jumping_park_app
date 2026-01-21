@@ -82,7 +82,7 @@ export function MinorFormModal({
 	const inputClass = cn(
 		// Base
 		"kiosk-input-base kiosk-input-premium",
-		"w-full text-sm sm:text-base text-white",
+		"w-full text-sm sm:text-base",
 		"bg-zinc-800 dark:bg-zinc-800",
 		"border-2 border-zinc-600/50 rounded-xl",
 		"px-3 py-3 sm:px-4 sm:py-3.5",
@@ -326,7 +326,7 @@ export function MinorFormModal({
 							<button
 								type="submit"
 								disabled={isSubmitting}
-								className="flex-1 py-3 px-4 bg-neon-green hover:bg-green-500 text-black font-bold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+								className="flex-1 py-3 px-4 bg-neon-green hover:bg-green-500 !text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50"
 							>
 								<Save size={18} />
 								{initialData ? t("minors.update") : t("minors.save")}
