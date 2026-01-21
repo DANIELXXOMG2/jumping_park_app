@@ -201,10 +201,10 @@ export default function OtpPage() {
 					<p className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.4em] text-red-400">
 						{t("otp.step")}
 					</p>
-					<h1 className="text-xl sm:text-2xl md:text-4xl font-semibold text-foreground">
+					<h1 className="text-xl sm:text-2xl md:text-4xl font-semibold text-white">
 						{t("otp.noData.title")}
 					</h1>
-					<p className="text-sm sm:text-base text-foreground/70">
+					<p className="text-sm sm:text-base text-white/70">
 						{t("otp.noData.description")}
 					</p>
 					<button
@@ -253,13 +253,13 @@ export default function OtpPage() {
 						</p>
 					</div>
 					
-					<h1 className="text-xl sm:text-2xl md:text-4xl font-semibold text-foreground">
+					<h1 className="text-xl sm:text-2xl md:text-4xl font-semibold text-white">
 						{t("otp.heading")}
 					</h1>
-					<p className="text-sm sm:text-base text-foreground/70 flex items-center justify-center gap-2 flex-wrap">
-						<Mail className="w-4 h-4 text-foreground/50" />
+					<p className="text-sm sm:text-base text-white/70 flex items-center justify-center gap-2 flex-wrap">
+						<Mail className="w-4 h-4 text-white/50" />
 						{t("otp.sentToEmail")}{" "}
-						<span className="text-primary font-medium">{maskedEmail}</span>
+						<span className="text-amber-400 font-bold bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">{maskedEmail}</span>
 					</p>
 				</div>
 
@@ -307,7 +307,7 @@ export default function OtpPage() {
 						type="button"
 						onClick={handleResend}
 						disabled={isResending || resendCooldown > 0 || isValidating}
-						className="group relative flex items-center gap-2 rounded-xl overflow-hidden border-2 border-white/20 dark:border-zinc-700/50 bg-gradient-to-r from-white/5 via-white/10 to-white/5 dark:from-zinc-800/50 dark:via-zinc-800/30 dark:to-zinc-800/50 px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-semibold text-foreground transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_20px_rgba(46,204,113,0.15)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-white/20"
+						className="group relative flex items-center gap-2 rounded-xl overflow-hidden border-2 border-white/20 dark:border-zinc-700/50 bg-gradient-to-r from-white/5 via-white/10 to-white/5 dark:from-zinc-800/50 dark:via-zinc-800/30 dark:to-zinc-800/50 px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-semibold text-white transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_20px_rgba(46,204,113,0.15)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-white/20"
 					>
 						{/* Shimmer */}
 						<span className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500 group-disabled:hidden" aria-hidden="true" />
