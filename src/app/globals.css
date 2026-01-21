@@ -394,6 +394,8 @@ button:active {
     linear-gradient(135deg, #050505 0%, #0c0617 50%, #050505 100%);
   position: relative;
   overflow: hidden;
+  /* Forzar texto blanco en ambos modos (light/dark) ya que el fondo siempre es oscuro */
+  color: white;
 }
 
 .kiosk-bg::after {
@@ -594,6 +596,7 @@ button:active {
 
 /* === VARIANTE: Premium Glass === */
 .kiosk-input-premium {
+  color: white;
   background: linear-gradient(135deg, 
     rgba(255, 255, 255, 0.08) 0%, 
     rgba(255, 255, 255, 0.04) 50%,
