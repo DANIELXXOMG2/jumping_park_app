@@ -153,7 +153,7 @@ export function MinorFormModal({
 						{/* Nombre y Apellidos */}
 						<div className="grid grid-cols-2 gap-3">
 							<div>
-								<label htmlFor="minorFirstName" className="flex items-center gap-1 text-xs text-gray-400 mb-1.5">
+								<label htmlFor="minorFirstName" className="flex items-center gap-1 text-xs text-white mb-1.5">
 									<User size={12} />
 									{t("minors.form.firstName")} *
 								</label>
@@ -175,7 +175,7 @@ export function MinorFormModal({
 							</div>
 
 							<div>
-								<label htmlFor="minorLastName" className="flex items-center gap-1 text-xs text-gray-400 mb-1.5">
+								<label htmlFor="minorLastName" className="flex items-center gap-1 text-xs text-white mb-1.5">
 									<User size={12} />
 									{t("minors.form.lastName")} *
 								</label>
@@ -199,7 +199,7 @@ export function MinorFormModal({
 
 						{/* Fecha de Nacimiento */}
 						<div>
-							<label htmlFor="minorBirthDate" className="flex items-center gap-1 text-xs text-gray-400 mb-1.5">
+							<label htmlFor="minorBirthDate" className="flex items-center gap-1 text-xs text-white mb-1.5">
 								<Calendar size={12} />
 								{t("minors.form.birthDate")} *
 							</label>
@@ -235,7 +235,7 @@ export function MinorFormModal({
 						{/* Tipo ID y Número */}
 						<div className="grid grid-cols-2 gap-3">
 							<div>
-								<label htmlFor="minorIdType" className="flex items-center gap-1 text-xs text-gray-400 mb-1.5">
+								<label htmlFor="minorIdType" className="flex items-center gap-1 text-xs text-white mb-1.5">
 									<CreditCard size={12} />
 									{t("minors.form.idType")} *
 								</label>
@@ -253,7 +253,7 @@ export function MinorFormModal({
 							</div>
 
 							<div>
-								<label htmlFor="minorIdNumber" className="flex items-center gap-1 text-xs text-gray-400 mb-1.5">
+								<label htmlFor="minorIdNumber" className="flex items-center gap-1 text-xs text-white mb-1.5">
 									<CreditCard size={12} />
 									{t("minors.form.idNumber")} *
 								</label>
@@ -277,7 +277,7 @@ export function MinorFormModal({
 
 						{/* Parentesco */}
 						<div>
-							<label htmlFor="minorRelationship" className="flex items-center gap-1 text-xs text-gray-400 mb-1.5">
+							<label htmlFor="minorRelationship" className="flex items-center gap-1 text-xs text-white mb-1.5">
 								<Heart size={12} />
 								{t("minors.form.relationship")} *
 							</label>
@@ -295,19 +295,19 @@ export function MinorFormModal({
 
 						{/* Condición Médica */}
 						<div>
-							<label htmlFor="minorMedicalCondition" className="flex items-center gap-1 text-xs text-gray-400 mb-1.5">
+							<label htmlFor="minorMedicalCondition" className="flex items-center gap-1 text-xs text-zinc-300 mb-1.5">
 								<Heart size={12} className="text-red-400" />
 								{t("minors.form.medicalCondition")}
-								<span className="text-gray-600 ml-1">{t("minors.form.medicalCondition.optional")}</span>
+								<span className="text-zinc-500 ml-1">{t("minors.form.medicalCondition.optional")}</span>
 							</label>
 							<input
 								id="minorMedicalCondition"
 								{...register("medicalCondition")}
 								placeholder={t("minors.form.medicalCondition.placeholder")}
 								maxLength={200}
-								className={cn(inputClass, "placeholder:text-gray-600")}
+								className={cn(inputClass, "placeholder:text-zinc-500")}
 							/>
-							<p className="text-gray-600 text-xs mt-1">
+							<p className="text-zinc-500 text-xs mt-1">
 								{t("minors.form.medicalCondition.hint")}
 							</p>
 						</div>
