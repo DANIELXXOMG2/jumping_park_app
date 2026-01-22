@@ -4,7 +4,7 @@
  */
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { verifyAdminToken } from "@/lib/adminAuth";
+import { verifyAdminTokenWithPermission } from "@/lib/adminAuth";
 import { db } from "@/lib/firebaseAdmin";
 
 const querySchema = z.object({
@@ -54,8 +54,8 @@ function escapeCSV(value: string | number | undefined | null): string {
 
 export async function GET(request: NextRequest) {
 	try {
-		// Verificar autenticación de admin
-		const authResult = await verifyAdminToken(request);
+		// Verificar autenticación y permiso consents:export
+		const authResult = await verifyAdminTokenWithPermission(request, "consents:export");
 		if (!authResult.success) {
 			return authResult.response;
 		}

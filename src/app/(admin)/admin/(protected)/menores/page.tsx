@@ -1,12 +1,13 @@
 "use client";
 
-import { MoreHorizontal, Trash2 } from "lucide-react";
+import { Baby, Eye, FileCheck, Mail, MoreHorizontal, Phone, Trash2, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/admin/Badge";
 import { DataTable } from "@/components/admin/DataTable";
 import { DeleteConfirmModal } from "@/components/admin/DeleteConfirmModal";
+import { Modal } from "@/components/admin/Modal";
 import { useNetworkStatus } from "@/components/admin/NetworkStatus";
 import { SearchInput } from "@/components/admin/SearchInput";
 import {
@@ -15,8 +16,10 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/contexts/AuthContext";
 import { adminDelete, adminGet } from "@/lib/adminApi";
 import { formatEPS } from "@/lib/utils/formatters";
+import { hasPermission } from "@/types/auth";
 
 interface Minor {
 	id: string;
@@ -32,6 +35,15 @@ interface Minor {
 	parentName: string;
 	parentEmail: string;
 	parentPhone: string;
+	medicalCondition?: string;
+}
+
+interface ConsentInfo {
+	id: string;
+	consecutivo: number;
+	signedAt: string | null;
+	expiresAt: string | null;
+	isExpired: boolean;
 }
 
 interface Pagination {
@@ -43,6 +55,7 @@ interface Pagination {
 
 export default function MinorsPage() {
 	const router = useRouter();
+	const { role } = useAuth();
 	const { isOffline } = useNetworkStatus();
 	const [minors, setMinors] = useState<Minor[]>([]);
 	const [pagination, setPagination] = useState<Pagination>({
@@ -54,9 +67,17 @@ export default function MinorsPage() {
 	const [search, setSearch] = useState("");
 	const [isLoading, setIsLoading] = useState(true);
 
-	// Estado para eliminar menores
+	// Estado para eliminar menores (solo si tiene permiso)
 	const [minorToDelete, setMinorToDelete] = useState<Minor | null>(null);
 	const [isDeleting, setIsDeleting] = useState(false);
+
+	// Estado para ver detalles (para trabajadores sin permiso de edición)
+	const [selectedMinor, setSelectedMinor] = useState<Minor | null>(null);
+	const [consentInfo, setConsentInfo] = useState<ConsentInfo | null>(null);
+	const [loadingConsent, setLoadingConsent] = useState(false);
+
+	// Verificar si el usuario puede editar/eliminar
+	const canEdit = role ? hasPermission(role, "minors:edit") : false;
 
 	const fetchMinors = useCallback(
 		async (searchTerm: string, offset: number) => {
@@ -129,6 +150,47 @@ export default function MinorsPage() {
 		return age;
 	};
 
+	const formatDate = (dateStr: string | null) => {
+		if (!dateStr) return "-";
+		return new Date(dateStr).toLocaleDateString("es-CO", {
+			year: "numeric",
+			month: "short",
+			day: "numeric",
+		});
+	};
+
+	// Cargar información del consentimiento cuando se selecciona un participante
+	const handleViewDetails = async (minor: Minor) => {
+		setSelectedMinor(minor);
+		setConsentInfo(null);
+		setLoadingConsent(true);
+
+		try {
+			// Buscar el último consentimiento del responsable
+			const result = await adminGet<{
+				found: boolean;
+				isExpired?: boolean;
+				consent?: {
+					id: string;
+					consecutivo: number;
+					signedAt: string | null;
+					expiresAt: string | null;
+				};
+			}>(`/api/admin/verificar-consentimiento?cedula=${minor.parentId}`);
+
+			if (result.found && result.consent) {
+				setConsentInfo({
+					...result.consent,
+					isExpired: result.isExpired ?? true,
+				});
+			}
+		} catch {
+			// No hay consentimiento o error
+		} finally {
+			setLoadingConsent(false);
+		}
+	};
+
 	const columns = [
 		{
 			key: "fullName",
@@ -192,30 +254,48 @@ export default function MinorsPage() {
 			key: "actions",
 			header: "",
 			render: (minor: Minor) => (
-				<DropdownMenu>
-					<DropdownMenuTrigger asChild>
-						<button
-							type="button"
-							className="p-2 rounded-lg hover:bg-surface-muted transition-colors"
-							onClick={(e) => e.stopPropagation()}
-							aria-label="Abrir menú de acciones"
-						>
-							<MoreHorizontal className="w-4 h-4 text-foreground/60" />
-						</button>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent align="end" className="w-48">
-						<DropdownMenuItem
-							onClick={(e) => {
-								e.stopPropagation();
-								setMinorToDelete(minor);
-							}}
-							className="text-red-600 focus:text-red-600"
-						>
-							<Trash2 className="w-4 h-4" />
-							Eliminar participante
-						</DropdownMenuItem>
-					</DropdownMenuContent>
-				</DropdownMenu>
+				<div className="flex items-center gap-1">
+					{/* Botón de ver detalles (siempre visible) */}
+					<button
+						type="button"
+						onClick={(e) => {
+							e.stopPropagation();
+							handleViewDetails(minor);
+						}}
+						className="p-2 rounded-lg hover:bg-primary/10 transition-colors text-primary"
+						aria-label="Ver detalles"
+					>
+						<Eye className="w-4 h-4" />
+					</button>
+
+					{/* Menú de acciones (solo si puede editar) */}
+					{canEdit && (
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<button
+									type="button"
+									className="p-2 rounded-lg hover:bg-surface-muted transition-colors"
+									onClick={(e) => e.stopPropagation()}
+									aria-label="Abrir menú de acciones"
+								>
+									<MoreHorizontal className="w-4 h-4 text-foreground/60" />
+								</button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align="end" className="w-48">
+								<DropdownMenuItem
+									onClick={(e) => {
+										e.stopPropagation();
+										setMinorToDelete(minor);
+									}}
+									className="text-red-600 focus:text-red-600"
+								>
+									<Trash2 className="w-4 h-4" />
+									Eliminar participante
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
+					)}
+				</div>
 			),
 		},
 	];
@@ -248,15 +328,12 @@ export default function MinorsPage() {
 			</div>
 
 			{/* Minors Table */}
-			{/* Minors Table */}
 			<div className="bg-surface rounded-xl border border-border p-4 lg:p-6">
 				<DataTable
 					data={minors}
 					columns={columns}
 					keyExtractor={(minor) => minor.id}
-					onRowClick={(minor) =>
-						router.push(`/admin/usuarios/${minor.parentId}`)
-					}
+					onRowClick={handleViewDetails}
 					isLoading={isLoading}
 					fromCache={isOffline}
 					emptyMessage="No se encontraron participantes"
@@ -267,16 +344,169 @@ export default function MinorsPage() {
 				/>
 			</div>
 
-			{/* Modal de confirmación de eliminación */}
-			<DeleteConfirmModal
-				isOpen={!!minorToDelete}
-				onClose={() => setMinorToDelete(null)}
-				onConfirm={handleDeleteMinor}
-				isDeleting={isDeleting}
-				title="Eliminar Participante"
-				description="¿Estás seguro de que deseas eliminar este participante?"
-				itemName={minorToDelete?.fullName}
-			/>
+			{/* Modal de Detalles del Participante */}
+			<Modal
+				isOpen={!!selectedMinor}
+				onClose={() => {
+					setSelectedMinor(null);
+					setConsentInfo(null);
+				}}
+				title="Detalles del Participante"
+				className="max-w-lg"
+			>
+				{selectedMinor && (
+					<div className="space-y-6">
+						{/* Información del Participante */}
+						<div className="bg-surface-muted rounded-xl p-4 space-y-4">
+							<div className="flex items-center gap-3">
+								<div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400/30 to-purple-400/30 flex items-center justify-center">
+									<Baby className="w-6 h-6 text-blue-400" />
+								</div>
+								<div>
+									<h3 className="text-lg font-semibold text-foreground">
+										{selectedMinor.fullName}
+									</h3>
+									<p className="text-sm text-foreground/60">
+										{calculateAge(selectedMinor.birthDate)} años • {selectedMinor.relationship}
+									</p>
+								</div>
+							</div>
+
+							<div className="grid grid-cols-2 gap-4 pt-2">
+								<div>
+									<p className="text-xs text-foreground/50 uppercase tracking-wide">Documento</p>
+									<p className="text-sm font-mono text-foreground mt-1">
+										{selectedMinor.idType?.toUpperCase()} {selectedMinor.idNumber || "-"}
+									</p>
+								</div>
+								<div>
+									<p className="text-xs text-foreground/50 uppercase tracking-wide">EPS</p>
+									<p className="text-sm text-foreground mt-1">
+										{formatEPS(selectedMinor.eps)}
+									</p>
+								</div>
+								<div>
+									<p className="text-xs text-foreground/50 uppercase tracking-wide">Fecha de Nacimiento</p>
+									<p className="text-sm text-foreground mt-1">
+										{formatDate(selectedMinor.birthDate)}
+									</p>
+								</div>
+								{selectedMinor.medicalCondition && (
+									<div className="col-span-2">
+										<p className="text-xs text-foreground/50 uppercase tracking-wide">Condición Médica</p>
+										<p className="text-sm text-foreground mt-1">
+											{selectedMinor.medicalCondition}
+										</p>
+									</div>
+								)}
+							</div>
+						</div>
+
+						{/* Información del Responsable */}
+						<div className="bg-surface-muted rounded-xl p-4 space-y-3">
+							<div className="flex items-center gap-2 text-foreground/70">
+								<User className="w-4 h-4" />
+								<span className="text-sm font-medium uppercase tracking-wide">Responsable</span>
+							</div>
+
+							<div className="space-y-2">
+								<p className="text-foreground font-medium">{selectedMinor.parentName}</p>
+								<div className="flex items-center gap-2 text-sm text-foreground/60">
+									<span className="font-mono">{selectedMinor.parentId}</span>
+								</div>
+								{selectedMinor.parentEmail && (
+									<div className="flex items-center gap-2 text-sm text-foreground/60">
+										<Mail className="w-4 h-4" />
+										<span>{selectedMinor.parentEmail}</span>
+									</div>
+								)}
+								{selectedMinor.parentPhone && (
+									<div className="flex items-center gap-2 text-sm text-foreground/60">
+										<Phone className="w-4 h-4" />
+										<span>{selectedMinor.parentPhone}</span>
+									</div>
+								)}
+							</div>
+						</div>
+
+						{/* Información del Consentimiento */}
+						<div className="bg-surface-muted rounded-xl p-4 space-y-3">
+							<div className="flex items-center gap-2 text-foreground/70">
+								<FileCheck className="w-4 h-4" />
+								<span className="text-sm font-medium uppercase tracking-wide">Consentimiento</span>
+							</div>
+
+							{loadingConsent ? (
+								<div className="flex items-center justify-center py-4">
+									<div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+								</div>
+							) : consentInfo ? (
+								<div className="space-y-2">
+									<div className="flex items-center justify-between">
+										<span className="text-foreground font-medium">
+											#{consentInfo.consecutivo}
+										</span>
+										<Badge variant={!consentInfo.isExpired ? "success" : "error"}>
+											{!consentInfo.isExpired ? "Vigente" : "Vencido"}
+										</Badge>
+									</div>
+									<div className="grid grid-cols-2 gap-2 text-sm">
+										<div>
+											<p className="text-foreground/50">Firmado</p>
+											<p className="text-foreground">{formatDate(consentInfo.signedAt)}</p>
+										</div>
+										<div>
+											<p className="text-foreground/50">Válido hasta</p>
+											<p className="text-foreground">{formatDate(consentInfo.expiresAt)}</p>
+										</div>
+									</div>
+								</div>
+							) : (
+								<div className="text-center py-4 text-foreground/50">
+									<FileCheck className="w-8 h-8 mx-auto mb-2 opacity-50" />
+									<p className="text-sm">No se encontró consentimiento activo</p>
+								</div>
+							)}
+						</div>
+
+						{/* Botones de acción */}
+						<div className="flex justify-end gap-2 pt-2">
+							{canEdit && (
+								<button
+									type="button"
+									onClick={() => router.push(`/admin/usuarios/${selectedMinor.parentId}`)}
+									className="px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 transition-colors text-white"
+								>
+									Ver perfil completo
+								</button>
+							)}
+							<button
+								type="button"
+								onClick={() => {
+									setSelectedMinor(null);
+									setConsentInfo(null);
+								}}
+								className="px-4 py-2 rounded-lg bg-surface-muted hover:bg-surface-muted/80 transition-colors text-foreground"
+							>
+								Cerrar
+							</button>
+						</div>
+					</div>
+				)}
+			</Modal>
+
+			{/* Modal de confirmación de eliminación (solo si puede editar) */}
+			{canEdit && (
+				<DeleteConfirmModal
+					isOpen={!!minorToDelete}
+					onClose={() => setMinorToDelete(null)}
+					onConfirm={handleDeleteMinor}
+					isDeleting={isDeleting}
+					title="Eliminar Participante"
+					description="¿Estás seguro de que deseas eliminar este participante?"
+					itemName={minorToDelete?.fullName}
+				/>
+			)}
 		</div>
 	);
 }

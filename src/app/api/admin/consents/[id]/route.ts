@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { verifyAdminToken } from "@/lib/adminAuth";
+import { verifyAdminTokenWithPermission } from "@/lib/adminAuth";
 import { db } from "@/lib/firebaseAdmin";
 
 interface RouteParams {
@@ -8,8 +8,8 @@ interface RouteParams {
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
 	try {
-		// Verificar autenticación de admin
-		const authResult = await verifyAdminToken(request);
+		// Verificar autenticación y permiso consents:view
+		const authResult = await verifyAdminTokenWithPermission(request, "consents:view");
 		if (!authResult.success) {
 			return authResult.response;
 		}
@@ -85,8 +85,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
  */
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
 	try {
-		// Verificar autenticación de admin con rol específico
-		const authResult = await verifyAdminToken(request, "admin");
+		// Verificar autenticación y permiso roles:manage (solo admin puede eliminar)
+		const authResult = await verifyAdminTokenWithPermission(request, "roles:manage");
 		if (!authResult.success) {
 			return authResult.response;
 		}

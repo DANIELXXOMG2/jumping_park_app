@@ -107,6 +107,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
 	],
 	trabajador: [
 		"dashboard:view",
+		"minors:view",
 	],
 	visitor: ["kiosk:access", "consent:sign"],
 };
@@ -182,7 +183,7 @@ export const ROUTE_ACCESS: Record<string, UserRole[]> = {
 	"/admin/estadisticas": ["admin"],
 	"/admin/usuarios": ["admin"],
 	"/admin/consentimientos": ["admin"],
-	"/admin/menores": ["admin"],
+	"/admin/menores": ["admin", "trabajador"], // Trabajador puede ver participantes (solo lectura)
 	"/admin/configuracion": ["admin"],
 };
 

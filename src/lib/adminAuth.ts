@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { admin } from "@/lib/firebaseAdmin";
-import type { UserRole, CustomClaims } from "@/types/auth";
-import { ADMIN_ROLES, canAccessAdmin, getRoleFromClaims } from "@/types/auth";
+import type { UserRole, CustomClaims, Permission } from "@/types/auth";
+import { ADMIN_ROLES, canAccessAdmin, getRoleFromClaims, hasPermission } from "@/types/auth";
 
 export interface AuthResult {
 	success: true;
@@ -115,4 +115,73 @@ export async function verifyFullAdminToken(
 	request: NextRequest,
 ): Promise<AuthResult | AuthError> {
 	return verifyAdminToken(request, "admin");
+}
+
+/**
+ * Verifica el token y un permiso específico.
+ * Usar para endpoints que requieren permisos granulares.
+ * 
+ * @param request - Request de Next.js
+ * @param permission - Permiso requerido (ej: "minors:view", "users:edit")
+ * @returns AuthResult si tiene permiso, AuthError si no
+ * 
+ * @example
+ * const authResult = await verifyAdminTokenWithPermission(request, "minors:view");
+ * if (!authResult.success) return authResult.response;
+ */
+export async function verifyAdminTokenWithPermission(
+	request: NextRequest,
+	permission: Permission,
+): Promise<AuthResult | AuthError> {
+	// Primero verificar autenticación básica
+	const authResult = await verifyAdminToken(request);
+	if (!authResult.success) {
+		return authResult;
+	}
+
+	// Verificar permiso específico
+	if (!hasPermission(authResult.role, permission)) {
+		return {
+			success: false,
+			response: NextResponse.json(
+				{ error: `No tienes permiso para esta acción (requiere: ${permission})` },
+				{ status: 403 },
+			),
+		};
+	}
+
+	return authResult;
+}
+
+/**
+ * Verifica el token y múltiples permisos (debe tener al menos uno).
+ * Usar cuando una acción puede ser realizada por diferentes permisos.
+ * 
+ * @param request - Request de Next.js
+ * @param permissions - Array de permisos, debe tener al menos uno
+ * @returns AuthResult si tiene algún permiso, AuthError si no tiene ninguno
+ */
+export async function verifyAdminTokenWithAnyPermission(
+	request: NextRequest,
+	permissions: Permission[],
+): Promise<AuthResult | AuthError> {
+	const authResult = await verifyAdminToken(request);
+	if (!authResult.success) {
+		return authResult;
+	}
+
+	// Verificar si tiene al menos uno de los permisos
+	const hasAnyPermission = permissions.some((p) => hasPermission(authResult.role, p));
+	
+	if (!hasAnyPermission) {
+		return {
+			success: false,
+			response: NextResponse.json(
+				{ error: `No tienes permisos para esta acción (requiere uno de: ${permissions.join(", ")})` },
+				{ status: 403 },
+			),
+		};
+	}
+
+	return authResult;
 }

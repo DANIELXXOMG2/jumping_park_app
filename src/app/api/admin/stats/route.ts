@@ -1,11 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { verifyAdminToken } from "@/lib/adminAuth";
+import { verifyAdminTokenWithPermission } from "@/lib/adminAuth";
 import { db } from "@/lib/firebaseAdmin";
 import { getTodayStartColombia } from "@/lib/utils/dateUtils";
 
 export async function GET(request: NextRequest) {
 	try {
-		const authResult = await verifyAdminToken(request);
+		// Verificar autenticación y permiso statistics:view
+		const authResult = await verifyAdminTokenWithPermission(request, "statistics:view");
 		if (!authResult.success) {
 			return authResult.response;
 		}
