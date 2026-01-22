@@ -85,22 +85,6 @@ export function isExpired(value: FirestoreDateValue): boolean {
 const COLOMBIA_OFFSET_HOURS = -5;
 
 /**
- * Obtiene la fecha/hora actual en zona horaria de Colombia.
- * Útil para mostrar la hora local al usuario.
- *
- * @returns Date object representando la hora actual en Colombia
- *
- * @example
- * const colombiaTime = getNowColombia();
- * console.log(colombiaTime.toLocaleString()); // Hora de Colombia
- */
-export function getNowColombia(): Date {
-	const now = new Date();
-	const utcTime = now.getTime() + now.getTimezoneOffset() * 60000;
-	return new Date(utcTime + COLOMBIA_OFFSET_HOURS * 3600000);
-}
-
-/**
  * Obtiene el inicio del día actual (medianoche) en zona horaria de Colombia,
  * retornando un Date que puede ser usado en queries de Firestore.
  *
@@ -135,32 +119,6 @@ export function getTodayStartColombia(): Date {
 	);
 
 	return midnightUtc;
-}
-
-/**
- * Obtiene el fin del día actual (23:59:59.999) en zona horaria de Colombia.
- *
- * @returns Date object representando el fin del día en Colombia en formato UTC
- */
-export function getTodayEndColombia(): Date {
-	const now = new Date();
-
-	// Obtener la hora actual en Colombia
-	const utcTime = now.getTime() + now.getTimezoneOffset() * 60000;
-	const colombiaTime = new Date(utcTime + COLOMBIA_OFFSET_HOURS * 3600000);
-
-	// Obtener fin del día en Colombia
-	const colombiaEndOfDay = new Date(colombiaTime);
-	colombiaEndOfDay.setHours(23, 59, 59, 999);
-
-	// Convertir a UTC para la query
-	const endOfDayUtc = new Date(
-		colombiaEndOfDay.getTime() -
-			COLOMBIA_OFFSET_HOURS * 3600000 -
-			now.getTimezoneOffset() * 60000,
-	);
-
-	return endOfDayUtc;
 }
 
 /**

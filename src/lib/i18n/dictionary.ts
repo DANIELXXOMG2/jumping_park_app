@@ -608,16 +608,8 @@ export const dictionary = {
 	},
 
 	// ============================================================================
-	// FORMULARIOS DE SALUD / EPS
+	// FORMULARIOS DE SALUD / EPS (Simplificado - texto libre)
 	// ============================================================================
-	"forms.health.affiliationType": {
-		es: "Tipo de Afiliación",
-		en: "Affiliation Type",
-	},
-	"forms.health.coverageType": {
-		es: "Tipo de Cobertura",
-		en: "Coverage Type",
-	},
 	"forms.health.companionEps": {
 		es: "EPS del Participante",
 		en: "Participant's Health Insurance",
@@ -625,46 +617,6 @@ export const dictionary = {
 	"forms.health.epsName": {
 		es: "Nombre de la EPS",
 		en: "Health Insurance Name",
-	},
-	"forms.health.selectEps": {
-		es: "Selecciona la EPS",
-		en: "Select Health Insurance",
-	},
-	"forms.health.selectPlaceholder": {
-		es: "Selecciona una opción",
-		en: "Select an option",
-	},
-	"forms.health.writeEpsName": {
-		es: "Escribe el nombre de la EPS",
-		en: "Enter the health insurance name",
-	},
-	"forms.health.writeExactName": {
-		es: "Escribe el nombre exacto de la EPS",
-		en: "Enter the exact name of the health insurance",
-	},
-	"forms.health.options.contributivo": {
-		es: "Contributivo",
-		en: "Contributive",
-	},
-	"forms.health.options.subsidiado": {
-		es: "Subsidiado",
-		en: "Subsidized",
-	},
-	"forms.health.options.especial": {
-		es: "Especial / Excepción",
-		en: "Special / Exception",
-	},
-	"forms.health.options.particular": {
-		es: "Particular / Sin EPS",
-		en: "Private / No Insurance",
-	},
-	"forms.health.options.prepagada": {
-		es: "Medicina Prepagada",
-		en: "Prepaid Medicine",
-	},
-	"forms.health.options.noEps": {
-		es: "Sin EPS (Particular)",
-		en: "No Insurance (Private)",
 	},
 
 	// ============================================================================

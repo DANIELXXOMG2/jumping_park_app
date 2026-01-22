@@ -42,3 +42,36 @@ export function maskEmail(email: string): string {
 
 	return `${maskedLocal}@${maskedDomain}${tld ? `.${tld}` : ""}`;
 }
+
+/**
+ * Formatea el valor de EPS para visualización.
+ * Convierte formatos legacy (snake_case) a título legible.
+ *
+ * @example
+ * formatEPS("nueva_eps") => "Nueva Eps"
+ * formatEPS("Sanitas") => "Sanitas"
+ * formatEPS("otra_manual:Mi EPS Privada") => "Mi EPS Privada"
+ * formatEPS("") => "-"
+ *
+ * @param eps - Valor de EPS desde la base de datos
+ * @returns EPS formateada para visualización
+ */
+export function formatEPS(eps: string | undefined | null): string {
+	if (!eps) return "-";
+
+	// Manejar formato legacy "otra_manual:texto"
+	if (eps.startsWith("otra_manual:")) {
+		return eps.replace("otra_manual:", "").trim() || "-";
+	}
+
+	// Convertir snake_case a Title Case
+	if (eps.includes("_")) {
+		return eps
+			.split("_")
+			.map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+			.join(" ");
+	}
+
+	// Devolver tal cual si ya está en formato normal
+	return eps;
+}

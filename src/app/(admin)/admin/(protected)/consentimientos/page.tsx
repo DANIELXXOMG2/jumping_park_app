@@ -31,6 +31,7 @@ import {
 import { type Consent, useConsents } from "@/hooks";
 import { adminDelete, adminDownload, adminPost, getAuthToken } from "@/lib/adminApi";
 import { formatRelativeTime } from "@/lib/utils";
+import { formatEPS } from "@/lib/utils/formatters";
 
 export default function ConsentsPage() {
 	const router = useRouter();
@@ -375,7 +376,7 @@ export default function ConsentsPage() {
 													`${minor.firstName || ""} ${minor.lastName || ""}`.trim()}
 											</p>
 											<p className="text-xs text-foreground/50">
-												{minor.relationship} • {minor.birthDate}
+												{minor.relationship} • {minor.birthDate} • EPS: {formatEPS(minor.eps)}
 											</p>
 										</div>
 										<Badge variant="default" className="text-xs">
