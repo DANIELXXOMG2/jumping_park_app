@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { verifyAdminToken } from "@/lib/adminAuth";
+import { verifyAdminTokenWithPermission } from "@/lib/adminAuth";
 import { db, admin } from "@/lib/firebaseAdmin";
 
 interface RouteParams {
@@ -12,8 +12,8 @@ interface RouteParams {
  */
 export async function GET(request: NextRequest, { params }: RouteParams) {
 	try {
-		// Verificar autenticación de admin
-		const authResult = await verifyAdminToken(request);
+		// Verificar autenticación y permiso minors:view
+		const authResult = await verifyAdminTokenWithPermission(request, "minors:view");
 		if (!authResult.success) {
 			return authResult.response;
 		}
@@ -88,12 +88,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 /**
  * DELETE /api/admin/minors/[id]
  * Elimina un menor del array de menores del usuario padre.
- * Solo accesible por usuarios con rol 'admin'.
+ * Solo accesible por usuarios con permiso 'minors:edit'.
  */
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
 	try {
-		// Verificar autenticación de admin con rol específico
-		const authResult = await verifyAdminToken(request, "admin");
+		// Verificar autenticación y permiso minors:edit
+		const authResult = await verifyAdminTokenWithPermission(request, "minors:edit");
 		if (!authResult.success) {
 			return authResult.response;
 		}

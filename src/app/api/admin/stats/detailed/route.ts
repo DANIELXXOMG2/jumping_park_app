@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { verifyAdminToken } from "@/lib/adminAuth";
+import { verifyAdminTokenWithPermission } from "@/lib/adminAuth";
 import { db } from "@/lib/firebaseAdmin";
 import { getDateRangeColombia } from "@/lib/utils/dateUtils";
 
@@ -24,8 +24,8 @@ function getPreviousPeriodRange(period: Period): { start: Date; end: Date } {
 
 export async function GET(request: NextRequest) {
 	try {
-		// Verificar autenticación de admin
-		const authResult = await verifyAdminToken(request);
+		// Verificar autenticación y permiso statistics:view
+		const authResult = await verifyAdminTokenWithPermission(request, "statistics:view");
 		if (!authResult.success) {
 			return authResult.response;
 		}

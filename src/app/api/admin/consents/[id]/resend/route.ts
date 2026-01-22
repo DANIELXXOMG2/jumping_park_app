@@ -3,7 +3,7 @@
  * Reenvía el PDF del consentimiento al email del cliente.
  */
 import { type NextRequest, NextResponse } from "next/server";
-import { verifyAdminToken } from "@/lib/adminAuth";
+import { verifyAdminTokenWithPermission } from "@/lib/adminAuth";
 import { db } from "@/lib/firebaseAdmin";
 import { sendConsentEmail } from "@/services/emailService";
 import { generateConsentPdf } from "@/services/pdfService";
@@ -18,8 +18,8 @@ export async function POST(
 	{ params }: RouteParams,
 ): Promise<NextResponse> {
 	try {
-		// Verificar autenticación de admin
-		const authResult = await verifyAdminToken(request);
+		// Verificar autenticación y permiso consents:view (reenviar requiere poder ver)
+		const authResult = await verifyAdminTokenWithPermission(request, "consents:view");
 		if (!authResult.success) {
 			return authResult.response;
 		}

@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { verifyAdminToken } from "@/lib/adminAuth";
+import { verifyAdminTokenWithPermission } from "@/lib/adminAuth";
 import { db, adminAuth } from "@/lib/firebaseAdmin";
 
 interface RouteParams {
@@ -26,7 +26,8 @@ function isSuperAdmin(email: string | null | undefined): boolean {
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
 	try {
-		const authResult = await verifyAdminToken(request);
+		// Verificar autenticación y permiso users:view
+		const authResult = await verifyAdminTokenWithPermission(request, "users:view");
 		if (!authResult.success) {
 			return authResult.response;
 		}
@@ -74,7 +75,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
 	try {
-		const authResult = await verifyAdminToken(request);
+		// Verificar autenticación y permiso roles:manage (solo super admin)
+		const authResult = await verifyAdminTokenWithPermission(request, "roles:manage");
 		if (!authResult.success) {
 			return authResult.response;
 		}

@@ -7,7 +7,7 @@
  * Requiere: Token de administrador válido.
  */
 import { type NextRequest, NextResponse } from "next/server";
-import { verifyAdminToken } from "@/lib/adminAuth";
+import { verifyAdminTokenWithPermission } from "@/lib/adminAuth";
 import { admin } from "@/lib/firebaseAdmin";
 import { generateConsentPdf } from "@/services/pdfService";
 import type { Consent } from "@/types/firestore";
@@ -22,8 +22,8 @@ export async function GET(
 	request: NextRequest,
 	{ params }: RouteParams,
 ): Promise<NextResponse> {
-	// 1. Verificar autenticación de admin
-	const authResult = await verifyAdminToken(request);
+	// 1. Verificar autenticación y permiso consents:view
+	const authResult = await verifyAdminTokenWithPermission(request, "consents:view");
 	if (!authResult.success) {
 		return authResult.response;
 	}

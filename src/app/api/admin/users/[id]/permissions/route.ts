@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { verifyAdminToken } from "@/lib/adminAuth";
+import { verifyAdminTokenWithPermission } from "@/lib/adminAuth";
 import { db } from "@/lib/firebaseAdmin";
 import { AVAILABLE_PERMISSIONS, type Permission } from "@/types/auth";
 
@@ -34,8 +34,8 @@ const updatePermissionsSchema = z.object({
  */
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
 	try {
-		// 1. Verificar autenticación de admin
-		const authResult = await verifyAdminToken(request);
+		// 1. Verificar autenticación y permiso roles:manage
+		const authResult = await verifyAdminTokenWithPermission(request, "roles:manage");
 		if (!authResult.success) {
 			return authResult.response;
 		}
@@ -134,8 +134,8 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
  */
 export async function GET(request: NextRequest, { params }: RouteParams) {
 	try {
-		// 1. Verificar autenticación de admin
-		const authResult = await verifyAdminToken(request);
+		// 1. Verificar autenticación y permiso roles:manage
+		const authResult = await verifyAdminTokenWithPermission(request, "roles:manage");
 		if (!authResult.success) {
 			return authResult.response;
 		}

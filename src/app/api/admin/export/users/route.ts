@@ -3,7 +3,7 @@
  * Exporta usuarios en formato CSV.
  */
 import { type NextRequest, NextResponse } from "next/server";
-import { verifyAdminToken } from "@/lib/adminAuth";
+import { verifyAdminTokenWithPermission } from "@/lib/adminAuth";
 import { db } from "@/lib/firebaseAdmin";
 
 function formatDate(date: Date): string {
@@ -47,8 +47,8 @@ function escapeCSV(value: string | number | undefined | null): string {
 
 export async function GET(request: NextRequest) {
 	try {
-		// Verificar autenticación de admin
-		const authResult = await verifyAdminToken(request);
+		// Verificar autenticación y permiso users:view (exportar requiere ver usuarios)
+		const authResult = await verifyAdminTokenWithPermission(request, "users:view");
 		if (!authResult.success) {
 			return authResult.response;
 		}

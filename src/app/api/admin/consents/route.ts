@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { verifyAdminToken } from "@/lib/adminAuth";
+import { verifyAdminTokenWithPermission } from "@/lib/adminAuth";
 import { db } from "@/lib/firebaseAdmin";
 
 const querySchema = z.object({
@@ -12,8 +12,8 @@ const querySchema = z.object({
 
 export async function GET(request: NextRequest) {
 	try {
-		// Verificar autenticación de admin
-		const authResult = await verifyAdminToken(request);
+		// Verificar autenticación y permiso consents:view
+		const authResult = await verifyAdminTokenWithPermission(request, "consents:view");
 		if (!authResult.success) {
 			return authResult.response;
 		}

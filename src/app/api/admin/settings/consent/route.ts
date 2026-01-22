@@ -1,7 +1,7 @@
 import { Timestamp } from "firebase-admin/firestore";
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { verifyAdminToken } from "@/lib/adminAuth";
+import { verifyAdminTokenWithPermission } from "@/lib/adminAuth";
 import { db } from "@/lib/firebaseAdmin";
 
 // ============================================================================
@@ -67,7 +67,8 @@ const MultiLanguageContentSchema = z.object({
  */
 export async function GET(request: NextRequest) {
 	try {
-		const authResult = await verifyAdminToken(request);
+		// Verificar autenticación y permiso settings:manage
+		const authResult = await verifyAdminTokenWithPermission(request, "settings:manage");
 		if (!authResult.success) {
 			return authResult.response;
 		}
@@ -122,7 +123,8 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
 	try {
-		const authResult = await verifyAdminToken(request);
+		// Verificar autenticación y permiso settings:manage
+		const authResult = await verifyAdminTokenWithPermission(request, "settings:manage");
 		if (!authResult.success) {
 			return authResult.response;
 		}
@@ -194,7 +196,8 @@ export async function POST(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
 	try {
-		const authResult = await verifyAdminToken(request);
+		// Verificar autenticación y permiso settings:manage
+		const authResult = await verifyAdminTokenWithPermission(request, "settings:manage");
 		if (!authResult.success) {
 			return authResult.response;
 		}

@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { verifyAdminToken } from "@/lib/adminAuth";
+import { verifyAdminTokenWithPermission } from "@/lib/adminAuth";
 import { db, adminAuth } from "@/lib/firebaseAdmin";
 import { FieldValue } from "firebase-admin/firestore";
 import { ROLE_PERMISSIONS, getEffectivePermissions, type UserRole } from "@/types/auth";
@@ -83,8 +83,8 @@ async function hasCreateUserPermission(uid: string): Promise<{ hasPermission: bo
 
 export async function GET(request: NextRequest) {
 	try {
-		// Verificar autenticación de admin
-		const authResult = await verifyAdminToken(request);
+		// Verificar autenticación y permiso users:view
+		const authResult = await verifyAdminTokenWithPermission(request, "users:view");
 		if (!authResult.success) {
 			return authResult.response;
 		}
@@ -175,27 +175,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
 	try {
-		// Verificar autenticación de admin
-		const authResult = await verifyAdminToken(request);
+		// Verificar autenticación y permiso users:create
+		const authResult = await verifyAdminTokenWithPermission(request, "users:create");
 		if (!authResult.success) {
 			return authResult.response;
-		}
-
-		// Verificar permisos para crear usuarios
-		const permissionResult = await hasCreateUserPermission(authResult.uid);
-		if (!permissionResult.hasPermission) {
-			console.warn(`[STAFF] Acceso denegado para usuario ${authResult.uid}. Rol: ${permissionResult.role}, Permisos: ${JSON.stringify(permissionResult.permissions)}`);
-			return NextResponse.json(
-				{ 
-					error: "No tienes permisos para crear usuarios administrativos",
-					details: {
-						role: permissionResult.role,
-						requiredPermission: "users:create",
-						userPermissions: permissionResult.permissions
-					}
-				},
-				{ status: 403 },
-			);
 		}
 
 		// Parsear y validar body
