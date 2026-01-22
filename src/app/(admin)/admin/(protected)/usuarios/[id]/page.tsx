@@ -28,6 +28,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/admin/Card";
+import { formatEPS } from "@/lib/utils/formatters";
 import { Modal } from "@/components/admin/Modal";
 import { adminGet, adminPost, getAuthToken } from "@/lib/adminApi";
 import { formatRelativeTime } from "@/lib/utils";
@@ -427,7 +428,7 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
 								<div className="flex justify-between items-center">
 									<span className="text-sm text-foreground/60">EPS:</span>
 									<span className="text-sm font-medium">
-										{selectedMinor.eps || "No registrada"}
+										{formatEPS(selectedMinor.eps)}
 									</span>
 								</div>
 							</div>

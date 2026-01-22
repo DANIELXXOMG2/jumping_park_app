@@ -14,7 +14,6 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { getEPSLabel } from "@/lib/data/epsColombiaData";
 import type { Minor } from "@/lib/schemas/consent.schema";
 import { cn } from "@/lib/utils";
 
@@ -165,13 +164,14 @@ export function MinorHistoryModal({
 		return types[type] || type;
 	};
 
-	// Obtener label de EPS
+	// Obtener label de EPS (ahora es texto libre)
 	const getEPSDisplayLabel = (epsValue?: string): string => {
 		if (!epsValue) return t("minors.section.noEps");
+		// Compatibilidad con datos legacy que usan prefijo "otra_manual:"
 		if (epsValue.startsWith("otra_manual:")) {
 			return epsValue.replace("otra_manual:", "");
 		}
-		return getEPSLabel(epsValue);
+		return epsValue;
 	};
 
 	// Formatear última visita

@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { isValidEPS } from "@/lib/data/epsColombiaData";
 import { getTranslation, type Language } from "@/lib/i18n/dictionary";
 
 // ============================================================================
@@ -72,14 +71,13 @@ export const birthDateSchema = z
 // ============================================================================
 
 /**
- * Schema de EPS validado contra la lista oficial de Colombia
+ * Schema de EPS como texto libre.
+ * Acepta cualquier string (ej: "Sura", "Sanitas", "No tengo", etc.)
+ * Compatible con datos legacy en Firebase que usan strings simples.
  */
 export const epsSchema = z
 	.string()
-	.min(2, "La EPS es requerida")
-	.refine((value) => isValidEPS(value), {
-		message: "Selecciona una EPS válida de la lista",
-	});
+	.min(3, "Ingresa el nombre de tu EPS");
 
 // ============================================================================
 // SCHEMA DE MENOR

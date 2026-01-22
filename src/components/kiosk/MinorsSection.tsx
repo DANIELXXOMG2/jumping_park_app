@@ -21,7 +21,6 @@ import type {
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { DictionaryKey } from "@/lib/i18n/dictionary";
 import { useUISound } from "@/hooks";
-import { getEPSLabel } from "@/lib/data/epsColombiaData";
 import type { ConsentFormData, Minor } from "@/lib/schemas/consent.schema";
 import { MinorFormModal } from "./MinorFormModal";
 import { MinorHistoryModal } from "./MinorHistoryModal";
@@ -203,13 +202,14 @@ export function MinorsSection({
 		}
 	};
 
-	// Obtener label de EPS
+	// Obtener label de EPS (ahora es texto libre)
 	const getEPSDisplayLabel = (epsValue: string): string => {
 		if (!epsValue) return t("minors.section.noEps");
+		// Compatibilidad con datos legacy que usan prefijo "otra_manual:"
 		if (epsValue.startsWith("otra_manual:")) {
 			return epsValue.replace("otra_manual:", "");
 		}
-		return getEPSLabel(epsValue);
+		return epsValue;
 	};
 
 	return (

@@ -74,7 +74,7 @@ export const menorCreateSchema = z.object({
 	/** Fecha de nacimiento con validación robusta */
 	birthDate: birthDateSchema,
 
-	/** EPS validada contra lista oficial de Colombia */
+	/** EPS como texto libre (compatible con datos legacy) */
 	eps: epsSchema,
 
 	/** Tipo de identificación */

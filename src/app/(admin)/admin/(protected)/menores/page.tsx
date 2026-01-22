@@ -16,6 +16,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { adminDelete, adminGet } from "@/lib/adminApi";
+import { formatEPS } from "@/lib/utils/formatters";
 
 interface Minor {
 	id: string;
@@ -172,8 +173,8 @@ export default function MinorsPage() {
 			key: "eps",
 			header: "EPS",
 			render: (minor: Minor) => (
-				<span className="text-foreground/70 capitalize">
-					{minor.eps || "-"}
+				<span className="text-foreground/70">
+					{formatEPS(minor.eps)}
 				</span>
 			),
 		},
