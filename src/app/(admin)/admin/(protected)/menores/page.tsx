@@ -1,6 +1,6 @@
 "use client";
 
-import { Baby, Eye, FileCheck, Mail, MoreHorizontal, Phone, Trash2, User } from "lucide-react";
+import { Baby, Eye, FileCheck, Heart, Mail, MoreHorizontal, Phone, Trash2, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -197,10 +197,17 @@ export default function MinorsPage() {
 			header: "Nombre",
 			render: (minor: Minor) => (
 				<div className="flex items-center gap-2">
-					<div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400/30 to-purple-400/30 flex items-center justify-center">
-						<span className="text-xs font-bold text-blue-400">
-							{minor.fullName?.charAt(0)?.toUpperCase() || "M"}
-						</span>
+					<div className="relative">
+						<div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400/30 to-purple-400/30 flex items-center justify-center">
+							<span className="text-xs font-bold text-blue-400">
+								{minor.fullName?.charAt(0)?.toUpperCase() || "M"}
+							</span>
+						</div>
+						{minor.medicalCondition && (
+							<div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500/20 border border-red-500/50 flex items-center justify-center" title="Tiene condición médica">
+								<Heart className="w-2.5 h-2.5 text-red-400 fill-red-400" />
+							</div>
+						)}
 					</div>
 					<span className="font-medium">{minor.fullName}</span>
 				</div>
@@ -391,14 +398,15 @@ export default function MinorsPage() {
 										{formatDate(selectedMinor.birthDate)}
 									</p>
 								</div>
-								{selectedMinor.medicalCondition && (
-									<div className="col-span-2">
-										<p className="text-xs text-foreground/50 uppercase tracking-wide">Condición Médica</p>
-										<p className="text-sm text-foreground mt-1">
-											{selectedMinor.medicalCondition}
-										</p>
-									</div>
-								)}
+								<div className="col-span-2">
+									<p className="text-xs text-foreground/50 uppercase tracking-wide flex items-center gap-1">
+										<Heart className="w-3 h-3" />
+										Condición Médica / Alergias
+									</p>
+									<p className={`text-sm mt-1 ${selectedMinor.medicalCondition ? "text-red-400 font-medium" : "text-foreground"}`}>
+										{selectedMinor.medicalCondition || "Ninguna"}
+									</p>
+								</div>
 							</div>
 						</div>
 

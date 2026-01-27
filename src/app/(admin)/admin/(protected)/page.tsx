@@ -6,6 +6,7 @@ import {
 	Clock,
 	FileCheck,
 	FileText,
+	Heart,
 	Loader2,
 	RefreshCw,
 	Search,
@@ -30,6 +31,7 @@ interface MinorSnapshot {
 	lastName: string;
 	idType?: string;
 	idNumber?: string;
+	medicalCondition?: string;
 }
 
 interface ConsentResult {
@@ -294,19 +296,31 @@ export default function AdminDashboard() {
 												>
 													<div className="flex items-center justify-between">
 														<div className="flex items-center gap-3">
-															<div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
-																<span className="text-green-400 font-bold text-sm">
-																	{idx + 1}
-																</span>
+															<div className="relative">
+																<div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
+																	<span className="text-green-400 font-bold text-sm">
+																		{idx + 1}
+																	</span>
+																</div>
+																{minor.medicalCondition && (
+																	<div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500/20 border border-red-500/50 flex items-center justify-center" title="Condición médica">
+																		<Heart className="w-3 h-3 text-red-400 fill-red-400" />
+																	</div>
+																)}
 															</div>
 															<div>
 																<p className="font-semibold text-foreground">
 																	{minor.firstName} {minor.lastName}
 																</p>
-																<div className="flex items-center gap-2 mt-0.5">
+																<div className="flex flex-wrap items-center gap-2 mt-0.5">
 																	<span className="text-xs text-foreground/50 font-mono bg-surface px-1.5 py-0.5 rounded">
 																		{minor.idType?.toUpperCase() || "T.I."}: {minor.idNumber}
 																	</span>
+																	{minor.medicalCondition && (
+																		<span className="text-xs text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded border border-red-500/30">
+																			⚠️ {minor.medicalCondition}
+																		</span>
+																	)}
 																</div>
 															</div>
 														</div>
