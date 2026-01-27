@@ -37,6 +37,7 @@ export async function GET(request: NextRequest) {
 			eps?: string;
 			idType?: string;
 			idNumber?: string;
+			medicalCondition?: string;
 			parentId: string;
 			parentName: string;
 			parentEmail: string;
@@ -61,6 +62,7 @@ export async function GET(request: NextRequest) {
 						eps: minor.eps as string | undefined,
 						idType: minor.idType as string | undefined,
 						idNumber: minor.idNumber as string | undefined,
+						medicalCondition: minor.medicalCondition as string | undefined,
 						parentId: data.uid,
 						parentName: data.fullName,
 						parentEmail: data.email,

@@ -10,6 +10,7 @@ interface Minor {
 	eps?: string;
 	idType?: string;
 	idNumber?: string;
+	medicalCondition?: string;
 }
 
 interface Consent {
