@@ -33,6 +33,7 @@ export interface CreateConsentInput {
 		eps?: string;
 		idType?: "rc" | "ti" | "cc" | "ce" | "pa" | "ppt" | "otro";
 		idNumber?: string;
+		medicalCondition?: string;
 	}>;
 	signatureBase64: string;
 	ipAddress: string;
@@ -168,6 +169,7 @@ class ConsentService {
 			eps: m.eps,
 			idType: m.idType,
 			idNumber: m.idNumber,
+			medicalCondition: m.medicalCondition,
 		}));
 	}
 
