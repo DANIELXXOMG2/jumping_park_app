@@ -5,6 +5,7 @@ import {
 	ExternalLink,
 	Eye,
 	FileText,
+	Heart,
 	Loader2,
 	MoreHorizontal,
 	PenTool,
@@ -368,20 +369,28 @@ export default function ConsentsPage() {
 								{selectedConsent.minors.map((minor, index) => (
 									<div
 										key={index}
-										className="bg-surface-muted rounded-lg p-3 flex items-center justify-between"
+										className="bg-surface-muted rounded-lg p-3"
 									>
-										<div>
-											<p className="text-sm font-medium">
-												{minor.fullName ||
-													`${minor.firstName || ""} ${minor.lastName || ""}`.trim()}
-											</p>
-											<p className="text-xs text-foreground/50">
-												{minor.relationship} • {minor.birthDate} • EPS: {formatEPS(minor.eps)}
-											</p>
+										<div className="flex items-center justify-between">
+											<div>
+												<p className="text-sm font-medium">
+													{minor.fullName ||
+														`${minor.firstName || ""} ${minor.lastName || ""}`.trim()}
+												</p>
+												<p className="text-xs text-foreground/50">
+													{minor.relationship} • {minor.birthDate} • EPS: {formatEPS(minor.eps)}
+												</p>
+											</div>
+											<Badge variant="default" className="text-xs">
+												{minor.idType?.toUpperCase()} {minor.idNumber}
+											</Badge>
 										</div>
-										<Badge variant="default" className="text-xs">
-											{minor.idType?.toUpperCase()} {minor.idNumber}
-										</Badge>
+										{minor.medicalCondition && (
+											<div className="mt-2 flex items-center gap-1.5 text-xs text-red-400 bg-red-500/10 px-2 py-1 rounded border border-red-500/30">
+												<Heart className="w-3 h-3 fill-red-400" />
+												<span>⚠️ {minor.medicalCondition}</span>
+											</div>
+										)}
 									</div>
 								))}
 							</div>
