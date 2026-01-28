@@ -1,6 +1,13 @@
 // Hooks personalizados de la aplicación
 
 export type {
+	ActivityData,
+	ActivityStats,
+	HourlyDataPoint,
+	LatestConsent,
+} from "./useActivity";
+export { useActivity } from "./useActivity";
+export type {
 	Consent,
 	ConsentsResponse,
 	Minor,
