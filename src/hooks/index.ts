@@ -7,6 +7,7 @@ export type {
 	Pagination,
 } from "./useConsents";
 export { useConsents } from "./useConsents";
+export { useConsentsTable } from "./useConsentsTable";
 export type {
 	ConnectionState,
 	RecentRegistrationsResult,
