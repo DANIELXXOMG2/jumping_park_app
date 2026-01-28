@@ -5,15 +5,16 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "build:webpack": "next build --webpack",
-    "analyze": "ANALYZE=true next build --webpack",
     "start": "next start",
-    "lint": "eslint",
-    "optimize-assets": "bun run scripts/optimize-assets.ts",
-    "seed": "bun run scripts/seed-database.ts",
-    "set-admin": "bun run scripts/set-admin-role.ts",
+    "lint": "biome check src/",
+    "format": "biome check src/ --write",
+    "analyze": "ANALYZE=true next build --webpack",
+    "audit": "bun run audit:dead && bun run audit:dupe && bun run audit:circ",
     "audit:dead": "knip",
-    "audit:dupe": "jscpd src/ --ignore \"**/*.d.ts\" --reporters console"
+    "audit:dupe": "jscpd src/ --config .jscpd.json",
+    "audit:circ": "depcruise src --include-only \"^src\" --config .dependency-cruiser.js",
+    "seed": "bun run scripts/seed-database.ts",
+    "set-admin": "bun run scripts/set-admin-role.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -41,12 +42,14 @@
     "zustand": "^5.0.9"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.3.13",
     "@faker-js/faker": "^10.1.0",
     "@next/bundle-analyzer": "^16.0.10",
     "@tailwindcss/postcss": "^4.1.17",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
+    "dependency-cruiser": "^17.3.7",
     "eslint": "^9.39.1",
     "eslint-config-next": "16.0.7",
     "jscpd": "^4.0.5",
