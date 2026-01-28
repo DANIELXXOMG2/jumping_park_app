@@ -1,19 +1,28 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "entry": ["src/app/**/page.tsx", "src/app/**/layout.tsx", "src/app/api/**/route.ts"],
-  "project": ["src/**/*.{ts,tsx}"],
+  "entry": [
+    "next.config.ts",
+    "src/app/**/{page,layout,loading,error,not-found,route,template,default}.{ts,tsx}",
+    "src/middleware.ts",
+    "scripts/**/*.ts"
+  ],
+  "project": ["src/**/*.{ts,tsx}", "scripts/**/*.{ts,tsx}"],
   "ignore": [
-    "postman/**",
-    "diagramas/**",
-    "scripts/**",
-    "**/*.d.ts"
+    "**/*.d.ts",
+    "src/components/ui/**"
   ],
-  "ignoreDependencies": [
-    "@tailwindcss/postcss",
-    "sharp"
-  ],
+  "ignoreBinaries": [], 
+  "ignoreDependencies": ["sharp"],
+  
+  "includeEntryExports": true,
   "ignoreExportsUsedInFile": true,
-  "next": {
-    "entry": ["next.config.ts"]
-  }
+  
+  "include": [
+    "classMembers",
+    "enumMembers",
+    "exports",
+    "types",
+    "unresolved",
+    "duplicates"
+  ]
 }

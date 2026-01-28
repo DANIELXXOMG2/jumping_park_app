@@ -12,6 +12,11 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Reportes de auditoría (knip, jscpd, dependency-cruiser)
+/report/
+*.report.json
+jscpd-report.*
+
 # Entornos/credenciales
 .env*
 .vercel
