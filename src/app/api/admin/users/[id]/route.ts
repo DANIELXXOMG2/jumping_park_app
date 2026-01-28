@@ -1,161 +1,63 @@
-import { type NextRequest, NextResponse } from "next/server";
-import { verifyAdminTokenWithPermission } from "@/lib/adminAuth";
-import { db } from "@/lib/firebaseAdmin";
+import {
+	apiError,
+	apiSuccess,
+	withAdminAuthParams,
+} from "@/lib/api-middleware";
+import { userService } from "@/services/userService";
 
-interface RouteParams {
-	params: Promise<{ id: string }>;
-}
+/**
+ * GET /api/admin/users/[id]
+ * Obtiene detalles de un usuario con sus consentimientos.
+ */
+export const GET = withAdminAuthParams(
+	async (_req, _session, params) => {
+		const result = await userService.getById(params.id);
 
-export async function GET(request: NextRequest, { params }: RouteParams) {
-	try {
-		// Verificar autenticación y permiso users:view
-		const authResult = await verifyAdminTokenWithPermission(request, "users:view");
-		if (!authResult.success) {
-			return authResult.response;
+		if (!result) {
+			return apiError("Usuario no encontrado", 404);
 		}
 
-		const { id } = await params;
+		const consents = await userService.getConsents(result.user.uid);
 
-		let userDoc = await db.collection("users").doc(id).get();
-
-		if (!userDoc.exists) {
-			const byUid = await db
-				.collection("users")
-				.where("uid", "==", id)
-				.limit(1)
-				.get();
-
-			if (byUid.empty) {
-				return NextResponse.json(
-					{ error: "Usuario no encontrado" },
-					{ status: 404 },
-				);
-			}
-			userDoc = byUid.docs[0];
-		}
-
-		const userData = userDoc.data();
-		if (!userData) {
-			return NextResponse.json(
-				{ error: "Usuario no encontrado" },
-				{ status: 404 },
-			);
-		}
-
-		const consentsSnap = await db
-			.collection("consents")
-			.where("userId", "==", userData.uid)
-			.get();
-
-		const consents = consentsSnap.docs
-			.map((doc) => {
-				const data = doc.data();
-				return {
-					id: doc.id,
-					consecutivo: data.consecutivo,
-					policyVersion: data.policyVersion,
-					signatureUrl: data.signatureUrl,
-					minorsCount: data.minorsSnapshot?.length || 0,
-					minors: data.minorsSnapshot || [],
-					adultName: data.adultSnapshot?.fullName || userData.fullName,
-					adultEmail: data.adultSnapshot?.email || userData.email,
-					adultPhone: data.adultSnapshot?.phone || userData.phone,
-					userId: data.userId,
-					ipAddress: data.ipAddress || null,
-					createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
-					signedAt: data.signedAt?.toDate?.()?.toISOString() || null,
-					validUntil: data.validUntil?.toDate?.()?.toISOString() || null,
-				};
-			})
-			.sort((a, b) => {
-				if (!a.createdAt || !b.createdAt) return 0;
-				return (
-					new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-				);
-			});
-
-		return NextResponse.json({
+		return apiSuccess({
 			user: {
-				id: userDoc.id,
-				uid: userData.uid,
-				fullName: userData.fullName,
-				email: userData.email,
-				phone: userData.phone,
-				address: userData.address,
-				minors: userData.minors || [],
-				createdAt: userData.createdAt?.toDate?.()?.toISOString() || null,
-				updatedAt: userData.updatedAt?.toDate?.()?.toISOString() || null,
+				id: result.user.id,
+				uid: result.user.uid,
+				fullName: result.user.fullName,
+				email: result.user.email,
+				phone: result.user.phone,
+				minors: result.user.minors,
+				createdAt: result.user.createdAt,
+				updatedAt: result.user.updatedAt,
 			},
 			consents,
 			stats: {
 				totalConsents: consents.length,
-				minorsCount: userData.minors?.length || 0,
+				minorsCount: result.user.minorsCount,
 			},
 		});
-	} catch {
-		return NextResponse.json(
-			{ error: "Error al obtener detalles del usuario" },
-			{ status: 500 },
-		);
-	}
-}
+	},
+	{ permission: "users:view" },
+);
 
 /**
  * DELETE /api/admin/users/[id]
  * Elimina un usuario y opcionalmente sus datos relacionados.
  * Solo accesible por usuarios con rol 'admin'.
  */
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
-	try {
-		// Verificar autenticación y permiso users:delete
-		const authResult = await verifyAdminTokenWithPermission(request, "users:delete");
-		if (!authResult.success) {
-			return authResult.response;
+export const DELETE = withAdminAuthParams(
+	async (_req, _session, params) => {
+		const result = await userService.delete(params.id);
+
+		if (!result) {
+			return apiError("Usuario no encontrado", 404);
 		}
 
-		const { id } = await params;
-
-		// Buscar usuario por ID o UID
-		let userDoc = await db.collection("users").doc(id).get();
-		let userId = id;
-
-		if (!userDoc.exists) {
-			const byUid = await db
-				.collection("users")
-				.where("uid", "==", id)
-				.limit(1)
-				.get();
-
-			if (byUid.empty) {
-				return NextResponse.json(
-					{ error: "Usuario no encontrado" },
-					{ status: 404 },
-				);
-			}
-			userDoc = byUid.docs[0];
-			userId = userDoc.id;
-		}
-
-		const userData = userDoc.data();
-		if (!userData) {
-			return NextResponse.json(
-				{ error: "Usuario no encontrado" },
-				{ status: 404 },
-			);
-		}
-
-		// Eliminar el usuario
-		await db.collection("users").doc(userId).delete();
-
-		return NextResponse.json({
+		return apiSuccess({
 			success: true,
 			message: "Usuario eliminado correctamente",
-			deletedId: userId,
+			deletedId: result.deletedId,
 		});
-	} catch {
-		return NextResponse.json(
-			{ error: "Error al eliminar el usuario" },
-			{ status: 500 },
-		);
-	}
-}
+	},
+	{ permission: "users:delete" },
+);
