@@ -3,7 +3,6 @@
   "entry": [
     "next.config.ts",
     "src/app/**/{page,layout,loading,error,not-found,route,template,default}.{ts,tsx}",
-    "src/middleware.ts",
     "scripts/**/*.ts"
   ],
   "project": ["src/**/*.{ts,tsx}", "scripts/**/*.{ts,tsx}"],
@@ -12,7 +11,7 @@
     "src/components/ui/**"
   ],
   "ignoreBinaries": [], 
-  "ignoreDependencies": ["sharp"],
+  "ignoreDependencies": [],
   
   "includeEntryExports": true,
   "ignoreExportsUsedInFile": true,
@@ -24,5 +23,10 @@
     "types",
     "unresolved",
     "duplicates"
-  ]
+  ],
+  
+  "rules": {
+    "exports": "warn",
+    "types": "warn"
+  }
 }

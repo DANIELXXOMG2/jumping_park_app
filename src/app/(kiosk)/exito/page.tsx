@@ -1,10 +1,10 @@
 "use client";
 
-import { ArrowRight, CheckCircle2, PartyPopper, Sparkles, Star, Rocket } from "lucide-react";
+import { ArrowRight, CheckCircle2, PartyPopper, Rocket, Sparkles, Star } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { useKioskStore } from "@/store/kioskStore";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useKioskStore } from "@/store/kioskStore";
 
 /**
  * Componente interno que contiene la lógica de useSearchParams y el renderizado visual.
@@ -15,7 +15,7 @@ function ExitoContent() {
 	const { clearSession } = useKioskStore();
 	const { t, language } = useLanguage();
 	const [countdown, setCountdown] = useState(8);
-	const [isHovering, setIsHovering] = useState(false);
+	const [_isHovering, setIsHovering] = useState(false);
 
 	const consecutivo = searchParams.get("consecutivo") || "---";
 	const nombre = searchParams.get("nombre") || (language === "es" ? "Visitante" : "Visitor");

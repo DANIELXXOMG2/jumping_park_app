@@ -45,7 +45,6 @@ export default function UsersPage() {
 		data: recentUsers,
 		loading: recentLoading,
 		fromCache,
-		hasPendingWrites,
 		refresh,
 	} = useRecentRegistrations(7);
 

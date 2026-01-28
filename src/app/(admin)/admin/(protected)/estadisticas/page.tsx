@@ -132,8 +132,8 @@ function ChartSkeleton() {
 			</CardHeader>
 			<CardContent>
 				<div className="space-y-3">
-					{SKELETON_WIDTHS.map((width, i) => (
-						<div key={i} className="space-y-1">
+						{SKELETON_WIDTHS.map((width) => (
+							<div key={`skeleton-${width}`} className="space-y-1">
 							<div className="flex justify-between">
 								<div className="h-3 w-12 bg-surface-muted rounded animate-pulse" />
 								<div className="h-3 w-16 bg-surface-muted rounded animate-pulse" />
@@ -294,9 +294,9 @@ export default function EstadisticasPage() {
 								</CardHeader>
 								<CardContent>
 									<div className="space-y-3">
-										{[...Array(5)].map((_, i) => (
+										{["a", "b", "c", "d", "e"].map((id) => (
 											<div
-												key={i}
+												key={`skel-activity-${id}`}
 												className="flex justify-between items-center"
 											>
 												<div className="flex items-center gap-3">
@@ -315,8 +315,8 @@ export default function EstadisticasPage() {
 								</CardHeader>
 								<CardContent>
 									<div className="space-y-4">
-										{[...Array(3)].map((_, i) => (
-											<div key={i} className="flex justify-between">
+										{["x", "y", "z"].map((id) => (
+											<div key={`skel-totals-${id}`} className="flex justify-between">
 												<div className="h-4 w-24 bg-surface-muted rounded animate-pulse" />
 												<div className="h-5 w-12 bg-surface-muted rounded animate-pulse" />
 											</div>
@@ -540,8 +540,8 @@ export default function EstadisticasPage() {
 
 									{/* Bars */}
 									<div className="space-y-1.5 sm:space-y-2 max-h-[250px] sm:max-h-[300px] overflow-y-auto pr-1 sm:pr-2">
-										{data.chartData.map((item, index) => (
-											<div key={index} className="space-y-0.5 sm:space-y-1">
+										{data.chartData.map((item) => (
+											<div key={item.date} className="space-y-0.5 sm:space-y-1">
 												<div className="flex items-center justify-between text-[10px] sm:text-xs">
 													<span className="text-foreground/60 w-12 sm:w-16 shrink-0 truncate">
 														{item.date}
@@ -595,7 +595,7 @@ export default function EstadisticasPage() {
 										<div className="space-y-3">
 											{data.topDays.map((day, index) => (
 												<div
-													key={index}
+													key={day.date}
 													className="flex items-center justify-between"
 												>
 													<div className="flex items-center gap-3">

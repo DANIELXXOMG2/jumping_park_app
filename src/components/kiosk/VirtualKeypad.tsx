@@ -1,8 +1,8 @@
 "use client";
 
 import { Check, Delete, Sparkles } from "lucide-react";
-import { useUISound } from "@/hooks";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useUISound } from "@/hooks";
 import { cn } from "@/lib/utils";
 
 interface VirtualKeypadProps {

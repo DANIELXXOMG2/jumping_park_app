@@ -157,21 +157,21 @@ export function SmartOtpInput({
 	};
 
 	return (
-		<div
+		<fieldset
 			className={cn(
-				"flex items-center justify-center gap-2 sm:gap-3",
+				"flex items-center justify-center gap-2 sm:gap-3 border-none p-0 m-0",
 				className
 			)}
-			role="group"
 			aria-label="Código de verificación OTP"
 		>
 			{Array.from({ length }, (_, index) => {
 				const digit = value[index] || "";
 				const isFocused = focusedIndex === index;
+				const digitKey = `otp-digit-${index}`;
 
 				return (
 					<input
-						key={index}
+						key={digitKey}
 						ref={(el) => {
 							inputsRef.current[index] = el;
 						}}
@@ -247,6 +247,5 @@ export function SmartOtpInput({
 					/>
 				);
 			})}
-		</div>
-	);
+		</fieldset>	);
 }

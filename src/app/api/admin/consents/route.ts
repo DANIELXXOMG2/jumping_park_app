@@ -70,8 +70,8 @@ export async function GET(request: NextRequest) {
 				(consent) =>
 					consent.adultName?.toLowerCase().includes(searchLower) ||
 					consent.adultEmail?.toLowerCase().includes(searchLower) ||
-					consent.userId?.includes(query.search!) ||
-					consent.consecutivo?.toString().includes(query.search!),
+					consent.userId?.includes(searchLower) ||
+					consent.consecutivo?.toString().includes(query.search ?? ""),
 			);
 		}
 

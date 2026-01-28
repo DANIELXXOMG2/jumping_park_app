@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useRef, type ReactNode } from "react";
+import { type ReactNode, useCallback, useRef } from "react";
 
 interface SecretAdminTriggerProps {
 	children: ReactNode;
@@ -61,19 +61,13 @@ export function SecretAdminTrigger({
 	}, [clicksRequired, timeoutMs, redirectTo, router, resetTimer]);
 
 	return (
-		<div
+		<button
+			type="button"
 			onClick={handleClick}
-			onKeyDown={(e) => {
-				if (e.key === "Enter" || e.key === " ") {
-					handleClick();
-				}
-			}}
 			className="cursor-pointer"
-			role="button"
-			tabIndex={0}
 			aria-label="Elemento interactivo"
 		>
 			{children}
-		</div>
+		</button>
 	);
 }

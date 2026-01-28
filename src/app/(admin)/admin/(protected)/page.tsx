@@ -23,7 +23,7 @@ import {
 	CardTitle,
 } from "@/components/admin/Card";
 import { StatCard } from "@/components/admin/StatCard";
-import { adminGet, adminFetch } from "@/lib/adminApi";
+import { adminFetch, adminGet } from "@/lib/adminApi";
 import { formatRelativeTime } from "@/lib/utils";
 
 interface MinorSnapshot {
@@ -291,7 +291,7 @@ export default function AdminDashboard() {
 										<div className="space-y-2">
 											{searchResult.consent.minorsSnapshot.map((minor, idx) => (
 												<div
-													key={idx}
+													key={minor.idNumber || `minor-${idx}`}
 													className="p-3 bg-surface-muted rounded-xl border border-border/50 hover:border-green-500/30 transition-colors"
 												>
 													<div className="flex items-center justify-between">

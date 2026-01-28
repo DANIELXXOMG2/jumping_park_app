@@ -52,7 +52,7 @@ export function toJsDate(value: FirestoreDateValue): Date {
 	// Es un string ISO o número (timestamp en ms)
 	if (typeof value === "string" || typeof value === "number") {
 		const parsed = new Date(value);
-		return isNaN(parsed.getTime()) ? new Date() : parsed;
+		return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
 	}
 
 	// Fallback: retornar fecha actual si el valor es inválido
@@ -168,7 +168,6 @@ export function getDateRangeColombia(
 			colombiaStart.setFullYear(colombiaTime.getFullYear() - 1);
 			colombiaStart.setHours(0, 0, 0, 0);
 			break;
-		case "all":
 		default:
 			colombiaStart = new Date(2020, 0, 1);
 			break;

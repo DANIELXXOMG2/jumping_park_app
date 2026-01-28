@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Home, RefreshCw, Sparkles, WifiOff } from "lucide-react";
+import { Home, RefreshCw, WifiOff } from "lucide-react";
 import Link from "next/link";
 
 export default function OfflinePage() {

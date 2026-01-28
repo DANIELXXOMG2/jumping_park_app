@@ -1,12 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server";
 import {
-	type ConsentContentStructure,
 	CONSENT_CONTENT_BY_LANGUAGE,
+	type ConsentContentStructure,
 	DEFAULT_CONSENT_CONTENT,
 	getConsentContent,
 } from "@/lib/data/legalContent";
-import type { Language } from "@/lib/i18n/dictionary";
 import { db } from "@/lib/firebaseAdmin";
+import type { Language } from "@/lib/i18n/dictionary";
 
 /**
  * GET /api/settings/consent

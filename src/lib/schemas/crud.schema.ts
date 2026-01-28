@@ -46,7 +46,7 @@ export const accesoCreateSchema = z.object({
 	notas: z.string().max(500).optional(),
 });
 
-type AccesoCreate = z.infer<typeof accesoCreateSchema>;
+export type AccesoCreate = z.infer<typeof accesoCreateSchema>;
 
 // ============================================================================
 // MENORES - Menores registrados (standalone, fuera de consentimiento)
@@ -101,7 +101,7 @@ export const menorCreateSchema = z.object({
 		.regex(ALPHANUMERIC_DOC_REGEX, "Solo letras y números"),
 });
 
-type MenorCreate = z.infer<typeof menorCreateSchema>;
+export type MenorCreate = z.infer<typeof menorCreateSchema>;
 
 // ============================================================================
 // USUARIOS - Perfil de usuario (para POST directo, no via consentimiento)
@@ -137,4 +137,4 @@ export const usuarioCreateSchema = z.object({
 	minors: z.array(z.any()).default([]),
 });
 
-type UsuarioCreate = z.infer<typeof usuarioCreateSchema>;
+export type UsuarioCreate = z.infer<typeof usuarioCreateSchema>;

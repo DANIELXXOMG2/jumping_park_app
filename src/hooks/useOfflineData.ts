@@ -1,17 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
 	collection,
-	query,
-	where,
-	onSnapshot,
-	type Unsubscribe,
-	type QuerySnapshot,
 	type DocumentData,
-	Timestamp,
+	onSnapshot,
 	orderBy,
+	type QuerySnapshot,
+	query,
+	Timestamp,
+	type Unsubscribe,
+	where,
 } from "firebase/firestore";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { firestore } from "@/lib/firebaseClient";
 import type { UserProfile } from "@/types/firestore";
 
@@ -145,7 +145,7 @@ export function useRecentRegistrations(
 	const [error, setError] = useState<Error | null>(null);
 	const [fromCache, setFromCache] = useState<boolean>(false);
 	const [hasPendingWrites, setHasPendingWrites] = useState<boolean>(false);
-	const [refreshKey, setRefreshKey] = useState<number>(0);
+	const [_refreshKey, setRefreshKey] = useState<number>(0);
 	const dataRef = useRef<UserProfile[]>([]);
 
 	// Calcular fecha límite (hoy - days días)
@@ -227,7 +227,7 @@ export function useRecentRegistrations(
 				unsubscribe();
 			}
 		};
-	}, [dateThreshold, refreshKey]);
+	}, [dateThreshold]);
 
 	return {
 		data,

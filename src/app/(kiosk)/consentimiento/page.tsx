@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertCircle, CheckCircle2, FileText, Maximize2, PenTool, Sparkles, Users } from "lucide-react";
+import { AlertCircle, FileText, Maximize2, PenTool, Sparkles, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
@@ -12,12 +12,12 @@ import { MinorsSection } from "@/components/kiosk/MinorsSection";
 import SignaturePad, {
 	type SignaturePadRef,
 } from "@/components/kiosk/SignaturePad";
+import { useLanguage } from "@/contexts/LanguageContext";
 import {
 	type ConsentFormData,
 	getConsentSchema,
 } from "@/lib/schemas/consent.schema";
 import { useKioskStore } from "@/store/kioskStore";
-import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function ConsentPage() {
 	const router = useRouter();

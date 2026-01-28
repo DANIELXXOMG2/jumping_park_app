@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, UserPlus, Mail, Phone, MapPin, IdCard, AlertCircle, Sparkles, ArrowLeft } from "lucide-react";
+import { AlertCircle, ArrowLeft, IdCard, Loader2, Mail, MapPin, Phone, Sparkles, UserPlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
@@ -11,8 +11,8 @@ import {
 	type VisitorFormValues,
 	visitorSchema,
 } from "@/lib/schemas/visitor.schema";
-import { useKioskStore } from "@/store/kioskStore";
 import { cn } from "@/lib/utils";
+import { useKioskStore } from "@/store/kioskStore";
 
 export default function RegistroPage() {
 	const router = useRouter();

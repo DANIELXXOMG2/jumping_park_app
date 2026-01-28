@@ -1,6 +1,6 @@
 "use client";
 
-import { type InputHTMLAttributes, forwardRef } from "react";
+import { forwardRef, type InputHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
 export interface KioskInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
@@ -343,6 +343,7 @@ export const KioskSelect = forwardRef<HTMLSelectElement, KioskSelectProps>(
 
 				{/* Chevron */}
 				<svg
+					aria-hidden="true"
 					className={cn(
 						"absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none",
 						"text-foreground/40 group-hover:text-foreground/60 group-focus-within:text-primary/80",

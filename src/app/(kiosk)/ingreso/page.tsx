@@ -1,11 +1,11 @@
 "use client";
 
-import { Loader2, Fingerprint, Sparkles } from "lucide-react";
+import { Fingerprint, Loader2, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useCallback, useState } from "react";
 import { VirtualKeypad } from "@/components/kiosk/VirtualKeypad";
-import { useKioskStore } from "@/store/kioskStore";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useKioskStore } from "@/store/kioskStore";
 
 const MIN_DIGITS = 5;
 const MAX_DIGITS = 20;

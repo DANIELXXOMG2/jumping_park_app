@@ -16,8 +16,8 @@ import {
 	useState,
 } from "react";
 import { auth } from "@/lib/firebaseClient";
-import type { UserRole, CustomClaims, Permission } from "@/types/auth";
-import { canAccessAdmin, getRoleFromClaims, hasPermission, ROLE_PERMISSIONS } from "@/types/auth";
+import type { CustomClaims, Permission, UserRole } from "@/types/auth";
+import { canAccessAdmin, getRoleFromClaims, hasPermission } from "@/types/auth";
 
 interface AuthContextType {
 	user: User | null;

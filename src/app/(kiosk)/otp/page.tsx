@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Loader2, RefreshCw, ShieldCheck, Mail, Sparkles } from "lucide-react";
+import { AlertTriangle, Loader2, Mail, RefreshCw, ShieldCheck, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { SmartOtpInput } from "@/components/ui/SmartOtpInput";

@@ -61,7 +61,7 @@ export const birthDateSchema = z
 		(dateStr) => {
 			// Validar que la fecha sea válida (ej. no 2024-02-30)
 			const date = new Date(dateStr);
-			return !isNaN(date.getTime());
+			return !Number.isNaN(date.getTime());
 		},
 		{ message: "La fecha ingresada no es válida" },
 	);

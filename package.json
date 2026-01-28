@@ -6,13 +6,17 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "biome check src/",
-    "format": "biome check src/ --write",
-    "analyze": "ANALYZE=true next build --webpack",
+    
+    "check": "bun run check:format && bun run check:lint && bun run check:types && bun run audit",
+    "check:format": "biome check src/ --write",
+    "check:lint": "biome lint src/ --write",
+    "check:types": "tsc --noEmit",
+    
     "audit": "bun run audit:dead && bun run audit:dupe && bun run audit:circ",
     "audit:dead": "knip",
     "audit:dupe": "jscpd src/ --config .jscpd.json",
     "audit:circ": "depcruise src --include-only \"^src\" --config .dependency-cruiser.js",
+    
     "seed": "bun run scripts/seed-database.ts",
     "set-admin": "bun run scripts/set-admin-role.ts"
   },

@@ -1,14 +1,12 @@
 import { getApp, getApps, initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import {
+	CACHE_SIZE_UNLIMITED,
 	type Firestore,
 	getFirestore,
 	initializeFirestore,
 	persistentLocalCache,
 	persistentMultipleTabManager,
-	CACHE_SIZE_UNLIMITED,
-	enableNetwork,
-	disableNetwork,
 } from "firebase/firestore";
 
 const firebaseConfig = {
