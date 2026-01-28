@@ -1,18 +1,8 @@
 "use client";
 
-import {
-	collection,
-	type DocumentData,
-	onSnapshot,
-	orderBy,
-	type QuerySnapshot,
-	query,
-	Timestamp,
-	type Unsubscribe,
-	where,
-} from "firebase/firestore";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { firestore } from "@/lib/firebaseClient";
+import { useCallback, useEffect, useState } from "react";
+import useSWR from "swr";
+import { adminGet } from "@/lib/adminApi";
 import type { UserProfile } from "@/types/firestore";
 
 // ============================================================================
@@ -118,123 +108,73 @@ export function useOfflineConnection(): ConnectionState {
 // ============================================================================
 
 /**
- * Hook para obtener registros recientes de usuarios con soporte offline.
+ * API response type for recent registrations endpoint.
+ */
+interface RecentRegistrationsResponse {
+	users: UserProfile[];
+	fromCache?: boolean;
+}
+
+/**
+ * Hook para obtener registros recientes de usuarios con caché SWR.
  * 
- * Estrategia "Offline First":
- * - Si hay internet: trae los datos más recientes del servidor
- * - Si no hay internet: muestra los datos en caché sin error
- * - Siempre indica si los datos vienen de caché
+ * 🔥 OPTIMIZADO: Reemplazó onSnapshot (tiempo real) por SWR con fetch simple.
+ * Impacto estimado: -15,000 lecturas/día
+ * 
+ * Estrategia:
+ * - Fetch inicial + revalidación cada 5 minutos
+ * - Sin revalidación al cambiar de pestaña
+ * - Datos en caché mientras revalida
  * 
  * @param days - Número de días hacia atrás para filtrar (default: 3)
  * @returns Datos, estado de carga, flags de caché y función de refresh
  * 
  * @example
  * ```tsx
- * const { data, loading, fromCache, hasPendingWrites } = useRecentRegistrations(3);
- * 
- * if (fromCache) {
- *   console.log("Mostrando datos de caché - podrían no estar actualizados");
- * }
+ * const { data, loading, fromCache, refresh } = useRecentRegistrations(3);
  * ```
  */
 export function useRecentRegistrations(
 	days = 3
 ): RecentRegistrationsResult<UserProfile> {
-	const [data, setData] = useState<UserProfile[]>([]);
-	const [loading, setLoading] = useState<boolean>(true);
-	const [error, setError] = useState<Error | null>(null);
-	const [fromCache, setFromCache] = useState<boolean>(false);
-	const [hasPendingWrites, setHasPendingWrites] = useState<boolean>(false);
-	const [_refreshKey, setRefreshKey] = useState<number>(0);
-	const dataRef = useRef<UserProfile[]>([]);
+	const { isOnline } = useOfflineConnection();
 
-	// Calcular fecha límite (hoy - days días)
-	const dateThreshold = useMemo(() => {
-		const date = new Date();
-		date.setDate(date.getDate() - days);
-		date.setHours(0, 0, 0, 0);
-		return Timestamp.fromDate(date);
-	}, [days]);
+	// Clave única basada en los días
+	const swrKey = `admin/users/recent?days=${days}`;
 
-	// Función para forzar recarga
-	const refresh = useCallback(() => {
-		setRefreshKey((prev) => prev + 1);
-	}, []);
-
-	useEffect(() => {
-		// Solo ejecutar en cliente
-		if (typeof window === "undefined") return;
-
-		// Query: usuarios creados en los últimos N días, ordenados por fecha
-		const usersQuery = query(
-			collection(firestore, "users"),
-			where("createdAt", ">=", dateThreshold),
-			orderBy("createdAt", "desc")
-		);
-
-		let unsubscribe: Unsubscribe | null = null;
-		let isFirstSnapshot = true;
-
-		try {
-			unsubscribe = onSnapshot(
-				usersQuery,
-				{ includeMetadataChanges: true },
-				(snapshot: QuerySnapshot<DocumentData>) => {
-					// Extraer metadata de conectividad
-					const metadata = snapshot.metadata;
-					setFromCache(metadata.fromCache);
-					setHasPendingWrites(metadata.hasPendingWrites);
-
-					// Mapear documentos a UserProfile
-					const users: UserProfile[] = snapshot.docs.map((doc) => ({
-						...(doc.data() as Omit<UserProfile, "uid">),
-						uid: doc.id,
-					}));
-
-					dataRef.current = users;
-					setData(users);
-					if (isFirstSnapshot) {
-						setLoading(false);
-						isFirstSnapshot = false;
-					}
-					setError(null);
-				},
-				(err: Error) => {
-					// Manejo de errores graceful
-					// Si hay error de red, no lanzar error fatal - los datos de caché siguen disponibles
-					// Solo marcar error si no tenemos datos en caché
-					if (dataRef.current.length === 0) {
-						setError(err);
-					}
-					
-					setFromCache(true);
-					setLoading(false);
-				}
+	const { data, error, isLoading, mutate } = useSWR<RecentRegistrationsResponse>(
+		swrKey,
+		async () => {
+			// Fetch via API en lugar de Firestore directo (aprovecha caché del servidor)
+			const response = await adminGet<RecentRegistrationsResponse>(
+				`/api/admin/users/recent?days=${days}`
 			);
-		} catch (caughtErr) {
-			// Error al crear la query - manejar en el próximo tick para evitar warnings
-			const errorToSet = caughtErr instanceof Error ? caughtErr : new Error("Error desconocido");
-			console.error("[useRecentRegistrations] Error creando query:", caughtErr);
-			// Usar setTimeout para mover fuera del ciclo síncrono del effect
-			setTimeout(() => {
-				setError(errorToSet);
-				setLoading(false);
-			}, 0);
+			return response;
+		},
+		{
+			// ⚡ Optimizaciones de costo
+			revalidateOnFocus: false, // NO recargar al cambiar de pestaña
+			revalidateOnReconnect: true, // SÍ recargar al reconectarse
+			dedupingInterval: 60000, // 1 minuto de deduplicación
+			refreshInterval: 5 * 60 * 1000, // 5 minutos de refresco automático
+			
+			// 📦 UX
+			keepPreviousData: true,
+			errorRetryCount: 2,
 		}
+	);
 
-		return () => {
-			if (unsubscribe) {
-				unsubscribe();
-			}
-		};
-	}, [dateThreshold]);
+	// Función de refresh manual
+	const refresh = useCallback(() => {
+		mutate();
+	}, [mutate]);
 
 	return {
-		data,
-		loading,
-		error,
-		fromCache,
-		hasPendingWrites,
+		data: data?.users ?? [],
+		loading: isLoading,
+		error: error ?? null,
+		fromCache: !isOnline, // Asumimos caché si está offline
+		hasPendingWrites: false, // Ya no aplica con SWR
 		refresh,
 	};
 }

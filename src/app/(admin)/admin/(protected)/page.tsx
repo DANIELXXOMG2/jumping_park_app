@@ -23,7 +23,8 @@ import {
 	CardTitle,
 } from "@/components/admin/Card";
 import { StatCard } from "@/components/admin/StatCard";
-import { adminFetch, adminGet } from "@/lib/adminApi";
+import { useActivity } from "@/hooks/useActivity";
+import { adminGet } from "@/lib/adminApi";
 import { formatRelativeTime } from "@/lib/utils";
 
 interface MinorSnapshot {
@@ -50,55 +51,15 @@ interface ConsentResult {
 	isExpired?: boolean;
 }
 
-interface ActivityData {
-	stats: {
-		consentsToday: number;
-		minorsToday: number;
-		timestamp: string;
-	};
-	latestConsents: {
-		id: string;
-		consecutivo: number;
-		adultName: string;
-		minorsCount: number;
-		signedAt: string | null;
-	}[];
-	hourlyData: {
-		hour: number;
-		label: string;
-		count: number;
-	}[];
-}
-
 export default function AdminDashboard() {
 	const [cedula, setCedula] = useState("");
 	const [isSearching, setIsSearching] = useState(false);
 	const [searchResult, setSearchResult] = useState<ConsentResult | null>(null);
-	const [activityData, setActivityData] = useState<ActivityData | null>(null);
-	const [activityLoading, setActivityLoading] = useState(true);
-	const [isRefreshing, setIsRefreshing] = useState(false);
 	const inputRef = useRef<HTMLInputElement>(null);
 
-	// Cargar actividad del día
-	const fetchActivity = useCallback(async (showRefresh = false) => {
-		if (showRefresh) setIsRefreshing(true);
-		try {
-			const result = await adminGet<ActivityData>("/api/admin/activity");
-			setActivityData(result);
-		} catch {
-			// Silenciar error
-		} finally {
-			setActivityLoading(false);
-			setIsRefreshing(false);
-		}
-	}, []);
-
-	useEffect(() => {
-		fetchActivity();
-		// Auto-refresh cada 30 segundos
-		const interval = setInterval(() => fetchActivity(), 30000);
-		return () => clearInterval(interval);
-	}, [fetchActivity]);
+	// 🔥 OPTIMIZADO: Usar hook con SWR en lugar de setInterval
+	// Refresco automático cada 5 minutos, no 30 segundos
+	const { data: activityData, isLoading: activityLoading, isValidating, mutate } = useActivity();
 
 	// Focus en el input al cargar
 	useEffect(() => {
@@ -156,14 +117,14 @@ export default function AdminDashboard() {
 					</h2>
 					<button
 						type="button"
-						onClick={() => fetchActivity(true)}
-						disabled={isRefreshing}
+						onClick={() => mutate()}
+						disabled={isValidating}
 						className="p-1.5 sm:p-2 hover:bg-surface-muted rounded-lg transition-colors"
 						title="Actualizar"
 						aria-label="Actualizar actividad"
 					>
 						<RefreshCw
-							className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-foreground/60 ${isRefreshing ? "animate-spin" : ""}`}
+							className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-foreground/60 ${isValidating ? "animate-spin" : ""}`}
 						/>
 					</button>
 				</div>
@@ -341,7 +302,7 @@ export default function AdminDashboard() {
 									onClick={async () => {
 										try {
 											const pdfUrl = `/api/admin/consents/${searchResult.consent?.id}/pdf`;
-											const response = await adminFetch(pdfUrl);
+												const response = await fetch(pdfUrl);
 											if (!response.ok) throw new Error("Error al generar PDF");
 											const blob = await response.blob();
 											const url = URL.createObjectURL(blob);
