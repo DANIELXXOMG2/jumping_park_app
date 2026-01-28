@@ -1,10 +1,10 @@
 import { create } from "zustand";
-import type { UserProfile } from "@/types/firestore";
 import {
 	clearKioskSession,
 	getKioskSession,
 	saveKioskSession,
 } from "@/lib/utils/kioskSession";
+import type { UserProfile } from "@/types/firestore";
 
 export interface ConsentFormState {
 	acceptedPolicy: boolean;
@@ -82,7 +82,7 @@ export const useKioskStore = create<KioskState>((set, get) => ({
 
 	restoreSession: () => {
 		const session = getKioskSession();
-		if (session && session.isAuthenticated) {
+		if (session?.isAuthenticated) {
 			set({
 				step: session.step,
 				visitorData: session.visitorData,

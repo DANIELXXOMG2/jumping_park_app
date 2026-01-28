@@ -76,7 +76,7 @@ export const AVAILABLE_PERMISSIONS: Permission[] = Object.values(ALL_PERMISSIONS
 /**
  * Información del usuario autenticado con su rol.
  */
-interface AuthenticatedUser {
+export interface AuthenticatedUser {
 	uid: string;
 	email: string;
 	displayName?: string;
@@ -198,7 +198,7 @@ export function canAccessRoute(role: UserRole, pathname: string): boolean {
 	const sortedRoutes = Object.keys(ROUTE_ACCESS).sort((a, b) => b.length - a.length);
 	
 	for (const route of sortedRoutes) {
-		if (pathname === route || pathname.startsWith(route + "/")) {
+		if (pathname === route || pathname.startsWith(`${route}/`)) {
 			return ROUTE_ACCESS[route].includes(role);
 		}
 	}

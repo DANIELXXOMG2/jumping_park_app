@@ -1,6 +1,7 @@
 "use client";
 
 import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 import {
 	type ConsentClause,
 	type ConsentContentStructure,
@@ -9,7 +10,6 @@ import {
 	replaceCompanyName,
 } from "@/lib/data/legalContent";
 import { validateLocalizedContent } from "@/lib/schemas/legalContent.schema";
-import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 
 interface ConsentContentProps {
@@ -55,14 +55,12 @@ function ClauseItem({
 	companyName: string;
 }) {
 	// Resaltar el nombre de la empresa en negrita
-	const formattedText = clause.text
-		.split(companyName)
-		.reduce<ReactNode[]>((acc, part, index, array) => {
-			if (index < array.length - 1) {
-				return [...acc, part, <strong key={index}>{companyName}</strong>];
-			}
-			return [...acc, part];
-		}, []);
+	const parts = clause.text.split(companyName);
+	const formattedText = parts.flatMap((part, idx) =>
+		idx < parts.length - 1
+			? [part, <strong key={`${clause.id}-company-${idx}`}>{companyName}</strong>]
+			: [part],
+	);
 
 	if (clause.highlight) {
 		return (

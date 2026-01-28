@@ -252,7 +252,7 @@ export function SpaceBackground() {
 		// Loop de animación
 		let lastTime = 0;
 		const animate = (time: number) => {
-			const deltaTime = time - lastTime;
+			const _deltaTime = time - lastTime;
 			lastTime = time;
 
 			// Limpiar canvas con fondo degradado (con tonos verdes sutiles)
@@ -311,7 +311,7 @@ export function SpaceBackground() {
 			<canvas
 				ref={canvasRef}
 				className="absolute inset-0 z-0"
-				aria-hidden="true"
+				tabIndex={-1}
 			/>
 
 			{/* Capas CSS adicionales para profundidad */}

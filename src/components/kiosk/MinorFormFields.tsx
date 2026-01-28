@@ -10,8 +10,8 @@ import {
 import type { FieldErrors, UseFormRegister } from "react-hook-form";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { Minor } from "@/lib/schemas/consent.schema";
-import { DOCUMENT_ID_TYPES } from "@/types/firestore";
 import { cn } from "@/lib/utils";
+import { DOCUMENT_ID_TYPES } from "@/types/firestore";
 import { KioskInput } from "./KioskInput";
 
 interface MinorFormFieldsProps {

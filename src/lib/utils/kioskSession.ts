@@ -8,8 +8,8 @@
  * Esta persistencia es solo para UX y optimización de costos.
  */
 
-import type { UserProfile } from "@/types/firestore";
 import type { ConsentFormState } from "@/store/kioskStore";
+import type { UserProfile } from "@/types/firestore";
 
 const KIOSK_SESSION_KEY = "kiosk_session";
 const SESSION_DURATION_MS = 10 * 60 * 1000; // 10 minutos

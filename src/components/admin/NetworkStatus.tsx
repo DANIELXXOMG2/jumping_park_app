@@ -55,7 +55,7 @@ export function NetworkStatus({ compact = false, className }: NetworkStatusProps
 	if (networkState === "online") {
 		if (compact) {
 			return (
-				<div
+				<output
 					className={cn(
 						"flex items-center justify-center w-2 h-2 rounded-full bg-success",
 						className
@@ -72,7 +72,7 @@ export function NetworkStatus({ compact = false, className }: NetworkStatusProps
 	// Estado: Sincronizando
 	if (networkState === "syncing") {
 		return (
-			<div
+			<output
 				className={cn(
 					"flex items-center gap-1.5 px-2.5 py-1 rounded-full",
 					"bg-blue-500/10 text-blue-600 dark:text-blue-400",
@@ -81,17 +81,16 @@ export function NetworkStatus({ compact = false, className }: NetworkStatusProps
 				)}
 				title="Sincronizando datos con el servidor"
 				aria-label="Estado: Sincronizando"
-				role="status"
 			>
 				<RefreshCw className="w-3.5 h-3.5 animate-spin" />
 				{!compact && <span>Sincronizando...</span>}
-			</div>
+			</output>
 		);
 	}
 
 	// Estado: Offline
 	return (
-		<div
+		<output
 			className={cn(
 				"flex items-center gap-1.5 px-2.5 py-1 rounded-full",
 				"bg-warning/10 text-warning",
@@ -104,7 +103,6 @@ export function NetworkStatus({ compact = false, className }: NetworkStatusProps
 					: "Sin conexión a internet"
 			}
 			aria-label="Estado: Modo Offline"
-			role="status"
 		>
 			{isOnline ? (
 				<CloudOff className="w-3.5 h-3.5" />
@@ -112,7 +110,7 @@ export function NetworkStatus({ compact = false, className }: NetworkStatusProps
 				<WifiOff className="w-3.5 h-3.5" />
 			)}
 			{!compact && <span>Modo Offline</span>}
-		</div>
+		</output>
 	);
 }
 

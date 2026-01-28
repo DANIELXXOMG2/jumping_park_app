@@ -1,21 +1,21 @@
 "use client";
 
-import Link from "next/link";
-import Image from "next/image";
-import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
-  Users,
-  FileCheck,
   Baby,
+  BarChart3,
   ChevronLeft,
   ChevronRight,
-  BarChart3,
+  FileCheck,
+  LayoutDashboard,
   Settings,
+  Users,
 } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { cn } from "@/lib/utils";
 import { hasPermission, type Permission } from "@/types/auth";
 
 interface MenuItem {
@@ -100,6 +100,7 @@ export function Sidebar() {
             />
           </div>
           <button
+            type="button"
             onClick={() => setCollapsed(!collapsed)}
             className="p-2 rounded-lg hover:bg-surface-muted transition-colors min-h-0 shrink-0"
           >

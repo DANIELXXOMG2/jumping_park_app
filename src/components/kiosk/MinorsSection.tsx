@@ -12,15 +12,15 @@ import {
 	Trash2,
 	User,
 } from "lucide-react";
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type {
 	UseFieldArrayReturn,
 	UseFormGetValues,
 	UseFormSetValue,
 } from "react-hook-form";
 import { useLanguage } from "@/contexts/LanguageContext";
-import type { DictionaryKey } from "@/lib/i18n/dictionary";
 import { useUISound } from "@/hooks";
+import type { DictionaryKey } from "@/lib/i18n/dictionary";
 import type { ConsentFormData, Minor } from "@/lib/schemas/consent.schema";
 import { MinorFormModal } from "./MinorFormModal";
 import { MinorHistoryModal } from "./MinorHistoryModal";

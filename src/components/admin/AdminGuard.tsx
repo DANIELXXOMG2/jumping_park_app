@@ -1,11 +1,11 @@
 "use client";
 
-import { ShieldAlert, WifiOff, Lock } from "lucide-react";
+import { Lock, ShieldAlert, WifiOff } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useSyncExternalStore } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { canAccessAdmin, canAccessRoute } from "@/types/auth";
 import type { UserRole } from "@/types/auth";
+import { canAccessAdmin, canAccessRoute } from "@/types/auth";
 
 // ============================================================================
 // HOOK: useOnlineStatus
@@ -124,7 +124,7 @@ interface AdminGuardProps {
 }
 
 export function AdminGuard({ children }: AdminGuardProps) {
-	const { user, isLoading, isAdmin, role } = useAuth();
+	const { user, isLoading, role } = useAuth();
 	const router = useRouter();
 	const pathname = usePathname();
 	const isOnline = useOnlineStatus();

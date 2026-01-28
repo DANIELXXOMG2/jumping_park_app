@@ -1,37 +1,41 @@
-# Copilot Instructions — Jumping Park App (Refactor Phase)
+# DevTwin Architect — Jumping Park App (Reference)
 
-## 1. Fuente de Verdad
-- Ubicación de documentación: `/docs`, `ESTRUCTURA_PROYECTO.md`
-- Regla: Código limpio, arquitectura hexagonal/clean donde sea posible.
+> **Estado:** Refactorizado (Sprint 2.3)
+> **Stack:** Next.js 16 (App Router) + Bun + Biome + Firebase
 
-## 2. Stack Oficial
-| Capa | Tecnología | Detalles |
-|------|------------|---------|
-| Runtime | Bun | Latest |
-| Framework | Next.js | App Router |
-| Lenguaje | TypeScript | Strict |
-| UI | React + Shadcn/ui | Tailwind CSS |
-| BD | Firebase Firestore | [BLOQUEO_DOCUMENTAL: ¿Usamos reglas de seguridad estrictas?] |
-| Auth | Firebase Auth | Custom Claims / Roles |
-| Linter | Biome | Configuración en `biome.json` |
+## 1. Principios de Calidad (Definition of Done)
+Para considerar una tarea terminada, debe pasar el pipeline de calidad unificado:
+- **Comando Obligatorio:** `bun run check` (debe retornar exit code 0).
+    - ✅ **Format & Lint:** Biome (Strict).
+    - ✅ **Type Check:** TypeScript (No emit).
+    - ✅ **Dead Code:** Knip (Sin errores críticos).
+    - ✅ **Duplicación:** JSCPD (< 2% permitido).
+    - ✅ **Ciclos:** Dependency Cruiser (0 ciclos).
 
-## 3. Arquitectura
-- **Backend (API)**: Next.js API Routes.
-- **Frontend**: Componentes de servidor (RSC) por defecto, Client Components solo para interactividad.
-- **Patrón de Datos**: 
-    - `services/`: Lógica de negocio pura.
-    - `lib/firestoreService.ts`: Acceso a datos.
-    - `app/api/`: Controladores HTTP (deben ser delgados).
+## 2. Arquitectura de Backend (API)
+Evitar lógica de negocio en `route.ts`. Usar capas:
+1.  **Middleware (`src/lib/api-middleware.ts`):** - Maneja Auth (`withAdminAuth`), validación Zod y errores `try/catch`.
+2.  **Servicios (`src/services/`):** - Lógica pura (CRUD, reglas de negocio).
+    - Ejemplos: `userService.ts`, `staffService.ts`.
+3.  **Data Access (`src/lib/firestoreService.ts`):** - Solo interacción directa con Firebase.
 
-## 4. Estándares de Calidad (DoD)
-Para dar una tarea por terminada:
-- [ ] 0 errores en `bun run audit:dead` (Knip).
-- [ ] 0 duplicidad en `bun run audit:dupe` (JSCPD).
-- [ ] Tipado estricto (Zod para validación de entrada/salida).
-- [ ] Tests unitarios para nuevos servicios (Jest/Vitest) [BLOQUEO_DOCUMENTAL: Definir framework de testing].
+## 3. Arquitectura de Frontend (UI)
+- **Componentes Compartidos:** - Tablas complejas → `src/components/admin/ConsentTable.tsx`
+    - Modales base → `src/components/kiosk/MinorModalBase.tsx`
+- **Hooks:** Lógica de estado/fetch en `src/hooks/` (ej. `useConsentsTable.ts`).
+- **Keys:** NUNCA usar `index` como key en listas. Usar IDs únicos o generarlos.
+- **Accesibilidad:** Botones siempre con `type="button" | "submit"`.
 
-## 5. Organización de Directorios (Clave)
-- `src/components/ui`: Primitivas de diseño (no tocar lógica).
-- `src/components/{feature}`: Componentes de negocio (ej. `kiosk`, `admin`).
-- `src/lib`: Utilidades puras.
-- `src/scripts`: Automatización (se ejecutan con Bun).
+## 4. Flujo de Trabajo con IA
+Al solicitar código a Copilot/DevTwin:
+1.  Pedir explícitamente **Servicios** en lugar de lógica inline.
+2.  Exigir **Tipado Estricto** (evitar `any`).
+3.  Solicitar verificación de duplicación si se crea UI similar a la existente.
+
+## 5. Comandos Clave
+| Acción | Comando |
+|:---|:---|
+| **Chequeo Completo** | `bun run check` (CI Gate) |
+| **Dev Server** | `bun run dev` |
+| **Auto-fix Lint** | `biome check src/ --write` |
+| **Analizar Bundle** | `bun run analyze` |

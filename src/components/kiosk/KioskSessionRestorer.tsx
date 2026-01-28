@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef } from "react";
 import { useKioskStore } from "@/store/kioskStore";
 
 /**
@@ -18,7 +18,7 @@ export function KioskSessionRestorer() {
 	const router = useRouter();
 	const pathname = usePathname();
 	const restoreSession = useKioskStore((state) => state.restoreSession);
-	const wasRestored = useKioskStore((state) => state.wasRestored);
+	const _wasRestored = useKioskStore((state) => state.wasRestored);
 	const isAuthenticated = useKioskStore((state) => state.isAuthenticated);
 	const hasCheckedRef = useRef(false);
 

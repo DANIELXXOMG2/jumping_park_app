@@ -136,11 +136,12 @@ export function DataTable<T extends object>({
 				fromCache && "ring-2 ring-warning/30 rounded-lg p-2"
 			)}>
 				{data.map((item) => (
-					<div
+					<button
+						type="button"
 						key={keyExtractor(item)}
 						onClick={() => onRowClick?.(item)}
 						className={cn(
-							"bg-surface-muted rounded-lg p-4 border border-border/50",
+							"bg-surface-muted rounded-lg p-4 border border-border/50 w-full text-left",
 							onRowClick && "cursor-pointer active:bg-surface",
 						)}
 					>
@@ -159,7 +160,7 @@ export function DataTable<T extends object>({
 								</span>
 							</div>
 						))}
-					</div>
+					</button>
 				))}
 			</div>
 

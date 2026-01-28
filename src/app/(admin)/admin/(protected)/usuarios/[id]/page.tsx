@@ -245,11 +245,12 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
 				<CardContent>
 					{user.minors.length > 0 ? (
 						<div className="grid sm:grid-cols-2 gap-4">
-							{user.minors.map((minor, index) => (
-								<div
-									key={index}
+							{user.minors.map((minor) => (
+								<button
+									type="button"
+									key={minor.idNumber || minor.birthDate}
 									onClick={() => setSelectedMinor(minor)}
-									className="bg-surface-muted rounded-lg p-4 border border-border/50 cursor-pointer hover:border-primary/50 hover:bg-surface-muted/80 transition-all"
+									className="bg-surface-muted rounded-lg p-4 border border-border/50 cursor-pointer hover:border-primary/50 hover:bg-surface-muted/80 transition-all text-left"
 								>
 									<div className="flex items-start justify-between">
 										<div>
@@ -276,7 +277,7 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
 											<Eye className="w-4 h-4 text-foreground/40" />
 										</div>
 									</div>
-								</div>
+								</button>
 							))}
 						</div>
 					) : (
@@ -298,10 +299,11 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
 							{consents.map((consent) => {
 								const isValid = isValidConsent(consent.validUntil);
 								return (
-									<div
+									<button
+										type="button"
 										key={consent.id}
 										onClick={() => setSelectedConsent(consent)}
-										className="flex items-center justify-between p-4 rounded-lg bg-surface-muted border border-border/50 cursor-pointer hover:border-primary/50 hover:bg-surface-muted/80 transition-all"
+										className="w-full flex items-center justify-between p-4 rounded-lg bg-surface-muted border border-border/50 cursor-pointer hover:border-primary/50 hover:bg-surface-muted/80 transition-all text-left"
 									>
 										<div className="flex items-center gap-4">
 											<Badge variant="info">#{consent.consecutivo}</Badge>
@@ -327,7 +329,7 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
 											</div>
 											<Eye className="w-4 h-4 text-foreground/40" />
 										</div>
-									</div>
+									</button>
 								);
 							})}
 						</div>

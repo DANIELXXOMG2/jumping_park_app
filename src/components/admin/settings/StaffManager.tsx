@@ -1,27 +1,27 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { Card } from '@/components/admin/Card';
-import { Button } from '@/components/admin/Button';
-import { Badge } from '@/components/admin/Badge';
-import { Modal } from '@/components/admin/Modal';
-import { SearchInput } from '@/components/admin/SearchInput';
-import { useAuth } from '@/contexts/AuthContext';
-import { UserRole } from '@/types/auth';
 import {
-  Users,
-  UserPlus,
+  AlertCircle,
+  Calendar,
+  CheckCircle,
+  Edit2,
+  Loader2,
+  Mail,
+  RefreshCw,
   Shield,
   ShieldCheck,
   Trash2,
-  Edit2,
-  RefreshCw,
-  Mail,
-  Calendar,
-  AlertCircle,
-  CheckCircle,
-  Loader2,
+  UserPlus,
+  Users,
 } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { Badge } from '@/components/admin/Badge';
+import { Button } from '@/components/admin/Button';
+import { Card } from '@/components/admin/Card';
+import { Modal } from '@/components/admin/Modal';
+import { SearchInput } from '@/components/admin/SearchInput';
+import { useAuth } from '@/contexts/AuthContext';
+import type { UserRole } from '@/types/auth';
 
 interface StaffMember {
   uid: string;
@@ -414,10 +414,11 @@ export function StaffManager() {
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="staff-email" className="block text-sm font-medium text-gray-700 mb-1">
               Email del usuario
             </label>
             <input
+              id="staff-email"
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -430,10 +431,11 @@ export function StaffManager() {
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="staff-role" className="block text-sm font-medium text-gray-700 mb-1">
               Rol
             </label>
             <select
+              id="staff-role"
               value={formData.role}
               onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
@@ -477,17 +479,18 @@ export function StaffManager() {
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <span className="block text-sm font-medium text-gray-700 mb-1">
               Usuario
-            </label>
+            </span>
             <p className="text-gray-900">{selectedMember?.email}</p>
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="edit-staff-role" className="block text-sm font-medium text-gray-700 mb-1">
               Nuevo Rol
             </label>
             <select
+              id="edit-staff-role"
               value={formData.role}
               onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"

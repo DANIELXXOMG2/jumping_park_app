@@ -1,7 +1,7 @@
 {
-  "threshold": 0,
-  "minTokens": 40,
-  "minLines": 5,
+  "threshold": 5,
+  "minTokens": 50,
+  "minLines": 6,
   "ignore": [
     "**/node_modules/**",
     "**/.next/**",

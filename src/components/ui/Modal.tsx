@@ -5,8 +5,6 @@ import { X } from "lucide-react";
 import { type ReactNode, useEffect } from "react";
 import { cn } from "@/lib/utils";
 
-type ModalVariant = "dialog" | "fullscreen";
-
 interface BaseModalProps {
 	isOpen: boolean;
 	onClose: () => void;
@@ -153,8 +151,10 @@ export function Modal(props: ModalProps) {
 	return (
 		<div className="fixed inset-0 z-100 flex items-center justify-center">
 			{/* Backdrop */}
-			<div
-				className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+			<button
+				type="button"
+				aria-label="Cerrar modal"
+				className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-default"
 				onClick={onClose}
 			/>
 

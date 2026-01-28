@@ -1,10 +1,9 @@
+import { Timestamp } from "firebase-admin/firestore";
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { adminAuth, db } from "@/lib/firebaseAdmin";
 import { verifyFullAdminToken } from "@/lib/adminAuth";
-import { Timestamp } from "firebase-admin/firestore";
+import { adminAuth, db } from "@/lib/firebaseAdmin";
 import type { UserRole } from "@/types/auth";
-import { ADMIN_ROLES } from "@/types/auth";
 
 /**
  * Schema de validación para asignar rol
@@ -82,7 +81,7 @@ export async function POST(request: NextRequest) {
 		const { email, role } = setRoleSchema.parse(body);
 
 		// Buscar usuario en Firebase Auth
-		let user;
+		let user: Awaited<ReturnType<typeof adminAuth.getUserByEmail>> | undefined;
 		try {
 			user = await adminAuth.getUserByEmail(email);
 		} catch {
@@ -177,7 +176,7 @@ export async function DELETE(request: NextRequest) {
 		const { email } = revokeRoleSchema.parse(body);
 
 		// Buscar usuario en Firebase Auth
-		let user;
+		let user: Awaited<ReturnType<typeof adminAuth.getUserByEmail>> | undefined;
 		try {
 			user = await adminAuth.getUserByEmail(email);
 		} catch {

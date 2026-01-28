@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { admin } from "@/lib/firebaseAdmin";
-import type { UserRole, CustomClaims, Permission } from "@/types/auth";
-import { ADMIN_ROLES, canAccessAdmin, getRoleFromClaims, hasPermission } from "@/types/auth";
+import type { CustomClaims, Permission, UserRole } from "@/types/auth";
+import { canAccessAdmin, getRoleFromClaims, hasPermission } from "@/types/auth";
 
 export interface AuthResult {
 	success: true;

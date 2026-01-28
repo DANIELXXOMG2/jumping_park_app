@@ -1,11 +1,11 @@
 "use client";
 
-import type { ReactNode } from "react";
-import { useRouter } from "next/navigation";
 import { Home, Sparkles } from "lucide-react";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
-import { LanguageToggle } from "@/components/kiosk/LanguageToggle";
+import { useRouter } from "next/navigation";
+import type { ReactNode } from "react";
 import { KioskSessionRestorer } from "@/components/kiosk/KioskSessionRestorer";
+import { LanguageToggle } from "@/components/kiosk/LanguageToggle";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LanguageProvider, useLanguage } from "@/contexts/LanguageContext";
 import { useKioskStore } from "@/store/kioskStore";

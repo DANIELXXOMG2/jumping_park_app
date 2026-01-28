@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
-import { adminDelete, adminDownload, adminPost, getAuthToken } from "@/lib/adminApi";
 import type { Consent } from "@/hooks";
+import { adminDelete, adminDownload, adminPost, getAuthToken } from "@/lib/adminApi";
 
 interface UseConsentsTableOptions {
 	onMutate?: () => void;

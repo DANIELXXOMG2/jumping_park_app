@@ -11,9 +11,9 @@
 
 import type { Language } from "@/lib/i18n/dictionary";
 import { 
-	validateLocalizedContent, 
 	detectConsentFormat,
-	type LocalizedConsentValidated 
+	type LocalizedConsentValidated, 
+	validateLocalizedContent 
 } from "@/lib/schemas/legalContent.schema";
 
 // ============================================================================
@@ -687,7 +687,7 @@ export function extractLocalizedContent(
 
 		// Fallback a español si el idioma no existe
 		if (language !== 'es' && 'es' in data) {
-			const validation = validateLocalizedContent(data['es']);
+			const validation = validateLocalizedContent(data.es);
 			if (validation.success) {
 				console.warn(`[LegalContent] Idioma '${language}' no encontrado, usando fallback 'es'`);
 				return validation.data;
