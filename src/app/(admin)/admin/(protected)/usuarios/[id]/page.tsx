@@ -5,21 +5,15 @@ import {
 	Baby,
 	Calendar,
 	CreditCard,
-	ExternalLink,
 	Eye,
 	FileCheck,
-	FileText,
 	Heart,
-	Loader2,
 	Mail,
 	Phone,
-	Send,
-	User,
+	User as UserIcon,
 } from "lucide-react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { use, useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
 import { Badge } from "@/components/admin/Badge";
 import { Button } from "@/components/admin/Button";
 import {
@@ -28,10 +22,12 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/admin/Card";
-import { formatEPS } from "@/lib/utils/formatters";
+import { ConsentDetailModal } from "@/components/admin/ConsentDetailModal";
 import { Modal } from "@/components/admin/Modal";
-import { adminGet, adminPost, getAuthToken } from "@/lib/adminApi";
+import { useConsentsTable } from "@/hooks/useConsentsTable";
+import { adminGet } from "@/lib/adminApi";
 import { formatRelativeTime } from "@/lib/utils";
+import { formatEPS } from "@/lib/utils/formatters";
 
 interface Minor {
 	fullName?: string;
@@ -96,8 +92,15 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [selectedMinor, setSelectedMinor] = useState<Minor | null>(null);
-	const [selectedConsent, setSelectedConsent] = useState<Consent | null>(null);
-	const [isResending, setIsResending] = useState(false);
+
+	// Hook compartido para manejo de consentimientos
+	const {
+		selectedConsent,
+		setSelectedConsent,
+		isResending,
+		handleResendEmail,
+		isValidConsent,
+	} = useConsentsTable();
 
 	const fetchUserData = useCallback(async () => {
 		try {
@@ -153,28 +156,6 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
 			age--;
 		}
 		return age;
-	};
-
-	const isValidConsent = (validUntil: string | null) => {
-		if (!validUntil) return false;
-		return new Date(validUntil) > new Date();
-	};
-
-	const handleResendEmail = async (consent: Consent) => {
-		setIsResending(true);
-		try {
-			await adminPost(`/api/admin/consents/${consent.id}/resend`, {});
-			toast.success("Email reenviado", {
-				description: `Consentimiento enviado a ${consent.adultEmail}`,
-			});
-		} catch (error) {
-			toast.error("Error al reenviar", {
-				description:
-					error instanceof Error ? error.message : "Intente nuevamente",
-			});
-		} finally {
-			setIsResending(false);
-		}
 	};
 
 	const getRelationshipLabel = (relationship: string) => {
@@ -390,7 +371,7 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
 						{/* Información personal */}
 						<div>
 							<h4 className="text-sm font-semibold text-foreground/60 uppercase mb-3 flex items-center gap-2">
-								<User className="w-4 h-4" />
+								<UserIcon className="w-4 h-4" />
 								Identificación
 							</h4>
 							<div className="bg-surface-muted rounded-lg p-4 space-y-3">
@@ -477,214 +458,20 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
 				)}
 			</Modal>
 
-			{/* Consent Detail Modal */}
-			<Modal
-				isOpen={!!selectedConsent}
+			{/* Consent Detail Modal - Componente reutilizable */}
+			<ConsentDetailModal
+				consent={selectedConsent}
 				onClose={() => setSelectedConsent(null)}
-				title={`Consentimiento #${selectedConsent?.consecutivo}`}
-			>
-				{selectedConsent && (
-					<div className="space-y-6">
-						{/* Adult Info */}
-						<div>
-							<h4 className="text-sm font-semibold text-foreground/60 uppercase mb-3">
-								Información del Responsable
-							</h4>
-							<div className="bg-surface-muted rounded-lg p-4 space-y-2">
-								<div className="flex justify-between">
-									<span className="text-sm text-foreground/60">Nombre:</span>
-									<span className="text-sm font-medium">
-										{selectedConsent.adultName || user.fullName}
-									</span>
-								</div>
-								<div className="flex justify-between">
-									<span className="text-sm text-foreground/60">Documento:</span>
-									<span className="text-sm font-mono">
-										{selectedConsent.userId || user.uid}
-									</span>
-								</div>
-								<div className="flex justify-between">
-									<span className="text-sm text-foreground/60">Email:</span>
-									<span className="text-sm">
-										{selectedConsent.adultEmail || user.email}
-									</span>
-								</div>
-								<div className="flex justify-between">
-									<span className="text-sm text-foreground/60">Teléfono:</span>
-									<span className="text-sm">
-										{selectedConsent.adultPhone || user.phone}
-									</span>
-								</div>
-							</div>
-						</div>
-
-						{/* Minors */}
-						{selectedConsent.minors && selectedConsent.minors.length > 0 && (
-							<div>
-								<h4 className="text-sm font-semibold text-foreground/60 uppercase mb-3">
-									Participantes ({selectedConsent.minors.length})
-								</h4>
-								<div className="space-y-2">
-									{selectedConsent.minors.map((minor, index) => (
-										<div
-											key={index}
-											className="bg-surface-muted rounded-lg p-3"
-										>
-											<div className="flex items-center justify-between">
-												<div>
-													<p className="text-sm font-medium">
-														{minor.fullName ||
-															`${minor.firstName || ""} ${minor.lastName || ""}`.trim()}
-													</p>
-													<p className="text-xs text-foreground/50">
-														{getRelationshipLabel(minor.relationship)} •{" "}
-														{minor.birthDate}
-													</p>
-												</div>
-												<Badge variant="default" className="text-xs">
-													{minor.idType?.toUpperCase()} {minor.idNumber}
-												</Badge>
-											</div>
-											{minor.medicalCondition && (
-												<div className="mt-2 flex items-center gap-1.5 text-xs text-red-400 bg-red-500/10 px-2 py-1 rounded border border-red-500/30">
-													<Heart className="w-3 h-3 fill-red-400" />
-													<span>⚠️ {minor.medicalCondition}</span>
-												</div>
-											)}
-										</div>
-									))}
-								</div>
-							</div>
-						)}
-
-						{/* Consent Details */}
-						<div>
-							<h4 className="text-sm font-semibold text-foreground/60 uppercase mb-3">
-								Detalles del Consentimiento
-							</h4>
-							<div className="bg-surface-muted rounded-lg p-4 space-y-2">
-								<div className="flex justify-between">
-									<span className="text-sm text-foreground/60">Versión:</span>
-									<span className="text-sm">
-										{selectedConsent.policyVersion}
-									</span>
-								</div>
-								<div className="flex justify-between">
-									<span className="text-sm text-foreground/60">IP:</span>
-									<span className="text-sm font-mono">
-										{selectedConsent.ipAddress || "-"}
-									</span>
-								</div>
-								<div className="flex justify-between">
-									<span className="text-sm text-foreground/60">Firmado:</span>
-									<span className="text-sm">
-										{selectedConsent.signedAt
-											? new Date(selectedConsent.signedAt).toLocaleString(
-													"es-CO",
-												)
-											: "-"}
-									</span>
-								</div>
-								<div className="flex justify-between">
-									<span className="text-sm text-foreground/60">
-										Válido hasta:
-									</span>
-									<span className="text-sm">
-										{selectedConsent.validUntil
-											? new Date(selectedConsent.validUntil).toLocaleString(
-													"es-CO",
-												)
-											: "-"}
-									</span>
-								</div>
-								<div className="flex justify-between items-center">
-									<span className="text-sm text-foreground/60">Estado:</span>
-									<Badge
-										variant={
-											isValidConsent(selectedConsent.validUntil)
-												? "success"
-												: "error"
-										}
-									>
-										{isValidConsent(selectedConsent.validUntil)
-											? "Vigente"
-											: "Vencido"}
-									</Badge>
-								</div>
-							</div>
-						</div>
-
-						{/* Signature */}
-						{selectedConsent.signatureUrl && (
-							<div>
-								<h4 className="text-sm font-semibold text-foreground/60 uppercase mb-3">
-									Firma Digital
-								</h4>
-								<div className="bg-white rounded-lg p-4 relative h-24">
-									<Image
-										src={selectedConsent.signatureUrl}
-										alt="Firma"
-										fill
-										className="object-contain"
-										unoptimized
-									/>
-								</div>
-							</div>
-						)}
-
-						{/* Actions */}
-						<div className="flex flex-wrap gap-3 pt-4 border-t border-border">
-							<Button
-								variant="primary"
-								onClick={async () => {
-									const token = await getAuthToken();
-									if (token) {
-										const pdfUrl = `/api/admin/consents/${selectedConsent.id}/pdf`;
-										try {
-											const response = await fetch(pdfUrl, {
-												headers: { Authorization: `Bearer ${token}` },
-											});
-											if (response.ok) {
-												const blob = await response.blob();
-												const url = URL.createObjectURL(blob);
-												window.open(url, "_blank");
-											}
-										} catch {
-											// Error silencioso
-										}
-									}
-								}}
-							>
-								<FileText className="w-4 h-4 mr-2" />
-								Ver PDF
-							</Button>
-							<Button
-								variant="outline"
-								onClick={() => handleResendEmail(selectedConsent)}
-								disabled={isResending}
-							>
-								{isResending ? (
-									<Loader2 className="w-4 h-4 mr-2 animate-spin" />
-								) : (
-									<Send className="w-4 h-4 mr-2" />
-								)}
-								Reenviar Email
-							</Button>
-							{selectedConsent.signatureUrl && (
-								<Button
-									variant="ghost"
-									onClick={() =>
-										window.open(selectedConsent.signatureUrl, "_blank")
-									}
-									title="Ver firma"
-								>
-									<ExternalLink className="w-4 h-4" />
-								</Button>
-							)}
-						</div>
-					</div>
-				)}
-			</Modal>
+				onResendEmail={handleResendEmail}
+				isResending={isResending}
+				isValidConsent={isValidConsent}
+				userFallback={{
+					fullName: user.fullName,
+					uid: user.uid,
+					email: user.email,
+					phone: user.phone,
+				}}
+			/>
 		</div>
 	);
 }
