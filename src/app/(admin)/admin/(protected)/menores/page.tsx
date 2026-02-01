@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
 import { adminDelete, adminGet } from "@/lib/adminApi";
+import { calculateAge } from "@/lib/utils/dateUtils";
 import { formatEPS } from "@/lib/utils/formatters";
 import { hasPermission } from "@/types/auth";
 
@@ -134,20 +135,6 @@ export default function MinorsPage() {
 			setIsDeleting(false);
 			setMinorToDelete(null);
 		}
-	};
-
-	const calculateAge = (birthDate: string) => {
-		const today = new Date();
-		const birth = new Date(birthDate);
-		let age = today.getFullYear() - birth.getFullYear();
-		const monthDiff = today.getMonth() - birth.getMonth();
-		if (
-			monthDiff < 0 ||
-			(monthDiff === 0 && today.getDate() < birth.getDate())
-		) {
-			age--;
-		}
-		return age;
 	};
 
 	const formatDate = (dateStr: string | null) => {
