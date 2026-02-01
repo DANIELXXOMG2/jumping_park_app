@@ -335,8 +335,8 @@ textarea:focus-visible {
   box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
 }
 
-/* Primary Button Style */
-button {
+/* Primary Button Style - Solo aplica a botones sin clases de background de Tailwind */
+button:not([class*="bg-"]):not([class*="btn-"]):not([class*="p-"]) {
   background-color: var(--brand-green);
   color: var(--text-on-primary);
   font-weight: 600;
@@ -344,13 +344,13 @@ button {
   border: none;
 }
 
-button:hover {
+button:not([class*="bg-"]):not([class*="btn-"]):not([class*="p-"]):hover {
   background-color: var(--primary-hover);
   box-shadow: var(--shadow-button-hover);
   transform: translateY(-1px);
 }
 
-button:active {
+button:not([class*="bg-"]):not([class*="btn-"]):not([class*="p-"]):active {
   transform: translateY(0) scale(0.98);
 }
 
