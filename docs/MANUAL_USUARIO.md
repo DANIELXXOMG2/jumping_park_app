@@ -241,7 +241,7 @@ Hola,
 
 Tu código de verificación es: 847291
 
-Este código expira en 10 minutos.
+Este código expira en 20 minutos.
 
 Si no solicitaste este código, ignora este mensaje.
 ```

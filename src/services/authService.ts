@@ -3,7 +3,9 @@ import { isExpired, toJsDate } from "../lib/utils/dateUtils";
 import type { OtpRecord, OtpSession, UserProfile } from "../types/firestore";
 import { sendOtpEmail as sendOtpViaEmail } from "./emailService";
 
-// Duración de la sesión OTP en minutos
+// Duración del código OTP en minutos
+const OTP_EXPIRATION_MINUTES = 20;
+// Duración de la sesión OTP post-validación en minutos
 const OTP_SESSION_DURATION_MINUTES = 15;
 
 export type SendOtpResult = {
@@ -19,7 +21,7 @@ export async function getUserByCedula(
 }
 
 export async function saveOtp(email: string, code: string): Promise<void> {
-	const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+	const expiresAt = new Date(Date.now() + OTP_EXPIRATION_MINUTES * 60 * 1000);
 	const otpRecord: OtpRecord = {
 		email,
 		code,
