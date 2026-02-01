@@ -8,6 +8,7 @@ import { Badge } from "@/components/admin/Badge";
 import { Button } from "@/components/admin/Button";
 import { DataTable } from "@/components/admin/DataTable";
 import { DeleteConfirmModal } from "@/components/admin/DeleteConfirmModal";
+import { useNetworkStatus } from "@/components/admin/NetworkStatus";
 import { SearchInput } from "@/components/admin/SearchInput";
 import {
 	DropdownMenu,
@@ -15,10 +16,8 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useRecentRegistrations } from "@/hooks";
 import { adminDelete, adminDownload, adminGet } from "@/lib/adminApi";
 import { formatRelativeTime } from "@/lib/utils";
-import { toJsDate } from "@/lib/utils/dateUtils";
 
 interface User {
 	id: string;
@@ -37,100 +36,65 @@ interface Pagination {
 	hasMore: boolean;
 }
 
+const PAGE_SIZE = 20;
+
 export default function UsersPage() {
 	const router = useRouter();
-	
-	// Hook con soporte offline - trae últimos 7 días
-	const {
-		data: recentUsers,
-		loading: recentLoading,
-		fromCache,
-		refresh,
-	} = useRecentRegistrations(7);
+	const { isOffline } = useNetworkStatus();
 
-	// Estado para búsqueda (usa API tradicional)
-	const [searchResults, setSearchResults] = useState<User[]>([]);
+	// Estado para usuarios y paginación
+	const [users, setUsers] = useState<User[]>([]);
 	const [pagination, setPagination] = useState<Pagination>({
 		total: 0,
-		limit: 20,
+		limit: PAGE_SIZE,
 		offset: 0,
 		hasMore: false,
 	});
 	const [search, setSearch] = useState("");
-	const [isSearching, setIsSearching] = useState(false);
+	const [isLoading, setIsLoading] = useState(true);
 	const [isExporting, setIsExporting] = useState(false);
 
 	// Estado para eliminar usuarios
 	const [userToDelete, setUserToDelete] = useState<User | null>(null);
 	const [isDeleting, setIsDeleting] = useState(false);
 
-	// Determinar qué datos mostrar: búsqueda o recientes
-	const isSearchActive = search.trim().length > 0;
-	
-	// Mapear usuarios recientes al formato esperado
-	const mappedRecentUsers: User[] = recentUsers.map((user) => {
-		let createdAtISO: string | null = null;
+	// Función para obtener usuarios con paginación
+	const fetchUsers = useCallback(async (searchTerm: string, offset: number) => {
 		try {
-			if (user.createdAt) {
-				const date = toJsDate(user.createdAt);
-				if (date && !Number.isNaN(date.getTime())) {
-					createdAtISO = date.toISOString();
-				}
-			}
-		} catch {
-			// Fecha inválida, mantener null
-		}
-		
-		return {
-			id: user.uid,
-			uid: user.uid,
-			fullName: user.fullName,
-			email: user.email,
-			phone: user.phone,
-			minorsCount: user.minors?.length || 0,
-			createdAt: createdAtISO,
-		};
-	});
-
-	const displayedUsers = isSearchActive ? searchResults : mappedRecentUsers;
-	const isLoading = isSearchActive ? isSearching : recentLoading;
-
-	const fetchSearchResults = useCallback(async (searchTerm: string, offset: number) => {
-		if (!searchTerm.trim()) return;
-		
-		try {
-			setIsSearching(true);
+			setIsLoading(true);
 			const params = new URLSearchParams({
-				limit: "20",
+				limit: PAGE_SIZE.toString(),
 				offset: offset.toString(),
-				search: searchTerm,
 			});
+			
+			if (searchTerm.trim()) {
+				params.set("search", searchTerm);
+			}
 
 			const data = await adminGet<{ users: User[]; pagination: Pagination }>(
 				`/api/admin/users?${params}`,
 			);
-			setSearchResults(data.users);
+			setUsers(data.users);
 			setPagination(data.pagination);
 		} catch {
-			toast.error("Error al buscar usuarios");
+			toast.error("Error al cargar usuarios");
 		} finally {
-			setIsSearching(false);
+			setIsLoading(false);
 		}
 	}, []);
 
+	// Cargar usuarios al montar y cuando cambia la búsqueda
 	useEffect(() => {
-		if (search.trim()) {
-			fetchSearchResults(search, 0);
-		} else {
-			setSearchResults([]);
-			setPagination({ total: 0, limit: 20, offset: 0, hasMore: false });
-		}
-	}, [search, fetchSearchResults]);
+		fetchUsers(search, 0);
+	}, [search, fetchUsers]);
 
 	const handlePageChange = (newOffset: number) => {
-		if (isSearchActive) {
-			fetchSearchResults(search, newOffset);
-		}
+		setPagination((prev) => ({ ...prev, offset: newOffset }));
+		fetchUsers(search, newOffset);
+	};
+
+	const handleRefresh = () => {
+		fetchUsers(search, pagination.offset);
 	};
 
 	const handleExport = async () => {
@@ -159,10 +123,7 @@ export default function UsersPage() {
 				description: `${userToDelete.fullName} ha sido eliminado correctamente`,
 			});
 			// Refrescar la lista
-			refresh();
-			if (isSearchActive) {
-				fetchSearchResults(search, pagination.offset);
-			}
+			fetchUsers(search, pagination.offset);
 		} catch (error) {
 			toast.error("Error al eliminar", {
 				description:
@@ -270,10 +231,7 @@ export default function UsersPage() {
 						Usuarios
 					</h1>
 					<p className="text-foreground/60 mt-1">
-						{isSearchActive 
-							? `${pagination.total} resultados encontrados`
-							: `${mappedRecentUsers.length} usuarios en los últimos 7 días`
-						}
+						{pagination.total} usuarios registrados
 					</p>
 				</div>
 				<div className="flex items-center gap-2">
@@ -281,11 +239,11 @@ export default function UsersPage() {
 					<Button
 						variant="ghost"
 						size="sm"
-						onClick={() => refresh()}
-						disabled={recentLoading}
+						onClick={handleRefresh}
+						disabled={isLoading}
 						title="Recargar datos"
 					>
-						<RefreshCw className={`w-4 h-4 ${recentLoading ? "animate-spin" : ""}`} />
+						<RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
 					</Button>
 					<Button
 						variant="secondary"
@@ -318,17 +276,19 @@ export default function UsersPage() {
 			{/* Users Table */}
 			<div className="bg-surface rounded-xl border border-border p-4 lg:p-6">
 				<DataTable
-					data={displayedUsers}
+					data={users}
 					columns={columns}
 					keyExtractor={(user) => user.id}
 					onRowClick={(user) => router.push(`/admin/usuarios/${user.uid}`)}
 					isLoading={isLoading}
-					fromCache={!isSearchActive && fromCache}
-					emptyMessage={isSearchActive ? "No se encontraron usuarios" : "No hay usuarios registrados en los últimos 7 días"}
-					pagination={isSearchActive ? {
-						...pagination,
+					fromCache={isOffline}
+					emptyMessage={search ? "No se encontraron usuarios" : "No hay usuarios registrados"}
+					pagination={{
+						total: pagination.total,
+						limit: pagination.limit,
+						offset: pagination.offset,
 						onPageChange: handlePageChange,
-					} : undefined}
+					}}
 				/>
 			</div>
 
