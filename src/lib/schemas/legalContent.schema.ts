@@ -92,58 +92,15 @@ export const localizedConsentSchema = z.object({
 });
 
 // ============================================================================
-// SCHEMA: Estructura Multilenguaje del Consentimiento
-// ============================================================================
-
-/**
- * Esquema principal que soporta múltiples idiomas.
- * Estructura: { es: {...}, en: {...}, fr: {...}, ... }
- * 
- * Usa z.record para permitir claves de idioma dinámicas (ISO 639-1).
- * Ejemplo de claves válidas: "es", "en", "fr", "pt", etc.
- */
-export const consentContentStructureSchema = z.record(
-	z.string().min(2).max(5), // Claves ISO 639-1 (ej: "es", "en", "pt-BR")
-	localizedConsentSchema
-).refine(
-	(data) => Object.keys(data).length > 0,
-	{ message: "Debe existir al menos un idioma configurado" }
-);
-
-// ============================================================================
 // TIPOS INFERIDOS
 // ============================================================================
 
 /** Tipo para el contenido de UN idioma */
 export type LocalizedConsentValidated = z.infer<typeof localizedConsentSchema>;
-/** Tipo para el documento completo multilenguaje */
-export type ConsentContentStructureValidated = z.infer<typeof consentContentStructureSchema>;
 
 // ============================================================================
 // FUNCIÓN DE VALIDACIÓN
 // ============================================================================
-
-/**
- * Valida que los datos de Firestore tengan la estructura multilenguaje correcta.
- * NO valida cantidad de elementos, solo estructura.
- * 
- * @param data - Datos a validar (estructura multilenguaje)
- * @returns { success: true, data } si es válido, { success: false, error } si no
- */
-export function validateConsentContent(data: unknown): 
-	| { success: true; data: ConsentContentStructureValidated }
-	| { success: false; error: string } {
-	try {
-		const validated = consentContentStructureSchema.parse(data);
-		return { success: true, data: validated };
-	} catch (error) {
-		if (error instanceof z.ZodError) {
-			const messages = error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
-			return { success: false, error: `Estructura inválida: ${messages}` };
-		}
-		return { success: false, error: "Error desconocido al validar estructura" };
-	}
-}
 
 /**
  * Valida el contenido de UN idioma específico.
