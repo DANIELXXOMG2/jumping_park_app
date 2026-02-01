@@ -141,8 +141,8 @@ export function DataTable<T extends object>({
 						key={keyExtractor(item)}
 						onClick={() => onRowClick?.(item)}
 						className={cn(
-							"bg-surface-muted rounded-lg p-4 border border-border/50 w-full text-left",
-							onRowClick && "cursor-pointer active:bg-surface",
+							"bg-card rounded-lg p-4 border border-border/50 w-full text-left",
+							onRowClick && "cursor-pointer active:bg-muted",
 						)}
 					>
 						{columns.map((column) => (
