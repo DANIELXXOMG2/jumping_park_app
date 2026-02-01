@@ -103,7 +103,7 @@ export function LanguageToggle({
 			onClick={handleToggle}
 			className={cn(
 				"group relative inline-flex items-center gap-2 px-4 py-2.5 rounded-xl overflow-hidden",
-				"bg-gradient-to-r from-primary/10 via-purple-500/10 to-primary/10",
+				"bg-linear-to-r from-primary/10 via-purple-500/10 to-primary/10",
 				"dark:from-primary/20 dark:via-purple-500/20 dark:to-primary/20",
 				"border border-primary/20 hover:border-primary/40",
 				"shadow-lg shadow-black/10 hover:shadow-[0_0_25px_rgba(46,204,113,0.25)]",
@@ -114,7 +114,7 @@ export function LanguageToggle({
 			title={isEnglish ? "Cambiar a Español" : "Switch to English"}
 		>
 			{/* Efecto shimmer */}
-			<span className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/20 to-primary/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out" aria-hidden="true" />
+			<span className="absolute inset-0 bg-linear-to-r from-primary/0 via-primary/20 to-primary/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" aria-hidden="true" />
 			
 			{/* Ícono con animación */}
 			<span className="relative flex items-center justify-center w-8 h-8 rounded-lg bg-primary/20 group-hover:bg-primary/30 transition-colors duration-300">

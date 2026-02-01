@@ -186,7 +186,7 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
 			{/* User Info Header */}
 			<div className="bg-surface rounded-xl border border-border p-6">
 				<div className="flex flex-col lg:flex-row lg:items-center gap-6">
-					<div className="w-16 h-16 lg:w-20 lg:h-20 rounded-full bg-gradient-to-br from-primary to-primary-contrast flex items-center justify-center">
+					<div className="w-16 h-16 lg:w-20 lg:h-20 rounded-full bg-linear-to-br from-primary to-primary-contrast flex items-center justify-center">
 						<span className="text-2xl lg:text-3xl font-bold text-background">
 							{user.fullName?.charAt(0)?.toUpperCase() || "U"}
 						</span>
@@ -351,7 +351,7 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
 					<div className="space-y-6">
 						{/* Header con avatar */}
 						<div className="flex items-center gap-4 pb-4 border-b border-border">
-							<div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/80 to-primary-contrast flex items-center justify-center">
+							<div className="w-16 h-16 rounded-full bg-linear-to-br from-primary/80 to-primary-contrast flex items-center justify-center">
 								<Baby className="w-8 h-8 text-white" />
 							</div>
 							<div>

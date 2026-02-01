@@ -1,7 +1,7 @@
 /**
  * Utilidades para persistencia de sesión del Kiosco.
  * 
- * Usa localStorage para mantener la sesión del visitante por 10 minutos,
+ * Usa localStorage para mantener la sesión del visitante por 15 minutos,
  * evitando re-envío de OTPs costosos si el usuario recarga la página.
  * 
  * SEGURIDAD: La validación crítica se hace en el backend al firmar el consentimiento.
@@ -12,7 +12,7 @@ import type { ConsentFormState } from "@/store/kioskStore";
 import type { UserProfile } from "@/types/firestore";
 
 const KIOSK_SESSION_KEY = "kiosk_session";
-const SESSION_DURATION_MS = 10 * 60 * 1000; // 10 minutos
+const SESSION_DURATION_MS = 15 * 60 * 1000; // 15 minutos (sincronizado con OTP backend)
 
 export interface KioskSession {
 	/** UID/Cédula del visitante */
