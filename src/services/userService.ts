@@ -224,6 +224,28 @@ function isSuperAdmin(email: string | null | undefined): boolean {
 	return email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
 }
 
+/**
+ * Helper para mapear documento Firestore a StaffListResult.
+ * Evita duplicación de código entre list() y getById().
+ */
+function mapDocToStaffResult(
+	doc: FirebaseFirestore.DocumentSnapshot,
+	data: FirebaseFirestore.DocumentData,
+): StaffListResult {
+	return {
+		id: doc.id,
+		uid: data.uid || doc.id,
+		fullName: data.fullName,
+		email: data.email,
+		phone: data.phone || null,
+		role: data.role,
+		avatar: data.avatar || null,
+		customPermissions: data.customPermissions || [],
+		createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
+		updatedAt: data.updatedAt?.toDate?.()?.toISOString() || null,
+	};
+}
+
 export const staffService = {
 	/**
 	 * Lista personal administrativo con búsqueda y paginación.
@@ -242,18 +264,7 @@ export const staffService = {
 
 		let staff: StaffListResult[] = snapshot.docs.map((doc) => {
 			const data = doc.data();
-			return {
-				id: doc.id,
-				uid: data.uid || doc.id,
-				fullName: data.fullName,
-				email: data.email,
-				phone: data.phone || null,
-				role: data.role,
-				avatar: data.avatar || null,
-				customPermissions: data.customPermissions || [],
-				createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
-				updatedAt: data.updatedAt?.toDate?.()?.toISOString() || null,
-			};
+			return mapDocToStaffResult(doc, data);
 		});
 
 		if (query.search) {
@@ -292,18 +303,7 @@ export const staffService = {
 		const data = staffDoc.data();
 		if (!data) return null;
 
-		return {
-			id: staffDoc.id,
-			uid: data.uid || staffDoc.id,
-			fullName: data.fullName,
-			email: data.email,
-			phone: data.phone || null,
-			role: data.role,
-			avatar: data.avatar || null,
-			customPermissions: data.customPermissions || [],
-			createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
-			updatedAt: data.updatedAt?.toDate?.()?.toISOString() || null,
-		};
+		return mapDocToStaffResult(staffDoc, data);
 	},
 
 	/**

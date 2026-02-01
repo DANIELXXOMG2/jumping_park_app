@@ -62,7 +62,7 @@ function KioskLayoutContent({ children }: { children: ReactNode }) {
 						onClick={handleGoHome}
 						className="group relative flex items-center gap-2 overflow-hidden rounded-full
 							border-2 border-white/20 dark:border-zinc-300/30
-							bg-gradient-to-r from-white/10 via-white/5 to-white/10
+							bg-linear-to-r from-white/10 via-white/5 to-white/10
 							dark:from-white dark:via-zinc-50 dark:to-white
 							px-4 py-2 text-xs font-semibold tracking-[0.3em] uppercase
 							text-white/80 dark:text-black
@@ -73,7 +73,7 @@ function KioskLayoutContent({ children }: { children: ReactNode }) {
 						aria-label={t("layout.homeButton") || "Volver al inicio"}
 					>
 						{/* Shimmer effect */}
-						<span className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 pointer-events-none" aria-hidden="true" />
+						<span className="absolute inset-0 bg-linear-to-r from-transparent via-primary/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 pointer-events-none" aria-hidden="true" />
 						
 						{/* Icono Home */}
 						<Home className="relative w-4 h-4 text-primary dark:text-black group-hover:scale-110 transition-transform duration-300" strokeWidth={2.5} />

@@ -74,19 +74,6 @@ export const ALL_PERMISSIONS = {
 export const AVAILABLE_PERMISSIONS: Permission[] = Object.values(ALL_PERMISSIONS).flat() as Permission[];
 
 /**
- * Información del usuario autenticado con su rol.
- */
-export interface AuthenticatedUser {
-	uid: string;
-	email: string;
-	displayName?: string;
-	photoURL?: string;
-	role: UserRole;
-	/** Permisos adicionales asignados al usuario (modelo aditivo) */
-	customPermissions?: Permission[];
-}
-
-/**
  * Permisos por rol para diferentes acciones.
  * Admin tiene acceso total, trabajador solo a dashboard.
  */

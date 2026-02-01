@@ -167,21 +167,6 @@ export function validateLocalizedContent(data: unknown):
 }
 
 /**
- * Type Guard para verificar si un objeto tiene la estructura multilenguaje.
- * Usa validación Zod internamente.
- */
-export function isValidConsentContent(data: unknown): data is ConsentContentStructureValidated {
-	return validateConsentContent(data).success;
-}
-
-/**
- * Type Guard para verificar si un objeto tiene la estructura de UN idioma.
- */
-export function isValidLocalizedContent(data: unknown): data is LocalizedConsentValidated {
-	return validateLocalizedContent(data).success;
-}
-
-/**
  * Detecta si los datos están en formato antiguo (plano) o nuevo (multilenguaje).
  * Formato antiguo: tiene 'meta', 'consent', 'rules' en la raíz.
  * Formato nuevo: tiene claves de idioma ('es', 'en', etc.) en la raíz.
