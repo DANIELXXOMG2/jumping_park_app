@@ -182,3 +182,37 @@ export function getDateRangeColombia(
 
 	return { start, end };
 }
+
+// ============================================================================
+// CÁLCULO DE EDAD
+// ============================================================================
+
+/**
+ * Calcula la edad en años a partir de una fecha de nacimiento.
+ * 
+ * @param birthDate - Fecha de nacimiento (string ISO, Date, o Firestore Timestamp)
+ * @returns La edad en años como número
+ * 
+ * @example
+ * calculateAge("2015-06-15") // => 10 (si hoy es 2026)
+ * calculateAge(new Date("2010-03-20")) // => 15
+ */
+export function calculateAge(birthDate: string | Date | FirestoreDateValue): number {
+	if (!birthDate) return 0;
+	
+	const birth = birthDate instanceof Date 
+		? birthDate 
+		: typeof birthDate === "string" 
+			? new Date(birthDate)
+			: toJsDate(birthDate);
+	
+	const today = new Date();
+	let age = today.getFullYear() - birth.getFullYear();
+	const monthDiff = today.getMonth() - birth.getMonth();
+	
+	if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+		age--;
+	}
+	
+	return age;
+}

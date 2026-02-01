@@ -14,6 +14,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { Minor } from "@/lib/schemas/consent.schema";
 import { cn } from "@/lib/utils";
+import { calculateAge } from "@/lib/utils/dateUtils";
 import { MinorModalBase } from "./MinorModalBase";
 
 interface HistoricalMinor {
@@ -134,22 +135,6 @@ export function MinorHistoryModal({
 
 		onSelectMinors(selectedMinors);
 		onClose();
-	};
-
-	// Calcular edad desde fecha de nacimiento
-	const calculateAge = (birthDate: string): string => {
-		if (!birthDate) return "";
-		const birth = new Date(birthDate);
-		const today = new Date();
-		let age = today.getFullYear() - birth.getFullYear();
-		const monthDiff = today.getMonth() - birth.getMonth();
-		if (
-			monthDiff < 0 ||
-			(monthDiff === 0 && today.getDate() < birth.getDate())
-		) {
-			age--;
-		}
-		return `${age} ${t("minors.section.years")}`;
 	};
 
 	// Formatear tipo de documento
@@ -304,7 +289,7 @@ export function MinorHistoryModal({
 									<div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
 										<div className="flex items-center gap-1.5 text-gray-200">
 											<Calendar size={12} className="text-neon-blue" />
-											<span>{calculateAge(minor.birthDate)}</span>
+											<span>{calculateAge(minor.birthDate)} {t("minors.section.years")}</span>
 										</div>
 										<div className="flex items-center gap-1.5 text-gray-200">
 											<CreditCard size={12} className="text-neon-pink" />

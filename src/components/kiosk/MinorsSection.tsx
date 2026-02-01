@@ -22,6 +22,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useUISound } from "@/hooks";
 import type { DictionaryKey } from "@/lib/i18n/dictionary";
 import type { ConsentFormData, Minor } from "@/lib/schemas/consent.schema";
+import { calculateAge } from "@/lib/utils/dateUtils";
 import { MinorFormModal } from "./MinorFormModal";
 import { MinorHistoryModal } from "./MinorHistoryModal";
 import { MinorInlineForm } from "./MinorInlineForm";
@@ -165,20 +166,10 @@ export function MinorsSection({
 		return minors[editingIndex] || null;
 	};
 
-	// Calcular edad desde fecha de nacimiento
-	const calculateAge = (birthDate: string): string => {
+	// Calcular edad desde fecha de nacimiento (usa utilidad centralizada)
+	const formatMinorAge = (birthDate: string): string => {
 		if (!birthDate) return "";
-		const birth = new Date(birthDate);
-		const today = new Date();
-		let age = today.getFullYear() - birth.getFullYear();
-		const monthDiff = today.getMonth() - birth.getMonth();
-		if (
-			monthDiff < 0 ||
-			(monthDiff === 0 && today.getDate() < birth.getDate())
-		) {
-			age--;
-		}
-		return `${age} ${t("minors.section.years")}`;
+		return `${calculateAge(birthDate)} ${t("minors.section.years")}`;
 	};
 
 	// Formatear tipo de documento
@@ -322,7 +313,7 @@ export function MinorsSection({
 								minor={minor}
 								onEdit={() => handleEditMinor(index)}
 								onRemove={() => handleRemoveMinor(index)}
-								calculateAge={calculateAge}
+								calculateAge={formatMinorAge}
 								formatIdType={formatIdType}
 								formatRelationship={formatRelationship}
 								getEPSDisplayLabel={getEPSDisplayLabel}

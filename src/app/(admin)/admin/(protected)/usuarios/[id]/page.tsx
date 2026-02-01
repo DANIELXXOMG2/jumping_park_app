@@ -27,6 +27,7 @@ import { Modal } from "@/components/admin/Modal";
 import { useConsentsTable } from "@/hooks/useConsentsTable";
 import { adminGet } from "@/lib/adminApi";
 import { formatRelativeTime } from "@/lib/utils";
+import { calculateAge } from "@/lib/utils/dateUtils";
 import { formatEPS } from "@/lib/utils/formatters";
 
 interface Minor {
@@ -143,20 +144,6 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
 	}
 
 	const { user, consents, stats } = data;
-
-	const calculateAge = (birthDate: string) => {
-		const today = new Date();
-		const birth = new Date(birthDate);
-		let age = today.getFullYear() - birth.getFullYear();
-		const monthDiff = today.getMonth() - birth.getMonth();
-		if (
-			monthDiff < 0 ||
-			(monthDiff === 0 && today.getDate() < birth.getDate())
-		) {
-			age--;
-		}
-		return age;
-	};
 
 	const getRelationshipLabel = (relationship: string) => {
 		const labels: Record<string, string> = {
