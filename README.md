@@ -332,7 +332,7 @@ vercel --prod
 |-----------|--------------|-------------|
 | `users` | `{cédula}` | Perfiles de visitantes adultos |
 | `consents` | `{autoID}` | Consentimientos firmados |
-| `otps` | `{cédula}` | Códigos OTP temporales (TTL: 10 min) |
+| `otps` | `{cédula}` | Códigos OTP temporales (TTL: 20 min) |
 | `minors` | `{autoID}` | Menores registrados por adulto |
 | `accesses` | `{autoID}` | Registros de ingreso al parque |
 | `_counters` | `consents` | Contador atómico de consecutivos |
@@ -372,7 +372,7 @@ interface Consent {
 | **API** | Validación Zod | Todo input es validado antes de procesar |
 | **Firestore** | Admin SDK Only | No hay acceso directo desde cliente |
 | **Storage** | URLs Firmadas | Firmas protegidas con URLs de larga duración |
-| **OTP** | TTL 10 min | Códigos expiran automáticamente |
+| **OTP** | TTL 20 min | Códigos expiran automáticamente |
 | **Admin** | JWT + HttpOnly | Sesiones seguras con cookies |
 
 ### Reglas de Firestore

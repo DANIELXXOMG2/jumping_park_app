@@ -102,7 +102,7 @@ export function generateOtpEmailHtml({ otp }: OtpEmailProps): string {
                 <tr>
                   <td style="background-color: ${warningBg}; border-radius: 8px; padding: 12px 16px; text-align: center;">
                     <p style="margin: 0; color: ${warningText}; font-size: 13px;">
-                      ⏱️ Este código expira en <strong>10 minutos</strong>
+                      ⏱️ Este código expira en <strong>20 minutos</strong>
                     </p>
                   </td>
                 </tr>
