@@ -2,6 +2,7 @@
 
 import { Globe, Languages } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useUISound } from "@/hooks/useUISound";
 import { cn } from "@/lib/utils";
 
 interface LanguageToggleProps {
@@ -24,6 +25,12 @@ export function LanguageToggle({
 	className,
 }: LanguageToggleProps) {
 	const { language, toggleLanguage } = useLanguage();
+	const { playClick } = useUISound();
+
+	const handleToggle = () => {
+		playClick();
+		toggleLanguage();
+	};
 
 	const isEnglish = language === "en";
 
@@ -31,7 +38,7 @@ export function LanguageToggle({
 		return (
 			<button
 				type="button"
-				onClick={toggleLanguage}
+				onClick={handleToggle}
 				className={cn(
 					"flex items-center gap-1.5 px-2 py-1 rounded-lg",
 					"text-xs font-medium text-foreground/70 hover:text-foreground",
@@ -52,7 +59,7 @@ export function LanguageToggle({
 		return (
 			<button
 				type="button"
-				onClick={toggleLanguage}
+				onClick={handleToggle}
 				className={cn(
 					"flex items-center gap-2 px-3 py-1.5 rounded-full",
 					"text-sm font-semibold",
@@ -93,7 +100,7 @@ export function LanguageToggle({
 	return (
 		<button
 			type="button"
-			onClick={toggleLanguage}
+			onClick={handleToggle}
 			className={cn(
 				"group relative inline-flex items-center gap-2 px-4 py-2.5 rounded-xl overflow-hidden",
 				"bg-gradient-to-r from-primary/10 via-purple-500/10 to-primary/10",
