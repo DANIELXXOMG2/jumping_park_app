@@ -3,10 +3,10 @@ import { isExpired, toJsDate } from "../lib/utils/dateUtils";
 import type { OtpRecord, OtpSession, UserProfile } from "../types/firestore";
 import { sendOtpEmail as sendOtpViaEmail } from "./emailService";
 
-// Duración del código OTP en minutos
-const OTP_EXPIRATION_MINUTES = 20;
-// Duración de la sesión OTP post-validación en minutos
-const OTP_SESSION_DURATION_MINUTES = 15;
+// Duración del código OTP en minutos (1 hora)
+const OTP_EXPIRATION_MINUTES = 60;
+// Duración de la sesión OTP post-validación en minutos (2 horas)
+const OTP_SESSION_DURATION_MINUTES = 120;
 
 export type SendOtpResult = {
 	success: boolean;
@@ -18,6 +18,43 @@ export async function getUserByCedula(
 ): Promise<UserProfile | null> {
 	console.log("[AuthService] Buscando en 'users' con ID:", cedula);
 	return await getDocById<UserProfile>("users", cedula);
+}
+
+/**
+ * Verifica si existe un OTP activo (no expirado) para un email.
+ * @param email - Email a verificar
+ * @returns OtpRecord si existe y está activo, null si no existe o expiró
+ */
+export async function getActiveOtp(
+	email: string,
+): Promise<(OtpRecord & { remainingMinutes: number }) | null> {
+	try {
+		const otpDoc = await getDocById<OtpRecord>("otp_sessions", email);
+
+		if (!otpDoc) {
+			return null;
+		}
+
+		// Verificar si el OTP ha expirado
+		if (isExpired(otpDoc.expiresAt)) {
+			console.log(`[AuthService] OTP encontrado pero expirado para: ${email}`);
+			return null;
+		}
+
+		// Calcular minutos restantes
+		const expiresAtDate = toJsDate(otpDoc.expiresAt);
+		const remainingMs = expiresAtDate.getTime() - Date.now();
+		const remainingMinutes = Math.ceil(remainingMs / 60000);
+
+		console.log(
+			`[AuthService] OTP activo encontrado para: ${email}, expira en ${remainingMinutes} minutos`,
+		);
+
+		return { ...otpDoc, remainingMinutes };
+	} catch (error) {
+		console.error("[AuthService] Error verificando OTP activo:", error);
+		return null;
+	}
 }
 
 export async function saveOtp(email: string, code: string): Promise<void> {
