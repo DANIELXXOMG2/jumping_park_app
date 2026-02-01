@@ -95,6 +95,18 @@ export default function IngresoPage() {
 				});
 
 				const otpPayload = await otpResponse.json().catch(() => ({}));
+				
+				// Caso especial: ya existe un OTP activo - redirigir a /otp para ingresarlo
+				if (!otpResponse.ok && otpPayload.otpAlreadySent) {
+					updateVisitorData({
+						uid: cedula,
+						email: data.userData?.emailMasked,
+					});
+					setStep(2);
+					router.push(OTP_ROUTE);
+					return;
+				}
+				
 				if (!otpResponse.ok) {
 					throw new Error(
 						otpPayload.error ?? "No pudimos enviar el código OTP",
