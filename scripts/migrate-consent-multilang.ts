@@ -233,8 +233,9 @@ async function migrateConsentData(dryRun = true): Promise<{
 /**
  * Código para ejecutar directamente en la consola del navegador.
  * Copia y pega este bloque en las DevTools de tu app.
+ * @internal No exportado - es código de referencia para copiar/pegar
  */
-export const browserConsoleCode = `
+const browserConsoleCode = `
 // ============================================================================
 // MIGRACIÓN DE CONSENTIMIENTO - CONSOLA DEL NAVEGADOR
 // ============================================================================
