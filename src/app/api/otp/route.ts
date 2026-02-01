@@ -1,6 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { sendOtpSchema } from "@/lib/schemas/auth.schema";
-import { getUserByCedula, saveOtp, sendOtpEmail } from "@/services/authService";
+import {
+	getActiveOtp,
+	getUserByCedula,
+	saveOtp,
+	sendOtpEmail,
+} from "@/services/authService";
 import { checkRateLimit } from "@/services/rateLimitService";
 
 const OTP_DIGITS = 6;
@@ -83,6 +88,24 @@ export async function POST(req: NextRequest) {
 		if (!targetEmail) {
 			console.error("[API OTP] Faltan datos (Email o Cédula válida)");
 			return NextResponse.json({ error: "Faltan datos" }, { status: 400 });
+		}
+
+		// ═══════════════════════════════════════════════════════════════
+		// VERIFICAR OTP ACTIVO: No permitir generar si ya existe uno válido
+		// ═══════════════════════════════════════════════════════════════
+		const activeOtp = await getActiveOtp(targetEmail);
+		if (activeOtp) {
+			console.warn(
+				`[API OTP] Ya existe un OTP activo para: ${targetEmail}. Expira en ${activeOtp.remainingMinutes} minutos.`,
+			);
+			return NextResponse.json(
+				{
+					error: `Ya se ha enviado un código de verificación. Por favor, revisa tu correo o espera ${activeOtp.remainingMinutes} minutos para solicitar uno nuevo.`,
+					otpAlreadySent: true,
+					remainingMinutes: activeOtp.remainingMinutes,
+				},
+				{ status: 429 },
+			);
 		}
 
 		// ═══════════════════════════════════════════════════════════════
