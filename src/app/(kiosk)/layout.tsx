@@ -1,5 +1,6 @@
 "use client";
 
+import { signOut } from "firebase/auth";
 import { Home, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
@@ -8,6 +9,7 @@ import { LanguageToggle } from "@/components/kiosk/LanguageToggle";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LanguageProvider, useLanguage } from "@/contexts/LanguageContext";
+import { auth } from "@/lib/firebaseClient";
 import { useKioskStore } from "@/store/kioskStore";
 
 interface KioskLayoutProps {
@@ -23,11 +25,22 @@ function KioskLayoutContent({ children }: { children: ReactNode }) {
 	const clearSession = useKioskStore((state) => state.clearSession);
 
 	/**
-	 * Handler para volver al inicio
-	 * Limpia toda la sesión del kiosko y redirige al home
+	 * Handler para volver al inicio (Hard Reset)
+	 * Limpia toda la sesión del kiosko, cierra Firebase Auth y redirige al home
 	 */
-	const handleGoHome = () => {
+	const handleGoHome = async () => {
+		// 1. Limpiar estado local del store y localStorage
 		clearSession();
+		
+		// 2. Cerrar sesión de Firebase Auth (anónima o cualquiera)
+		try {
+			await signOut(auth);
+		} catch (error) {
+			// Ignorar errores si no había sesión activa
+			console.debug("[KioskLayout] signOut ignorado:", error);
+		}
+		
+		// 3. Redirigir al inicio
 		router.push("/");
 	};
 
