@@ -119,8 +119,10 @@ export async function validateOtp(
 			return { valid: false, message: "Código expirado" };
 		}
 
-		console.log(`[AuthService] OTP válido. Eliminando documento.`);
-		await deleteDoc("otp_sessions", email);
+		// OTP válido - NO eliminamos el documento para permitir reutilización
+		// El OTP seguirá siendo válido hasta que expire (1 hora)
+		// Esto permite al usuario volver a entrar si "cierra sesión" accidentalmente
+		console.log(`[AuthService] OTP válido para: ${email}. Se mantiene activo hasta expiración.`);
 		return { valid: true, message: "OTP válido" };
 	} catch (error) {
 		console.error("Error validando OTP", error);
