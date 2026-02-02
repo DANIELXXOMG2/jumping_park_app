@@ -17,7 +17,7 @@ import { generateOtpEmailHtml } from "@/components/emails/OtpEmail";
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Configuración del remitente
-const FROM_EMAIL = "Jumping Park <no-reply@jumpingpark.lat>";
+const FROM_EMAIL = "Jumping Park <acceso@jumpingpark.lat>";
 const FROM_EMAIL_DEV = "Jumping Park <onboarding@resend.dev>"; // Para desarrollo
 
 function getFromEmail(): string {
