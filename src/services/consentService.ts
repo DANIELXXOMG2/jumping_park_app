@@ -294,6 +294,7 @@ class ConsentService {
 	 * 3. Upsert usuario en Firestore
 	 * 4. Generar consecutivo atómico (RF-08)
 	 * 5. Crear documento de consentimiento
+	 * 6. Sincronizar menores a colección optimizada
 	 *
 	 * NOTA: El PDF se genera bajo demanda via /api/admin/consents/{id}/pdf
 	 *
@@ -336,7 +337,26 @@ class ConsentService {
 				ipAddress,
 			);
 
-			// 6. NOTA: El PDF NO se guarda en Storage. Se genera bajo demanda
+			// 6. Sincronizar menores a colección optimizada (minors_index)
+			// Esto permite listar menores sin cargar todos los usuarios
+			try {
+				const { minorIndexService } = await import("@/services/minorIndexService");
+				await minorIndexService.syncMinors(
+					responsibleAdult.documentId,
+					responsibleAdult.fullName,
+					responsibleAdult.email,
+					responsibleAdult.phone,
+					normalizedMinors,
+				);
+				console.log(
+					`[ConsentService] Menores sincronizados a minors_index: ${normalizedMinors.length}`,
+				);
+			} catch (syncError) {
+				// No fallar el consentimiento si falla la sincronización
+				console.warn("[ConsentService] Error sincronizando minors_index:", syncError);
+			}
+
+			// 7. NOTA: El PDF NO se guarda en Storage. Se genera bajo demanda
 			// cuando el admin lo solicita a través de /api/admin/consents/{id}/pdf.
 			// Esto reduce costos de Storage y evita datos duplicados
 			// (la información ya persiste en Firestore).

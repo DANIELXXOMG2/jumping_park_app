@@ -70,10 +70,68 @@ export interface PaginatedResult<T> {
 export const userService = {
 	/**
 	 * Lista usuarios (visitantes) con búsqueda y paginación.
+	 * OPTIMIZADO: Usa paginación real de Firestore para reducir lecturas.
 	 */
 	async list(query: UserListQuery): Promise<PaginatedResult<UserListResult>> {
-		const usersQuery = db.collection("users").orderBy("createdAt", "desc");
-		const snapshot = await usersQuery.limit(500).get();
+		// Si hay búsqueda, cargar menos documentos y filtrar
+		// Si no hay búsqueda, usar paginación real de Firestore
+		if (query.search) {
+			return this.listWithSearch(query);
+		}
+
+		// Sin búsqueda: paginación real de Firestore
+		const [countSnap, snapshot] = await Promise.all([
+			db.collection("users").count().get(),
+			db.collection("users")
+				.orderBy("createdAt", "desc")
+				.offset(query.offset)
+				.limit(query.limit)
+				.get(),
+		]);
+
+		const total = countSnap.data().count;
+		const users: UserListResult[] = snapshot.docs.map((doc) => {
+			const data = doc.data();
+			return {
+				id: doc.id,
+				uid: data.uid,
+				fullName: data.fullName,
+				email: data.email,
+				phone: data.phone || null,
+				role: data.role || "visitor",
+				customPermissions: data.customPermissions || [],
+				minorsCount: data.minors?.length || 0,
+				minors: data.minors || [],
+				createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
+				updatedAt: data.updatedAt?.toDate?.()?.toISOString() || null,
+			};
+		});
+
+		return {
+			items: users,
+			pagination: {
+				total,
+				limit: query.limit,
+				offset: query.offset,
+				hasMore: query.offset + query.limit < total,
+			},
+		};
+	},
+
+	/**
+	 * Búsqueda de usuarios con límite para reducir lecturas.
+	 * Firestore no soporta búsqueda de texto parcial, así que filtramos en memoria.
+	 * OPTIMIZADO: Limita a 100 documentos máximo para búsquedas.
+	 */
+	async listWithSearch(query: UserListQuery): Promise<PaginatedResult<UserListResult>> {
+		const searchLower = query.search?.toLowerCase() || "";
+		const searchTerm = query.search || "";
+
+		// Cargar máximo 100 documentos para búsqueda
+		const snapshot = await db.collection("users")
+			.orderBy("createdAt", "desc")
+			.limit(100)
+			.get();
 
 		let users: UserListResult[] = snapshot.docs.map((doc) => {
 			const data = doc.data();
@@ -93,17 +151,13 @@ export const userService = {
 		});
 
 		// Filtrar por búsqueda
-		if (query.search) {
-			const searchLower = query.search.toLowerCase();
-			const searchTerm = query.search;
-			users = users.filter(
-				(user) =>
-					user.fullName?.toLowerCase().includes(searchLower) ||
-					user.email?.toLowerCase().includes(searchLower) ||
-					user.phone?.includes(searchTerm) ||
-					user.uid?.includes(searchTerm),
-			);
-		}
+		users = users.filter(
+			(user) =>
+				user.fullName?.toLowerCase().includes(searchLower) ||
+				user.email?.toLowerCase().includes(searchLower) ||
+				user.phone?.includes(searchTerm) ||
+				user.uid?.includes(searchTerm),
+		);
 
 		const total = users.length;
 		const paginatedUsers = users.slice(query.offset, query.offset + query.limit);
@@ -249,40 +303,68 @@ function mapDocToStaffResult(
 export const staffService = {
 	/**
 	 * Lista personal administrativo con búsqueda y paginación.
+	 * OPTIMIZADO: Usa paginación real de Firestore.
 	 */
 	async list(query: StaffListQuery): Promise<PaginatedResult<StaffListResult>> {
-		let usersQuery = db.collection("admin_users").orderBy("createdAt", "desc");
+		const baseCollection = db.collection("admin_users");
 
-		if (query.role) {
-			usersQuery = db
-				.collection("admin_users")
-				.where("role", "==", query.role)
-				.orderBy("createdAt", "desc");
-		}
-
-		const snapshot = await usersQuery.limit(500).get();
-
-		let staff: StaffListResult[] = snapshot.docs.map((doc) => {
-			const data = doc.data();
-			return mapDocToStaffResult(doc, data);
-		});
-
+		// Con búsqueda: filtrar en memoria (staff normalmente es pequeño)
 		if (query.search) {
+			let firestoreQuery = baseCollection.orderBy("createdAt", "desc");
+			if (query.role) {
+				firestoreQuery = baseCollection
+					.where("role", "==", query.role)
+					.orderBy("createdAt", "desc");
+			}
+
+			const snapshot = await firestoreQuery.limit(50).get();
 			const searchLower = query.search.toLowerCase();
 			const searchTerm = query.search;
-			staff = staff.filter(
-				(user) =>
-					user.fullName?.toLowerCase().includes(searchLower) ||
-					user.email?.toLowerCase().includes(searchLower) ||
-					user.phone?.includes(searchTerm),
-			);
+
+			let staff: StaffListResult[] = snapshot.docs
+				.map((doc) => mapDocToStaffResult(doc, doc.data()))
+				.filter(
+					(user) =>
+						user.fullName?.toLowerCase().includes(searchLower) ||
+						user.email?.toLowerCase().includes(searchLower) ||
+						user.phone?.includes(searchTerm),
+				);
+
+			const total = staff.length;
+			const paginatedStaff = staff.slice(query.offset, query.offset + query.limit);
+
+			return {
+				items: paginatedStaff,
+				pagination: {
+					total,
+					limit: query.limit,
+					offset: query.offset,
+					hasMore: query.offset + query.limit < total,
+				},
+			};
 		}
 
-		const total = staff.length;
-		const paginatedStaff = staff.slice(query.offset, query.offset + query.limit);
+		// Sin búsqueda: paginación real
+		const countQueryBase = query.role
+			? baseCollection.where("role", "==", query.role)
+			: baseCollection;
+
+		const dataQueryBase = query.role
+			? baseCollection.where("role", "==", query.role).orderBy("createdAt", "desc")
+			: baseCollection.orderBy("createdAt", "desc");
+
+		const [countSnap, snapshot] = await Promise.all([
+			countQueryBase.count().get(),
+			dataQueryBase.offset(query.offset).limit(query.limit).get(),
+		]);
+
+		const total = countSnap.data().count;
+		const staff: StaffListResult[] = snapshot.docs.map((doc) =>
+			mapDocToStaffResult(doc, doc.data()),
+		);
 
 		return {
-			items: paginatedStaff,
+			items: staff,
 			pagination: {
 				total,
 				limit: query.limit,
@@ -491,7 +573,7 @@ export const staffService = {
 };
 
 // ============================================================================
-// SERVICIO DE MENORES
+// SERVICIO DE MENORES (Usa colección denormalizada minors_index)
 // ============================================================================
 
 export interface MinorWithParent {
@@ -513,67 +595,46 @@ export interface MinorWithParent {
 
 export const minorService = {
 	/**
-	 * Lista todos los menores con información del padre.
+	 * Lista todos los menores usando la colección optimizada minors_index.
+	 * OPTIMIZADO: Evita cargar todos los usuarios.
 	 */
 	async list(query: UserListQuery): Promise<PaginatedResult<MinorWithParent>> {
-		const usersSnap = await db.collection("users").get();
+		// Importar dinámicamente para evitar dependencias circulares
+		const { minorIndexService } = await import("@/services/minorIndexService");
 
-		let allMinors: MinorWithParent[] = [];
-
-		usersSnap.docs.forEach((doc) => {
-			const data = doc.data();
-			if (data.minors && Array.isArray(data.minors)) {
-				data.minors.forEach((minor: Record<string, unknown>, index: number) => {
-					allMinors.push({
-						id: `${doc.id}_${index}`,
-						fullName:
-							(minor.fullName as string) ||
-							`${minor.firstName || ""} ${minor.lastName || ""}`.trim(),
-						firstName: minor.firstName as string | undefined,
-						lastName: minor.lastName as string | undefined,
-						birthDate: minor.birthDate as string,
-						relationship: minor.relationship as string,
-						eps: minor.eps as string | undefined,
-						idType: minor.idType as string | undefined,
-						idNumber: minor.idNumber as string | undefined,
-						medicalCondition: minor.medicalCondition as string | undefined,
-						parentId: data.uid,
-						parentName: data.fullName,
-						parentEmail: data.email,
-						parentPhone: data.phone,
-					});
-				});
-			}
+		const result = await minorIndexService.list({
+			search: query.search,
+			limit: query.limit,
+			offset: query.offset,
 		});
 
-		if (query.search) {
-			const searchLower = query.search.toLowerCase();
-			const searchTerm = query.search;
-			allMinors = allMinors.filter(
-				(minor) =>
-					minor.fullName?.toLowerCase().includes(searchLower) ||
-					minor.idNumber?.includes(searchTerm) ||
-					minor.parentName?.toLowerCase().includes(searchLower) ||
-					minor.parentId?.includes(searchTerm),
-			);
-		}
-
-		const total = allMinors.length;
-		const paginatedMinors = allMinors.slice(query.offset, query.offset + query.limit);
+		// Mapear al formato esperado por la API existente
+		const items: MinorWithParent[] = result.items.map((m) => ({
+			id: m.idNumber, // Usar idNumber como ID
+			fullName: m.fullName,
+			firstName: m.firstName,
+			lastName: m.lastName,
+			birthDate: m.birthDate,
+			relationship: m.relationship,
+			eps: m.eps,
+			idType: m.idType,
+			idNumber: m.idNumber,
+			medicalCondition: m.medicalCondition,
+			parentId: m.parentId,
+			parentName: m.parentName,
+			parentEmail: m.parentEmail,
+			parentPhone: m.parentPhone,
+		}));
 
 		return {
-			items: paginatedMinors,
-			pagination: {
-				total,
-				limit: query.limit,
-				offset: query.offset,
-				hasMore: query.offset + query.limit < total,
-			},
+			items,
+			pagination: result.pagination,
 		};
 	},
 
 	/**
-	 * Obtiene un menor por ID compuesto (userId_index).
+	 * Obtiene un menor por ID (idNumber).
+	 * OPTIMIZADO: Lee un solo documento.
 	 */
 	async getById(id: string): Promise<{
 		minor: Record<string, unknown>;
@@ -581,102 +642,80 @@ export const minorService = {
 		userDocId: string;
 		minorIndex: number;
 	} | null> {
-		const [userId, indexStr] = id.split("_");
-		const minorIndex = Number.parseInt(indexStr, 10);
+		const { minorIndexService } = await import("@/services/minorIndexService");
 
-		if (!userId || Number.isNaN(minorIndex)) {
-			return null;
-		}
-
-		const userSnap = await db
-			.collection("users")
-			.where("uid", "==", userId)
-			.limit(1)
-			.get();
-
-		if (userSnap.empty) {
-			return null;
-		}
-
-		const userDoc = userSnap.docs[0];
-		const userData = userDoc.data();
-
-		if (!userData.minors || !userData.minors[minorIndex]) {
-			return null;
-		}
-
-		const minor = userData.minors[minorIndex];
+		const minorDoc = await minorIndexService.getById(id);
+		if (!minorDoc) return null;
 
 		return {
-			userDocId: userDoc.id,
-			minorIndex,
+			userDocId: minorDoc.parentId,
+			minorIndex: 0, // Ya no usamos índice, usamos idNumber
 			minor: {
-				id,
-				fullName: minor.fullName || `${minor.firstName || ""} ${minor.lastName || ""}`.trim(),
-				firstName: minor.firstName,
-				lastName: minor.lastName,
-				birthDate: minor.birthDate,
-				relationship: minor.relationship,
-				eps: minor.eps,
-				idType: minor.idType,
-				idNumber: minor.idNumber,
+				id: minorDoc.idNumber,
+				fullName: minorDoc.fullName,
+				firstName: minorDoc.firstName,
+				lastName: minorDoc.lastName,
+				birthDate: minorDoc.birthDate,
+				relationship: minorDoc.relationship,
+				eps: minorDoc.eps,
+				idType: minorDoc.idType,
+				idNumber: minorDoc.idNumber,
+				medicalCondition: minorDoc.medicalCondition,
 			},
 			parent: {
-				id: userDoc.id,
-				uid: userData.uid,
-				fullName: userData.fullName,
-				email: userData.email,
-				phone: userData.phone,
+				id: minorDoc.parentId,
+				uid: minorDoc.parentId,
+				fullName: minorDoc.parentName,
+				email: minorDoc.parentEmail,
+				phone: minorDoc.parentPhone,
 			},
 		};
 	},
 
 	/**
-	 * Elimina un menor por ID compuesto (userId_index).
+	 * Elimina un menor por ID (idNumber).
+	 * OPTIMIZADO: Elimina de ambas colecciones.
 	 */
 	async delete(id: string): Promise<{
 		success: boolean;
 		deletedMinor: { fullName: string };
 	} | { error: string; status: number }> {
-		const [userId, indexStr] = id.split("_");
-		const minorIndex = Number.parseInt(indexStr, 10);
+		const { minorIndexService } = await import("@/services/minorIndexService");
 
-		if (!userId || Number.isNaN(minorIndex)) {
-			return { error: "ID de menor inválido", status: 400 };
-		}
-
-		const userSnap = await db
-			.collection("users")
-			.where("uid", "==", userId)
-			.limit(1)
-			.get();
-
-		if (userSnap.empty) {
-			return { error: "Usuario padre no encontrado", status: 404 };
-		}
-
-		const userDoc = userSnap.docs[0];
-		const userData = userDoc.data();
-
-		if (!userData.minors || !userData.minors[minorIndex]) {
+		// Obtener datos del menor antes de eliminar
+		const minorDoc = await minorIndexService.getById(id);
+		if (!minorDoc) {
 			return { error: "Menor no encontrado", status: 404 };
 		}
 
-		const deletedMinor = userData.minors[minorIndex];
-		const updatedMinors = [...userData.minors];
-		updatedMinors.splice(minorIndex, 1);
+		// Eliminar de minors_index
+		await minorIndexService.delete(id);
 
-		await userDoc.ref.update({
-			minors: updatedMinors,
-			updatedAt: FieldValue.serverTimestamp(),
-		});
+		// También eliminar del array embebido en users (para consistencia)
+		const userSnap = await db
+			.collection("users")
+			.where("uid", "==", minorDoc.parentId)
+			.limit(1)
+			.get();
+
+		if (!userSnap.empty) {
+			const userDoc = userSnap.docs[0];
+			const userData = userDoc.data();
+			if (userData.minors && Array.isArray(userData.minors)) {
+				const updatedMinors = userData.minors.filter(
+					(m: { idNumber?: string }) => m.idNumber !== id,
+				);
+				await userDoc.ref.update({
+					minors: updatedMinors,
+					updatedAt: FieldValue.serverTimestamp(),
+				});
+			}
+		}
 
 		return {
 			success: true,
 			deletedMinor: {
-				fullName:
-					deletedMinor.fullName ||
-					`${deletedMinor.firstName || ""} ${deletedMinor.lastName || ""}`.trim(),
+				fullName: minorDoc.fullName,
 			},
 		};
 	},

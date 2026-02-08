@@ -1,6 +1,7 @@
 /**
  * API Route: /api/admin/activity
  * Retorna la actividad del día actual con los últimos consentimientos.
+ * OPTIMIZADO: Usa .select() para reducir lecturas de campos innecesarios.
  */
 import { type NextRequest, NextResponse } from "next/server";
 import { verifyAdminTokenWithPermission } from "@/lib/adminAuth";
@@ -19,27 +20,43 @@ export async function GET(request: NextRequest) {
 		const now = new Date();
 		const todayStart = getTodayStartColombia();
 
-		// Obtener estadísticas del día
-		const todaySnapshot = await db
-			.collection("consents")
-			.where("signedAt", ">=", todayStart)
-			.get();
+		// OPTIMIZADO: Ejecutar queries en paralelo y usar .select() para solo traer campos necesarios
+		const [todaySnapshot, latestSnapshot] = await Promise.all([
+			// Consentimientos de hoy - solo campos necesarios para stats
+			db
+				.collection("consents")
+				.where("signedAt", ">=", todayStart)
+				.select("signedAt", "minorsSnapshot")
+				.get(),
+			// Últimos 10 consentimientos - solo campos necesarios para el feed
+			db
+				.collection("consents")
+				.orderBy("signedAt", "desc")
+				.limit(10)
+				.select("consecutivo", "signedAt", "adultSnapshot", "minorsSnapshot")
+				.get(),
+		]);
 
 		const consentsToday = todaySnapshot.size;
 
 		// Calcular total de menores hoy
 		let minorsToday = 0;
+		const hourlyStats: Record<number, number> = {};
+
 		todaySnapshot.docs.forEach((doc) => {
 			const data = doc.data();
 			minorsToday += data.minorsSnapshot?.length || 0;
-		});
 
-		// Últimos 10 consentimientos (para el feed en tiempo real)
-		const latestSnapshot = await db
-			.collection("consents")
-			.orderBy("signedAt", "desc")
-			.limit(10)
-			.get();
+			// Estadísticas por hora
+			if (data.signedAt) {
+				const signedDate =
+					data.signedAt instanceof Date
+						? data.signedAt
+						: data.signedAt.toDate();
+				const hour = signedDate.getHours();
+				hourlyStats[hour] = (hourlyStats[hour] || 0) + 1;
+			}
+		});
 
 		const latestConsents = latestSnapshot.docs.map((doc) => {
 			const data = doc.data();
@@ -63,26 +80,12 @@ export async function GET(request: NextRequest) {
 			};
 		});
 
-		// Estadísticas por hora del día (para ver flujo)
-		const hourlyStats: Record<number, number> = {};
-		todaySnapshot.docs.forEach((doc) => {
-			const data = doc.data();
-			if (data.signedAt) {
-				const signedDate =
-					data.signedAt instanceof Date
-						? data.signedAt
-						: data.signedAt.toDate();
-				const hour = signedDate.getHours();
-				hourlyStats[hour] = (hourlyStats[hour] || 0) + 1;
-			}
-		});
-
-		// Convertir a array ordenado
+		// Convertir a array ordenado (solo horario comercial 8am-10pm)
 		const hourlyData = Array.from({ length: 24 }, (_, hour) => ({
 			hour,
 			label: `${hour.toString().padStart(2, "0")}:00`,
 			count: hourlyStats[hour] || 0,
-		})).filter((h) => h.hour >= 8 && h.hour <= 22); // Solo horario comercial 8am-10pm
+		})).filter((h) => h.hour >= 8 && h.hour <= 22);
 
 		return NextResponse.json({
 			success: true,

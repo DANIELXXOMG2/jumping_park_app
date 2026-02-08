@@ -8,6 +8,7 @@ import type {
 	Consent,
 	Invoice,
 	Minor,
+	MinorDocument,
 	OtpRecord,
 	Sale,
 	Service,
@@ -29,6 +30,7 @@ type FirestoreCollectionMap = {
 	consents: Consent;
 	otps: OtpRecord;
 	minors: Minor;
+	minors_index: MinorDocument; // Colección denormalizada para optimización
 	// Business collections
 	accesses: Access;
 	invoices: Invoice;

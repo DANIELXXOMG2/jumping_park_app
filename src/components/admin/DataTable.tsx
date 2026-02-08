@@ -136,10 +136,17 @@ export function DataTable<T extends object>({
 				fromCache && "ring-2 ring-warning/30 rounded-lg p-2"
 			)}>
 				{data.map((item) => (
-					<button
-						type="button"
+					<div
 						key={keyExtractor(item)}
 						onClick={() => onRowClick?.(item)}
+						onKeyDown={(e) => {
+							if (e.key === "Enter" || e.key === " ") {
+								e.preventDefault();
+								onRowClick?.(item);
+							}
+						}}
+						role={onRowClick ? "button" : undefined}
+						tabIndex={onRowClick ? 0 : undefined}
 						className={cn(
 							"bg-card rounded-lg p-4 border border-border/50 w-full text-left",
 							onRowClick && "cursor-pointer active:bg-muted hover:bg-muted/50",
@@ -160,7 +167,7 @@ export function DataTable<T extends object>({
 								</span>
 							</div>
 						))}
-					</button>
+					</div>
 				))}
 			</div>
 
