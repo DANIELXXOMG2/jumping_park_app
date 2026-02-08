@@ -17,33 +17,40 @@ export async function GET(request: NextRequest) {
 		const weekAgo = new Date();
 		weekAgo.setDate(weekAgo.getDate() - 7);
 
+		// OPTIMIZADO: Usar contadores y limitar lecturas
 		const [
 			usersCountSnap,
 			consentsCountSnap,
+			minorsCountSnap,
 			usersTodaySnap,
 			consentsTodaySnap,
 			recentUsersSnap,
 			recentConsentsSnap,
+			// OPTIMIZADO: Limitar a 50 consentimientos de la semana para el gráfico
 			weeklyConsentsSnap,
 		] = await Promise.all([
 			db.collection("users").count().get(),
 			db.collection("consents").count().get(),
+			// OPTIMIZADO: Usar contador de minors_index (colección denormalizada)
+			db.collection("minors_index").count().get(),
 			db.collection("users").where("createdAt", ">=", today).count().get(),
 			db.collection("consents").where("createdAt", ">=", today).count().get(),
 			db.collection("users").orderBy("createdAt", "desc").limit(5).get(),
 			db.collection("consents").orderBy("createdAt", "desc").limit(5).get(),
-			db.collection("consents").where("createdAt", ">=", weekAgo).get(),
+			// OPTIMIZADO: Limitar documentos de la semana (suficiente para gráfico)
+			db.collection("consents")
+				.where("createdAt", ">=", weekAgo)
+				.orderBy("createdAt", "desc")
+				.limit(100)
+				.get(),
 		]);
 
 		const totalUsers = usersCountSnap.data().count;
 		const totalConsents = consentsCountSnap.data().count;
+		const totalMinors = minorsCountSnap.data().count;
 
-		let totalMinors = 0;
 		const recentUsers = recentUsersSnap.docs.map((doc) => {
 			const data = doc.data();
-			if (data.minors && Array.isArray(data.minors)) {
-				totalMinors += data.minors.length;
-			}
 			return {
 				id: doc.id,
 				uid: data.uid,

@@ -4,6 +4,9 @@
  *
  * PROTEGIDO: Requiere sesión OTP válida (el usuario debe haber validado su identidad).
  * Usado para el historial de participantes en el kiosko.
+ * 
+ * OPTIMIZADO: Usa la colección denormalizada minors_index en lugar de leer
+ * múltiples consentimientos. Reduce de ~21 lecturas a ~N lecturas (N = cantidad de menores).
  */
 import { type NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/firebaseAdmin";
@@ -15,7 +18,7 @@ interface RouteParams {
 
 /**
  * GET /api/usuarios/[uid]/menores
- * Retorna los menores únicos asociados a un usuario desde sus consentimientos previos.
+ * Retorna los menores únicos asociados a un usuario desde minors_index.
  *
  * SEGURIDAD: Solo accesible si el usuario validó su OTP en los últimos 15 minutos.
  */
@@ -46,88 +49,28 @@ export async function GET(
 			);
 		}
 
-		// Buscar en la colección de usuarios primero
-		const userDoc = await db.collection("users").doc(uid).get();
-
-		// También buscar en consentimientos para obtener menores históricos
-		const consentsSnapshot = await db
-			.collection("consents")
-			.where("userId", "==", uid)
-			.orderBy("signedAt", "desc")
-			.limit(20) // Últimos 20 consentimientos
+		// OPTIMIZADO: Usar minors_index en lugar de leer users + múltiples consents
+		// Esto reduce de ~21 lecturas a solo N lecturas (N = cantidad de menores del usuario)
+		const minorsSnapshot = await db
+			.collection("minors_index")
+			.where("parentId", "==", uid)
+			.orderBy("updatedAt", "desc")
+			.limit(50) // Máximo 50 menores por usuario (más que suficiente)
 			.get();
 
-		// Mapa para evitar duplicados (por idNumber)
-		const minorsMap = new Map<
-			string,
-			{
-				firstName: string;
-				lastName: string;
-				birthDate: string;
-				relationship: string;
-				eps?: string;
-				idType?: string;
-				idNumber: string;
-				medicalCondition?: string;
-				lastUsed?: string; // Fecha del último consentimiento donde apareció
-			}
-		>();
-
-		// Agregar menores del perfil de usuario
-		if (userDoc.exists) {
-			const userData = userDoc.data();
-			const userMinors = userData?.minors || [];
-
-			for (const minor of userMinors) {
-				if (minor.idNumber) {
-					minorsMap.set(minor.idNumber, {
-						firstName: minor.firstName || "",
-						lastName: minor.lastName || "",
-						birthDate: minor.birthDate || "",
-						relationship: minor.relationship || "otro",
-						eps: minor.eps,
-						idType: minor.idType || "ti",
-						idNumber: minor.idNumber,
-						medicalCondition: minor.medicalCondition,
-					});
-				}
-			}
-		}
-
-		// Agregar menores de consentimientos previos (puede tener más info actualizada)
-		for (const doc of consentsSnapshot.docs) {
-			const consent = doc.data();
-			const minorsSnapshot = consent.minorsSnapshot || [];
-			const signedAt = consent.signedAt?.toDate?.() || new Date();
-
-			for (const minor of minorsSnapshot) {
-				if (minor.idNumber) {
-					const existing = minorsMap.get(minor.idNumber);
-
-					// Solo actualizar si no existe o si este es más reciente
-					if (!existing || !existing.lastUsed) {
-						minorsMap.set(minor.idNumber, {
-							firstName: minor.firstName || "",
-							lastName: minor.lastName || "",
-							birthDate: minor.birthDate || "",
-							relationship: minor.relationship || "otro",
-							eps: minor.eps,
-							idType: minor.idType || "ti",
-							idNumber: minor.idNumber,
-							medicalCondition: minor.medicalCondition,
-							lastUsed: signedAt.toISOString(),
-						});
-					}
-				}
-			}
-		}
-
-		// Convertir a array y ordenar por último uso
-		const minors = Array.from(minorsMap.values()).sort((a, b) => {
-			if (!a.lastUsed && !b.lastUsed) return 0;
-			if (!a.lastUsed) return 1;
-			if (!b.lastUsed) return -1;
-			return new Date(b.lastUsed).getTime() - new Date(a.lastUsed).getTime();
+		const minors = minorsSnapshot.docs.map((doc) => {
+			const data = doc.data();
+			return {
+				firstName: data.firstName || "",
+				lastName: data.lastName || "",
+				birthDate: data.birthDate || "",
+				relationship: data.relationship || "otro",
+				eps: data.eps,
+				idType: data.idType || "ti",
+				idNumber: data.idNumber || doc.id,
+				medicalCondition: data.medicalCondition,
+				lastUsed: data.updatedAt?.toDate?.()?.toISOString(),
+			};
 		});
 
 		return NextResponse.json({

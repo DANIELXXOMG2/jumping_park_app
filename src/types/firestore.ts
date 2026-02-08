@@ -62,6 +62,49 @@ export interface Minor {
 }
 
 /**
+ * Documento de menor en colección denormalizada 'minors_index'.
+ * Optimiza lecturas evitando cargar todos los usuarios para listar menores.
+ * El ID del documento es el idNumber del menor (único).
+ */
+export interface MinorDocument {
+	/** ID del documento (idNumber del menor) */
+	id?: string;
+	/** Nombre completo del menor */
+	fullName: string;
+	/** Nombre */
+	firstName?: string;
+	/** Apellidos */
+	lastName?: string;
+	/** Fecha de nacimiento ISO */
+	birthDate: string;
+	/** Parentesco con el responsable */
+	relationship: RelationshipType;
+	/** EPS del menor */
+	eps?: string;
+	/** Tipo de documento */
+	idType?: DocumentIdType;
+	/** Número de documento (clave primaria) */
+	idNumber: string;
+	/** Condición médica */
+	medicalCondition?: string;
+	// Datos denormalizados del padre (evita join)
+	/** ID del padre (cédula) */
+	parentId: string;
+	/** Nombre completo del padre */
+	parentName: string;
+	/** Email del padre */
+	parentEmail: string;
+	/** Teléfono del padre */
+	parentPhone: string;
+	/** Nombre completo en minúsculas para búsqueda */
+	fullNameLower: string;
+	/** Fecha de creación */
+	createdAt?: FirestoreDateValue;
+	/** Fecha de actualización */
+	updatedAt?: FirestoreDateValue;
+}
+
+/**
  * Perfil de usuario en la colección 'users'.
  * El uid corresponde a la cédula/documento de identidad.
  */

@@ -27,62 +27,103 @@ export async function GET(request: NextRequest) {
 			userId: searchParams.get("userId") || undefined,
 		});
 
-		let consentsQuery = db.collection("consents").orderBy("createdAt", "desc");
+		// Helper para mapear documento a respuesta
+		const mapConsent = (doc: FirebaseFirestore.DocumentSnapshot) => {
+			const data = doc.data();
+			if (!data) return null;
+			return {
+				id: doc.id,
+				consecutivo: data.consecutivo,
+				userId: data.userId,
+				adultName: data.adultSnapshot?.fullName || "N/A",
+				adultEmail: data.adultSnapshot?.email || "N/A",
+				adultPhone: data.adultSnapshot?.phone || "N/A",
+				minorsCount: data.minorsSnapshot?.length || 0,
+				minors: data.minorsSnapshot || [],
+				signatureUrl: data.signatureUrl,
+				policyVersion: data.policyVersion,
+				ipAddress: data.ipAddress,
+				createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
+				signedAt: data.signedAt?.toDate?.()?.toISOString() || null,
+				validUntil: data.validUntil?.toDate?.()?.toISOString() || null,
+			};
+		};
 
+		// Filtrar por userId específico
 		if (query.userId) {
-			consentsQuery = db
+			const snapshot = await db
 				.collection("consents")
-				.where("userId", "==", query.userId);
-		}
+				.where("userId", "==", query.userId)
+				.orderBy("createdAt", "desc")
+				.get();
 
-		const snapshot = await consentsQuery.limit(500).get();
+			const consents = snapshot.docs
+				.map(mapConsent)
+				.filter(Boolean);
 
-		let consents = snapshot.docs
-			.map((doc) => {
-				const data = doc.data();
-				return {
-					id: doc.id,
-					consecutivo: data.consecutivo,
-					userId: data.userId,
-					adultName: data.adultSnapshot?.fullName || "N/A",
-					adultEmail: data.adultSnapshot?.email || "N/A",
-					adultPhone: data.adultSnapshot?.phone || "N/A",
-					minorsCount: data.minorsSnapshot?.length || 0,
-					minors: data.minorsSnapshot || [],
-					signatureUrl: data.signatureUrl,
-					policyVersion: data.policyVersion,
-					ipAddress: data.ipAddress,
-					createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
-					signedAt: data.signedAt?.toDate?.()?.toISOString() || null,
-					validUntil: data.validUntil?.toDate?.()?.toISOString() || null,
-				};
-			})
-			.sort((a, b) => {
-				if (!a.createdAt || !b.createdAt) return 0;
-				return (
-					new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-				);
+			return NextResponse.json({
+				consents,
+				pagination: {
+					total: consents.length,
+					limit: query.limit,
+					offset: 0,
+					hasMore: false,
+				},
 			});
-
-		if (query.search) {
-			const searchLower = query.search.toLowerCase();
-			consents = consents.filter(
-				(consent) =>
-					consent.adultName?.toLowerCase().includes(searchLower) ||
-					consent.adultEmail?.toLowerCase().includes(searchLower) ||
-					consent.userId?.includes(searchLower) ||
-					consent.consecutivo?.toString().includes(query.search ?? ""),
-			);
 		}
 
-		const total = consents.length;
-		const paginatedConsents = consents.slice(
-			query.offset,
-			query.offset + query.limit,
-		);
+		// Con búsqueda: cargar limitado y filtrar en memoria
+		if (query.search) {
+			const snapshot = await db
+				.collection("consents")
+				.orderBy("createdAt", "desc")
+				.limit(100)
+				.get();
+
+			const searchLower = query.search.toLowerCase();
+			let consents = snapshot.docs
+				.map(mapConsent)
+				.filter(Boolean)
+				.filter(
+					(consent) =>
+						consent!.adultName?.toLowerCase().includes(searchLower) ||
+						consent!.adultEmail?.toLowerCase().includes(searchLower) ||
+						consent!.userId?.includes(searchLower) ||
+						consent!.consecutivo?.toString().includes(query.search ?? ""),
+				);
+
+			const total = consents.length;
+			const paginatedConsents = consents.slice(
+				query.offset,
+				query.offset + query.limit,
+			);
+
+			return NextResponse.json({
+				consents: paginatedConsents,
+				pagination: {
+					total,
+					limit: query.limit,
+					offset: query.offset,
+					hasMore: query.offset + query.limit < total,
+				},
+			});
+		}
+
+		// Sin búsqueda: paginación real de Firestore (OPTIMIZADO)
+		const [countSnap, snapshot] = await Promise.all([
+			db.collection("consents").count().get(),
+			db.collection("consents")
+				.orderBy("createdAt", "desc")
+				.offset(query.offset)
+				.limit(query.limit)
+				.get(),
+		]);
+
+		const total = countSnap.data().count;
+		const consents = snapshot.docs.map(mapConsent).filter(Boolean);
 
 		return NextResponse.json({
-			consents: paginatedConsents,
+			consents,
 			pagination: {
 				total,
 				limit: query.limit,

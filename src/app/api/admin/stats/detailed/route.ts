@@ -41,6 +41,10 @@ export async function GET(request: NextRequest) {
 		// =========================================================================
 		// EJECUTAR TODAS LAS CONSULTAS EN PARALELO
 		// =========================================================================
+		
+		// OPTIMIZACIÓN: Limitar consultas para evitar costos excesivos en Firebase
+		// Para períodos largos (year, all), limitamos a 2000 documentos máximo
+		const MAX_DOCS_PER_QUERY = 2000;
 
 		const [
 			consentsSnap,
@@ -50,11 +54,13 @@ export async function GET(request: NextRequest) {
 			totalUsersCount,
 			totalConsentsCount,
 		] = await Promise.all([
-			// Período actual
+			// Período actual - con límite para proteger costos
 			db
 				.collection("consents")
 				.where("signedAt", ">=", start)
 				.where("signedAt", "<=", end)
+				.orderBy("signedAt", "desc")
+				.limit(MAX_DOCS_PER_QUERY)
 				.select("signedAt", "minorsSnapshot", "validUntil") // Solo campos necesarios
 				.get(),
 
@@ -62,14 +68,16 @@ export async function GET(request: NextRequest) {
 				.collection("users")
 				.where("createdAt", ">=", start)
 				.where("createdAt", "<=", end)
+				.limit(MAX_DOCS_PER_QUERY)
 				.select("createdAt") // Solo campos necesarios
 				.get(),
 
-			// Período anterior (solo contar, no necesitamos todos los datos)
+			// Período anterior - con límite
 			db
 				.collection("consents")
 				.where("signedAt", ">=", previousRange.start)
 				.where("signedAt", "<=", previousRange.end)
+				.limit(MAX_DOCS_PER_QUERY)
 				.select("minorsSnapshot")
 				.get(),
 
@@ -237,21 +245,12 @@ export async function GET(request: NextRequest) {
 			}));
 
 		// =========================================================================
-		// TOTALES DE MENORES (consulta lazy solo si es necesario)
+		// TOTALES DE MENORES (usando colección denormalizada minors_index)
 		// =========================================================================
 
-		// Para los totales de menores, hacemos una consulta más ligera
-		// Solo necesitamos el count, no todos los datos
-		let totalMinors = 0;
-		const minorsCountSnap = await db
-			.collection("users")
-			.select("minors")
-			.limit(1000) // Limitar para evitar leer demasiados docs
-			.get();
-
-		minorsCountSnap.docs.forEach((doc) => {
-			totalMinors += (doc.data().minors || []).length;
-		});
+		// OPTIMIZADO: Usar count() en minors_index en lugar de leer 1000 docs de users
+		const minorsCountResult = await db.collection("minors_index").count().get();
+		const totalMinors = minorsCountResult.data().count;
 
 		// =========================================================================
 		// CALCULAR VARIACIONES
