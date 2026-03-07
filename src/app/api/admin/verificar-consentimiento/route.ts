@@ -29,25 +29,73 @@ export async function GET(request: NextRequest) {
 
 		const cedulaValue = validation.data.cedula;
 
-		// Buscar el último consentimiento del usuario ordenado por fecha de firma
-		// CORREGIDO: El campo correcto es "userId", no "adultId"
-		const consentsSnap = await db
-			.collection("consents")
-			.where("userId", "==", cedulaValue)
-			.orderBy("signedAt", "desc")
-			.limit(1)
-			.get();
+		// Buscar por cédula del adulto (userId) o del menor (searchTokens)
+		// Usar Promise.allSettled para que si una falla, la otra siga funcionando
+		const [adultResult, minorResult] = await Promise.allSettled([
+			db
+				.collection("consents")
+				.where("userId", "==", cedulaValue)
+				.orderBy("signedAt", "desc")
+				.limit(1)
+				.get(),
+			db
+				.collection("consents")
+				.where("searchTokens", "array-contains", cedulaValue)
+				.limit(50)
+				.get(),
+		]);
+
+		// Combinar resultados y encontrar el más reciente
+		let consentDoc: FirebaseFirestore.DocumentSnapshot | null = null;
+		let consentData: FirebaseFirestore.DocumentData | null = null;
+		let latestSignedAt: Date | null = null;
+
+		// Procesar resultados del adulto (userId)
+		if (adultResult.status === "fulfilled" && !adultResult.value.empty) {
+			consentDoc = adultResult.value.docs[0];
+			consentData = consentDoc.data() || null;
+			latestSignedAt = consentData?.signedAt?.toDate?.() || null;
+		}
+
+		// Procesar resultados del menor (searchTokens) - ordenar manualmente
+		if (minorResult.status === "fulfilled" && !minorResult.value.empty) {
+			// Ordenar manualmente por signedAt descendente
+			const sortedDocs = minorResult.value.docs.sort((a, b) => {
+				const aDate = a.data().signedAt?.toDate?.() || new Date(0);
+				const bDate = b.data().signedAt?.toDate?.() || new Date(0);
+				return bDate.getTime() - aDate.getTime();
+			});
+
+			const minorDoc = sortedDocs[0];
+			const minorData = minorDoc.data() || null;
+			const minorSignedAt = minorData?.signedAt?.toDate?.() || null;
+
+			// Si no hay consentimiento de adulto, usar el del menor
+			// O si el del menor es más reciente
+			if (!consentDoc) {
+				consentDoc = minorDoc;
+				consentData = minorData;
+			} else if (minorSignedAt && (!latestSignedAt || minorSignedAt > latestSignedAt)) {
+				consentDoc = minorDoc;
+				consentData = minorData;
+			}
+		}
+
+		// Debug: log si hay errores en las consultas
+		if (adultResult.status === "rejected") {
+			console.error("[verificar-consentimiento] Error buscando por userId:", adultResult.reason);
+		}
+		if (minorResult.status === "rejected") {
+			console.error("[verificar-consentimiento] Error buscando por searchTokens:", minorResult.reason);
+		}
 
 		// Si no hay consentimientos
-		if (consentsSnap.empty) {
+		if (!consentDoc) {
 			return NextResponse.json({
 				found: false,
 				message: "No se encontró ningún consentimiento para esta cédula",
 			});
 		}
-
-		const consentDoc = consentsSnap.docs[0];
-		const consentData = consentDoc.data();
 
 		// Verificar si el consentimiento ha expirado usando el campo validUntil
 		const now = new Date();
@@ -55,7 +103,7 @@ export async function GET(request: NextRequest) {
 		let expiresAt: string | null = null;
 
 		// Usar validUntil que ya existe en el documento
-		if (consentData.validUntil) {
+		if (consentData?.validUntil) {
 			const validUntilDate = consentData.validUntil.toDate?.()
 				? consentData.validUntil.toDate()
 				: new Date(consentData.validUntil);
@@ -65,8 +113,8 @@ export async function GET(request: NextRequest) {
 
 		// Obtener fecha de firma
 		const signedAt =
-			consentData.signedAt?.toDate?.()?.toISOString() ||
-			consentData.createdAt?.toDate?.()?.toISOString() ||
+			consentData?.signedAt?.toDate?.()?.toISOString() ||
+			consentData?.createdAt?.toDate?.()?.toISOString() ||
 			null;
 
 		// Retornar resultado
@@ -75,13 +123,13 @@ export async function GET(request: NextRequest) {
 			isExpired,
 			consent: {
 				id: consentDoc.id,
-				consecutivo: consentData.consecutivo,
-				adultSnapshot: consentData.adultSnapshot || {
+				consecutivo: consentData?.consecutivo,
+				adultSnapshot: consentData?.adultSnapshot || {
 					fullName: "Nombre no disponible",
 					uid: cedulaValue,
 				},
-				minorsSnapshot: consentData.minorsSnapshot || [],
-				signatureUrl: consentData.signatureUrl || null,
+				minorsSnapshot: consentData?.minorsSnapshot || [],
+				signatureUrl: consentData?.signatureUrl || null,
 				signedAt,
 				expiresAt,
 			},

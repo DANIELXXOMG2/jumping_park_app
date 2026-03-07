@@ -1,6 +1,25 @@
 import { FieldValue } from "firebase-admin/firestore";
 import { adminAuth, db } from "@/lib/firebaseAdmin";
+import {
+	generateSearchTokens,
+	extractEmailTokens,
+	normalizeText,
+} from "@/lib/utils/searchUtils";
 import { getEffectivePermissions, type UserRole } from "@/types/auth";
+
+// ============================================================================
+// UTILIDADES DE BÚSQUEDA
+// ============================================================================
+
+/**
+ * Combina tokens de nombre y email para búsqueda completa.
+ * Usa las utilidades centralizadas con normalización de tildes.
+ */
+export function buildUserSearchTokens(fullName: string, email: string): string[] {
+	const nameTokens = generateSearchTokens(fullName);
+	const emailTokens = extractEmailTokens(email);
+	return [...new Set([...nameTokens, ...emailTokens])];
+}
 
 // ============================================================================
 // TIPOS
@@ -119,15 +138,213 @@ export const userService = {
 	},
 
 	/**
-	 * Búsqueda de usuarios con límite para reducir lecturas.
-	 * Firestore no soporta búsqueda de texto parcial, así que filtramos en memoria.
-	 * OPTIMIZADO: Limita a 100 documentos máximo para búsquedas.
+	 * Búsqueda de usuarios optimizada con tokenización.
+	 *
+	 * ESTRATEGIA:
+	 * - Si es búsqueda por cédula (solo dígitos): Busca directo por ID (1 lectura)
+	 * - Si es búsqueda por nombre/email: Usa array-contains-any en searchTokens
+	 * - Sin búsqueda: Paginación real de Firestore
+	 *
+	 * Los usuarios se guardan con ID = cédula.
 	 */
 	async listWithSearch(query: UserListQuery): Promise<PaginatedResult<UserListResult>> {
-		const searchLower = query.search?.toLowerCase() || "";
+		const searchNormalized = normalizeText(query.search || "");
+		const searchTerm = query.search?.trim() || "";
+
+		// CASO 1: Búsqueda por cédula/documento (solo dígitos)
+		if (/^\d+$/.test(searchTerm)) {
+			const userDoc = await db.collection("users").doc(searchTerm).get();
+
+			if (userDoc.exists) {
+				const data = userDoc.data()!;
+				const user: UserListResult = {
+					id: userDoc.id,
+					uid: data.uid,
+					fullName: data.fullName,
+					email: data.email,
+					phone: data.phone || null,
+					role: data.role || "visitor",
+					customPermissions: data.customPermissions || [],
+					minorsCount: data.minors?.length || 0,
+					minors: data.minors || [],
+					createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
+					updatedAt: data.updatedAt?.toDate?.()?.toISOString() || null,
+				};
+				return {
+					items: [user],
+					pagination: {
+						total: 1,
+						limit: query.limit,
+						offset: 0,
+						hasMore: false,
+					},
+				};
+			}
+			return {
+				items: [],
+				pagination: {
+					total: 0,
+					limit: query.limit,
+					offset: 0,
+					hasMore: false,
+				},
+			};
+		}
+
+		// CASO 2: Búsqueda por nombre/email usando searchTokens
+		// Extraer palabras individuales del término de búsqueda (normalizadas sin tildes)
+		const searchWords = searchNormalized
+			.split(/\s+/)
+			.filter((w) => w.length >= 2);
+
+		if (searchWords.length === 0) {
+			// Si no hay palabras válidas, usar fallback (cargar recientes)
+			return this.listWithSearchFallback(query);
+		}
+
+		// Firestore limita array-contains-any a 10 términos
+		const termsToSearch = searchWords.slice(0, 10);
+		const fullToken = searchWords.join("");
+
+		// Estrategia optimizada: Priorizar token completo, solo query amplia si es necesario
+		// Query 1: Buscar token completo concatenado (más preciso, menos lecturas)
+		const fullTokenSnapshot = await db
+			.collection("users")
+			.where("searchTokens", "array-contains", fullToken)
+			.limit(Math.max(query.limit * 2, 20))
+			.get();
+
+		// Combinar resultados sin duplicados
+		const userMap = new Map<string, UserListResult>();
+		for (const doc of fullTokenSnapshot.docs) {
+			const data = doc.data();
+			userMap.set(doc.id, {
+				id: doc.id,
+				uid: data.uid,
+				fullName: data.fullName,
+				email: data.email,
+				phone: data.phone || null,
+				role: data.role || "visitor",
+				customPermissions: data.customPermissions || [],
+				minorsCount: data.minors?.length || 0,
+				minors: data.minors || [],
+				createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
+				updatedAt: data.updatedAt?.toDate?.()?.toISOString() || null,
+			});
+		}
+
+		// Solo si no hay suficientes resultados del token completo, buscar por palabras individuales
+		if (userMap.size < query.limit) {
+			let tokenQuery: FirebaseFirestore.Query;
+
+			if (termsToSearch.length === 1) {
+				tokenQuery = db
+					.collection("users")
+					.where("searchTokens", "array-contains", termsToSearch[0])
+					.limit(50);
+			} else {
+				tokenQuery = db
+					.collection("users")
+					.where("searchTokens", "array-contains-any", termsToSearch)
+					.limit(100);
+			}
+
+			const snapshot = await tokenQuery.get();
+
+			for (const doc of snapshot.docs) {
+				if (!userMap.has(doc.id)) {
+					const data = doc.data();
+					userMap.set(doc.id, {
+						id: doc.id,
+						uid: data.uid,
+						fullName: data.fullName,
+						email: data.email,
+						phone: data.phone || null,
+						role: data.role || "visitor",
+						customPermissions: data.customPermissions || [],
+						minorsCount: data.minors?.length || 0,
+						minors: data.minors || [],
+						createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
+						updatedAt: data.updatedAt?.toDate?.()?.toISOString() || null,
+					});
+				}
+			}
+		}
+
+		// Mapear resultados
+		let users: UserListResult[] = Array.from(userMap.values());
+
+		// FILTRAR: Solo documentos que contengan TODAS las palabras buscadas (normalizadas)
+		if (searchWords.length > 1) {
+			users = users.filter((user) => {
+				const nameNormalized = normalizeText(user.fullName || "");
+				const emailNormalized = normalizeText(user.email || "");
+				const combinedText = `${nameNormalized} ${emailNormalized}`;
+				return searchWords.every((word) => combinedText.includes(word));
+			});
+		}
+
+		// Ordenar por relevancia (scoring más preciso, usando texto normalizado)
+		users = users.sort((a, b) => {
+			const aName = normalizeText(a.fullName || "");
+			const bName = normalizeText(b.fullName || "");
+			const aEmail = normalizeText(a.email || "");
+			const bEmail = normalizeText(b.email || "");
+
+			const getScore = (name: string, email: string): number => {
+				let score = 0;
+
+				// Coincidencia exacta del nombre = máxima prioridad
+				if (name === searchNormalized) score += 1000;
+				else if (name.startsWith(searchNormalized)) score += 500;
+				else if (name.includes(searchNormalized)) score += 300;
+
+				// Coincidencia en email
+				if (email === searchNormalized) score += 200;
+				else if (email.startsWith(searchNormalized)) score += 100;
+				else if (email.includes(searchNormalized)) score += 50;
+
+				// Palabras individuales
+				for (const word of searchWords) {
+					if (name.startsWith(word)) score += 20;
+					else if (name.includes(word)) score += 10;
+					else if (email.includes(word)) score += 5;
+				}
+
+				return score;
+			};
+
+			const scoreA = getScore(aName, aEmail);
+			const scoreB = getScore(bName, bEmail);
+
+			if (scoreB !== scoreA) return scoreB - scoreA;
+
+			// Desempate: nombre más corto primero
+			return aName.length - bName.length;
+		});
+
+		const total = users.length;
+		const paginatedUsers = users.slice(query.offset, query.offset + query.limit);
+
+		return {
+			items: paginatedUsers,
+			pagination: {
+				total,
+				limit: query.limit,
+				offset: query.offset,
+				hasMore: query.offset + query.limit < total,
+			},
+		};
+	},
+
+	/**
+	 * Fallback para búsquedas que no pueden usar searchTokens.
+	 * Carga últimos 100 documentos y filtra en memoria.
+	 */
+	async listWithSearchFallback(query: UserListQuery): Promise<PaginatedResult<UserListResult>> {
+		const searchNormalized = normalizeText(query.search || "");
 		const searchTerm = query.search || "";
 
-		// Cargar máximo 100 documentos para búsqueda
 		const snapshot = await db.collection("users")
 			.orderBy("createdAt", "desc")
 			.limit(100)
@@ -150,13 +367,12 @@ export const userService = {
 			};
 		});
 
-		// Filtrar por búsqueda
+		// Filtrar usando normalizeText para ignorar tildes
 		users = users.filter(
 			(user) =>
-				user.fullName?.toLowerCase().includes(searchLower) ||
-				user.email?.toLowerCase().includes(searchLower) ||
-				user.phone?.includes(searchTerm) ||
-				user.uid?.includes(searchTerm),
+				normalizeText(user.fullName || "").includes(searchNormalized) ||
+				normalizeText(user.email || "").includes(searchNormalized) ||
+				user.phone?.includes(searchTerm),
 		);
 
 		const total = users.length;

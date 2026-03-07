@@ -11,6 +11,10 @@
  * NOTA: El envío de email ha sido deshabilitado (diciembre 2025).
  */
 import { bucket, db } from "@/lib/firebaseAdmin";
+import {
+	generateSearchTokens,
+	extractEmailTokens,
+} from "@/lib/utils/searchUtils";
 import type { Consent, Minor, UserProfile } from "@/types/firestore";
 
 // ============================================================================
@@ -44,6 +48,49 @@ export interface CreateConsentResult {
 	consentId?: string;
 	consecutivo?: number;
 	error?: string;
+}
+
+/**
+ * Construye tokens de búsqueda para consentimientos incluyendo menores.
+ * Usa las utilidades centralizadas con normalización de tildes.
+ */
+function buildConsentSearchTokens(
+	fullName: string,
+	email: string,
+	consecutivo: number,
+	minors: Minor[]
+): string[] {
+	const nameTokens = generateSearchTokens(fullName);
+	const emailTokens = extractEmailTokens(email);
+	const allTokens = new Set<string>([...nameTokens, ...emailTokens]);
+
+	// Agregar consecutivo para buscar por #1047
+	allTokens.add(consecutivo.toString());
+
+	// Agregar tokens de los menores (nombres y cédulas)
+	for (const minor of minors) {
+		// Tokens del nombre del menor
+		if (minor.fullName) {
+			const minorTokens = generateSearchTokens(minor.fullName);
+			minorTokens.forEach((token) => allTokens.add(token));
+		}
+
+		// Agregar cédula del menor para búsqueda directa
+		if (minor.idNumber) {
+			allTokens.add(minor.idNumber);
+		}
+
+		// Nombre combinado si tiene firstName/lastName
+		if (minor.firstName || minor.lastName) {
+			const combinedName = `${minor.firstName || ""} ${minor.lastName || ""}`.trim();
+			if (combinedName) {
+				const combinedTokens = generateSearchTokens(combinedName);
+				combinedTokens.forEach((token) => allTokens.add(token));
+			}
+		}
+	}
+
+	return Array.from(allTokens);
 }
 
 // ============================================================================
@@ -259,7 +306,15 @@ class ConsentService {
 		const now = new Date();
 		const oneYearFromNow = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
 
-		const consent: Consent = {
+		// Generar tokens de búsqueda incluyendo menores
+		const searchTokens = buildConsentSearchTokens(
+			userProfile.fullName,
+			userProfile.email,
+			consecutivo,
+			normalizedMinors,
+		);
+
+		const consent: Consent & { searchTokens: string[]; adultNameLower: string } = {
 			id: consentRef.id,
 			consecutivo,
 			userId: userProfile.uid,
@@ -271,6 +326,9 @@ class ConsentService {
 			signedAt: now,
 			validUntil: oneYearFromNow,
 			createdAt: now,
+			// Campos de búsqueda optimizada
+			searchTokens,
+			adultNameLower: userProfile.fullName.toLowerCase(),
 		};
 
 		await consentRef.set(consent);

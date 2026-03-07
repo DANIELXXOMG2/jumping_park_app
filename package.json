@@ -16,7 +16,12 @@
     "audit:circ": "depcruise src --include-only \"^src\" --config .dependency-cruiser.js",
     "seed": "bun run scripts/seed-database.ts",
     "set-admin": "bun run scripts/set-admin-role.ts",
-    "migrate:minors": "bun run scripts/migrate-minors.ts"
+    "migrate:minors": "bun run scripts/migrate-minors.ts",
+    "migrate:search-tokens": "bun run scripts/migrate-search-tokens.ts",
+    "migrate:consent-minor-tokens": "bun run scripts/migrate-consent-minor-tokens.ts",
+    "migrate:minor-search-tokens": "bun run scripts/migrate-minor-search-tokens.ts",
+    "migrate:tildes": "bun run scripts/migrate-search-tokens-tildes.ts",
+    "backup": "bun run scripts/backup.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

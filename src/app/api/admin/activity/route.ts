@@ -21,12 +21,14 @@ export async function GET(request: NextRequest) {
 		const todayStart = getTodayStartColombia();
 
 		// OPTIMIZADO: Ejecutar queries en paralelo y usar .select() para solo traer campos necesarios
+		// Agregado limit(1000) como seguridad para evitar lecturas masivas
 		const [todaySnapshot, latestSnapshot] = await Promise.all([
 			// Consentimientos de hoy - solo campos necesarios para stats
 			db
 				.collection("consents")
 				.where("signedAt", ">=", todayStart)
 				.select("signedAt", "minorsSnapshot")
+				.limit(1000) // Límite de seguridad
 				.get(),
 			// Últimos 10 consentimientos - solo campos necesarios para el feed
 			db
@@ -87,16 +89,24 @@ export async function GET(request: NextRequest) {
 			count: hourlyStats[hour] || 0,
 		})).filter((h) => h.hour >= 8 && h.hour <= 22);
 
-		return NextResponse.json({
-			success: true,
-			stats: {
-				consentsToday,
-				minorsToday,
-				timestamp: now.toISOString(),
+		return NextResponse.json(
+			{
+				success: true,
+				stats: {
+					consentsToday,
+					minorsToday,
+					timestamp: now.toISOString(),
+				},
+				latestConsents,
+				hourlyData,
 			},
-			latestConsents,
-			hourlyData,
-		});
+			{
+				headers: {
+					// Cache por 30 segundos para reducir lecturas de Firestore
+					"Cache-Control": "private, max-age=30, stale-while-revalidate=60",
+				},
+			}
+		);
 	} catch (error) {
 		console.error("[API /admin/activity] Error:", error);
 		return NextResponse.json(
