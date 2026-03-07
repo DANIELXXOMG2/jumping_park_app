@@ -58,6 +58,10 @@ public/swe-worker*
 *.tgz
 *.orig
 
+# Backups locales de Firestore
+/backups/
+*.backup.json
+
 # Tiposcript/JS tooling
 *.tsbuildinfo
 next-env.d.ts

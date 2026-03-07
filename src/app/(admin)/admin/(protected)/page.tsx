@@ -24,7 +24,7 @@ import {
 } from "@/components/admin/Card";
 import { StatCard } from "@/components/admin/StatCard";
 import { useActivity } from "@/hooks/useActivity";
-import { adminGet } from "@/lib/adminApi";
+import { adminGet, adminDownload } from "@/lib/adminApi";
 import { formatRelativeTime } from "@/lib/utils";
 
 interface MinorSnapshot {
@@ -301,12 +301,11 @@ export default function AdminDashboard() {
 									type="button"
 									onClick={async () => {
 										try {
-											const pdfUrl = `/api/admin/consents/${searchResult.consent?.id}/pdf`;
-												const response = await fetch(pdfUrl);
-											if (!response.ok) throw new Error("Error al generar PDF");
-											const blob = await response.blob();
-											const url = URL.createObjectURL(blob);
-											window.open(url, "_blank");
+											const consentId = searchResult.consent?.id;
+											if (!consentId) throw new Error("ID de consentimiento no disponible");
+											const pdfUrl = `/api/admin/consents/${consentId}/pdf`;
+											const filename = `consentimiento-${searchResult.consent?.consecutivo || consentId.slice(0, 8)}.pdf`;
+											await adminDownload(pdfUrl, filename);
 										} catch (error) {
 											console.error("Error descargando PDF:", error);
 										}

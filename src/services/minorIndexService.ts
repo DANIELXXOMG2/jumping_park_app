@@ -11,10 +11,27 @@
  */
 import { FieldValue } from "firebase-admin/firestore";
 import { db } from "@/lib/firebaseAdmin";
+import {
+	generateSearchTokens,
+	normalizeText,
+} from "@/lib/utils/searchUtils";
 import type { Minor, MinorDocument, UserProfile } from "@/types/firestore";
 
 const MINORS_INDEX_COLLECTION = "minors_index";
 const COUNTERS_COLLECTION = "_counters";
+
+// ============================================================================
+// UTILIDADES DE BÚSQUEDA
+// ============================================================================
+
+/**
+ * Combina tokens de menor y padre usando normalización de tildes.
+ */
+function buildMinorSearchTokens(minorName: string, parentName: string): string[] {
+	const minorTokens = generateSearchTokens(minorName);
+	const parentTokens = generateSearchTokens(parentName);
+	return [...new Set([...minorTokens, ...parentTokens])];
+}
 
 // ============================================================================
 // TIPOS
@@ -70,7 +87,10 @@ export const minorIndexService = {
 				`${minor.firstName || ""} ${minor.lastName || ""}`.trim() ||
 				"Sin nombre";
 
-			const minorDoc: Omit<MinorDocument, "id"> = {
+			// Generar tokens de búsqueda
+			const searchTokens = buildMinorSearchTokens(fullName, parentName);
+
+			const minorDoc: Omit<MinorDocument, "id"> & { searchTokens: string[] } = {
 				fullName,
 				firstName: minor.firstName,
 				lastName: minor.lastName,
@@ -85,6 +105,7 @@ export const minorIndexService = {
 				parentEmail,
 				parentPhone,
 				fullNameLower: fullName.toLowerCase(),
+				searchTokens,
 				updatedAt: FieldValue.serverTimestamp() as unknown as Date,
 			};
 
@@ -112,6 +133,11 @@ export const minorIndexService = {
 	/**
 	 * Lista menores con paginación y búsqueda optimizada.
 	 * Usa la colección denormalizada para evitar cargar todos los usuarios.
+	 *
+	 * ESTRATEGIA:
+	 * - Si es búsqueda por idNumber (solo dígitos): Busca directo por ID (1 lectura)
+	 * - Si es búsqueda por nombre: Usa array-contains-any en searchTokens
+	 * - Sin búsqueda: Paginación directa
 	 */
 	async list(query: MinorIndexQuery): Promise<PaginatedMinorResult> {
 		let firestoreQuery = db
@@ -126,12 +152,11 @@ export const minorIndexService = {
 				.orderBy("createdAt", "desc");
 		}
 
-		// Obtener total para paginación (usar contador cacheado si no hay búsqueda)
+		// Obtener total para paginación
 		let total: number;
 		if (!query.search && !query.parentId) {
 			total = await this.getMinorsCount();
 		} else if (query.parentId && !query.search) {
-			// Contar solo los del padre específico
 			const countSnap = await db
 				.collection(MINORS_INDEX_COLLECTION)
 				.where("parentId", "==", query.parentId)
@@ -139,60 +164,143 @@ export const minorIndexService = {
 				.get();
 			total = countSnap.data().count;
 		} else {
-			// Con búsqueda, obtener total después de filtrar
 			total = 0;
 		}
-
-		// Si hay búsqueda, usar fullNameLower para filtro parcial
-		// Firestore no soporta búsqueda de texto parcial, así que:
-		// - Para búsquedas exactas o prefijo: usar >= y <
-		// - Para búsquedas parciales: cargar más docs y filtrar
 
 		let items: MinorDocument[] = [];
 
 		if (query.search) {
-			const searchLower = query.search.toLowerCase();
+			const searchLower = query.search.toLowerCase().trim();
+			const searchNormalized = normalizeText(query.search);
 
-			// Intentar búsqueda por prefijo primero (más eficiente)
-			const prefixEnd = searchLower.slice(0, -1) + String.fromCharCode(searchLower.charCodeAt(searchLower.length - 1) + 1);
+			// CASO 1: Búsqueda por idNumber (solo dígitos)
+			if (/^\d+$/.test(query.search)) {
+				const minorDoc = await db
+					.collection(MINORS_INDEX_COLLECTION)
+					.doc(query.search)
+					.get();
 
-			const prefixQuery = db
-				.collection(MINORS_INDEX_COLLECTION)
-				.where("fullNameLower", ">=", searchLower)
-				.where("fullNameLower", "<", prefixEnd)
-				.orderBy("fullNameLower")
-				.limit(query.limit + query.offset);
-
-			const prefixSnap = await prefixQuery.get();
-
-			if (!prefixSnap.empty) {
-				items = prefixSnap.docs.map((doc) => ({
-					id: doc.id,
-					...doc.data(),
-				})) as MinorDocument[];
-				total = items.length;
+				if (minorDoc.exists) {
+					items = [{ id: minorDoc.id, ...minorDoc.data() } as MinorDocument];
+					total = 1;
+				} else {
+					items = [];
+					total = 0;
+				}
 			} else {
-				// Fallback: búsqueda en más documentos (limitado)
-				const fallbackSnap = await firestoreQuery.limit(200).get();
-				const allItems = fallbackSnap.docs.map((doc) => ({
-					id: doc.id,
-					...doc.data(),
-				})) as MinorDocument[];
+				// CASO 2: Búsqueda por nombre usando searchTokens + fallback a fullNameLower
+				// Acepta palabras de 1+ caracteres (antes era 2+)
+				// Normalizar tildes en las palabras de búsqueda
+				const searchWords = searchLower
+					.split(/\s+/)
+					.filter((w) => w.length >= 1)
+					.map((w) => normalizeText(w));
 
-				items = allItems.filter(
-					(m) =>
-						m.fullNameLower?.includes(searchLower) ||
-						m.idNumber?.includes(query.search!) ||
-						m.parentName?.toLowerCase().includes(searchLower) ||
-						m.parentId?.includes(query.search!),
-				);
+				if (searchWords.length === 0) {
+					return this.listWithSearchFallback(query);
+				}
+
+				// Estrategia optimizada: Priorizar token completo, solo hacer query amplia si es necesario
+				let allItems: MinorDocument[] = [];
+
+				// Buscar por searchTokens (máximo 10 palabras)
+				const termsToSearch = searchWords.slice(0, 10);
+				const fullToken = searchWords.join("");
+
+				if (termsToSearch.length > 0) {
+					// Query 1: Buscar token completo concatenado (más preciso, menos lecturas)
+					// Ejemplo: "mariajosecubides" para "Maria Jose Cubides"
+					const fullTokenSnapshot = await db
+						.collection(MINORS_INDEX_COLLECTION)
+						.where("searchTokens", "array-contains", fullToken)
+						.limit(Math.max(query.limit * 2, 20))
+						.get();
+
+					allItems = fullTokenSnapshot.docs.map((doc) => ({
+						id: doc.id,
+						...doc.data(),
+					})) as MinorDocument[];
+
+					// Solo si no hay suficientes resultados del token completo, buscar por palabras individuales
+					if (allItems.length < query.limit) {
+						let tokenQuery: FirebaseFirestore.Query;
+
+						if (termsToSearch.length === 1) {
+							tokenQuery = db
+								.collection(MINORS_INDEX_COLLECTION)
+								.where("searchTokens", "array-contains", termsToSearch[0])
+								.limit(50);
+						} else {
+							tokenQuery = db
+								.collection(MINORS_INDEX_COLLECTION)
+								.where("searchTokens", "array-contains-any", termsToSearch)
+								.limit(100);
+						}
+
+						const snapshot = await tokenQuery.get();
+
+						// Combinar resultados sin duplicados
+						const itemMap = new Map<string, MinorDocument>();
+						for (const item of allItems) {
+							itemMap.set(item.idNumber, item);
+						}
+						for (const doc of snapshot.docs) {
+							if (!itemMap.has(doc.id)) {
+								itemMap.set(doc.id, { id: doc.id, ...doc.data() } as MinorDocument);
+							}
+						}
+						allItems = Array.from(itemMap.values());
+					}
+				}
+
+				// Si no hay resultados con tokens, hacer fallback a búsqueda por fullNameLower
+				if (allItems.length === 0) {
+					return this.listWithSearchFallback(query);
+				}
+
+				// Filtrar: debe contener TODAS las palabras buscadas (usando normalizeText)
+				items = allItems.filter((item) => {
+					const nameNormalized = normalizeText(item.fullName || "");
+					const parentNormalized = normalizeText(item.parentName || "");
+					const combinedText = `${nameNormalized} ${parentNormalized}`;
+					return searchWords.every((word) => combinedText.includes(word));
+				});
+
+				// Ordenar por relevancia (usando normalizeText)
+				items = items.sort((a, b) => {
+					const aName = normalizeText(a.fullName || "");
+					const bName = normalizeText(b.fullName || "");
+					const aParent = normalizeText(a.parentName || "");
+					const bParent = normalizeText(b.parentName || "");
+
+					const getScore = (name: string, parent: string): number => {
+						let score = 0;
+						if (name === searchNormalized) score += 1000;
+						else if (name.startsWith(searchNormalized)) score += 500;
+						else if (name.includes(searchNormalized)) score += 300;
+						if (parent === searchNormalized) score += 200;
+						else if (parent.startsWith(searchNormalized)) score += 100;
+						else if (parent.includes(searchNormalized)) score += 50;
+						for (const word of searchWords) {
+							if (name.startsWith(word)) score += 20;
+							else if (name.includes(word)) score += 10;
+							else if (parent.includes(word)) score += 5;
+						}
+						return score;
+					};
+
+					const scoreA = getScore(aName, aParent);
+					const scoreB = getScore(bName, bParent);
+
+					if (scoreB !== scoreA) return scoreB - scoreA;
+					return aName.length - bName.length;
+				});
+
 				total = items.length;
+				items = items.slice(query.offset, query.offset + query.limit);
 			}
-
-			// Aplicar paginación manual
-			items = items.slice(query.offset, query.offset + query.limit);
 		} else {
-			// Sin búsqueda: paginación directa en Firestore
+			// Sin búsqueda: paginación directa
 			const snapshot = await firestoreQuery
 				.offset(query.offset)
 				.limit(query.limit)
@@ -203,6 +311,81 @@ export const minorIndexService = {
 				...doc.data(),
 			})) as MinorDocument[];
 		}
+
+		return {
+			items,
+			pagination: {
+				total,
+				limit: query.limit,
+				offset: query.offset,
+				hasMore: query.offset + query.limit < total,
+			},
+		};
+	},
+
+	/**
+	 * Fallback para búsquedas que no pueden usar searchTokens.
+	 * Busca en fullNameLower y parentName directamente.
+	 */
+	async listWithSearchFallback(query: MinorIndexQuery): Promise<PaginatedMinorResult> {
+		const searchNormalized = normalizeText(query.search || "");
+		const searchWords = searchNormalized
+			.split(/\s+/)
+			.filter((w) => w.length >= 1);
+
+		// Buscar en documentos recientes (200 es suficiente para la mayoría de casos)
+		const snapshot = await db
+			.collection(MINORS_INDEX_COLLECTION)
+			.orderBy("createdAt", "desc")
+			.limit(200)
+			.get();
+
+		const allItems = snapshot.docs.map((doc) => ({
+			id: doc.id,
+			...doc.data(),
+		})) as MinorDocument[];
+
+		// Filtrar por nombre del menor o del padre (usando normalizeText)
+		let items = allItems.filter((m) => {
+			const nameNormalized = normalizeText(m.fullName || "");
+			const parentNormalized = normalizeText(m.parentName || "");
+
+			const nameMatch = nameNormalized.includes(searchNormalized);
+			const parentMatch = parentNormalized.includes(searchNormalized);
+
+			// Si hay múltiples palabras, todas deben coincidir
+			if (searchWords.length > 1) {
+				const combinedText = `${nameNormalized} ${parentNormalized}`;
+				return searchWords.every((word) => combinedText.includes(word));
+			}
+
+			return nameMatch || parentMatch;
+		});
+
+		// Ordenar por relevancia (usando normalizeText)
+		items = items.sort((a, b) => {
+			const aName = normalizeText(a.fullName || "");
+			const bName = normalizeText(b.fullName || "");
+
+			// Priorizar nombres que empiezan con la búsqueda
+			const aStartsWith = aName.startsWith(searchNormalized);
+			const bStartsWith = bName.startsWith(searchNormalized);
+
+			if (aStartsWith && !bStartsWith) return -1;
+			if (!aStartsWith && bStartsWith) return 1;
+
+			// Luego por coincidencia exacta
+			const aExact = aName === searchNormalized;
+			const bExact = bName === searchNormalized;
+
+			if (aExact && !bExact) return -1;
+			if (!aExact && bExact) return 1;
+
+			return 0;
+		});
+
+		const total = items.length;
+		items = items.slice(query.offset, query.offset + query.limit);
 
 		return {
 			items,

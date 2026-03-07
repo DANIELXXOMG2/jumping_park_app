@@ -82,7 +82,7 @@ export async function GET(
 		const pdfBuffer = await generateConsentPdf(consentData, signatureBuffer);
 
 		// 6. Retornar PDF con headers adecuados
-		const consecutivo = consentData.consecutivo || "sin-numero";
+		const consecutivo = consentData.consecutivo || consentData.id?.slice(0, 8) || "sin-numero";
 		const filename = `consentimiento-${consecutivo}.pdf`;
 
 		// Convertir Buffer a Uint8Array para compatibilidad con NextResponse
@@ -99,8 +99,9 @@ export async function GET(
 		});
 	} catch (error) {
 		console.error("[API Admin Consent PDF] Error:", error);
+		const errorMessage = error instanceof Error ? error.message : "Error desconocido";
 		return NextResponse.json(
-			{ error: "Error al generar el PDF" },
+			{ error: "Error al generar el PDF", details: errorMessage },
 			{ status: 500 },
 		);
 	}

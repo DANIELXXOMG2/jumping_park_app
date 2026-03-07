@@ -216,6 +216,20 @@ export async function generateConsentPdf(
 	data: Consent,
 	signatureBuffer?: Buffer,
 ): Promise<Buffer> {
+	// Validaciones defensivas de campos requeridos
+	if (!data) {
+		throw new Error("No se proporcionaron datos del consentimiento");
+	}
+
+	if (!data.adultSnapshot) {
+		throw new Error("Datos del adulto responsable no encontrados (adultSnapshot)");
+	}
+
+	if (!data.minorsSnapshot || !Array.isArray(data.minorsSnapshot)) {
+		console.warn("[PDFService] minorsSnapshot no es un array, usando array vacío");
+		data.minorsSnapshot = [];
+	}
+
 	const pdfDoc = await PDFDocument.create();
 	const page = pdfDoc.addPage([PAGE.width, PAGE.height]);
 	const { width, height } = page.getSize();
@@ -434,10 +448,10 @@ export async function generateConsentPdf(
 	// Grid de datos
 	const labelWidth = 80;
 	const dataFields = [
-		{ label: "Nombre:", value: data.adultSnapshot.fullName },
-		{ label: "Documento:", value: data.adultSnapshot.uid || data.userId },
-		{ label: "Email:", value: data.adultSnapshot.email },
-		{ label: "Teléfono:", value: data.adultSnapshot.phone },
+		{ label: "Nombre:", value: data.adultSnapshot?.fullName },
+		{ label: "Documento:", value: data.adultSnapshot?.uid || data.userId },
+		{ label: "Email:", value: data.adultSnapshot?.email },
+		{ label: "Teléfono:", value: data.adultSnapshot?.phone },
 	];
 
 	for (const field of dataFields) {
@@ -662,8 +676,9 @@ export async function generateConsentPdf(
 	});
 
 	// ID del documento y timestamp
-	const signedAtDate = toDate(data.signedAt);
-	const footerMeta = `Documento ID: ${data.id} | Consecutivo: #${data.consecutivo} | Firmado: ${formatDate(signedAtDate)}`;
+	const signedAtDate = data.signedAt ? toDate(data.signedAt) : new Date();
+	const consecutivo = data.consecutivo || "sin-numero";
+	const footerMeta = `Documento ID: ${data.id || "N/A"} | Consecutivo: #${consecutivo} | Firmado: ${formatDate(signedAtDate)}`;
 	const metaWidth = font.widthOfTextAtSize(footerMeta, 7);
 	finalPage.drawText(footerMeta, {
 		x: (width - metaWidth) / 2,
