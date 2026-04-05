@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import Script from 'next/script'
 import {
 	APP_DESCRIPTION,
 	APP_NAME,
@@ -81,10 +82,13 @@ export const metadata: Metadata = {
 export default function ConsentimientoDigitalPage() {
 	return (
 		<main className="min-h-screen bg-linear-to-b from-zinc-950 via-zinc-900 to-emerald-950 px-6 py-16 text-zinc-50 sm:px-10 lg:px-16">
-			<script
+			<Script
+				id="consentimiento-digital-jsonld"
 				type="application/ld+json"
-				dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-			/>
+				strategy="afterInteractive"
+			>
+				{JSON.stringify(structuredData)}
+			</Script>
 
 			<div className="mx-auto flex max-w-5xl flex-col gap-12">
 				<section className="grid gap-8 rounded-[2rem] border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur sm:p-10 lg:grid-cols-[1.3fr_0.7fr]">
