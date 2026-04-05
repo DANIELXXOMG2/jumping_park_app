@@ -79,7 +79,9 @@ All Firestore operations go through `src/lib/firestoreService.ts`:
 
 Document IDs:
 - Users: cédula (national ID) as document ID
-- OTP sessions: email as document ID
+- OTP challenges: cédula as document ID
+- OTP access sessions: cédula as document ID
+- OTP legacy sessions: email or cédula depending on legacy record shape
 - Minors: idNumber as document ID (denormalized index)
 - Consents: auto-generated ID with atomic consecutivo number
 
@@ -89,8 +91,11 @@ Document IDs:
 1. User enters cédula at `/ingreso`
 2. OTP sent to email via `/api/otp`
 3. User validates OTP at `/otp`
-4. Session stored in `otp_sessions` collection (2 hour validity)
-5. Zustand store persists state to localStorage for session recovery
+4. Pending challenge state is stored in `otp_challenges` (request, retry, and lock metadata)
+5. Validated kiosk access is stored in `otp_access_sessions` (2 hour validity)
+6. Zustand store persists state to localStorage for session recovery
+
+`otp_sessions` remains only as a deprecated transitional/legacy compatibility collection. New kiosk flows should read/write the split model first.
 
 **Admin Flow:**
 - Firebase Authentication with Custom Claims for RBAC
@@ -128,6 +133,13 @@ Zod schemas are in `src/lib/schemas/`:
 - Utils in `src/lib/utils/` (dateUtils, formatters, etc.)
 - UI components in `src/components/ui/` (reusable primitives)
 - Feature components in `src/components/kiosk/` and `src/components/admin/`
+
+### Repo Hygiene
+
+- `src/`, `public/`, `tests/`, and runtime config files are the primary app surface; update them when behavior, UI, or runtime wiring changes.
+- `.github/` holds CI, automation, and agent instructions; touch it when workflow, review, or repository policy guidance changes.
+- `.claude/` and `.atl/` are AI/engineering workflow support directories; update them only when the task is explicitly about agent behavior, planning artifacts, or repo guidance.
+- `diagramas/` and `postman/` are reference/support assets; update them when architecture flows, API contracts, or operational collections materially change.
 
 ### Code Style (Biome)
 
@@ -170,7 +182,9 @@ Note: `FIREBASE_PRIVATE_KEY` must have `\n` characters for newlines.
 |------------|---------|-----------|
 | `users` | Adult visitor profiles | cédula (string) |
 | `consents` | Signed consent forms | autoID |
-| `otp_sessions` | Active OTP codes | email (string) |
+| `otp_challenges` | Pending OTP challenge state | cédula (string) |
+| `otp_access_sessions` | Validated kiosk access sessions | cédula (string) |
+| `otp_sessions` | Legacy mixed OTP records (deprecated/transitional) | email or cédula (legacy) |
 | `minors_index` | Denormalized minor records | idNumber (string) |
 | `accesses` | Entry/exit logs | autoID |
 
@@ -190,8 +204,10 @@ When creating a consent at `/api/consentimientos`:
 
 - OTP codes expire in 60 minutes
 - Validated sessions expire in 120 minutes
-- Sessions are stored in `otp_sessions` with userId (cédula) as document ID
+- Pending OTP challenge metadata lives in `otp_challenges`
+- Validated kiosk access sessions live in `otp_access_sessions` with userId (cédula) as document ID
 - Reusing an OTP is allowed until it expires
+- `otp_sessions` is legacy compatibility only and should not be the baseline for new flows
 
 ### Minor Data Architecture
 
@@ -214,6 +230,7 @@ PDFs are generated on-demand via `/api/admin/consents/[id]/pdf`:
 - **jscpd**: Detects code duplication (threshold: 5%)
 - **dependency-cruiser**: Detects circular dependencies
 - **Biome**: Linting and formatting
+- **Practical verification**: `bun test` for test suites and `bun run check:types` for fast type-safety validation
 
 Run `bun run check` before committing.
 
