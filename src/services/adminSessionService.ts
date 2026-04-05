@@ -8,6 +8,39 @@ import { adminAuth } from '@/lib/firebaseAdmin'
 import type { CustomClaims, UserRole } from '@/types/auth'
 import { canAccessAdmin, getRoleFromClaims } from '@/types/auth'
 
+interface DecodedAdminIdToken {
+	uid: string
+	email?: string | null
+	[key: string]: unknown
+}
+
+type AdminIdTokenVerifier = (
+	idToken: string,
+) => Promise<DecodedAdminIdToken>
+
+function isFirebaseAdminConfigurationError(error: unknown): boolean {
+	if (!(error instanceof Error)) {
+		return false
+	}
+
+	const message = error.message.toLowerCase()
+	const maybeErrorWithCode = error as Error & { code?: string }
+	const code =
+		typeof maybeErrorWithCode.code === 'string'
+			? maybeErrorWithCode.code.toLowerCase()
+			: ''
+
+	return (
+		code.includes('invalid-credential') ||
+		code.includes('invalid-app-options') ||
+		code.includes('no-app') ||
+		message.includes('credential') ||
+		message.includes('service account') ||
+		message.includes('initializeapp') ||
+		message.includes('project id')
+	)
+}
+
 export interface AdminSessionExchangeResult {
 	role: UserRole
 	expiresAt: string
@@ -16,9 +49,11 @@ export interface AdminSessionExchangeResult {
 
 export async function exchangeAdminSessionFromIdToken(
 	idToken: string,
+	verifyIdToken: AdminIdTokenVerifier = (token) =>
+		adminAuth.verifyIdToken(token) as Promise<DecodedAdminIdToken>,
 ): Promise<AdminSessionExchangeResult> {
 	try {
-		const decodedToken = await adminAuth.verifyIdToken(idToken)
+		const decodedToken = await verifyIdToken(idToken)
 		const claims = decodedToken as unknown as CustomClaims
 		const role = getRoleFromClaims(claims)
 
@@ -45,11 +80,48 @@ export async function exchangeAdminSessionFromIdToken(
 			throw error
 		}
 
-		if (error instanceof Error && error.message.includes('expired')) {
-			throw new ApiError('Token expirado. Inicia sesion nuevamente.', 401)
+		if (
+			error instanceof Error &&
+			error.message.includes('ADMIN_JWT_SECRET is required')
+		) {
+			console.error('[AdminSessionService] Missing ADMIN_JWT_SECRET')
+			throw new ApiError(
+				'Configuracion de sesion de administrador incompleta',
+				500,
+				'ADMIN_SESSION_CONFIG_ERROR',
+			)
 		}
 
-		throw new ApiError('No se pudo crear la sesion de administrador', 401)
+		if (isFirebaseAdminConfigurationError(error)) {
+			console.error('[AdminSessionService] Firebase Admin misconfiguration', error)
+			throw new ApiError(
+				'Configuracion de Firebase Admin invalida',
+				500,
+				'FIREBASE_ADMIN_CONFIG_ERROR',
+			)
+		}
+
+		if (error instanceof Error && error.message.includes('expired')) {
+			throw new ApiError('Token expirado. Inicia sesion nuevamente.', 401, 'TOKEN_EXPIRED')
+		}
+
+		if (
+			error instanceof Error &&
+			(error.message.toLowerCase().includes('invalid') ||
+				error.message.toLowerCase().includes('malformed'))
+		) {
+			throw new ApiError(
+				'Token invalido. Inicia sesion nuevamente.',
+				401,
+				'TOKEN_INVALID',
+			)
+		}
+
+		throw new ApiError(
+			'No se pudo crear la sesion de administrador',
+			401,
+			'ADMIN_SESSION_EXCHANGE_FAILED',
+		)
 	}
 }
 

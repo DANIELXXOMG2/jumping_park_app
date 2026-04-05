@@ -14,6 +14,7 @@ import {
 	useCallback,
 	useContext,
 	useEffect,
+	useRef,
 	useState,
 } from 'react'
 import { auth } from '@/lib/firebaseClient'
@@ -70,12 +71,14 @@ async function exchangeAdminSession(user: User): Promise<AdminSessionState> {
 
 	const data = (await response.json().catch(() => null)) as {
 		error?: string
+		code?: string
 		session?: AdminSessionState
 	} | null
 
 	if (!response.ok || !data?.session) {
+		const codeSuffix = data?.code ? ` [${data.code}]` : ''
 		throw new Error(
-			data?.error ?? 'No se pudo iniciar la sesion de administrador',
+			`${data?.error ?? 'No se pudo iniciar la sesion de administrador'}${codeSuffix}`,
 		)
 	}
 
@@ -88,6 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const [role, setRole] = useState<UserRole | null>(null)
 	const [session, setSession] = useState<AdminSessionState | null>(null)
 	const [isSessionExpired, setIsSessionExpired] = useState(false)
+	const isEstablishingSessionRef = useRef(false)
 
 	const isAdmin = role !== null && canAccessAdmin(role) && session !== null
 
@@ -170,6 +174,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			setUser(firebaseUser)
 
 			if (!firebaseUser) {
+				isEstablishingSessionRef.current = false
 				setRole(null)
 				clearSessionState()
 				setIsLoading(false)
@@ -179,12 +184,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			const userRole = await fetchRoleFromClaims(firebaseUser)
 
 			if (!userRole || !canAccessAdmin(userRole)) {
+				isEstablishingSessionRef.current = false
 				await performClientSignOut()
 				setIsLoading(false)
 				return
 			}
 
 			setRole(userRole)
+
+			if (isEstablishingSessionRef.current) {
+				setIsLoading(false)
+				return
+			}
+
 			await refreshSessionStatus()
 			setIsLoading(false)
 		})
@@ -193,54 +205,58 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	}, [clearSessionState, performClientSignOut, refreshSessionStatus])
 
 	const signIn = async (email: string, password: string) => {
-		const userCredential = await signInWithEmailAndPassword(
-			auth,
-			email,
-			password,
-		)
-		const userRole = await fetchRoleFromClaims(userCredential.user)
-
-		if (!userRole || !canAccessAdmin(userRole)) {
-			await performClientSignOut()
-			throw new Error('No tienes permisos de administrador')
-		}
-
-		let nextSession: AdminSessionState
+		isEstablishingSessionRef.current = true
 
 		try {
-			nextSession = await exchangeAdminSession(userCredential.user)
+			const userCredential = await signInWithEmailAndPassword(
+				auth,
+				email,
+				password,
+			)
+			const userRole = await fetchRoleFromClaims(userCredential.user)
+
+			if (!userRole || !canAccessAdmin(userRole)) {
+				await performClientSignOut()
+				throw new Error('No tienes permisos de administrador')
+			}
+
+			const nextSession = await exchangeAdminSession(userCredential.user)
+
+			setRole(userRole)
+			setSession(nextSession)
+			setIsSessionExpired(false)
 		} catch (error) {
 			await performClientSignOut()
 			throw error
+		} finally {
+			isEstablishingSessionRef.current = false
 		}
-
-		setRole(userRole)
-		setSession(nextSession)
-		setIsSessionExpired(false)
 	}
 
 	const signInWithGoogle = async () => {
-		const provider = new GoogleAuthProvider()
-		const userCredential = await signInWithPopup(auth, provider)
-		const userRole = await fetchRoleFromClaims(userCredential.user)
-
-		if (!userRole || !canAccessAdmin(userRole)) {
-			await performClientSignOut()
-			throw new Error('No tienes permisos de administrador')
-		}
-
-		let nextSession: AdminSessionState
+		isEstablishingSessionRef.current = true
 
 		try {
-			nextSession = await exchangeAdminSession(userCredential.user)
+			const provider = new GoogleAuthProvider()
+			const userCredential = await signInWithPopup(auth, provider)
+			const userRole = await fetchRoleFromClaims(userCredential.user)
+
+			if (!userRole || !canAccessAdmin(userRole)) {
+				await performClientSignOut()
+				throw new Error('No tienes permisos de administrador')
+			}
+
+			const nextSession = await exchangeAdminSession(userCredential.user)
+
+			setRole(userRole)
+			setSession(nextSession)
+			setIsSessionExpired(false)
 		} catch (error) {
 			await performClientSignOut()
 			throw error
+		} finally {
+			isEstablishingSessionRef.current = false
 		}
-
-		setRole(userRole)
-		setSession(nextSession)
-		setIsSessionExpired(false)
 	}
 
 	const signOut = async () => {
