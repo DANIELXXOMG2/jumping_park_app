@@ -15,12 +15,12 @@
 
 ## Phase 3: Public Discoverability (PR-03)
 
-- [ ] 3.1 Public metadata boundary; `src/app/layout.tsx`, `src/app/(public)/**`; done when only public pages emit indexable metadata and JSON-LD while kiosk/admin stay `noindex`; validate page source on one public and one private route.
-- [ ] 3.2 SEO artifacts; `src/app/robots.ts`, `src/app/sitemap.ts`; done when robots and sitemap expose only public URLs and block operational paths; validate fetch of `/robots.txt` and `/sitemap.xml`.
+- [x] 3.1 Public metadata boundary; `src/app/layout.tsx`, `src/app/(public)/**`; done when only public pages emit indexable metadata and JSON-LD while kiosk/admin stay `noindex`; validate page source on one public and one private route.
+- [x] 3.2 SEO artifacts; `src/app/robots.ts`, `src/app/sitemap.ts`; done when robots and sitemap expose only public URLs and block operational paths; validate fetch of `/robots.txt` and `/sitemap.xml`.
 
 ## Phase 4: Verification & Rollout Notes
 
-- [ ] 4.1 Hardening smoke pack; `README.md`, `postman/` or `docs/runbooks/production-hardening.md`; done when admin session, OTP abuse, export bounds, and robots/sitemap checks are reproducible after each PR; validate replay of the checklist.
+- [x] 4.1 Hardening smoke pack; `README.md`, `postman/` or `docs/runbooks/production-hardening.md`; done when admin session, OTP abuse, export bounds, and robots/sitemap checks are reproducible after each PR; validate replay of the checklist.
 
 ## PR Plan
 
