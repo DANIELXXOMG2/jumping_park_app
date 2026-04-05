@@ -1,97 +1,32 @@
-import { NextResponse } from "next/server";
-import { validateOtpSchema } from "@/lib/schemas/auth.schema";
-import {
-	createOtpSession,
-	getUserByCedula,
-	validateOtp,
-} from "@/services/authService";
-import type { UserProfile } from "@/types/firestore";
+import { type NextRequest, NextResponse } from 'next/server'
+import { apiHandler, getValidatedBody } from '@/lib/apiHandler'
+import { validateOtpSchema } from '@/lib/schemas/auth.schema'
+import { validateOtpChallengeRequest } from '@/services/authService'
 
-export async function POST(req: Request) {
-	try {
-		const body = await req.json();
-		const parsed = validateOtpSchema.safeParse(body);
+const VALIDATION_LIMIT = 5
+const VALIDATION_WINDOW_MINUTES = 5
 
-		if (!parsed.success) {
-			return NextResponse.json(
-				{
-					success: false,
-					error: "Datos inválidos",
-					details: parsed.error.flatten(),
-				},
-				{ status: 400 },
-			);
-		}
-
-		const { email, cedula, code } = parsed.data;
-		let targetEmail = email;
-		let userProfile: UserProfile | null = null;
-
-		if (email) {
-			targetEmail = email;
-		} else if (cedula) {
-			userProfile = await getUserByCedula(cedula);
-			if (!userProfile) {
-				console.warn(
-					`[Validate API] Usuario no encontrado para cédula: ${cedula}`,
-				);
-				return NextResponse.json(
-					{ success: false, error: "Usuario no encontrado" },
-					{ status: 404 },
-				);
-			}
-			if (!userProfile.email) {
-				console.error(
-					`[Validate API] Usuario encontrado (${cedula}) pero sin campo 'email' en Firestore.`,
-				);
-			}
-			targetEmail = userProfile.email;
-		}
-
-		if (!targetEmail) {
-			console.warn(
-				"[Validate API] No se pudo resolver un email válido (targetEmail es null/undefined).",
-			);
-			return NextResponse.json(
-				{ success: false, error: "Faltan datos (Email no encontrado)" },
-				{ status: 400 },
-			);
-		}
-
-		const result = await validateOtp(targetEmail, code);
-
-		if (!result.valid) {
-			return NextResponse.json(
-				{ success: false, error: result.message },
-				{ status: 404 },
-			);
-		}
-
-		// Crear sesión OTP para proteger endpoints sensibles (historial de menores, etc.)
-		// Solo si tenemos la cédula del usuario
-		if (cedula || userProfile?.uid) {
-			const userId = cedula || userProfile?.uid || "";
-			await createOtpSession(userId, targetEmail);
-		}
-
-		// Si validación exitosa y no tenemos el perfil aún (caso solo email), intentamos buscarlo si es posible?
-		// El requerimiento dice: "obtener el perfil COMPLETO del usuario".
-		// Si validamos solo con email, podríamos buscar por email en usuarios, pero Firestore no es eficiente para eso sin índice.
-		// Pero el flujo principal es con cédula.
-		// Si ya tenemos userProfile (porque vino cédula), lo devolvemos.
-
-		return NextResponse.json(
-			{
-				success: true,
-				userData: userProfile || undefined,
-			},
-			{ status: 200 },
-		);
-	} catch (error) {
-		console.error("Error en POST /api/otp/validate", error);
-		return NextResponse.json(
-			{ success: false, error: "Server error" },
-			{ status: 500 },
-		);
-	}
+type ValidateOtpInput = {
+	email?: string
+	cedula?: string
+	code: string
 }
+
+export const POST = apiHandler(
+	async (req: NextRequest) => {
+		const payload = getValidatedBody<ValidateOtpInput>(req)
+		const result = await validateOtpChallengeRequest({
+			email: payload.email,
+			cedula: payload.cedula,
+			code: payload.code,
+			validationLimit: VALIDATION_LIMIT,
+			validationWindowMinutes: VALIDATION_WINDOW_MINUTES,
+		})
+
+		return NextResponse.json(result.body, {
+			status: result.httpStatus,
+			headers: result.headers,
+		})
+	},
+	{ bodySchema: validateOtpSchema },
+)
