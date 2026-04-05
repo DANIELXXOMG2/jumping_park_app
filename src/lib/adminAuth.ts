@@ -39,6 +39,17 @@ export interface AuthError {
 	response: NextResponse
 }
 
+export interface BearerVerifierResult {
+	uid: string
+	email?: string | null
+	exp?: number
+	claims?: CustomClaims
+}
+
+export type BearerVerifier = (
+	token: string,
+) => Promise<BearerVerifierResult>
+
 function encodeBase64Url(value: string): string {
 	return Buffer.from(value).toString('base64url')
 }
@@ -189,6 +200,7 @@ export function readAdminSessionFromRequest(
 async function verifyBearerToken(
 	request: NextRequest,
 	requiredRole?: UserRole,
+	verifyToken: BearerVerifier = (token) => adminAuth.verifyIdToken(token),
 ): Promise<AuthResult | AuthError> {
 	const authHeader = request.headers.get('Authorization')
 
@@ -203,7 +215,7 @@ async function verifyBearerToken(
 	}
 
 	try {
-		const decodedToken = await adminAuth.verifyIdToken(token)
+		const decodedToken = await verifyToken(token)
 		const claims = decodedToken as unknown as CustomClaims
 		const role = getRoleFromClaims(claims)
 
@@ -224,7 +236,7 @@ async function verifyBearerToken(
 			uid: decodedToken.uid,
 			email: decodedToken.email ?? '',
 			role,
-			expiresAt: new Date(decodedToken.exp * 1000).toISOString(),
+			expiresAt: new Date((decodedToken.exp ?? Date.now() / 1000) * 1000).toISOString(),
 			transport: 'bearer',
 		}
 	} catch (error) {
@@ -259,6 +271,7 @@ function validateRequiredRole(
 export async function verifyAdminToken(
 	request: NextRequest,
 	requiredRole?: UserRole,
+	verifyToken?: BearerVerifier,
 ): Promise<AuthResult | AuthError> {
 	const cookieSession = readAdminSessionFromRequest(request)
 
@@ -267,7 +280,7 @@ export async function verifyAdminToken(
 	}
 
 	if (ADMIN_SESSION_MODE === 'dual') {
-		return verifyBearerToken(request, requiredRole)
+		return verifyBearerToken(request, requiredRole, verifyToken)
 	}
 
 	return getUnauthorizedResponse('Sesion de administrador requerida')
