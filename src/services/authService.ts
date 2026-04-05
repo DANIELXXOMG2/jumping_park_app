@@ -446,13 +446,50 @@ interface ValidateOtpChallengeRequestParams {
 	validationWindowMinutes: number
 }
 
+export interface RequestOtpChallengeDeps {
+	getUserByCedula: typeof getUserByCedula
+	getActiveOtp: typeof getActiveOtp
+	checkRateLimit: typeof checkRateLimit
+	saveOtp: typeof saveOtp
+	sendOtpEmail: typeof sendOtpEmail
+}
+
+export interface ValidateOtpChallengeRequestDeps {
+	resolveOtpValidationContext: typeof resolveOtpValidationContext
+	getActiveOtp: typeof getActiveOtp
+	checkRateLimit: typeof checkRateLimit
+	validateOtp: typeof validateOtp
+	createOtpSession: typeof createOtpSession
+}
+
+function getRequestOtpChallengeDeps(): RequestOtpChallengeDeps {
+	return {
+		getUserByCedula,
+		getActiveOtp,
+		checkRateLimit,
+		saveOtp,
+		sendOtpEmail,
+	}
+}
+
+function getValidateOtpChallengeRequestDeps(): ValidateOtpChallengeRequestDeps {
+	return {
+		resolveOtpValidationContext,
+		getActiveOtp,
+		checkRateLimit,
+		validateOtp,
+		createOtpSession,
+	}
+}
+
 export async function requestOtpChallenge(
 	params: RequestOtpChallengeParams,
+	deps: RequestOtpChallengeDeps = getRequestOtpChallengeDeps(),
 ): Promise<SendOtpRequestResult> {
 	let targetEmail = params.email
 
 	if (!targetEmail && params.cedula) {
-		const user = await getUserByCedula(params.cedula)
+		const user = await deps.getUserByCedula(params.cedula)
 
 		if (!user) {
 			return {
@@ -481,7 +518,7 @@ export async function requestOtpChallenge(
 		}
 	}
 
-	const activeOtp = await getActiveOtp(targetEmail)
+	const activeOtp = await deps.getActiveOtp(targetEmail)
 
 	if (activeOtp) {
 		if (activeOtp.locked && activeOtp.retryAfterSeconds) {
@@ -518,7 +555,7 @@ export async function requestOtpChallenge(
 	const primaryIdentifier = params.cedula
 		? `otp:req:doc:${params.cedula}`
 		: `otp:req:email:${targetEmail}`
-	const primaryRateLimit = await checkRateLimit(
+	const primaryRateLimit = await deps.checkRateLimit(
 		primaryIdentifier,
 		params.rateLimitMax,
 		params.rateLimitWindowMinutes,
@@ -540,7 +577,7 @@ export async function requestOtpChallenge(
 	}
 
 	if (params.clientIp && params.clientIp !== 'unknown') {
-		const ipRateLimit = await checkRateLimit(
+		const ipRateLimit = await deps.checkRateLimit(
 			`otp:req:ip:${params.clientIp}`,
 			params.rateLimitMax * params.rateLimitIpMultiplier,
 			params.rateLimitWindowMinutes,
@@ -563,8 +600,8 @@ export async function requestOtpChallenge(
 	}
 
 	const otp = params.codeGenerator()
-	await saveOtp(targetEmail, otp)
-	const emailResult = await sendOtpEmail(targetEmail, otp)
+	await deps.saveOtp(targetEmail, otp)
+	const emailResult = await deps.sendOtpEmail(targetEmail, otp)
 
 	if (!emailResult.success) {
 		return {
@@ -586,8 +623,10 @@ export async function requestOtpChallenge(
 
 export async function validateOtpChallengeRequest(
 	params: ValidateOtpChallengeRequestParams,
+	deps: ValidateOtpChallengeRequestDeps =
+		getValidateOtpChallengeRequestDeps(),
 ): Promise<ValidateOtpRequestResult> {
-	const context = await resolveOtpValidationContext({
+	const context = await deps.resolveOtpValidationContext({
 		email: params.email,
 		cedula: params.cedula,
 	})
@@ -608,7 +647,7 @@ export async function validateOtpChallengeRequest(
 		}
 	}
 
-	const activeChallenge = await getActiveOtp(context.targetEmail)
+	const activeChallenge = await deps.getActiveOtp(context.targetEmail)
 
 	if (activeChallenge?.locked) {
 		const retryAfter =
@@ -631,7 +670,7 @@ export async function validateOtpChallengeRequest(
 	const primaryIdentifier = params.cedula
 		? `otp:validate:doc:${params.cedula}`
 		: `otp:validate:email:${context.targetEmail}`
-	const validationBudget = await checkRateLimit(
+	const validationBudget = await deps.checkRateLimit(
 		primaryIdentifier,
 		params.validationLimit,
 		params.validationWindowMinutes,
@@ -653,7 +692,7 @@ export async function validateOtpChallengeRequest(
 		}
 	}
 
-	const result = await validateOtp(context.targetEmail, params.code)
+	const result = await deps.validateOtp(context.targetEmail, params.code)
 
 	if (!result.valid) {
 		if (result.code === 'OTP_LOCKED') {
@@ -683,7 +722,7 @@ export async function validateOtpChallengeRequest(
 
 	if (params.cedula || context.userProfile?.uid) {
 		const userId = params.cedula || context.userProfile?.uid || ''
-		await createOtpSession(userId, context.targetEmail)
+		await deps.createOtpSession(userId, context.targetEmail)
 	}
 
 	return {
