@@ -62,10 +62,18 @@ Crea el archivo `firestore.indexes.json` en la raíz del proyecto (si no existe)
       ]
     },
     {
-      "collectionGroup": "otp_sessions",
+      "collectionGroup": "otp_challenges",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "email", "order": "ASCENDING" },
+        { "fieldPath": "expiresAt", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "otp_access_sessions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
         { "fieldPath": "expiresAt", "order": "ASCENDING" }
       ]
     }
@@ -129,8 +137,18 @@ service cloud.firestore {
     }
 
     // =========================================================================
-    // COLECCIÓN: otp_sessions (Solo server-side via Admin SDK)
+    // COLECCIONES OTP (Solo server-side via Admin SDK)
+    // otp_challenges = estado pendiente / otp_access_sessions = acceso validado
+    // otp_sessions queda solo para compatibilidad legacy durante la transición.
     // =========================================================================
+    match /otp_challenges/{documentId} {
+      allow read, write: if false;
+    }
+
+    match /otp_access_sessions/{documentId} {
+      allow read, write: if false;
+    }
+
     match /otp_sessions/{documentId} {
       allow read, write: if false;
     }
