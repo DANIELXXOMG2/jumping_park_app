@@ -24,6 +24,7 @@
 - [Instalación](#-instalación)
 - [Variables de Entorno](#-variables-de-entorno)
 - [Comandos Disponibles](#-comandos-disponibles)
+- [Layout del Repositorio](#-layout-del-repositorio)
 - [Arquitectura del Proyecto](#-arquitectura-del-proyecto)
 - [Despliegue en Vercel](#-despliegue-en-vercel)
 - [Colecciones Firestore](#-colecciones-firestore)
@@ -122,42 +123,31 @@ La aplicación estará disponible en `http://localhost:3000`
 
 ## 🔐 Variables de Entorno
 
-Crea un archivo `.env.local` en la raíz del proyecto con las siguientes variables:
+Copia `.env.example` a `.env.local` y úsalo como contrato fuente de verdad:
 
 ```env
-# ══════════════════════════════════════════════════════════════════════════════
-# FIREBASE ADMIN SDK (Server-side)
-# Obtener desde: Firebase Console > Project Settings > Service Accounts
-# ══════════════════════════════════════════════════════════════════════════════
 FIREBASE_PROJECT_ID=tu-proyecto-firebase
 FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@tu-proyecto.iam.gserviceaccount.com
 FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nTU_CLAVE_PRIVADA_AQUI\n-----END PRIVATE KEY-----\n"
 FIREBASE_STORAGE_BUCKET=tu-proyecto.firebasestorage.app
-
-# ══════════════════════════════════════════════════════════════════════════════
-# FIREBASE CLIENT SDK (Client-side)
-# Obtener desde: Firebase Console > Project Settings > General > Your apps
-# ══════════════════════════════════════════════════════════════════════════════
 NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXX
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=tu-proyecto.firebaseapp.com
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=tu-proyecto-firebase
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=tu-proyecto.firebasestorage.app
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123456789012
 NEXT_PUBLIC_FIREBASE_APP_ID=1:123456789012:web:abcdef123456
-
-# ══════════════════════════════════════════════════════════════════════════════
-# RESEND - Email Service
-# Obtener desde: resend.com/api-keys
-# ══════════════════════════════════════════════════════════════════════════════
 RESEND_API_KEY=re_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-# ══════════════════════════════════════════════════════════════════════════════
-# ADMIN AUTHENTICATION
-# Credenciales para el panel administrativo
-# ══════════════════════════════════════════════════════════════════════════════
 ADMIN_EMAIL=admin@tudominio.com
 ADMIN_PASSWORD_HASH=tu-hash-bcrypt-aqui
 ADMIN_JWT_SECRET=una-clave-secreta-larga-y-aleatoria-min-32-chars
+ADMIN_SESSION_MODE=dual
+ADMIN_IDLE_TIMEOUT_MINUTES=30
+ALLOW_ADMIN_SETUP=false
+ADMIN_SECRET_KEY=
+OTP_LOCKOUT_MINUTES=15
+FIREBASE_SERVICE_ACCOUNT_KEY=
+FIRESTORE_EMULATOR_HOST=
+ANALYZE=false
 ```
 
 ### Notas sobre Variables de Entorno
@@ -168,37 +158,42 @@ ADMIN_JWT_SECRET=una-clave-secreta-larga-y-aleatoria-min-32-chars
 | `RESEND_API_KEY` | API Key de Resend. Comienza con `re_` | [resend.com/api-keys](https://resend.com/api-keys) |
 | `ADMIN_PASSWORD_HASH` | Hash bcrypt de la contraseña admin | Generar con `bunx bcrypt-cli hash "tu-password"` |
 | `ADMIN_JWT_SECRET` | Secreto para firmar tokens JWT | Generar string aleatorio de 32+ caracteres |
+| `ADMIN_SESSION_MODE` | Mantener `dual` durante el rollout de sesión cookie-first | Configuración local/Vercel |
 
 ---
 
 ## 📜 Comandos Disponibles
 
 ```bash
-# ═══════════════════════════════════════════════════════════════════════════════
-# DESARROLLO
-# ═══════════════════════════════════════════════════════════════════════════════
 bun dev                 # Inicia servidor de desarrollo (Turbopack) - http://localhost:3000
-bun lint                # Ejecuta ESLint para análisis de código
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# PRODUCCIÓN
-# ═══════════════════════════════════════════════════════════════════════════════
-bun run build           # Genera build optimizado para producción
-bun start               # Inicia servidor de producción (requiere build previo)
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# UTILIDADES
-# ═══════════════════════════════════════════════════════════════════════════════
-bun run optimize-assets # Optimiza imágenes del directorio public/
+bun run check           # Gate principal: format + lint + types + audit
+bun run check:types     # Verificación rápida de TypeScript
+bun test                # Suite de pruebas con Bun
+bun run check:format    # Formato con Biome
+bun run check:lint      # Lint con Biome
 bun run audit:dead      # Detecta código muerto con Knip
 bun run audit:dupe      # Detecta código duplicado con jscpd
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# FIREBASE
-# ═══════════════════════════════════════════════════════════════════════════════
+bun run audit:circ      # Detecta dependencias circulares
+bun run seed            # Pobla Firestore con datos de prueba
+bun run set-admin       # Asigna rol admin a un usuario
+bun run migrate:minors  # Migra menores al índice denormalizado
 firebase deploy --only firestore:rules    # Despliega reglas de Firestore
 firebase deploy --only storage:rules      # Despliega reglas de Storage
 ```
+
+---
+
+## 🗂️ Layout del Repositorio
+
+| Categoría | Rutas | Uso |
+|-----------|-------|-----|
+| **Runtime-critical** | `src/`, `public/`, `tests/`, `package.json`, `next.config.ts`, `firebase.json`, `tsconfig.json` | Código, assets, pruebas y configuración que afectan el runtime o la validación principal |
+| **Workflow / automation** | `.github/`, `openspec/`, `.claude/`, `.atl/`, `scripts/` | CI, especificaciones, automatización y tooling de ingeniería |
+| **Support / reference** | `docs/`, `diagramas/`, `postman/` | Runbooks, documentación, diagramas y colecciones operativas |
+
+### Artefactos locales no fuente
+
+No versionar ni tratar como fuente de verdad artefactos generados del workspace como `.next/`, `.playwright-mcp/`, `node_modules/`, logs locales o salidas temporales de pruebas.
 
 ---
 
@@ -332,8 +327,10 @@ vercel --prod
 |-----------|--------------|-------------|
 | `users` | `{cédula}` | Perfiles de visitantes adultos |
 | `consents` | `{autoID}` | Consentimientos firmados |
-| `otps` | `{cédula}` | Códigos OTP temporales (TTL: 20 min) |
-| `minors` | `{autoID}` | Menores registrados por adulto |
+| `otp_challenges` | `{email}` | Estado pendiente del OTP: código, expiración, reintentos y lockout |
+| `otp_access_sessions` | `{cédula}` | Sesión validada del kiosco con vigencia corta |
+| `otp_sessions` | `{email}` o `{cédula}` | Compatibilidad transitoria con registros legacy; no es la colección canónica |
+| `minors_index` | `{idNumber}` | Índice denormalizado de menores para búsquedas eficientes |
 | `accesses` | `{autoID}` | Registros de ingreso al parque |
 | `_counters` | `consents` | Contador atómico de consecutivos |
 
@@ -353,9 +350,10 @@ interface User {
 // consents/{autoID}
 interface Consent {
   consecutivo: number;   // Ej: 1001, 1002...
-  visitorId: string;     // Referencia a users
-  signatureUrl: string;  // URL firmada de Storage
-  minors: string[];      // IDs de menores incluidos
+  userId: string;        // Referencia a users
+  signaturePath: string; // Ruta persistida en Firebase Storage
+  signatureUrl?: string; // URL firmada efímera (compatibilidad/respuesta)
+  minorsSnapshot: Minor[];
   createdAt: Timestamp;
   // NOTA: El PDF se genera bajo demanda via /api/admin/consents/{id}/pdf
 }
@@ -371,8 +369,8 @@ interface Consent {
 |------|--------|-------------|
 | **API** | Validación Zod | Todo input es validado antes de procesar |
 | **Firestore** | Admin SDK Only | No hay acceso directo desde cliente |
-| **Storage** | URLs Firmadas | Firmas protegidas con URLs de larga duración |
-| **OTP** | TTL 20 min | Códigos expiran automáticamente |
+| **Storage** | Referencias persistidas + URLs efímeras | Las firmas guardan `signaturePath` y se firman bajo demanda con expiración `<=15 min` |
+| **OTP** | Split model + TTL | `otp_challenges` gestiona el challenge y `otp_access_sessions` la sesión validada; `otp_sessions` queda solo como legado |
 | **Admin** | JWT + HttpOnly | Sesiones seguras con cookies |
 
 ### Reglas de Firestore
