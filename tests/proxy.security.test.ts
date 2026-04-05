@@ -71,6 +71,29 @@ describe('admin perimeter hardening', () => {
 		expect(response.headers.get('set-cookie') ?? '').toContain('Max-Age=0')
 	})
 
+	it('rejects cookies with invalid signatures', async () => {
+		const now = Date.now()
+		const validCookie = buildAdminSessionCookieValue({
+			uid: 'worker-1',
+			email: 'worker@example.com',
+			role: 'worker',
+			issuedAt: now,
+			expiresAt: now + 60_000,
+		})
+		const [encodedPayload] = validCookie.split('.')
+		const tamperedCookie = `${encodedPayload}.invalid-signature`
+
+		const response = await proxy(
+			createRequest('/admin/dashboard', tamperedCookie),
+		)
+
+		expect(response.status).toBe(307)
+		expect(response.headers.get('location') ?? '').toContain('/admin/login')
+		expect(response.headers.get('set-cookie') ?? '').toContain(
+			`${ADMIN_SESSION_COOKIE_NAME}=`,
+		)
+	})
+
 	it('adds perimeter security headers to responses', async () => {
 		const response = await proxy(createRequest('/ingreso'))
 
