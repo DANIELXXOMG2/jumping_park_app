@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
 	signOut as firebaseSignOut,
@@ -7,133 +7,253 @@ import {
 	signInWithEmailAndPassword,
 	signInWithPopup,
 	type User,
-} from "firebase/auth";
+} from 'firebase/auth'
 import {
 	createContext,
 	type ReactNode,
+	useCallback,
 	useContext,
 	useEffect,
 	useState,
-} from "react";
-import { auth } from "@/lib/firebaseClient";
-import type { CustomClaims, Permission, UserRole } from "@/types/auth";
-import { canAccessAdmin, getRoleFromClaims, hasPermission } from "@/types/auth";
+} from 'react'
+import { auth } from '@/lib/firebaseClient'
+import type { CustomClaims, Permission, UserRole } from '@/types/auth'
+import { canAccessAdmin, getRoleFromClaims, hasPermission } from '@/types/auth'
 
-interface AuthContextType {
-	user: User | null;
-	isLoading: boolean;
-	isAdmin: boolean;
-	role: UserRole | null;
-	/** Verifica si el usuario tiene un permiso específico */
-	checkPermission: (permission: Permission) => boolean;
-	signIn: (email: string, password: string) => Promise<void>;
-	signInWithGoogle: () => Promise<void>;
-	signOut: () => Promise<void>;
-	getIdToken: () => Promise<string | null>;
-	/** Fuerza la recarga del token para obtener nuevos claims */
-	refreshToken: () => Promise<void>;
+interface AdminSessionState {
+	role: UserRole
+	expiresAt: string
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
+interface AuthContextType {
+	user: User | null
+	isLoading: boolean
+	isAdmin: boolean
+	role: UserRole | null
+	session: AdminSessionState | null
+	isSessionExpired: boolean
+	checkPermission: (permission: Permission) => boolean
+	signIn: (email: string, password: string) => Promise<void>
+	signInWithGoogle: () => Promise<void>
+	signOut: () => Promise<void>
+	getIdToken: () => Promise<string | null>
+	refreshToken: () => Promise<void>
+	refreshSessionStatus: () => Promise<boolean>
+}
 
-/**
- * Obtiene el rol del usuario desde los Custom Claims del token JWT.
- * Esta es la fuente de verdad para los roles - NO Firestore.
- */
+const AuthContext = createContext<AuthContextType | null>(null)
+
+interface PerformClientSignOutOptions {
+	preserveExpiration?: boolean
+}
+
 async function fetchRoleFromClaims(user: User): Promise<UserRole | null> {
 	try {
-		// Forzar refresh del token para obtener claims actualizados
-		const tokenResult = await user.getIdTokenResult(true);
-		const claims = tokenResult.claims as CustomClaims;
-		return getRoleFromClaims(claims);
-	} catch (error) {
-		console.error("Error fetching role from claims:", error);
-		return null;
+		const tokenResult = await user.getIdTokenResult(true)
+		const claims = tokenResult.claims as CustomClaims
+		return getRoleFromClaims(claims)
+	} catch {
+		return null
 	}
 }
 
+async function exchangeAdminSession(user: User): Promise<AdminSessionState> {
+	const idToken = await user.getIdToken(true)
+	const response = await fetch('/api/admin/session', {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		credentials: 'include',
+		body: JSON.stringify({ idToken }),
+	})
+
+	const data = (await response.json().catch(() => null)) as {
+		error?: string
+		session?: AdminSessionState
+	} | null
+
+	if (!response.ok || !data?.session) {
+		throw new Error(
+			data?.error ?? 'No se pudo iniciar la sesion de administrador',
+		)
+	}
+
+	return data.session
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-	const [user, setUser] = useState<User | null>(null);
-	const [isLoading, setIsLoading] = useState(true);
-	const [role, setRole] = useState<UserRole | null>(null);
+	const [user, setUser] = useState<User | null>(null)
+	const [isLoading, setIsLoading] = useState(true)
+	const [role, setRole] = useState<UserRole | null>(null)
+	const [session, setSession] = useState<AdminSessionState | null>(null)
+	const [isSessionExpired, setIsSessionExpired] = useState(false)
 
-	// isAdmin ahora se deriva del rol
-	const isAdmin = role !== null && canAccessAdmin(role);
+	const isAdmin = role !== null && canAccessAdmin(role) && session !== null
 
-	// Función para verificar permisos
 	const checkPermission = (permission: Permission): boolean => {
-		if (!role) return false;
-		return hasPermission(role, permission);
-	};
-
-	// Función para refrescar el token y obtener nuevos claims
-	const refreshToken = async () => {
-		if (user) {
-			const newRole = await fetchRoleFromClaims(user);
-			setRole(newRole);
+		if (!role || !session) {
+			return false
 		}
-	};
+
+		return hasPermission(role, permission)
+	}
+
+	const clearSessionState = useCallback((preserveExpiration = false) => {
+		setSession(null)
+		setIsSessionExpired(preserveExpiration)
+	}, [])
+
+	const performClientSignOut = useCallback(
+		async (options?: PerformClientSignOutOptions) => {
+			try {
+				await fetch('/api/admin/session', {
+					method: 'DELETE',
+					credentials: 'include',
+				})
+			} catch {
+				// Nada: queremos continuar con el sign out local.
+			}
+
+			await firebaseSignOut(auth)
+			setRole(null)
+			clearSessionState(options?.preserveExpiration)
+		},
+		[clearSessionState],
+	)
+
+	const refreshToken = async () => {
+		if (!user) {
+			setRole(null)
+			return
+		}
+
+		const newRole = await fetchRoleFromClaims(user)
+		setRole(newRole)
+	}
+
+	const refreshSessionStatus = useCallback(async (): Promise<boolean> => {
+		if (!user) {
+			clearSessionState()
+			return false
+		}
+
+		try {
+			const response = await fetch('/api/admin/session', {
+				method: 'GET',
+				credentials: 'include',
+				cache: 'no-store',
+			})
+
+			const data = (await response.json().catch(() => null)) as {
+				error?: string
+				session?: AdminSessionState
+			} | null
+
+			if (!response.ok || !data?.session) {
+				setSession(null)
+				setIsSessionExpired(true)
+				await performClientSignOut({ preserveExpiration: true })
+				return false
+			}
+
+			setSession(data.session)
+			setIsSessionExpired(false)
+			return true
+		} catch {
+			return session !== null
+		}
+	}, [clearSessionState, performClientSignOut, session, user])
 
 	useEffect(() => {
 		const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-			setUser(firebaseUser);
+			setUser(firebaseUser)
 
-			if (firebaseUser) {
-				// Obtener rol desde Custom Claims (fuente de verdad)
-				const userRole = await fetchRoleFromClaims(firebaseUser);
-				setRole(userRole);
-			} else {
-				setRole(null);
+			if (!firebaseUser) {
+				setRole(null)
+				clearSessionState()
+				setIsLoading(false)
+				return
 			}
 
-			setIsLoading(false);
-		});
+			const userRole = await fetchRoleFromClaims(firebaseUser)
 
-		return () => unsubscribe();
-	}, []);
+			if (!userRole || !canAccessAdmin(userRole)) {
+				await performClientSignOut()
+				setIsLoading(false)
+				return
+			}
+
+			setRole(userRole)
+			await refreshSessionStatus()
+			setIsLoading(false)
+		})
+
+		return () => unsubscribe()
+	}, [clearSessionState, performClientSignOut, refreshSessionStatus])
 
 	const signIn = async (email: string, password: string) => {
 		const userCredential = await signInWithEmailAndPassword(
 			auth,
 			email,
 			password,
-		);
-
-		// Obtener rol desde Custom Claims
-		const userRole = await fetchRoleFromClaims(userCredential.user);
+		)
+		const userRole = await fetchRoleFromClaims(userCredential.user)
 
 		if (!userRole || !canAccessAdmin(userRole)) {
-			await firebaseSignOut(auth);
-			throw new Error("No tienes permisos para acceder al panel de administración");
+			await performClientSignOut()
+			throw new Error('No tienes permisos de administrador')
 		}
 
-		setRole(userRole);
-	};
+		let nextSession: AdminSessionState
+
+		try {
+			nextSession = await exchangeAdminSession(userCredential.user)
+		} catch (error) {
+			await performClientSignOut()
+			throw error
+		}
+
+		setRole(userRole)
+		setSession(nextSession)
+		setIsSessionExpired(false)
+	}
 
 	const signInWithGoogle = async () => {
-		const provider = new GoogleAuthProvider();
-		const userCredential = await signInWithPopup(auth, provider);
-
-		// Obtener rol desde Custom Claims
-		const userRole = await fetchRoleFromClaims(userCredential.user);
+		const provider = new GoogleAuthProvider()
+		const userCredential = await signInWithPopup(auth, provider)
+		const userRole = await fetchRoleFromClaims(userCredential.user)
 
 		if (!userRole || !canAccessAdmin(userRole)) {
-			await firebaseSignOut(auth);
-			throw new Error("No tienes permisos para acceder al panel de administración");
+			await performClientSignOut()
+			throw new Error('No tienes permisos de administrador')
 		}
 
-		setRole(userRole);
-	};
+		let nextSession: AdminSessionState
+
+		try {
+			nextSession = await exchangeAdminSession(userCredential.user)
+		} catch (error) {
+			await performClientSignOut()
+			throw error
+		}
+
+		setRole(userRole)
+		setSession(nextSession)
+		setIsSessionExpired(false)
+	}
 
 	const signOut = async () => {
-		await firebaseSignOut(auth);
-		setRole(null);
-	};
+		await performClientSignOut()
+	}
 
 	const getIdToken = async (): Promise<string | null> => {
-		if (!user) return null;
-		return user.getIdToken();
-	};
+		if (!user) {
+			return null
+		}
+
+		return user.getIdToken()
+	}
 
 	return (
 		<AuthContext.Provider
@@ -142,23 +262,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 				isLoading,
 				isAdmin,
 				role,
+				session,
+				isSessionExpired,
 				checkPermission,
 				signIn,
 				signInWithGoogle,
 				signOut,
 				getIdToken,
 				refreshToken,
+				refreshSessionStatus,
 			}}
 		>
 			{children}
 		</AuthContext.Provider>
-	);
+	)
 }
 
 export function useAuth() {
-	const context = useContext(AuthContext);
+	const context = useContext(AuthContext)
+
 	if (!context) {
-		throw new Error("useAuth debe usarse dentro de un AuthProvider");
+		throw new Error('useAuth debe usarse dentro de un AuthProvider')
 	}
-	return context;
+
+	return context
 }

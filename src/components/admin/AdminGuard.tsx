@@ -1,59 +1,13 @@
-"use client";
+'use client'
 
-import { Lock, ShieldAlert, WifiOff } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useSyncExternalStore } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import type { UserRole } from "@/types/auth";
-import { canAccessAdmin, canAccessRoute } from "@/types/auth";
-
-// ============================================================================
-// HOOK: useOnlineStatus
-// ============================================================================
-
-/**
- * Hook para detectar estado de conexión a internet.
- * Usa useSyncExternalStore para evitar hydration mismatch.
- */
-function useOnlineStatus(): boolean {
-	const getSnapshot = () => {
-		if (typeof window === "undefined") return true;
-		return navigator.onLine;
-	};
-
-	const getServerSnapshot = () => true; // SSR siempre asume online
-
-	const subscribe = (callback: () => void) => {
-		window.addEventListener("online", callback);
-		window.addEventListener("offline", callback);
-		return () => {
-			window.removeEventListener("online", callback);
-			window.removeEventListener("offline", callback);
-		};
-	};
-
-	return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-}
-
-// ============================================================================
-// COMPONENTE: OfflineBadge
-// ============================================================================
-
-function OfflineBadge() {
-	return (
-		<div className="fixed bottom-4 right-4 z-50 flex items-center gap-2 bg-yellow-500/90 text-yellow-950 px-3 py-2 rounded-full shadow-lg text-sm font-medium animate-pulse">
-			<WifiOff className="w-4 h-4" />
-			<span>Modo Offline</span>
-		</div>
-	);
-}
-
-// ============================================================================
-// COMPONENTE: UnauthorizedView
-// ============================================================================
+import { Lock, ShieldAlert } from 'lucide-react'
+import { usePathname, useRouter } from 'next/navigation'
+import { useEffect } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
+import { canAccessAdmin, canAccessRoute } from '@/types/auth'
 
 function UnauthorizedView() {
-	const router = useRouter();
+	const router = useRouter()
 
 	return (
 		<div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -63,31 +17,26 @@ function UnauthorizedView() {
 				</div>
 				<div>
 					<h1 className="text-2xl font-bold text-foreground mb-2">
-						Acceso Denegado
+						Acceso denegado
 					</h1>
 					<p className="text-foreground/60">
-						No tienes permisos para acceder a esta sección. Contacta al
-						administrador si crees que esto es un error.
+						No tenes permisos para acceder a esta seccion.
 					</p>
 				</div>
 				<button
 					type="button"
-					onClick={() => router.push("/admin/login")}
+					onClick={() => router.push('/admin/login')}
 					className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
 				>
-					Volver al Login
+					Volver al login
 				</button>
 			</div>
 		</div>
-	);
+	)
 }
 
-// ============================================================================
-// COMPONENTE: RestrictedRouteView (Para rutas restringidas por rol)
-// ============================================================================
-
 function RestrictedRouteView() {
-	const router = useRouter();
+	const router = useRouter()
 
 	return (
 		<div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -97,77 +46,69 @@ function RestrictedRouteView() {
 				</div>
 				<div>
 					<h1 className="text-2xl font-bold text-foreground mb-2">
-						Sección Restringida
+						Seccion restringida
 					</h1>
 					<p className="text-foreground/60">
-						Tu rol no tiene acceso a esta sección. Solo puedes acceder al Dashboard.
+						Tu rol no tiene acceso a esta seccion.
 					</p>
 				</div>
 				<button
 					type="button"
-					onClick={() => router.push("/admin")}
+					onClick={() => router.push('/admin')}
 					className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
 				>
-					Ir al Dashboard
+					Ir al dashboard
 				</button>
 			</div>
 		</div>
-	);
+	)
 }
 
-// ============================================================================
-// COMPONENTE: AdminGuard
-// ============================================================================
-
 interface AdminGuardProps {
-	children: React.ReactNode;
+	children: React.ReactNode
 }
 
 export function AdminGuard({ children }: AdminGuardProps) {
-	const { user, isLoading, role } = useAuth();
-	const router = useRouter();
-	const pathname = usePathname();
-	const isOnline = useOnlineStatus();
+	const {
+		isLoading,
+		role,
+		session,
+		user,
+		isSessionExpired,
+		refreshSessionStatus,
+	} = useAuth()
+	const router = useRouter()
+	const pathname = usePathname()
 
-	// Obtener rol cacheado directamente de sessionStorage (sin estado React)
-	const getCachedRole = (): UserRole | null => {
-		if (typeof window === "undefined") return null;
-		try {
-			const cached = sessionStorage.getItem("jp_user_role");
-			return cached as UserRole | null;
-		} catch {
-			return null;
-		}
-	};
-
-	// Guardar rol en sessionStorage cuando cambia (efecto sincronizado)
 	useEffect(() => {
-		if (role && isOnline) {
-			try {
-				sessionStorage.setItem("jp_user_role", role);
-			} catch {
-				// sessionStorage no disponible
+		if (!user || !pathname) {
+			return
+		}
+
+		void refreshSessionStatus()
+	}, [pathname, refreshSessionStatus, user])
+
+	useEffect(() => {
+		const onFocus = () => {
+			if (user) {
+				void refreshSessionStatus()
 			}
 		}
-	}, [role, isOnline]);
 
-	// Obtener el rol cacheado para la lógica de acceso
-	const cachedRole = getCachedRole();
-	
-	// Determinar el rol efectivo (online: del contexto, offline: del cache)
-	const effectiveRole = isOnline ? role : (cachedRole || role);
+		window.addEventListener('focus', onFocus)
+		return () => window.removeEventListener('focus', onFocus)
+	}, [refreshSessionStatus, user])
 
 	useEffect(() => {
-		if (isLoading) return;
-
-		// Si no hay usuario, redirigir a login
-		if (!user) {
-			router.replace("/admin/login");
-			return;
+		if (isLoading) {
+			return
 		}
-	}, [user, isLoading, router]);
 
-	// Loading state
+		if (!user || isSessionExpired || !session) {
+			router.replace('/admin/login?reason=session-expired')
+		}
+	}, [isLoading, isSessionExpired, router, session, user])
+
 	if (isLoading) {
 		return (
 			<div className="min-h-screen bg-background flex items-center justify-center">
@@ -176,11 +117,10 @@ export function AdminGuard({ children }: AdminGuardProps) {
 					<p className="text-sm text-foreground/60">Verificando acceso...</p>
 				</div>
 			</div>
-		);
+		)
 	}
 
-	// Sin usuario
-	if (!user) {
+	if (!user || !session) {
 		return (
 			<div className="min-h-screen bg-background flex items-center justify-center">
 				<div className="flex flex-col items-center gap-4">
@@ -188,28 +128,20 @@ export function AdminGuard({ children }: AdminGuardProps) {
 					<p className="text-sm text-foreground/60">Redirigiendo...</p>
 				</div>
 			</div>
-		);
+		)
 	}
 
-	// Verificar acceso al panel admin
-	const hasAdminAccess = effectiveRole && canAccessAdmin(effectiveRole);
-	
+	const hasAdminAccess = role && canAccessAdmin(role)
+
 	if (!hasAdminAccess) {
-		return <UnauthorizedView />;
+		return <UnauthorizedView />
 	}
 
-	// Verificar acceso a la ruta específica según el rol
-	const canAccessCurrentRoute = effectiveRole && canAccessRoute(effectiveRole, pathname);
-	
+	const canAccessCurrentRoute = canAccessRoute(role, pathname)
+
 	if (!canAccessCurrentRoute) {
-		return <RestrictedRouteView />;
+		return <RestrictedRouteView />
 	}
 
-	return (
-		<>
-			{children}
-			{/* Indicador de Modo Offline */}
-			{!isOnline && <OfflineBadge />}
-		</>
-	);
+	return <>{children}</>
 }
