@@ -9,9 +9,9 @@
 
 ## Phase 2: Operational Stability (PR-02)
 
-- [ ] 2.1 Bounded exports; `src/app/api/admin/export/users/route.ts`, `src/app/api/admin/export/consents/route.ts`; done when unbounded or `>30d` exports are rejected/capped with response metadata; validate allowed vs rejected range requests.
-- [ ] 2.2 Short-lived consent links; `src/services/consentService.ts`, `src/app/api/admin/consents/[id]/pdf/route.ts`; done when signed URLs expire in `<=15m` and persistence keeps object paths instead of long-lived links; validate generated URL TTL config.
-- [ ] 2.3 Secure logs and operator baseline; `src/services/authService.ts`, `README.md`, `.env.example`, `.github/workflows/ci.yml`; done when PII is masked, env contract is complete, and CI/docs match Bun commands and runbooks; validate `bun run check`.
+- [x] 2.1 Bounded exports; `src/app/api/admin/export/users/route.ts`, `src/app/api/admin/export/consents/route.ts`; done when unbounded or `>30d` exports are rejected/capped with response metadata; validate allowed vs rejected range requests.
+- [x] 2.2 Short-lived consent links; `src/services/consentService.ts`, `src/app/api/admin/consents/[id]/pdf/route.ts`; done when signed URLs expire in `<=15m` and persistence keeps object paths instead of long-lived links; validate generated URL TTL config.
+- [x] 2.3 Secure logs and operator baseline; `src/services/authService.ts`, `README.md`, `.env.example`, `.github/workflows/ci.yml`; done when PII is masked, env contract is complete, and CI/docs match Bun commands and runbooks; validate `bun run check`.
 
 ## Phase 3: Public Discoverability (PR-03)
 

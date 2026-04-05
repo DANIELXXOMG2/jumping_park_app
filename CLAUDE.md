@@ -79,7 +79,7 @@ All Firestore operations go through `src/lib/firestoreService.ts`:
 
 Document IDs:
 - Users: cédula (national ID) as document ID
-- OTP challenges: cédula as document ID
+- OTP challenges: email as document ID
 - OTP access sessions: cédula as document ID
 - OTP legacy sessions: email or cédula depending on legacy record shape
 - Minors: idNumber as document ID (denormalized index)
@@ -182,7 +182,7 @@ Note: `FIREBASE_PRIVATE_KEY` must have `\n` characters for newlines.
 |------------|---------|-----------|
 | `users` | Adult visitor profiles | cédula (string) |
 | `consents` | Signed consent forms | autoID |
-| `otp_challenges` | Pending OTP challenge state | cédula (string) |
+| `otp_challenges` | Pending OTP challenge state | email (string) |
 | `otp_access_sessions` | Validated kiosk access sessions | cédula (string) |
 | `otp_sessions` | Legacy mixed OTP records (deprecated/transitional) | email or cédula (legacy) |
 | `minors_index` | Denormalized minor records | idNumber (string) |

@@ -91,6 +91,25 @@ function maskEmail(email: string): string {
 	return `${visible}***@${domain}`
 }
 
+function maskIdentifier(identifier: string): string {
+	const visiblePrefix = identifier.slice(0, 2)
+	const visibleSuffix = identifier.slice(-2)
+
+	if (identifier.length <= 4) {
+		return '****'
+	}
+
+	return `${visiblePrefix}***${visibleSuffix}`
+}
+
+function toSafeErrorMessage(error: unknown): string {
+	if (error instanceof Error) {
+		return error.message
+	}
+
+	return 'unknown-error'
+}
+
 function isOtpChallenge(value: unknown): value is OtpChallenge {
 	if (!value || typeof value !== 'object') {
 		return false
@@ -181,7 +200,10 @@ export async function getActiveOtp(
 				: null,
 		}
 	} catch (error) {
-		console.error('[AuthService] Error consultando challenge OTP:', error)
+		console.error('[AuthService] Error consultando challenge OTP:', {
+			email: maskEmail(email),
+			error: toSafeErrorMessage(error),
+		})
 		return null
 	}
 }
@@ -201,7 +223,10 @@ export async function saveOtp(email: string, code: string): Promise<void> {
 	try {
 		await createDoc(OTP_CHALLENGES_COLLECTION, otpRecord, email)
 	} catch (error) {
-		console.error('[AuthService] Error guardando challenge OTP:', error)
+		console.error('[AuthService] Error guardando challenge OTP:', {
+			email: maskEmail(email),
+			error: toSafeErrorMessage(error),
+		})
 		throw new Error('No se pudo guardar el OTP')
 	}
 }
@@ -326,8 +351,8 @@ export async function validateOtp(
 		return result
 	} catch (error) {
 		console.error(
-			`[AuthService] Error validando OTP para ${maskEmail(email)}:`,
-			error,
+			'[AuthService] Error validando OTP:',
+			{ email: maskEmail(email), error: toSafeErrorMessage(error) },
 		)
 		return {
 			valid: false,
@@ -358,8 +383,12 @@ export async function createOtpSession(
 		await createDoc(OTP_ACCESS_SESSIONS_COLLECTION, session, userId)
 	} catch (error) {
 		console.error(
-			`[AuthService] Error creando sesion OTP para ${maskEmail(email)}:`,
-			error,
+			'[AuthService] Error creando sesion OTP:',
+			{
+				email: maskEmail(email),
+				userId: maskIdentifier(userId),
+				error: toSafeErrorMessage(error),
+			},
 		)
 	}
 }
@@ -396,7 +425,10 @@ export async function verifyOtpSession(userId: string): Promise<boolean> {
 
 		return true
 	} catch (error) {
-		console.error('[AuthService] Error verificando sesion OTP:', error)
+		console.error('[AuthService] Error verificando sesion OTP:', {
+			userId: maskIdentifier(userId),
+			error: toSafeErrorMessage(error),
+		})
 		return false
 	}
 }
