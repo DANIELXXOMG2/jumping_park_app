@@ -11,6 +11,8 @@ yarn-error.log*
 .pnpm-debug.log*
 pnpm-debug.log*
 lerna-debug.log*
+seo-network.log
+.playwright-mcp/
 
 # Reportes de auditoría (knip, jscpd, dependency-cruiser)
 /report/
