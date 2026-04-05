@@ -1,13 +1,18 @@
 import { describe, expect, it } from 'bun:test'
-import {
-	requestOtpChallenge,
-	type RequestOtpChallengeDeps,
-	validateOtpChallengeRequest,
-	type ValidateOtpChallengeRequestDeps,
+import type {
+	OtpValidationContext,
+	RequestOtpChallengeDeps,
+	SendOtpResult,
+	ValidateOtpChallengeRequestDeps,
+	ValidateOtpResult,
 } from '@/services/authService'
-import type { OtpValidationContext, SendOtpResult, ValidateOtpResult } from '@/services/authService'
 import type { RateLimitResult } from '@/services/rateLimitService'
 import type { UserProfile } from '@/types/firestore'
+
+process.env.RESEND_API_KEY ??= 're_test_key'
+
+const { requestOtpChallenge, validateOtpChallengeRequest } =
+	await import('@/services/authService')
 
 function createAllowedRateLimitResult(remaining: number): RateLimitResult {
 	return {
