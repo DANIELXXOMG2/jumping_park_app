@@ -425,6 +425,8 @@ Body: {
 | Documento | Ubicación | Descripción |
 |-----------|-----------|-------------|
 | Manual de Usuario | `docs/MANUAL_USUARIO.md` | Guía para Cajeros y Visitantes |
+| OTP Operational Policy | `docs/runbooks/otp-operational-policy.md` | Runbook operativo del ciclo OTP, límites, lockout y troubleshooting |
+| Production Hardening Smoke Pack | `docs/runbooks/production-hardening.md` | Checklist reproducible de sesiones admin, abuso OTP, export bounds y robots/sitemap |
 | Diagrama ER | `diagramas/Diagrama-de-Entidad-Relación.mmd` | Modelo de datos |
 | Diagrama de Secuencia | `diagramas/Diagrama-Secuencia.mmd` | Flujo del sistema |
 | Colección API | `postman/` | Tests de endpoints |
