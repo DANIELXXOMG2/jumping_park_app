@@ -2,6 +2,8 @@ import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { verifyAdminTokenWithPermission } from "@/lib/adminAuth";
 import { db } from "@/lib/firebaseAdmin";
+import { getConsentSignatureAccessUrl } from "@/services/consentService";
+import type { Consent } from "@/types/firestore";
 
 const querySchema = z.object({
 	cedula: z.string().min(6, "La cédula debe tener al menos 6 dígitos"),
@@ -116,6 +118,9 @@ export async function GET(request: NextRequest) {
 			consentData?.signedAt?.toDate?.()?.toISOString() ||
 			consentData?.createdAt?.toDate?.()?.toISOString() ||
 			null;
+		const signatureUrl = consentData
+			? await getConsentSignatureAccessUrl(consentData as Consent)
+			: null;
 
 		// Retornar resultado
 		return NextResponse.json({
@@ -129,7 +134,8 @@ export async function GET(request: NextRequest) {
 					uid: cedulaValue,
 				},
 				minorsSnapshot: consentData?.minorsSnapshot || [],
-				signatureUrl: consentData?.signatureUrl || null,
+				signaturePath: consentData?.signaturePath || null,
+				signatureUrl,
 				signedAt,
 				expiresAt,
 			},
