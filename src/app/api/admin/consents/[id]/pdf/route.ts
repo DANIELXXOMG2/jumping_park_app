@@ -9,6 +9,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { verifyAdminTokenWithPermission } from "@/lib/adminAuth";
 import { admin } from "@/lib/firebaseAdmin";
+import { loadConsentSignatureBuffer } from "@/services/consentService";
 import { generateConsentPdf } from "@/services/pdfService";
 import type { Consent } from "@/types/firestore";
 
@@ -54,28 +55,12 @@ export async function GET(
 			...consentDoc.data(),
 		} as Consent;
 
-		// 4. Intentar descargar la firma si existe URL
 		let signatureBuffer: Buffer | undefined;
 
-		if (consentData.signatureUrl) {
-			try {
-				// La signatureUrl puede ser una URL firmada de Storage o base64
-				if (consentData.signatureUrl.startsWith("data:image")) {
-					// Es base64, extraer el buffer
-					const base64Data = consentData.signatureUrl.split(",")[1];
-					signatureBuffer = Buffer.from(base64Data, "base64");
-				} else {
-					// Es una URL, intentar descargar
-					const response = await fetch(consentData.signatureUrl);
-					if (response.ok) {
-						const arrayBuffer = await response.arrayBuffer();
-						signatureBuffer = Buffer.from(arrayBuffer);
-					}
-				}
-			} catch (error) {
-				// Si falla la descarga, continuamos sin firma
-				console.warn("[PDF Admin] No se pudo obtener la firma:", error);
-			}
+		try {
+			signatureBuffer = await loadConsentSignatureBuffer(consentData)
+		} catch (error) {
+			console.warn("[PDF Admin] No se pudo obtener la firma:", error);
 		}
 
 		// 5. Generar PDF

@@ -12,10 +12,14 @@
  */
 import { bucket, db } from "@/lib/firebaseAdmin";
 import {
-	generateSearchTokens,
 	extractEmailTokens,
+	generateSearchTokens,
 } from "@/lib/utils/searchUtils";
 import type { Consent, Minor, UserProfile } from "@/types/firestore";
+
+export const CONSENT_ASSET_LIMITS = {
+	SIGNED_URL_TTL_MINUTES: 15,
+} as const
 
 // ============================================================================
 // TYPES
@@ -48,6 +52,119 @@ export interface CreateConsentResult {
 	consentId?: string;
 	consecutivo?: number;
 	error?: string;
+}
+
+interface StoredSignatureAsset {
+	buffer: Buffer
+	path: string
+	signedUrl: string
+}
+
+function getConsentSignedUrlExpirationDate(): Date {
+	return new Date(
+		Date.now() + CONSENT_ASSET_LIMITS.SIGNED_URL_TTL_MINUTES * 60 * 1000,
+	)
+}
+
+function isStoragePath(reference: string): boolean {
+	return reference.startsWith('signatures/')
+}
+
+function isDataUrl(reference: string): boolean {
+	return reference.startsWith('data:image')
+}
+
+function isHttpUrl(reference: string): boolean {
+	return reference.startsWith('http://') || reference.startsWith('https://')
+}
+
+function getStoragePathFromLegacyReference(reference: string): string | null {
+	if (reference.startsWith('gs://')) {
+		const [, ...parts] = reference.replace('gs://', '').split('/')
+		return parts.length > 0 ? parts.join('/') : null
+	}
+
+	if (isStoragePath(reference)) {
+		return reference
+	}
+
+	return null
+}
+
+export async function getSignedConsentAssetUrl(path: string): Promise<string> {
+	if (!bucket) {
+		throw new Error('Firebase Storage no está configurado')
+	}
+
+	const [signedUrl] = await bucket.file(path).getSignedUrl({
+		action: 'read',
+		expires: getConsentSignedUrlExpirationDate(),
+	})
+
+	return signedUrl
+}
+
+export async function getConsentSignatureAccessUrl(
+	consent: Pick<Consent, 'signaturePath' | 'signatureUrl'>,
+): Promise<string | null> {
+	if (consent.signaturePath) {
+		return getSignedConsentAssetUrl(consent.signaturePath)
+	}
+
+	if (!consent.signatureUrl) {
+		return null
+	}
+
+	const storagePath = getStoragePathFromLegacyReference(consent.signatureUrl)
+	if (storagePath) {
+		return getSignedConsentAssetUrl(storagePath)
+	}
+
+	return consent.signatureUrl
+}
+
+export async function loadConsentSignatureBuffer(
+	consent: Pick<Consent, 'signaturePath' | 'signatureUrl'>,
+): Promise<Buffer | undefined> {
+	if (consent.signaturePath) {
+		if (!bucket) {
+			throw new Error('Firebase Storage no está configurado')
+		}
+
+		const [buffer] = await bucket.file(consent.signaturePath).download()
+		return buffer
+	}
+
+	if (!consent.signatureUrl) {
+		return undefined
+	}
+
+	if (isDataUrl(consent.signatureUrl)) {
+		const base64Data = consent.signatureUrl.split(',')[1]
+		return base64Data ? Buffer.from(base64Data, 'base64') : undefined
+	}
+
+	const storagePath = getStoragePathFromLegacyReference(consent.signatureUrl)
+	if (storagePath) {
+		if (!bucket) {
+			throw new Error('Firebase Storage no está configurado')
+		}
+
+		const [buffer] = await bucket.file(storagePath).download()
+		return buffer
+	}
+
+	if (!isHttpUrl(consent.signatureUrl)) {
+		return undefined
+	}
+
+	const response = await fetch(consent.signatureUrl)
+	if (!response.ok) {
+		throw new Error('No se pudo descargar la firma del consentimiento')
+	}
+
+	const arrayBuffer = await response.arrayBuffer()
+	return Buffer.from(arrayBuffer)
 }
 
 /**
@@ -155,12 +272,12 @@ class ConsentService {
 	// --------------------------------------------------------------------------
 
 	/**
-	 * Sube la firma digital a Firebase Storage y retorna la URL firmada.
+	 * Sube la firma digital a Firebase Storage y retorna la referencia persistida.
 	 */
 	private async uploadSignature(
 		documentId: string,
 		base64Data: string,
-	): Promise<{ url: string; buffer: Buffer }> {
+	): Promise<StoredSignatureAsset> {
 		if (!bucket) {
 			throw new Error("Firebase Storage no está configurado");
 		}
@@ -185,14 +302,13 @@ class ConsentService {
 			},
 		});
 
-		// Generar URL firmada con expiración larga (para MVP)
 		const [signedUrl] = await file.getSignedUrl({
-			action: "read",
-			expires: "03-01-2500", // Expiración lejana para MVP
-		});
+			action: 'read',
+			expires: getConsentSignedUrlExpirationDate(),
+		})
 
 		console.log(`[ConsentService] Firma subida exitosamente`);
-		return { url: signedUrl, buffer };
+		return { path, signedUrl, buffer }
 	}
 
 	// --------------------------------------------------------------------------
@@ -299,7 +415,7 @@ class ConsentService {
 		consecutivo: number,
 		userProfile: UserProfile,
 		normalizedMinors: Minor[],
-		signatureUrl: string,
+		signaturePath: string,
 		ipAddress: string,
 	): Promise<Consent> {
 		const consentRef = db.collection(this.CONSENTS_COLLECTION).doc();
@@ -320,7 +436,7 @@ class ConsentService {
 			userId: userProfile.uid,
 			adultSnapshot: userProfile,
 			minorsSnapshot: normalizedMinors,
-			signatureUrl,
+			signaturePath,
 			policyVersion: "1.0",
 			ipAddress,
 			signedAt: now,
@@ -368,7 +484,7 @@ class ConsentService {
 
 		try {
 			// 1. Subir firma a Storage
-			const { url: signatureUrl } =
+			const { path: signaturePath } =
 				await this.uploadSignature(
 					responsibleAdult.documentId,
 					signatureBase64,
@@ -391,7 +507,7 @@ class ConsentService {
 				consecutivo,
 				userProfile,
 				normalizedMinors,
-				signatureUrl,
+				signaturePath,
 				ipAddress,
 			);
 

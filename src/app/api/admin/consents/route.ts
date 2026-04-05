@@ -2,10 +2,9 @@ import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { verifyAdminTokenWithPermission } from "@/lib/adminAuth";
 import { db } from "@/lib/firebaseAdmin";
-import {
-	generateSearchTokens,
-	normalizeText,
-} from "@/lib/utils/searchUtils";
+import { normalizeText } from "@/lib/utils/searchUtils";
+import { getConsentSignatureAccessUrl } from "@/services/consentService";
+import type { Consent } from "@/types/firestore";
 
 const querySchema = z.object({
 	search: z.string().optional(),
@@ -22,6 +21,7 @@ const CONSENT_LIST_FIELDS = [
 	"minorsSnapshot",
 	"signedAt",
 	"createdAt",
+	"signaturePath",
 	"signatureUrl",
 	"policyVersion",
 	"ipAddress",
@@ -46,9 +46,10 @@ export async function GET(request: NextRequest) {
 		});
 
 		// Helper para mapear documento a respuesta
-		const mapConsent = (doc: FirebaseFirestore.DocumentSnapshot) => {
+		const mapConsent = async (doc: FirebaseFirestore.DocumentSnapshot) => {
 			const data = doc.data();
 			if (!data) return null;
+			const consentData = data as Consent;
 			return {
 				id: doc.id,
 				consecutivo: data.consecutivo,
@@ -58,7 +59,8 @@ export async function GET(request: NextRequest) {
 				adultPhone: data.adultSnapshot?.phone || "N/A",
 				minorsCount: data.minorsSnapshot?.length || 0,
 				minors: data.minorsSnapshot || [],
-				signatureUrl: data.signatureUrl,
+				signaturePath: consentData.signaturePath || null,
+				signatureUrl: await getConsentSignatureAccessUrl(consentData),
 				policyVersion: data.policyVersion,
 				ipAddress: data.ipAddress,
 				createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
@@ -66,6 +68,7 @@ export async function GET(request: NextRequest) {
 				validUntil: data.validUntil?.toDate?.()?.toISOString() || null,
 			};
 		};
+		type ConsentListItem = NonNullable<Awaited<ReturnType<typeof mapConsent>>>;
 
 		// Filtrar por userId específico
 		if (query.userId) {
@@ -76,9 +79,7 @@ export async function GET(request: NextRequest) {
 				.select(...CONSENT_LIST_FIELDS)
 				.get();
 
-			const consents = snapshot.docs
-				.map(mapConsent)
-				.filter(Boolean);
+			const consents = (await Promise.all(snapshot.docs.map(mapConsent))).filter(Boolean);
 
 			return NextResponse.json({
 				consents,
@@ -107,7 +108,7 @@ export async function GET(request: NextRequest) {
 					.limit(1)
 					.get();
 
-				const consents = snapshot.docs.map(mapConsent).filter(Boolean);
+				const consents = (await Promise.all(snapshot.docs.map(mapConsent))).filter(Boolean);
 
 				return NextResponse.json({
 					consents,
@@ -146,20 +147,20 @@ export async function GET(request: NextRequest) {
 					console.error("[consents] Error buscando por searchTokens:", minorResult.reason);
 				}
 
-				const consentMap = new Map();
+				const consentMap = new Map<string, ConsentListItem>();
 
 				if (adultResult.status === "fulfilled") {
-					adultResult.value.docs.forEach((doc) => {
-						const mapped = mapConsent(doc);
+					for (const doc of adultResult.value.docs) {
+						const mapped = await mapConsent(doc);
 						if (mapped) consentMap.set(doc.id, mapped);
-					});
+					}
 				}
 
 				if (minorResult.status === "fulfilled") {
-					minorResult.value.docs.forEach((doc) => {
-						const mapped = mapConsent(doc);
+					for (const doc of minorResult.value.docs) {
+						const mapped = await mapConsent(doc);
 						if (mapped) consentMap.set(doc.id, mapped);
-					});
+					}
 				}
 
 				const consents = Array.from(consentMap.values()).sort((a, b) => {
@@ -198,9 +199,9 @@ export async function GET(request: NextRequest) {
 					.get();
 
 				// Combinar resultados sin duplicados
-				const consentMap = new Map<string, ReturnType<typeof mapConsent>>();
+				const consentMap = new Map<string, ConsentListItem>();
 				for (const doc of fullTokenSnapshot.docs) {
-					const mapped = mapConsent(doc);
+					const mapped = await mapConsent(doc);
 					if (mapped) consentMap.set(doc.id, mapped);
 				}
 
@@ -226,7 +227,7 @@ export async function GET(request: NextRequest) {
 
 					for (const doc of snapshot.docs) {
 						if (!consentMap.has(doc.id)) {
-							const mapped = mapConsent(doc);
+							const mapped = await mapConsent(doc);
 							if (mapped) consentMap.set(doc.id, mapped);
 						}
 					}
@@ -299,8 +300,7 @@ export async function GET(request: NextRequest) {
 				.limit(100)
 				.get();
 
-			const consents = snapshot.docs
-				.map(mapConsent)
+			const consents = (await Promise.all(snapshot.docs.map(mapConsent)))
 				.filter(Boolean)
 				.filter(
 					(consent) =>
@@ -337,7 +337,7 @@ export async function GET(request: NextRequest) {
 		]);
 
 		const total = countSnap.data().count;
-		const consents = snapshot.docs.map(mapConsent).filter(Boolean);
+		const consents = (await Promise.all(snapshot.docs.map(mapConsent))).filter(Boolean);
 
 		return NextResponse.json({
 			consents,
