@@ -11,6 +11,9 @@ yarn-error.log*
 .pnpm-debug.log*
 pnpm-debug.log*
 lerna-debug.log*
+seo-network.log
+.playwright-mcp/
+.gga
 
 # Reportes de auditoría (knip, jscpd, dependency-cruiser)
 /report/
@@ -19,6 +22,7 @@ jscpd-report.*
 
 # Entornos/credenciales
 .env*
+.atl/
 .vercel
 .firebase/
 .secrets/
