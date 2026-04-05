@@ -1,73 +1,121 @@
-import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
+import type { NextRequest } from 'next/server'
+import { NextResponse } from 'next/server'
+import {
+	ADMIN_SESSION_COOKIE_NAME,
+	readAdminSessionFromEdgeRequest,
+} from '@/lib/adminSessionEdge'
 
-/**
- * ============================================================================
- * PROXY - RBAC para rutas protegidas (Next.js 16+)
- * ============================================================================
- *
- * Protege las rutas bajo /admin/* verificando la autenticación del usuario.
- *
- * Nota: El proxy de Next.js se ejecuta en Edge Runtime y no tiene acceso
- * directo a Firebase Admin SDK. La verificación completa del rol se hace en
- * el componente AdminGuard del lado del cliente.
- *
- * Este proxy solo verifica la existencia de cookies de sesión de Firebase.
- */
+const PUBLIC_ADMIN_ROUTES = ['/admin/login', '/admin/unauthorized']
+const NOINDEX_PREFIXES = [
+	'/admin',
+	'/ingreso',
+	'/otp',
+	'/registro',
+	'/consentimiento',
+	'/exito',
+]
 
-// Rutas que no requieren autenticación
-const PUBLIC_ROUTES = ["/admin/login", "/admin/unauthorized"];
+const CONTENT_SECURITY_POLICY = [
+	'default-src \'self\'',
+	'base-uri \'self\'',
+	'frame-ancestors \'none\'',
+	'form-action \'self\'',
+	'object-src \'none\'',
+	'img-src \'self\' data: blob: https:',
+	'font-src \'self\' data: https:',
+	'style-src \'self\' \'unsafe-inline\' https:',
+	'script-src \'self\' \'unsafe-inline\' \'unsafe-eval\' https:',
+	'connect-src \'self\' https: wss:',
+].join('; ')
 
-// Matcher para rutas que deben ser verificadas
 export const config = {
 	matcher: [
-		/*
-		 * Match all request paths except:
-		 * - _next/static (static files)
-		 * - _next/image (image optimization files)
-		 * - favicon.ico (favicon file)
-		 * - public files (assets, manifest, etc.)
-		 * - API routes (manejados por su propia autenticación)
-		 */
-		"/((?!_next/static|_next/image|favicon.ico|assets|manifest.json|api).*)",
+		'/((?!_next/static|_next/image|favicon.ico|assets|manifest.json).*)',
 	],
-};
+}
 
-export function proxy(request: NextRequest) {
-	const { pathname } = request.nextUrl;
-
-	// Solo verificar rutas bajo /admin
-	if (!pathname.startsWith("/admin")) {
-		return NextResponse.next();
+function isProtectedAdminRoute(pathname: string): boolean {
+	if (!pathname.startsWith('/admin')) {
+		return false
 	}
 
-	// Permitir rutas públicas del admin
-	if (
-		PUBLIC_ROUTES.some(
-			(route) => pathname === route || pathname.startsWith(route),
-		)
-	) {
-		return NextResponse.next();
+	return !PUBLIC_ADMIN_ROUTES.some(
+		(route) => pathname === route || pathname.startsWith(`${route}/`),
+	)
+}
+
+function shouldApplyNoIndex(pathname: string): boolean {
+	return NOINDEX_PREFIXES.some(
+		(prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+	)
+}
+
+function applySecurityHeaders(
+	response: NextResponse,
+	pathname: string,
+): NextResponse {
+	response.headers.set('Content-Security-Policy', CONTENT_SECURITY_POLICY)
+	response.headers.set('X-Frame-Options', 'DENY')
+	response.headers.set('X-Content-Type-Options', 'nosniff')
+	response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+	response.headers.set(
+		'Strict-Transport-Security',
+		'max-age=31536000; includeSubDomains',
+	)
+	response.headers.set(
+		'Permissions-Policy',
+		'camera=(), microphone=(), geolocation=(), payment=()',
+	)
+
+	if (shouldApplyNoIndex(pathname)) {
+		response.headers.set('X-Robots-Tag', 'noindex, nofollow')
 	}
 
-	// Verificar si hay una sesión de Firebase Auth (cookie)
-	// Firebase Auth en cliente usa IndexedDB, no cookies, así que verificamos
-	// la presencia de token en el header de autorización para API routes
-	// Para páginas, la verificación se hace en AdminGuard (cliente)
+	return response
+}
 
-	// Verificar si es una ruta admin protegida
-	// La autenticación real se verifica en AdminGuard con Firebase Auth del cliente
-	// Aquí solo podemos hacer verificaciones básicas como la presencia de cookies
+function buildAdminRedirect(
+	request: NextRequest,
+	pathname: string,
+	clearCookie = false,
+) {
+	const loginUrl = new URL('/admin/login', request.url)
+	loginUrl.searchParams.set('redirect', pathname)
+	loginUrl.searchParams.set('reason', 'session-required')
 
-	// Por ahora, permitimos el acceso y dejamos que AdminGuard haga la verificación
-	// En una implementación más robusta, se usarían cookies de sesión HTTP-only
+	const response = NextResponse.redirect(loginUrl)
 
-	const response = NextResponse.next();
+	if (clearCookie) {
+		response.cookies.set({
+			name: ADMIN_SESSION_COOKIE_NAME,
+			value: '',
+			httpOnly: true,
+			secure: request.nextUrl.protocol === 'https:',
+			sameSite: 'lax',
+			path: '/',
+			maxAge: 0,
+		})
+	}
 
-	// Agregar headers de seguridad
-	response.headers.set("X-Frame-Options", "DENY");
-	response.headers.set("X-Content-Type-Options", "nosniff");
-	response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+	return applySecurityHeaders(response, pathname)
+}
 
-	return response;
+export async function proxy(request: NextRequest) {
+	const { pathname } = request.nextUrl
+
+	if (isProtectedAdminRoute(pathname)) {
+		const hasAdminSessionCookie = request.cookies.has(ADMIN_SESSION_COOKIE_NAME)
+
+		if (!hasAdminSessionCookie) {
+			return buildAdminRedirect(request, pathname)
+		}
+
+		const session = await readAdminSessionFromEdgeRequest(request)
+
+		if (!session) {
+			return buildAdminRedirect(request, pathname, true)
+		}
+	}
+
+	return applySecurityHeaders(NextResponse.next(), pathname)
 }
