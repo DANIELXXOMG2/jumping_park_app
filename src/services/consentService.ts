@@ -189,7 +189,9 @@ function buildConsentSearchTokens(
 		// Tokens del nombre del menor
 		if (minor.fullName) {
 			const minorTokens = generateSearchTokens(minor.fullName);
-			minorTokens.forEach((token) => allTokens.add(token));
+			minorTokens.forEach((token) => {
+				allTokens.add(token);
+			});
 		}
 
 		// Agregar cédula del menor para búsqueda directa
@@ -202,7 +204,9 @@ function buildConsentSearchTokens(
 			const combinedName = `${minor.firstName || ""} ${minor.lastName || ""}`.trim();
 			if (combinedName) {
 				const combinedTokens = generateSearchTokens(combinedName);
-				combinedTokens.forEach((token) => allTokens.add(token));
+				combinedTokens.forEach((token) => {
+					allTokens.add(token);
+				});
 			}
 		}
 	}
