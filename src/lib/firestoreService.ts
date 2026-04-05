@@ -2,6 +2,7 @@ import type {
 	DocumentData,
 	DocumentReference,
 	DocumentSnapshot,
+	OrderByDirection,
 	QueryDocumentSnapshot,
 	Transaction,
 } from 'firebase-admin/firestore'
@@ -99,6 +100,54 @@ export async function getDocs<T extends BaseDoc>(
 	const colRef = db.collection(collection)
 	const query = colRef.orderBy('createdAt', 'desc').limit(limit)
 	const snap = await query.get()
+	return snap.docs.map((docSnap) => snapshotWithId<T>(docSnap))
+}
+
+export async function getDocsByDateRange<C extends KnownCollection>(
+	collection: C,
+	options: {
+		field: string
+		from: Date
+		to: Date
+		orderBy?: string
+		orderDirection?: OrderByDirection
+		limit?: number
+	},
+): Promise<Array<WithId<FirestoreCollectionMap[C]>>>
+export async function getDocsByDateRange<T extends BaseDoc>(
+	collection: string,
+	options: {
+		field: string
+		from: Date
+		to: Date
+		orderBy?: string
+		orderDirection?: OrderByDirection
+		limit?: number
+	},
+): Promise<Array<WithId<T>>>
+export async function getDocsByDateRange<T extends BaseDoc>(
+	collection: string,
+	options: {
+		field: string
+		from: Date
+		to: Date
+		orderBy?: string
+		orderDirection?: OrderByDirection
+		limit?: number
+	},
+): Promise<Array<WithId<T>>> {
+	const orderBy = options.orderBy ?? options.field
+	const orderDirection = options.orderDirection ?? 'desc'
+	const limit = options.limit ?? 5000
+
+	const snap = await db
+		.collection(collection)
+		.where(options.field, '>=', options.from)
+		.where(options.field, '<=', options.to)
+		.orderBy(orderBy, orderDirection)
+		.limit(limit)
+		.get()
+
 	return snap.docs.map((docSnap) => snapshotWithId<T>(docSnap))
 }
 

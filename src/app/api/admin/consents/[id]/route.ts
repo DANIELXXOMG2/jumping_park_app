@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { verifyAdminTokenWithPermission } from "@/lib/adminAuth";
 import { db } from "@/lib/firebaseAdmin";
+import { getConsentSignatureAccessUrl } from "@/services/consentService";
+import type { Consent } from "@/types/firestore";
 
 interface RouteParams {
 	params: Promise<{ id: string }>;
@@ -33,6 +35,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 			);
 		}
 
+		const signatureUrl = await getConsentSignatureAccessUrl(data as Consent)
+
 		let currentUser = null;
 		if (data.userId) {
 			const userSnap = await db
@@ -61,7 +65,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 				userId: data.userId,
 				adultSnapshot: data.adultSnapshot,
 				minorsSnapshot: data.minorsSnapshot || [],
-				signatureUrl: data.signatureUrl,
+				signaturePath: data.signaturePath || null,
+				signatureUrl,
 				policyVersion: data.policyVersion,
 				ipAddress: data.ipAddress,
 				createdAt: data.createdAt?.toDate?.()?.toISOString() || null,

@@ -158,8 +158,10 @@ export interface Consent {
 	adultSnapshot: UserProfile
 	/** Snapshot de los menores al momento de la firma */
 	minorsSnapshot: Minor[]
-	/** URL de la firma digital en Storage */
-	signatureUrl: string
+	/** Ruta persistida del objeto de firma en Storage */
+	signaturePath?: string
+	/** URL de compatibilidad para registros legacy o respuestas enriquecidas */
+	signatureUrl?: string
 	/** Versión de la política aceptada */
 	policyVersion: string
 	/** Dirección IP desde donde se firmó */
