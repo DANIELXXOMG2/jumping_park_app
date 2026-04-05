@@ -19,6 +19,7 @@ jscpd-report.*
 
 # Entornos/credenciales
 .env*
+.atl/
 .vercel
 .firebase/
 .secrets/
