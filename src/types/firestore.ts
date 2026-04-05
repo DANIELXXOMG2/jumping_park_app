@@ -1,5 +1,5 @@
-import type { Timestamp } from "firebase-admin/firestore";
-import type { UserRole } from "./auth";
+import type { Timestamp } from 'firebase-admin/firestore'
+import type { UserRole } from '@/types/auth'
 
 // ============================================================================
 // TIPOS BASE
@@ -8,7 +8,7 @@ import type { UserRole } from "./auth";
 /**
  * Valores compatibles con Timestamp de Firestore para entornos Admin/Cliente.
  */
-export type FirestoreDateValue = Date | Timestamp;
+export type FirestoreDateValue = Date | Timestamp
 
 /**
  * Tipos de identificación válidos en Colombia.
@@ -20,17 +20,25 @@ export type FirestoreDateValue = Date | Timestamp;
  * - PPT: Permiso por Protección Temporal (población migrante)
  * - OTRO: Otro documento válido
  */
-export type DocumentIdType = "rc" | "ti" | "cc" | "ce" | "pa" | "ppt" | "otro";
+export type DocumentIdType = 'rc' | 'ti' | 'cc' | 'ce' | 'pa' | 'ppt' | 'otro'
 
 /**
  * Constante con todos los tipos de documento para iteración en UI.
  */
-export const DOCUMENT_ID_TYPES = ["rc", "ti", "cc", "ce", "pa", "ppt", "otro"] as const;
+export const DOCUMENT_ID_TYPES = [
+	'rc',
+	'ti',
+	'cc',
+	'ce',
+	'pa',
+	'ppt',
+	'otro',
+] as const
 
 /**
  * Relaciones de parentesco válidas.
  */
-export type RelationshipType = "hijo" | "sobrino" | "nieto" | "otro";
+export type RelationshipType = 'hijo' | 'sobrino' | 'nieto' | 'otro'
 
 // ============================================================================
 // COLECCIÓN: users
@@ -42,23 +50,23 @@ export type RelationshipType = "hijo" | "sobrino" | "nieto" | "otro";
  */
 export interface Minor {
 	/** Nombre completo (calculado o directo) */
-	fullName?: string;
+	fullName?: string
 	/** Nombre (para formularios que capturan separado) */
-	firstName?: string;
+	firstName?: string
 	/** Apellidos (para formularios que capturan separado) */
-	lastName?: string;
+	lastName?: string
 	/** Fecha de nacimiento ISO YYYY-MM-DD */
-	birthDate: string;
+	birthDate: string
 	/** Parentesco con el responsable */
-	relationship: RelationshipType;
+	relationship: RelationshipType
 	/** EPS del menor */
-	eps?: string;
+	eps?: string
 	/** Tipo de documento de identidad */
-	idType?: DocumentIdType;
+	idType?: DocumentIdType
 	/** Número de documento */
-	idNumber?: string;
+	idNumber?: string
 	/** Condición médica o alergias (opcional) */
-	medicalCondition?: string;
+	medicalCondition?: string
 }
 
 /**
@@ -68,40 +76,40 @@ export interface Minor {
  */
 export interface MinorDocument {
 	/** ID del documento (idNumber del menor) */
-	id?: string;
+	id?: string
 	/** Nombre completo del menor */
-	fullName: string;
+	fullName: string
 	/** Nombre */
-	firstName?: string;
+	firstName?: string
 	/** Apellidos */
-	lastName?: string;
+	lastName?: string
 	/** Fecha de nacimiento ISO */
-	birthDate: string;
+	birthDate: string
 	/** Parentesco con el responsable */
-	relationship: RelationshipType;
+	relationship: RelationshipType
 	/** EPS del menor */
-	eps?: string;
+	eps?: string
 	/** Tipo de documento */
-	idType?: DocumentIdType;
+	idType?: DocumentIdType
 	/** Número de documento (clave primaria) */
-	idNumber: string;
+	idNumber: string
 	/** Condición médica */
-	medicalCondition?: string;
+	medicalCondition?: string
 	// Datos denormalizados del padre (evita join)
 	/** ID del padre (cédula) */
-	parentId: string;
+	parentId: string
 	/** Nombre completo del padre */
-	parentName: string;
+	parentName: string
 	/** Email del padre */
-	parentEmail: string;
+	parentEmail: string
 	/** Teléfono del padre */
-	parentPhone: string;
+	parentPhone: string
 	/** Nombre completo en minúsculas para búsqueda */
-	fullNameLower: string;
+	fullNameLower: string
 	/** Fecha de creación */
-	createdAt?: FirestoreDateValue;
+	createdAt?: FirestoreDateValue
 	/** Fecha de actualización */
-	updatedAt?: FirestoreDateValue;
+	updatedAt?: FirestoreDateValue
 }
 
 /**
@@ -110,25 +118,25 @@ export interface MinorDocument {
  */
 export interface UserProfile {
 	/** Identificador único (cédula del usuario) */
-	uid: string;
+	uid: string
 	/** Nombre completo */
-	fullName: string;
+	fullName: string
 	/** Correo electrónico */
-	email: string;
+	email: string
 	/** Teléfono de contacto */
-	phone: string;
+	phone: string
 	/** Dirección (opcional) */
-	address?: string;
+	address?: string
 	/** Rol del usuario en el sistema (RBAC) */
-	role?: UserRole;
+	role?: UserRole
 	/** Permisos adicionales asignados al usuario (modelo aditivo RBAC) */
-	customPermissions?: string[];
+	customPermissions?: string[]
 	/** Lista de menores a cargo */
-	minors: Minor[];
+	minors: Minor[]
 	/** Fecha de creación del registro */
-	createdAt: FirestoreDateValue;
+	createdAt: FirestoreDateValue
 	/** Fecha de última actualización */
-	updatedAt: FirestoreDateValue;
+	updatedAt: FirestoreDateValue
 }
 
 // ============================================================================
@@ -141,63 +149,91 @@ export interface UserProfile {
  */
 export interface Consent {
 	/** ID único del documento */
-	id: string;
+	id: string
 	/** Número consecutivo único (RF-08) */
-	consecutivo: number;
+	consecutivo: number
 	/** ID del usuario responsable (cédula) */
-	userId: string;
+	userId: string
 	/** Snapshot del perfil del adulto al momento de la firma */
-	adultSnapshot: UserProfile;
+	adultSnapshot: UserProfile
 	/** Snapshot de los menores al momento de la firma */
-	minorsSnapshot: Minor[];
+	minorsSnapshot: Minor[]
 	/** URL de la firma digital en Storage */
-	signatureUrl: string;
+	signatureUrl: string
 	/** Versión de la política aceptada */
-	policyVersion: string;
+	policyVersion: string
 	/** Dirección IP desde donde se firmó */
-	ipAddress?: string;
+	ipAddress?: string
 	/** Fecha y hora de la firma */
-	signedAt: FirestoreDateValue;
+	signedAt: FirestoreDateValue
 	/** Fecha de vencimiento del consentimiento */
-	validUntil: FirestoreDateValue;
+	validUntil: FirestoreDateValue
 	/** Fecha de creación del registro */
-	createdAt?: FirestoreDateValue;
+	createdAt?: FirestoreDateValue
 }
 
 // ============================================================================
-// COLECCIÓN: otp_sessions
+// COLECCIONES: otp_challenges / otp_access_sessions / otp_sessions (legacy)
 // ============================================================================
 
 /**
- * Registro de código OTP para validación de identidad.
+ * Estado del challenge OTP previo a la validación.
+ * Se persiste en `otp_challenges` para separar el challenge del acceso validado.
  */
-export interface OtpRecord {
+export interface OtpChallenge {
 	/** Email al que se envió el código */
-	email: string;
+	email: string
 	/** Código OTP (6 dígitos) */
-	code: string;
+	code: string
 	/** Fecha y hora de expiración */
-	expiresAt: FirestoreDateValue;
+	expiresAt: FirestoreDateValue
 	/** Número de intentos fallidos */
-	attempts: number;
+	attempts: number
+	/** Fecha/hora hasta la que el challenge queda bloqueado */
+	lockedUntil?: FirestoreDateValue | null
+	/** Fecha del último envío */
+	lastSentAt?: FirestoreDateValue
+	/** Fecha de la última validación exitosa */
+	lastValidatedAt?: FirestoreDateValue
 	/** Fecha de creación */
-	createdAt?: FirestoreDateValue;
+	createdAt?: FirestoreDateValue
+	/** Fecha de actualización */
+	updatedAt?: FirestoreDateValue
 }
 
 /**
- * Registro de sesión OTP validada.
- * Permite verificar que un usuario completó el flujo de autenticación recientemente.
+ * Sesión OTP validada, usada para autorizar pasos protegidos del kiosco.
+ * Se persiste en `otp_access_sessions`.
  */
-export interface OtpSession {
+export interface OtpAccessSession {
 	/** ID del usuario (cédula) */
-	userId: string;
+	userId: string
 	/** Email validado */
-	email: string;
+	email: string
 	/** Fecha de validación del OTP */
-	validatedAt: FirestoreDateValue;
+	validatedAt: FirestoreDateValue
 	/** Fecha de expiración de la sesión */
-	expiresAt: FirestoreDateValue;
+	expiresAt: FirestoreDateValue
+	/** Referencia lógica al challenge que originó la sesión */
+	challengeEmail?: string
+	createdAt?: FirestoreDateValue
+	updatedAt?: FirestoreDateValue
 }
+
+export interface RateLimitBucket {
+	identifier: string
+	count: number
+	resetAt: number
+	expireAt: FirestoreDateValue
+	createdAt?: FirestoreDateValue
+	updatedAt?: FirestoreDateValue
+}
+
+/** @deprecated Compatibilidad transitoria con la colección legacy `otp_sessions`. */
+export type OtpRecord = OtpChallenge
+
+/** @deprecated Compatibilidad transitoria con la colección legacy `otp_sessions`. */
+export type OtpSession = OtpAccessSession
 
 // ============================================================================
 // COLECCIÓN: accesses
@@ -208,19 +244,19 @@ export interface OtpSession {
  */
 export interface Access {
 	/** ID único del documento */
-	id?: string;
+	id?: string
 	/** ID del usuario (cédula) */
-	userId: string;
+	userId: string
 	/** ID del consentimiento asociado */
-	consentId: string;
+	consentId: string
 	/** Tipo de acceso */
-	tipo: "entrada" | "salida";
+	tipo: 'entrada' | 'salida'
 	/** Punto de acceso (ej. "Puerta Principal") */
-	punto?: string;
+	punto?: string
 	/** Notas adicionales */
-	notas?: string;
+	notas?: string
 	/** Fecha de creación */
-	createdAt?: FirestoreDateValue;
+	createdAt?: FirestoreDateValue
 }
 
 // ============================================================================
@@ -232,27 +268,27 @@ export interface Access {
  */
 export interface Invoice {
 	/** ID único del documento */
-	id?: string;
+	id?: string
 	/** ID del usuario (cédula) */
-	userId: string;
+	userId: string
 	/** ID de la venta asociada */
-	ventaId: string;
+	ventaId: string
 	/** Número de factura */
-	numero?: string;
+	numero?: string
 	/** Subtotal antes de impuestos */
-	subtotal: number;
+	subtotal: number
 	/** Valor del impuesto */
-	impuesto: number;
+	impuesto: number
 	/** Total de la factura */
-	total: number;
+	total: number
 	/** Estado de la factura */
-	estado: "pendiente" | "pagada" | "anulada";
+	estado: 'pendiente' | 'pagada' | 'anulada'
 	/** Método de pago */
-	metodoPago?: "efectivo" | "tarjeta" | "transferencia" | "otro";
+	metodoPago?: 'efectivo' | 'tarjeta' | 'transferencia' | 'otro'
 	/** Notas adicionales */
-	notas?: string;
+	notas?: string
 	/** Fecha de creación */
-	createdAt?: FirestoreDateValue;
+	createdAt?: FirestoreDateValue
 }
 
 // ============================================================================
@@ -264,33 +300,33 @@ export interface Invoice {
  */
 export interface Service {
 	/** ID único del documento */
-	id?: string;
+	id?: string
 	/** Nombre del servicio */
-	nombre: string;
+	nombre: string
 	/** Descripción */
-	descripcion?: string;
+	descripcion?: string
 	/** Precio unitario */
-	precio: number;
+	precio: number
 	/** Duración en minutos */
-	duracionMinutos?: number;
+	duracionMinutos?: number
 	/** Categoría del servicio */
 	categoria:
-		| "trampolines"
-		| "piscina_pelotas"
-		| "escalada"
-		| "arcade"
-		| "cafeteria"
-		| "otro";
+		| 'trampolines'
+		| 'piscina_pelotas'
+		| 'escalada'
+		| 'arcade'
+		| 'cafeteria'
+		| 'otro'
 	/** ¿Está activo? */
-	activo: boolean;
+	activo: boolean
 	/** Edad mínima requerida */
-	edadMinima?: number;
+	edadMinima?: number
 	/** Edad máxima permitida */
-	edadMaxima?: number;
+	edadMaxima?: number
 	/** ¿Requiere consentimiento firmado? (RF-10) */
-	requiereConsentimiento: boolean;
+	requiereConsentimiento: boolean
 	/** Fecha de creación */
-	createdAt?: FirestoreDateValue;
+	createdAt?: FirestoreDateValue
 }
 
 // ============================================================================
@@ -302,15 +338,15 @@ export interface Service {
  */
 export interface SaleItem {
 	/** ID del servicio */
-	servicioId: string;
+	servicioId: string
 	/** Nombre del servicio (snapshot) */
-	servicioNombre: string;
+	servicioNombre: string
 	/** Cantidad */
-	cantidad: number;
+	cantidad: number
 	/** Precio unitario al momento de la venta */
-	precioUnitario: number;
+	precioUnitario: number
 	/** Subtotal del item */
-	subtotal: number;
+	subtotal: number
 }
 
 /**
@@ -318,21 +354,21 @@ export interface SaleItem {
  */
 export interface Sale {
 	/** ID único del documento */
-	id?: string;
+	id?: string
 	/** ID del usuario comprador (cédula) */
-	userId: string;
+	userId: string
 	/** ID del consentimiento vigente */
-	consentId?: string;
+	consentId?: string
 	/** Items de la venta */
-	items: SaleItem[];
+	items: SaleItem[]
 	/** Total de la venta */
-	total: number;
+	total: number
 	/** Estado de la venta */
-	estado: "pendiente" | "completada" | "cancelada";
+	estado: 'pendiente' | 'completada' | 'cancelada'
 	/** Método de pago */
-	metodoPago?: "efectivo" | "tarjeta" | "transferencia" | "otro";
+	metodoPago?: 'efectivo' | 'tarjeta' | 'transferencia' | 'otro'
 	/** Notas adicionales */
-	notas?: string;
+	notas?: string
 	/** Fecha de creación */
-	createdAt?: FirestoreDateValue;
+	createdAt?: FirestoreDateValue
 }

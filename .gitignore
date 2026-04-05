@@ -13,6 +13,7 @@ pnpm-debug.log*
 lerna-debug.log*
 seo-network.log
 .playwright-mcp/
+.gga
 
 # Reportes de auditoría (knip, jscpd, dependency-cruiser)
 /report/
