@@ -9,18 +9,18 @@
 
 ## Phase 2: Operational Stability (PR-02)
 
-- [ ] 2.1 Bounded exports; `src/app/api/admin/export/users/route.ts`, `src/app/api/admin/export/consents/route.ts`; done when unbounded or `>30d` exports are rejected/capped with response metadata; validate allowed vs rejected range requests.
-- [ ] 2.2 Short-lived consent links; `src/services/consentService.ts`, `src/app/api/admin/consents/[id]/pdf/route.ts`; done when signed URLs expire in `<=15m` and persistence keeps object paths instead of long-lived links; validate generated URL TTL config.
-- [ ] 2.3 Secure logs and operator baseline; `src/services/authService.ts`, `README.md`, `.env.example`, `.github/workflows/ci.yml`; done when PII is masked, env contract is complete, and CI/docs match Bun commands and runbooks; validate `bun run check`.
+- [x] 2.1 Bounded exports; `src/app/api/admin/export/users/route.ts`, `src/app/api/admin/export/consents/route.ts`; done when unbounded or `>30d` exports are rejected/capped with response metadata; validate allowed vs rejected range requests.
+- [x] 2.2 Short-lived consent links; `src/services/consentService.ts`, `src/app/api/admin/consents/[id]/pdf/route.ts`; done when signed URLs expire in `<=15m` and persistence keeps object paths instead of long-lived links; validate generated URL TTL config.
+- [x] 2.3 Secure logs and operator baseline; `src/services/authService.ts`, `README.md`, `.env.example`, `.github/workflows/ci.yml`; done when PII is masked, env contract is complete, and CI/docs match Bun commands and runbooks; validate `bun run check`.
 
 ## Phase 3: Public Discoverability (PR-03)
 
-- [ ] 3.1 Public metadata boundary; `src/app/layout.tsx`, `src/app/(public)/**`; done when only public pages emit indexable metadata and JSON-LD while kiosk/admin stay `noindex`; validate page source on one public and one private route.
-- [ ] 3.2 SEO artifacts; `src/app/robots.ts`, `src/app/sitemap.ts`; done when robots and sitemap expose only public URLs and block operational paths; validate fetch of `/robots.txt` and `/sitemap.xml`.
+- [x] 3.1 Public metadata boundary; `src/app/layout.tsx`, `src/app/(public)/**`; done when only public pages emit indexable metadata and JSON-LD while kiosk/admin stay `noindex`; validate page source on one public and one private route.
+- [x] 3.2 SEO artifacts; `src/app/robots.ts`, `src/app/sitemap.ts`; done when robots and sitemap expose only public URLs and block operational paths; validate fetch of `/robots.txt` and `/sitemap.xml`.
 
 ## Phase 4: Verification & Rollout Notes
 
-- [ ] 4.1 Hardening smoke pack; `README.md`, `postman/` or `docs/runbooks/production-hardening.md`; done when admin session, OTP abuse, export bounds, and robots/sitemap checks are reproducible after each PR; validate replay of the checklist.
+- [x] 4.1 Hardening smoke pack; `README.md`, `postman/` or `docs/runbooks/production-hardening.md`; done when admin session, OTP abuse, export bounds, and robots/sitemap checks are reproducible after each PR; validate replay of the checklist.
 
 ## PR Plan
 

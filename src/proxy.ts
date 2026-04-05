@@ -7,6 +7,7 @@ import {
 
 const PUBLIC_ADMIN_ROUTES = ['/admin/login', '/admin/unauthorized']
 const NOINDEX_PREFIXES = [
+	'/',
 	'/admin',
 	'/ingreso',
 	'/otp',
@@ -46,7 +47,9 @@ function isProtectedAdminRoute(pathname: string): boolean {
 
 function shouldApplyNoIndex(pathname: string): boolean {
 	return NOINDEX_PREFIXES.some(
-		(prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+		(prefix) =>
+			pathname === prefix ||
+			(prefix !== '/' && pathname.startsWith(`${prefix}/`)),
 	)
 }
 
