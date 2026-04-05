@@ -41,7 +41,9 @@ export function generateSearchTokens(fullName: string): string[] {
 	const tokens = new Set<string>();
 
 	// Agregar cada palabra individual
-	words.forEach((word) => tokens.add(word));
+	words.forEach((word) => {
+		tokens.add(word);
+	});
 
 	// Combinaciones de 2 palabras consecutivas
 	for (let i = 0; i < words.length - 1; i++) {

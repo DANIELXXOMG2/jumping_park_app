@@ -1,8 +1,8 @@
 import { FieldValue } from "firebase-admin/firestore";
 import { adminAuth, db } from "@/lib/firebaseAdmin";
 import {
-	generateSearchTokens,
 	extractEmailTokens,
+	generateSearchTokens,
 	normalizeText,
 } from "@/lib/utils/searchUtils";
 import { getEffectivePermissions, type UserRole } from "@/types/auth";
@@ -156,7 +156,19 @@ export const userService = {
 			const userDoc = await db.collection("users").doc(searchTerm).get();
 
 			if (userDoc.exists) {
-				const data = userDoc.data()!;
+				const data = userDoc.data();
+				if (!data) {
+					return {
+						items: [],
+						pagination: {
+							total: 0,
+							limit: query.limit,
+							offset: 0,
+							hasMore: false,
+						},
+					};
+				}
+
 				const user: UserListResult = {
 					id: userDoc.id,
 					uid: data.uid,
