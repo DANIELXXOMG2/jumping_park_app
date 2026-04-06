@@ -1,8 +1,10 @@
 import type { Metadata } from 'next'
-import { INDEXABLE_ROBOTS } from '@/lib/seo'
+import { buildPublicRobotsMetadata } from '@/lib/seo'
 
-export const metadata: Metadata = {
-	robots: INDEXABLE_ROBOTS,
+export function generateMetadata(): Metadata {
+	return {
+		robots: buildPublicRobotsMetadata(),
+	}
 }
 
 export default function PublicLayout({
