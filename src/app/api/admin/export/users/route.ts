@@ -43,7 +43,7 @@ export async function handleUsersExport(
 	}
 
 	const { searchParams } = new URL(request.url)
-	let range
+	let range: ExportRangeResolution
 
 	try {
 		range = resolveExportRange({
