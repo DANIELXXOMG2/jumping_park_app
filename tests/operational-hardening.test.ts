@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'bun:test'
+import { NextRequest, NextResponse } from 'next/server'
 import {
 	evaluateHardeningFlag,
 	HARDENING_FLAG,
@@ -10,9 +11,36 @@ import {
 	loadConsentSignatureBuffer,
 } from '@/services/consentService'
 import {
+	buildExportMetadataHeaders,
+	EXPORT_FALLBACK_ROW_CAP,
 	EXPORT_RANGE_MAX_DAYS,
 	resolveBoundedExportRange,
+	resolveExportRange,
 } from '@/services/exportRangeService'
+
+const { handleUsersExport } = await import(
+	'@/app/api/admin/export/users/route'
+)
+const { handleConsentsExport } = await import(
+	'@/app/api/admin/export/consents/route'
+)
+
+function createAuthorizedExportDeps<TCsv extends { csv: string; rowCount: number }>(
+	exportResult: TCsv,
+) {
+	return {
+		verifyAdminTokenWithPermission: async () => ({
+			success: true as const,
+			uid: 'admin-uid',
+			email: 'admin@example.com',
+			role: 'admin' as const,
+			expiresAt: new Date(Date.now() + 60_000).toISOString(),
+			transport: 'bearer' as const,
+		}),
+		buildUsersCsvExport: async () => exportResult,
+		buildConsentsCsvExport: async () => exportResult,
+	}
+}
 
 async function withEnv<T>(
 	key: string,
@@ -129,6 +157,7 @@ describe('operational hardening helpers', () => {
 			resolveBoundedExportRange({
 				field: 'signedAt',
 				from: '2026-01-01',
+				source: 'admin-export-consents',
 			})
 		} catch (error) {
 			errorMessage = error instanceof Error ? error.message : 'unknown-error'
@@ -145,6 +174,7 @@ describe('operational hardening helpers', () => {
 				field: 'signedAt',
 				from: '2026-01-01',
 				to: '2026-02-01',
+				source: 'admin-export-consents',
 			})
 		} catch (error) {
 			errorMessage = error instanceof Error ? error.message : 'unknown-error'
@@ -160,12 +190,138 @@ describe('operational hardening helpers', () => {
 			field: 'createdAt',
 			from: '2026-01-01',
 			to: '2026-01-30',
+			source: 'admin-export-users',
 		})
 
 		expect(result.metadata.bounded).toBe(true)
 		expect(result.metadata.rejected).toBe(false)
 		expect(result.metadata.capped).toBe(false)
 		expect(result.metadata.dayCount).toBe(30)
+	})
+
+	it('bypasses export bounds and keeps observability headers when disabled', async () => {
+		await withEnv('EXPORT_BOUNDS_ENFORCED', 'false', () => {
+			const range = resolveExportRange({
+				field: 'signedAt',
+				from: '2026-01-01',
+				to: '2026-12-31',
+				source: 'admin-export-consents',
+				route: '/api/admin/export/consents',
+			})
+			const headers = {
+				...range.hardening.headers,
+				...buildExportMetadataHeaders(range.metadata, 42),
+			}
+
+			expect(range.hardening.status).toBe('disabled')
+			expect(range.metadata.dayCount).toBeGreaterThan(EXPORT_RANGE_MAX_DAYS)
+			expect(headers['X-Hardening-Feature']).toBe('export-bounds')
+			expect(headers['X-Hardening-Status']).toBe('disabled')
+			expect(headers['X-Export-Bounds']).toBe('enforced')
+			expect(headers['X-Export-Row-Cap']).toBe(String(EXPORT_FALLBACK_ROW_CAP))
+		})
+	})
+
+	it('returns 400 with hardening headers from /api/admin/export/users when enforced bounds reject the range', async () => {
+		await withEnv('EXPORT_BOUNDS_ENFORCED', 'true', async () => {
+			const response = await handleUsersExport(
+				new NextRequest(
+					'https://example.com/api/admin/export/users?from=2026-01-01&to=2026-12-31',
+				),
+				createAuthorizedExportDeps({
+					csv: 'uid,name\n123,Visitor',
+					rowCount: 1,
+				}),
+			)
+			const body = (await response.json()) as {
+				code?: string
+				error?: string
+			}
+
+			expect(response.status).toBe(400)
+			expect(body.code).toBe('EXPORT_RANGE_TOO_WIDE')
+			expect(body.error).toBe(
+				`El rango máximo permitido es de ${EXPORT_RANGE_MAX_DAYS} días.`,
+			)
+			expect(response.headers.get('X-Hardening-Policy')).toBe('hardening.policy')
+			expect(response.headers.get('X-Hardening-Feature')).toBe('export-bounds')
+			expect(response.headers.get('X-Hardening-Status')).toBe('enabled')
+		})
+	})
+
+	it('returns 200 with final headers from /api/admin/export/users when bounds are disabled', async () => {
+		await withEnv('EXPORT_BOUNDS_ENFORCED', 'false', async () => {
+			const response = await handleUsersExport(
+				new NextRequest(
+					'https://example.com/api/admin/export/users?from=2026-01-01&to=2026-12-31',
+				),
+				createAuthorizedExportDeps({
+					csv: 'uid,name\n123,Visitor',
+					rowCount: 1,
+				}),
+			)
+
+			expect(response.status).toBe(200)
+			expect(await response.text()).toContain('uid,name')
+			expect(response.headers.get('X-Hardening-Policy')).toBe('hardening.policy')
+			expect(response.headers.get('X-Hardening-Feature')).toBe('export-bounds')
+			expect(response.headers.get('X-Hardening-Status')).toBe('disabled')
+			expect(response.headers.get('X-Export-Bounds')).toBe('enforced')
+			expect(response.headers.get('X-Export-Row-Cap')).toBe(
+				String(EXPORT_FALLBACK_ROW_CAP),
+			)
+		})
+	})
+
+	it('returns 400 with hardening headers from /api/admin/export/consents when enforced bounds reject the range', async () => {
+		await withEnv('EXPORT_BOUNDS_ENFORCED', 'true', async () => {
+			const response = await handleConsentsExport(
+				new NextRequest(
+					'https://example.com/api/admin/export/consents?from=2026-01-01&to=2026-12-31',
+				),
+				createAuthorizedExportDeps({
+					csv: 'consecutivo\n1',
+					rowCount: 1,
+				}),
+			)
+			const body = (await response.json()) as {
+				code?: string
+				error?: string
+			}
+
+			expect(response.status).toBe(400)
+			expect(body.code).toBe('EXPORT_RANGE_TOO_WIDE')
+			expect(body.error).toBe(
+				`El rango máximo permitido es de ${EXPORT_RANGE_MAX_DAYS} días.`,
+			)
+			expect(response.headers.get('X-Hardening-Policy')).toBe('hardening.policy')
+			expect(response.headers.get('X-Hardening-Feature')).toBe('export-bounds')
+			expect(response.headers.get('X-Hardening-Status')).toBe('enabled')
+		})
+	})
+
+	it('returns 200 with final headers from /api/admin/export/consents when bounds are disabled', async () => {
+		await withEnv('EXPORT_BOUNDS_ENFORCED', 'false', async () => {
+			const response = await handleConsentsExport(
+				new NextRequest(
+					'https://example.com/api/admin/export/consents?from=2026-01-01&to=2026-12-31',
+				),
+				createAuthorizedExportDeps({
+					csv: 'consecutivo\n1',
+					rowCount: 1,
+				}),
+			)
+
+			expect(response.status).toBe(200)
+			expect(await response.text()).toContain('consecutivo')
+			expect(response.headers.get('X-Hardening-Policy')).toBe('hardening.policy')
+			expect(response.headers.get('X-Hardening-Feature')).toBe('export-bounds')
+			expect(response.headers.get('X-Hardening-Status')).toBe('disabled')
+			expect(response.headers.get('X-Export-Bounds')).toBe('enforced')
+			expect(response.headers.get('X-Export-Row-Cap')).toBe(
+				String(EXPORT_FALLBACK_ROW_CAP),
+			)
+		})
 	})
 
 	it('keeps legacy http signature urls accessible', async () => {
