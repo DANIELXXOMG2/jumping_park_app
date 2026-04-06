@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'bun:test'
 import {
+	evaluateHardeningFlag,
+	HARDENING_FLAG,
+	resolveHardeningFlag,
+} from '@/lib/hardeningPolicy'
+import {
 	CONSENT_ASSET_LIMITS,
 	getConsentSignatureAccessUrl,
 	loadConsentSignatureBuffer,
@@ -9,7 +14,114 @@ import {
 	resolveBoundedExportRange,
 } from '@/services/exportRangeService'
 
+async function withEnv<T>(
+	key: string,
+	value: string | undefined,
+	callback: () => Promise<T> | T,
+): Promise<T> {
+	const previousValue = process.env[key]
+
+	if (value === undefined) {
+		delete process.env[key]
+	} else {
+		process.env[key] = value
+	}
+
+	try {
+		return await callback()
+	} finally {
+		if (previousValue === undefined) {
+			delete process.env[key]
+		} else {
+			process.env[key] = previousValue
+		}
+	}
+}
+
 describe('operational hardening helpers', () => {
+	it('honors explicit true rollout flags', async () => {
+		await withEnv('OTP_HARDENING_ENABLED', 'true', () => {
+			const resolution = resolveHardeningFlag(HARDENING_FLAG.OTP_HARDENING)
+
+			expect(resolution.enabled).toBe(true)
+			expect(resolution.status).toBe('enabled')
+			expect(resolution.fallbackApplied).toBe(false)
+		})
+	})
+
+	it('defaults missing and malformed rollout flags to secure-on with deterministic warnings', async () => {
+		const originalWarn = console.warn
+		const warnings: unknown[][] = []
+		console.warn = (...args: unknown[]) => {
+			warnings.push(args)
+		}
+
+		try {
+			await withEnv('OTP_HARDENING_ENABLED', undefined, () => {
+				const resolution = resolveHardeningFlag(HARDENING_FLAG.OTP_HARDENING)
+
+				expect(resolution.enabled).toBe(true)
+				expect(resolution.status).toBe('defaulted')
+			})
+
+			await withEnv('OTP_HARDENING_ENABLED', 'banana', () => {
+				const resolution = resolveHardeningFlag(HARDENING_FLAG.OTP_HARDENING)
+
+				expect(resolution.enabled).toBe(true)
+				expect(resolution.status).toBe('defaulted')
+			})
+		} finally {
+			console.warn = originalWarn
+		}
+
+		expect(warnings.length).toBe(2)
+		expect((warnings[0]?.[1] as Record<string, unknown>)?.feature_name).toBe(
+			'otp-hardening',
+		)
+		expect((warnings[0]?.[1] as Record<string, unknown>)?.status).toBe(
+			'defaulted',
+		)
+		expect((warnings[1]?.[1] as Record<string, unknown>)?.feature_name).toBe(
+			'otp-hardening',
+		)
+		expect((warnings[1]?.[1] as Record<string, unknown>)?.status).toBe(
+			'defaulted',
+		)
+	})
+
+	it('emits deterministic policy telemetry markers', async () => {
+		const originalInfo = console.info
+		const events: unknown[][] = []
+		console.info = (...args: unknown[]) => {
+			events.push(args)
+		}
+
+		try {
+			await withEnv('EXPORT_BOUNDS_ENFORCED', 'false', () => {
+				const evaluation = evaluateHardeningFlag({
+					featureName: HARDENING_FLAG.EXPORT_BOUNDS,
+					source: 'admin-export-users',
+					route: '/api/admin/export/users',
+				})
+
+				expect(evaluation.event.feature_name).toBe('export-bounds')
+				expect(evaluation.event.status).toBe('disabled')
+				expect(evaluation.headers['X-Hardening-Feature']).toBe('export-bounds')
+				expect(evaluation.headers['X-Hardening-Status']).toBe('disabled')
+			})
+		} finally {
+			console.info = originalInfo
+		}
+
+		expect(events.length).toBe(1)
+		expect((events[0]?.[1] as Record<string, unknown>)?.feature_name).toBe(
+			'export-bounds',
+		)
+		expect((events[0]?.[1] as Record<string, unknown>)?.status).toBe(
+			'disabled',
+		)
+	})
+
 	it('rejects unbounded export ranges', () => {
 		let errorMessage = ''
 
