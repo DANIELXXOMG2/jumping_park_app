@@ -2,6 +2,19 @@
 
 Use this smoke pack after each hardening PR or before production rollout. All examples assume the app is running at `http://localhost:3000`; replace the origin as needed for preview or production.
 
+## 0. Rollout flags and deploy semantics
+
+Set the hardening flags explicitly in every environment before smoke testing:
+
+- `OTP_HARDENING_ENABLED=true` keeps OTP throttling and lockout enforcement on.
+- `EXPORT_BOUNDS_ENFORCED=true` keeps bounded export rejection on.
+- `PUBLIC_SEO_ENABLED=false` blocks public indexing until the SEO batch is approved.
+
+Operational rule:
+
+- Local/dev flag flips require restarting `bun dev`.
+- Preview/production flag flips on Vercel require a fresh deployment before `robots.txt`, `sitemap.xml`, OTP routes, or export routes reflect the new value.
+
 ## 1. Admin session smoke
 
 Goal: confirm the cookie-first admin session works, and `ADMIN_SESSION_MODE=dual` still accepts the Bearer baseline during rollout.
@@ -76,6 +89,7 @@ Expected:
 - attempts 1-3: `HTTP/1.1 200 OK`
 - attempt 4: `HTTP/1.1 429 Too Many Requests`
 - headers include `Retry-After: <seconds>`
+- headers include `X-Hardening-Feature: otp-hardening` and `X-Hardening-Status: enabled`
 - body includes `{"code":"OTP_RATE_LIMITED","retryAfter":<seconds>}`
 
 ### 2.2 Validation lock after 5 bad codes
@@ -92,6 +106,7 @@ Expected:
 - attempts 1-4: `HTTP/1.1 404 Not Found`
 - attempt 5: `HTTP/1.1 429 Too Many Requests`
 - headers include `Retry-After: <seconds>`
+- headers include `X-Hardening-Feature: otp-hardening` and `X-Hardening-Status: enabled`
 - body includes `{"code":"OTP_LOCKED","error":"Session locked","retryAfter":<seconds>}`
 
 ## 3. Export bounds behavior
@@ -130,6 +145,8 @@ curl -i "http://localhost:3000/api/admin/export/users?field=createdAt&from=2026-
 Expected:
 - `HTTP/1.1 200 OK`
 - CSV body downloads normally
+- headers include `X-Hardening-Feature: export-bounds`
+- headers include `X-Hardening-Status: enabled`
 - headers include:
   - `X-Export-Range-Field: createdAt`
   - `X-Export-Range-From: 2026-01-01`
@@ -137,9 +154,32 @@ Expected:
   - `X-Export-Max-Days: 30`
   - `X-Export-Rejected: false`
 
+### 3.4 Fallback smoke when export bounds are intentionally disabled
+
+Precondition: `EXPORT_BOUNDS_ENFORCED=false` and the app has been restarted or redeployed.
+
+```bash
+curl -i "http://localhost:3000/api/admin/export/users?from=2026-01-01&to=2026-12-31" \
+  -H "Cookie: jp_admin_session=<cookie-from-login>"
+```
+
+Expected:
+- `HTTP/1.1 200 OK`
+- headers include `X-Hardening-Status: disabled`
+- headers include `X-Export-Row-Cap: 5000`
+- rollback by restoring `EXPORT_BOUNDS_ENFORCED=true` and redeploying
+
 ## 4. Robots and sitemap checks
 
 Goal: confirm only the public SEO surface is discoverable.
+
+### 4.0 Pre-flight for SEO rollout
+
+Before enabling SEO in preview or production:
+
+1. Set `PUBLIC_SEO_ENABLED=true`.
+2. Redeploy.
+3. Run the checks below against the deployed URL, not a stale build.
 
 ### 4.1 `robots.txt`
 
@@ -183,6 +223,21 @@ Expected public page (`/consentimiento-digital`):
 Expected kiosk root (`/`):
 - header `X-Robots-Tag: noindex, nofollow`
 - HTML includes `<meta name="robots" content="noindex, nofollow">`
+
+### 4.4 Rollback smoke for SEO disable
+
+Precondition: `PUBLIC_SEO_ENABLED=false` after redeploy.
+
+```bash
+curl -i http://localhost:3000/robots.txt
+curl -i http://localhost:3000/sitemap.xml
+curl -s http://localhost:3000/consentimiento-digital
+```
+
+Expected:
+- `robots.txt` includes `Disallow: /`
+- `sitemap.xml` returns no public entries
+- `/consentimiento-digital` renders `noindex, nofollow` metadata
 
 ## Rollback notes
 

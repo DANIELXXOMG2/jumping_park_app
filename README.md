@@ -141,6 +141,9 @@ ADMIN_JWT_SECRET=una-clave-secreta-larga-y-aleatoria-min-32-chars
 ADMIN_SESSION_MODE=dual
 ADMIN_IDLE_TIMEOUT_MINUTES=30
 OTP_LOCKOUT_MINUTES=15
+OTP_HARDENING_ENABLED=true
+EXPORT_BOUNDS_ENFORCED=true
+PUBLIC_SEO_ENABLED=false
 ALLOW_ADMIN_SETUP=false
 ADMIN_SECRET_KEY=
 FIREBASE_SERVICE_ACCOUNT_KEY=
@@ -157,6 +160,15 @@ ANALYZE=false
 | `RESEND_API_KEY` | API Key de Resend. Comienza con `re_` | [resend.com/api-keys](https://resend.com/api-keys) |
 | `ADMIN_JWT_SECRET` | Secreto para firmar tokens JWT | Generar string aleatorio de 32+ caracteres |
 | `ADMIN_SESSION_MODE` | Mantener `dual` durante el rollout de sesión cookie-first | Configuración local/Vercel |
+| `OTP_HARDENING_ENABLED` | Activa o desactiva el enforcement estricto de OTP; dejar `true` salvo rollback controlado | `.env.local` / Vercel |
+| `EXPORT_BOUNDS_ENFORCED` | Mantiene el rechazo de exports sin rango o mayores a 30 días | `.env.local` / Vercel |
+| `PUBLIC_SEO_ENABLED` | Expone `robots.txt`, `sitemap.xml` y metadata indexable para la superficie pública | `.env.local` / Vercel |
+
+### Semántica de rollout de flags
+
+- Local/dev: cambiar `OTP_HARDENING_ENABLED`, `EXPORT_BOUNDS_ENFORCED` o `PUBLIC_SEO_ENABLED` requiere reiniciar `bun dev`.
+- Preview/producción en Vercel: actualizar variables de entorno requiere un nuevo deploy para que rutas y metadata server-side tomen el cambio.
+- Defaults recomendados: `OTP_HARDENING_ENABLED=true`, `EXPORT_BOUNDS_ENFORCED=true`, `PUBLIC_SEO_ENABLED=false` hasta completar humo SEO.
 
 ---
 
