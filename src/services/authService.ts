@@ -5,6 +5,7 @@ import {
 	getDocRef,
 	runInTransaction,
 } from '@/lib/firestoreService'
+import { evaluateHardeningFlag, HARDENING_FLAG } from '@/lib/hardeningPolicy'
 import { isExpired, toJsDate } from '@/lib/utils/dateUtils'
 import { sendOtpEmail as sendOtpViaEmail } from '@/services/emailService'
 import { checkRateLimit } from '@/services/rateLimitService'
@@ -464,6 +465,7 @@ interface RequestOtpChallengeParams {
 	email?: string
 	cedula?: string
 	clientIp?: string
+	route?: string
 	rateLimitMax: number
 	rateLimitWindowMinutes: number
 	rateLimitIpMultiplier: number
@@ -474,6 +476,7 @@ interface ValidateOtpChallengeRequestParams {
 	email?: string
 	cedula?: string
 	code: string
+	route?: string
 	validationLimit: number
 	validationWindowMinutes: number
 }
@@ -491,7 +494,16 @@ export interface ValidateOtpChallengeRequestDeps {
 	getActiveOtp: typeof getActiveOtp
 	checkRateLimit: typeof checkRateLimit
 	validateOtp: typeof validateOtp
+	validateOtpPermissive: typeof validateOtpPermissive
 	createOtpSession: typeof createOtpSession
+}
+
+function mergeHeaders(
+	...headerSets: Array<Record<string, string> | undefined>
+): Record<string, string> | undefined {
+	const merged = Object.assign({}, ...headerSets.filter(Boolean))
+
+	return Object.keys(merged).length > 0 ? merged : undefined
 }
 
 function getRequestOtpChallengeDeps(): RequestOtpChallengeDeps {
@@ -510,7 +522,94 @@ function getValidateOtpChallengeRequestDeps(): ValidateOtpChallengeRequestDeps {
 		getActiveOtp,
 		checkRateLimit,
 		validateOtp,
+		validateOtpPermissive,
 		createOtpSession,
+	}
+}
+
+export async function validateOtpPermissive(
+	email: string,
+	code: string,
+): Promise<ValidateOtpResult> {
+	try {
+		const challengeRef = getDocRef(OTP_CHALLENGES_COLLECTION, email)
+
+		const result = await runInTransaction(async (transaction) => {
+			const challengeSnapshot = await transaction.get(challengeRef)
+
+			if (!challengeSnapshot.exists) {
+				const legacyChallenge = await getDocById<OtpRecord>(
+					LEGACY_OTP_COLLECTION,
+					email,
+				)
+
+				if (!legacyChallenge || !isOtpChallenge(legacyChallenge)) {
+					return {
+						valid: false,
+						message: 'Codigo no solicitado o expirado',
+						code: 'OTP_EXPIRED' as const,
+					}
+				}
+
+				if (isExpired(legacyChallenge.expiresAt)) {
+					await deleteChallenge(email)
+					return {
+						valid: false,
+						message: 'Codigo expirado',
+						code: 'OTP_EXPIRED' as const,
+					}
+				}
+
+				if (legacyChallenge.code !== code) {
+					return {
+						valid: false,
+						message: 'Codigo incorrecto',
+						code: 'OTP_INVALID' as const,
+					}
+				}
+
+				return { valid: true, message: 'OTP valido' } as const
+			}
+
+			const challenge = challengeSnapshot.data() as OtpChallenge
+
+			if (isExpired(challenge.expiresAt)) {
+				transaction.delete(challengeRef)
+				return {
+					valid: false,
+					message: 'Codigo expirado',
+					code: 'OTP_EXPIRED' as const,
+				}
+			}
+
+			if (challenge.code !== code) {
+				return {
+					valid: false,
+					message: 'Codigo incorrecto',
+					code: 'OTP_INVALID' as const,
+				}
+			}
+
+			transaction.update(challengeRef, {
+				attempts: 0,
+				lockedUntil: null,
+				lastValidatedAt: new Date(),
+			})
+
+			return { valid: true, message: 'OTP valido' } as const
+		})
+
+		return result
+	} catch (error) {
+		console.error('[AuthService] Error validando OTP en modo permisivo:', {
+			email: maskEmail(email),
+			error: toSafeErrorMessage(error),
+		})
+		return {
+			valid: false,
+			message: 'No se pudo validar el OTP',
+			code: 'OTP_ERROR',
+		}
 	}
 }
 
@@ -518,6 +617,16 @@ export async function requestOtpChallenge(
 	params: RequestOtpChallengeParams,
 	deps: RequestOtpChallengeDeps = getRequestOtpChallengeDeps(),
 ): Promise<SendOtpRequestResult> {
+	const hardening = evaluateHardeningFlag({
+		featureName: HARDENING_FLAG.OTP_HARDENING,
+		source: 'otp-request',
+		route: params.route ?? '/api/otp',
+		details: {
+			has_cedula: Boolean(params.cedula),
+			has_email: Boolean(params.email),
+		},
+	})
+
 	let targetEmail = params.email
 
 	if (!targetEmail && params.cedula) {
@@ -528,6 +637,7 @@ export async function requestOtpChallenge(
 				status: 'bad_request',
 				httpStatus: 404,
 				body: { error: 'Usuario no encontrado' },
+				headers: hardening.headers,
 			}
 		}
 
@@ -536,6 +646,7 @@ export async function requestOtpChallenge(
 				status: 'bad_request',
 				httpStatus: 404,
 				body: { error: 'Usuario sin email registrado' },
+				headers: hardening.headers,
 			}
 		}
 
@@ -547,6 +658,31 @@ export async function requestOtpChallenge(
 			status: 'bad_request',
 			httpStatus: 400,
 			body: { error: 'Faltan datos' },
+			headers: hardening.headers,
+		}
+	}
+
+	if (!hardening.enabled) {
+		const otp = params.codeGenerator()
+		await deps.saveOtp(targetEmail, otp)
+		const emailResult = await deps.sendOtpEmail(targetEmail, otp)
+
+		if (!emailResult.success) {
+			return {
+				status: 'bad_request',
+				httpStatus: 500,
+				body: { error: emailResult.error ?? 'No se pudo enviar el OTP' },
+				headers: hardening.headers,
+			}
+		}
+
+		return {
+			status: 'ok',
+			httpStatus: 200,
+			body: {
+				message: 'OTP enviado',
+			},
+			headers: hardening.headers,
 		}
 	}
 
@@ -562,9 +698,10 @@ export async function requestOtpChallenge(
 					retryAfter: activeOtp.retryAfterSeconds,
 					code: 'OTP_RATE_LIMITED',
 				},
-				headers: {
-					'Retry-After': String(activeOtp.retryAfterSeconds),
-				},
+				headers: mergeHeaders(
+					{ 'Retry-After': String(activeOtp.retryAfterSeconds) },
+					hardening.headers,
+				),
 			}
 		}
 
@@ -578,9 +715,10 @@ export async function requestOtpChallenge(
 				otpAlreadySent: true,
 				remainingMinutes: activeOtp.remainingMinutes,
 			},
-			headers: {
-				'Retry-After': String(activeOtp.remainingMinutes * 60),
-			},
+			headers: mergeHeaders(
+				{ 'Retry-After': String(activeOtp.remainingMinutes * 60) },
+				hardening.headers,
+			),
 		}
 	}
 
@@ -602,9 +740,10 @@ export async function requestOtpChallenge(
 				retryAfter: primaryRateLimit.retryAfterSeconds,
 				code: 'OTP_RATE_LIMITED',
 			},
-			headers: {
-				'Retry-After': String(primaryRateLimit.retryAfterSeconds),
-			},
+			headers: mergeHeaders(
+				{ 'Retry-After': String(primaryRateLimit.retryAfterSeconds) },
+				hardening.headers,
+			),
 		}
 	}
 
@@ -624,9 +763,10 @@ export async function requestOtpChallenge(
 					retryAfter: ipRateLimit.retryAfterSeconds,
 					code: 'OTP_RATE_LIMITED',
 				},
-				headers: {
-					'Retry-After': String(ipRateLimit.retryAfterSeconds),
-				},
+				headers: mergeHeaders(
+					{ 'Retry-After': String(ipRateLimit.retryAfterSeconds) },
+					hardening.headers,
+				),
 			}
 		}
 	}
@@ -640,6 +780,7 @@ export async function requestOtpChallenge(
 			status: 'bad_request',
 			httpStatus: 500,
 			body: { error: emailResult.error ?? 'No se pudo enviar el OTP' },
+			headers: hardening.headers,
 		}
 	}
 
@@ -650,6 +791,7 @@ export async function requestOtpChallenge(
 			message: 'OTP enviado',
 			remaining: primaryRateLimit.remaining,
 		},
+		headers: hardening.headers,
 	}
 }
 
@@ -658,6 +800,16 @@ export async function validateOtpChallengeRequest(
 	deps: ValidateOtpChallengeRequestDeps =
 		getValidateOtpChallengeRequestDeps(),
 ): Promise<ValidateOtpRequestResult> {
+	const hardening = evaluateHardeningFlag({
+		featureName: HARDENING_FLAG.OTP_HARDENING,
+		source: 'otp-validate',
+		route: params.route ?? '/api/otp/validate',
+		details: {
+			has_cedula: Boolean(params.cedula),
+			has_email: Boolean(params.email),
+		},
+	})
+
 	const context = await deps.resolveOtpValidationContext({
 		email: params.email,
 		cedula: params.cedula,
@@ -669,6 +821,7 @@ export async function validateOtpChallengeRequest(
 				status: 'not_found',
 				httpStatus: 404,
 				body: { success: false, error: 'Usuario no encontrado' },
+				headers: hardening.headers,
 			}
 		}
 
@@ -676,6 +829,35 @@ export async function validateOtpChallengeRequest(
 			status: 'bad_request',
 			httpStatus: 400,
 			body: { success: false, error: 'Faltan datos (Email no encontrado)' },
+			headers: hardening.headers,
+		}
+	}
+
+	if (!hardening.enabled) {
+		const result = await deps.validateOtpPermissive(context.targetEmail, params.code)
+
+		if (!result.valid) {
+			return {
+				status: 'not_found',
+				httpStatus: 404,
+				body: { success: false, error: result.message },
+				headers: hardening.headers,
+			}
+		}
+
+		if (params.cedula || context.userProfile?.uid) {
+			const userId = params.cedula || context.userProfile?.uid || ''
+			await deps.createOtpSession(userId, context.targetEmail)
+		}
+
+		return {
+			status: 'ok',
+			httpStatus: 200,
+			body: {
+				success: true,
+				userData: context.userProfile ?? undefined,
+			},
+			headers: hardening.headers,
 		}
 	}
 
@@ -693,9 +875,10 @@ export async function validateOtpChallengeRequest(
 				retryAfter,
 				code: 'OTP_LOCKED',
 			},
-			headers: {
-				'Retry-After': String(retryAfter),
-			},
+			headers: mergeHeaders(
+				{ 'Retry-After': String(retryAfter) },
+				hardening.headers,
+			),
 		}
 	}
 
@@ -718,9 +901,10 @@ export async function validateOtpChallengeRequest(
 				retryAfter: validationBudget.retryAfterSeconds,
 				code: 'OTP_RATE_LIMITED',
 			},
-			headers: {
-				'Retry-After': String(validationBudget.retryAfterSeconds),
-			},
+			headers: mergeHeaders(
+				{ 'Retry-After': String(validationBudget.retryAfterSeconds) },
+				hardening.headers,
+			),
 		}
 	}
 
@@ -739,9 +923,10 @@ export async function validateOtpChallengeRequest(
 					retryAfter,
 					code: 'OTP_LOCKED',
 				},
-				headers: {
-					'Retry-After': String(retryAfter),
-				},
+				headers: mergeHeaders(
+					{ 'Retry-After': String(retryAfter) },
+					hardening.headers,
+				),
 			}
 		}
 
@@ -749,6 +934,7 @@ export async function validateOtpChallengeRequest(
 			status: 'not_found',
 			httpStatus: 404,
 			body: { success: false, error: result.message },
+			headers: hardening.headers,
 		}
 	}
 
@@ -764,5 +950,6 @@ export async function validateOtpChallengeRequest(
 			success: true,
 			userData: context.userProfile ?? undefined,
 		},
+		headers: hardening.headers,
 	}
 }

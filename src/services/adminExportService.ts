@@ -1,4 +1,4 @@
-import { getDocsByDateRange } from '@/lib/firestoreService'
+import { getDocs, getDocsByDateRange } from '@/lib/firestoreService'
 import type { ExportRangeResolution } from '@/services/exportRangeService'
 import type { Consent, UserProfile } from '@/types/firestore'
 
@@ -50,14 +50,17 @@ function buildCsv(headers: string[], rows: string[]): string {
 export async function buildUsersCsvExport(
 	range: ExportRangeResolution,
 ): Promise<{ csv: string; rowCount: number }> {
-	const users = await getDocsByDateRange('users', {
-		field: 'createdAt',
-		from: range.fromDate,
-		to: range.toDate,
-		orderBy: 'createdAt',
-		orderDirection: 'desc',
-		limit: 5000,
-	})
+	const users =
+		range.fromDate && range.toDate
+			? await getDocsByDateRange('users', {
+					field: 'createdAt',
+					from: range.fromDate,
+					to: range.toDate,
+					orderBy: 'createdAt',
+					orderDirection: 'desc',
+					limit: range.metadata.rowCap,
+			  })
+			: await getDocs('users', range.metadata.rowCap)
 
 	const headers = [
 		'Cédula',
@@ -94,14 +97,17 @@ export async function buildUsersCsvExport(
 export async function buildConsentsCsvExport(
 	range: ExportRangeResolution,
 ): Promise<{ csv: string; rowCount: number }> {
-	const consents = await getDocsByDateRange('consents', {
-		field: 'signedAt',
-		from: range.fromDate,
-		to: range.toDate,
-		orderBy: 'signedAt',
-		orderDirection: 'desc',
-		limit: 5000,
-	})
+	const consents =
+		range.fromDate && range.toDate
+			? await getDocsByDateRange('consents', {
+					field: 'signedAt',
+					from: range.fromDate,
+					to: range.toDate,
+					orderBy: 'signedAt',
+					orderDirection: 'desc',
+					limit: range.metadata.rowCap,
+			  })
+			: await getDocs('consents', range.metadata.rowCap)
 
 	const headers = [
 		'Consecutivo',
