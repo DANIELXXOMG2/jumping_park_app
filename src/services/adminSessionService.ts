@@ -8,6 +8,8 @@ import { adminAuth } from '@/lib/firebaseAdmin'
 import type { CustomClaims, UserRole } from '@/types/auth'
 import { canAccessAdmin, getRoleFromClaims } from '@/types/auth'
 
+const ADMIN_SESSION_REFRESH_THRESHOLD_MS = 5 * 60 * 1000
+
 interface DecodedAdminIdToken {
 	uid: string
 	email?: string | null
@@ -45,6 +47,13 @@ export interface AdminSessionExchangeResult {
 	role: UserRole
 	expiresAt: string
 	cookieValue: string
+}
+
+export interface AdminSessionRefreshResult {
+	role: UserRole
+	expiresAt: string
+	cookieValue: string | null
+	didRefresh: boolean
 }
 
 export async function exchangeAdminSessionFromIdToken(
@@ -125,11 +134,23 @@ export async function exchangeAdminSessionFromIdToken(
 	}
 }
 
-export function refreshAdminSessionFromRequest(request: Request): AdminSessionExchangeResult | null {
+export function refreshAdminSessionFromRequest(
+	request: Request,
+	now = Date.now(),
+): AdminSessionRefreshResult | null {
 	const session = readAdminSessionFromRequest(request as never)
 
 	if (!session) {
 		return null
+	}
+
+	if (session.expiresAt - now > ADMIN_SESSION_REFRESH_THRESHOLD_MS) {
+		return {
+			role: session.role,
+			expiresAt: new Date(session.expiresAt).toISOString(),
+			cookieValue: null,
+			didRefresh: false,
+		}
 	}
 
 	const refreshedPayload = createAdminSessionPayload({
@@ -142,5 +163,6 @@ export function refreshAdminSessionFromRequest(request: Request): AdminSessionEx
 		role: refreshedPayload.role,
 		expiresAt: new Date(refreshedPayload.expiresAt).toISOString(),
 		cookieValue: buildAdminSessionCookieValue(refreshedPayload),
+		didRefresh: true,
 	}
 }

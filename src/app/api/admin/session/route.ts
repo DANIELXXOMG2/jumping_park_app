@@ -69,11 +69,13 @@ export const GET = apiHandler(async (request: NextRequest) => {
 		{ status: 200 },
 	)
 
-	response.cookies.set({
-		name: ADMIN_SESSION_COOKIE_NAME,
-		value: session.cookieValue,
-		...getAdminSessionCookieOptions(request),
-	})
+	if (session.didRefresh && session.cookieValue) {
+		response.cookies.set({
+			name: ADMIN_SESSION_COOKIE_NAME,
+			value: session.cookieValue,
+			...getAdminSessionCookieOptions(request),
+		})
+	}
 
 	return response
 })
