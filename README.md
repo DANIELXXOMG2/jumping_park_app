@@ -137,14 +137,12 @@ NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=tu-proyecto.firebasestorage.app
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123456789012
 NEXT_PUBLIC_FIREBASE_APP_ID=1:123456789012:web:abcdef123456
 RESEND_API_KEY=re_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-ADMIN_EMAIL=admin@tudominio.com
-ADMIN_PASSWORD_HASH=tu-hash-bcrypt-aqui
 ADMIN_JWT_SECRET=una-clave-secreta-larga-y-aleatoria-min-32-chars
 ADMIN_SESSION_MODE=dual
 ADMIN_IDLE_TIMEOUT_MINUTES=30
+OTP_LOCKOUT_MINUTES=15
 ALLOW_ADMIN_SETUP=false
 ADMIN_SECRET_KEY=
-OTP_LOCKOUT_MINUTES=15
 FIREBASE_SERVICE_ACCOUNT_KEY=
 FIRESTORE_EMULATOR_HOST=
 ANALYZE=false
@@ -155,8 +153,8 @@ ANALYZE=false
 | Variable | Descripción | Dónde Obtenerla |
 |----------|-------------|-----------------|
 | `FIREBASE_PRIVATE_KEY` | Clave privada del Service Account. **Incluir saltos de línea como `\n`** | Firebase Console > Service Accounts > Generate Key |
+| `NEXT_PUBLIC_FIREBASE_*` | Configuración pública del Client SDK/Auth web (`apiKey`, `authDomain`, `projectId`, `storageBucket`, `messagingSenderId`, `appId`) | Firebase Console > Project Settings > Your apps |
 | `RESEND_API_KEY` | API Key de Resend. Comienza con `re_` | [resend.com/api-keys](https://resend.com/api-keys) |
-| `ADMIN_PASSWORD_HASH` | Hash bcrypt de la contraseña admin | Generar con `bunx bcrypt-cli hash "tu-password"` |
 | `ADMIN_JWT_SECRET` | Secreto para firmar tokens JWT | Generar string aleatorio de 32+ caracteres |
 | `ADMIN_SESSION_MODE` | Mantener `dual` durante el rollout de sesión cookie-first | Configuración local/Vercel |
 
