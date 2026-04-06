@@ -35,6 +35,7 @@ export const POST = apiHandler(
 			email: payload.email,
 			cedula: payload.cedula,
 			clientIp: getClientIP(req),
+			route: '/api/otp',
 			rateLimitMax: RATE_LIMIT_MAX,
 			rateLimitWindowMinutes: RATE_LIMIT_WINDOW_MINUTES,
 			rateLimitIpMultiplier: RATE_LIMIT_IP_MULTIPLIER,

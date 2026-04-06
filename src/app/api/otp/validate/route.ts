@@ -19,6 +19,7 @@ export const POST = apiHandler(
 			email: payload.email,
 			cedula: payload.cedula,
 			code: payload.code,
+			route: '/api/otp/validate',
 			validationLimit: VALIDATION_LIMIT,
 			validationWindowMinutes: VALIDATION_WINDOW_MINUTES,
 		})
