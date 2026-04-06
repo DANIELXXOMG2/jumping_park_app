@@ -26,6 +26,10 @@ interface AdminSessionState {
 	expiresAt: string
 }
 
+interface RefreshSessionStatusOptions {
+	force?: boolean
+}
+
 interface AuthContextType {
 	user: User | null
 	isLoading: boolean
@@ -39,7 +43,7 @@ interface AuthContextType {
 	signOut: () => Promise<void>
 	getIdToken: () => Promise<string | null>
 	refreshToken: () => Promise<void>
-	refreshSessionStatus: () => Promise<boolean>
+	refreshSessionStatus: (options?: RefreshSessionStatusOptions) => Promise<boolean>
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
@@ -47,6 +51,8 @@ const AuthContext = createContext<AuthContextType | null>(null)
 interface PerformClientSignOutOptions {
 	preserveExpiration?: boolean
 }
+
+const SESSION_STATUS_MIN_INTERVAL_MS = 15_000
 
 async function fetchRoleFromClaims(user: User): Promise<UserRole | null> {
 	try {
@@ -92,6 +98,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const [session, setSession] = useState<AdminSessionState | null>(null)
 	const [isSessionExpired, setIsSessionExpired] = useState(false)
 	const isEstablishingSessionRef = useRef(false)
+	const sessionRef = useRef<AdminSessionState | null>(null)
+	const refreshSessionRequestRef = useRef<Promise<boolean> | null>(null)
+	const signOutRequestRef = useRef<Promise<void> | null>(null)
+	const lastSessionStatusCheckAtRef = useRef(0)
 
 	const isAdmin = role !== null && canAccessAdmin(role) && session !== null
 
@@ -104,27 +114,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	}
 
 	const clearSessionState = useCallback((preserveExpiration = false) => {
+		sessionRef.current = null
 		setSession(null)
 		setIsSessionExpired(preserveExpiration)
 	}, [])
 
 	const performClientSignOut = useCallback(
 		async (options?: PerformClientSignOutOptions) => {
-			try {
-				await fetch('/api/admin/session', {
-					method: 'DELETE',
-					credentials: 'include',
-				})
-			} catch {
-				// Nada: queremos continuar con el sign out local.
+			if (signOutRequestRef.current) {
+				return signOutRequestRef.current
 			}
 
-			await firebaseSignOut(auth)
-			setRole(null)
-			clearSessionState(options?.preserveExpiration)
+			const signOutRequest = (async () => {
+				try {
+					await fetch('/api/admin/session', {
+						method: 'DELETE',
+						credentials: 'include',
+					})
+				} catch {
+					// Nada: queremos continuar con el sign out local.
+				}
+
+				await firebaseSignOut(auth)
+				setRole(null)
+				clearSessionState(options?.preserveExpiration)
+			})()
+
+			signOutRequestRef.current = signOutRequest
+
+			try {
+				await signOutRequest
+			} finally {
+				signOutRequestRef.current = null
+			}
 		},
 		[clearSessionState],
 	)
+
+	useEffect(() => {
+		sessionRef.current = session
+	}, [session])
 
 	const refreshToken = async () => {
 		if (!user) {
@@ -136,38 +165,69 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		setRole(newRole)
 	}
 
-	const refreshSessionStatus = useCallback(async (): Promise<boolean> => {
-		if (!user) {
-			clearSessionState()
-			return false
-		}
-
-		try {
-			const response = await fetch('/api/admin/session', {
-				method: 'GET',
-				credentials: 'include',
-				cache: 'no-store',
-			})
-
-			const data = (await response.json().catch(() => null)) as {
-				error?: string
-				session?: AdminSessionState
-			} | null
-
-			if (!response.ok || !data?.session) {
-				setSession(null)
-				setIsSessionExpired(true)
-				await performClientSignOut({ preserveExpiration: true })
+	const refreshSessionStatus = useCallback(
+		async (options?: RefreshSessionStatusOptions): Promise<boolean> => {
+			if (!user) {
+				clearSessionState()
 				return false
 			}
 
-			setSession(data.session)
-			setIsSessionExpired(false)
-			return true
-		} catch {
-			return session !== null
-		}
-	}, [clearSessionState, performClientSignOut, session, user])
+			if (signOutRequestRef.current) {
+				await signOutRequestRef.current
+				return false
+			}
+
+			if (refreshSessionRequestRef.current) {
+				return refreshSessionRequestRef.current
+			}
+
+			if (
+				!options?.force &&
+				sessionRef.current !== null &&
+				Date.now() - lastSessionStatusCheckAtRef.current < SESSION_STATUS_MIN_INTERVAL_MS
+			) {
+				return true
+			}
+
+			const refreshRequest = (async () => {
+				try {
+					const response = await fetch('/api/admin/session', {
+						method: 'GET',
+						credentials: 'include',
+						cache: 'no-store',
+					})
+
+					const data = (await response.json().catch(() => null)) as {
+						error?: string
+						session?: AdminSessionState
+					} | null
+
+					if (!response.ok || !data?.session) {
+						if (response.status === 401) {
+							await performClientSignOut({ preserveExpiration: true })
+							return false
+						}
+
+						return sessionRef.current !== null
+					}
+
+					lastSessionStatusCheckAtRef.current = Date.now()
+					sessionRef.current = data.session
+					setSession(data.session)
+					setIsSessionExpired(false)
+					return true
+				} catch {
+					return sessionRef.current !== null
+				} finally {
+					refreshSessionRequestRef.current = null
+				}
+			})()
+
+			refreshSessionRequestRef.current = refreshRequest
+			return refreshRequest
+		},
+		[clearSessionState, performClientSignOut, user],
+	)
 
 	useEffect(() => {
 		const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {

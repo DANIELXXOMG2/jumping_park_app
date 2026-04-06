@@ -91,7 +91,7 @@ export function AdminGuard({ children }: AdminGuardProps) {
 	useEffect(() => {
 		const onFocus = () => {
 			if (user) {
-				void refreshSessionStatus()
+				void refreshSessionStatus({ force: true })
 			}
 		}
 
