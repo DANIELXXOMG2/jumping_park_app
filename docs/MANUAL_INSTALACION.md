@@ -228,7 +228,13 @@ En el dashboard de Vercel, ve a **Settings > Environment Variables** y configura
 | `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Sender ID | `1234567890` |
 | `NEXT_PUBLIC_FIREBASE_APP_ID` | App ID | `1:123456:web:abc123` |
 | `RESEND_API_KEY` | API Key de Resend | `re_XXXXX...` |
+| `ADMIN_JWT_SECRET` | Secreto JWT para sesión admin (cookie/bearer) | `cadena-aleatoria-32+-chars` |
+| `ADMIN_SESSION_MODE` | Estrategia de sesión admin (`dual` recomendado) | `dual` |
+| `ADMIN_IDLE_TIMEOUT_MINUTES` | Ventana de inactividad de sesión admin | `30` |
+| `OTP_LOCKOUT_MINUTES` | Minutos de bloqueo tras múltiples OTP inválidos | `15` |
+| `ALLOW_ADMIN_SETUP` | Habilita bootstrap admin desde API de setup | `false` |
 | `ADMIN_SECRET_KEY` | Clave secreta para scripts admin | `tu-clave-secreta-segura` |
+| `ANALYZE` | Activa análisis de bundle en builds locales/CI | `false` |
 
 ### ⚠️ Nota sobre FIREBASE_PRIVATE_KEY
 
