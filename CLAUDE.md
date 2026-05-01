@@ -177,6 +177,8 @@ ADMIN_IDLE_TIMEOUT_MINUTES=30
 
 # Runtime policy / local setup
 OTP_LOCKOUT_MINUTES=15
+OTP_EXPIRATION_MINUTES=60
+OTP_SESSION_DURATION_MINUTES=120
 ALLOW_ADMIN_SETUP=false
 ADMIN_SECRET_KEY=
 FIRESTORE_EMULATOR_HOST=
@@ -212,12 +214,13 @@ When creating a consent at `/api/consentimientos`:
 
 ### OTP Session Management
 
-- OTP codes expire in 60 minutes
-- Validated sessions expire in 120 minutes
+- OTP codes expire according to `OTP_EXPIRATION_MINUTES` (default `60`; invalid or missing values safely fall back)
+- Validated sessions expire according to `OTP_SESSION_DURATION_MINUTES` (default `120`; invalid or missing values safely fall back)
 - Pending OTP challenge metadata lives in `otp_challenges`
 - Validated kiosk access sessions live in `otp_access_sessions` with userId (cédula) as document ID
 - Reusing an OTP is allowed until it expires
 - `otp_sessions` is legacy compatibility only and should not be the baseline for new flows
+- `OTP_LOCKOUT_MINUTES` remains a separate backend lockout control, and `src/lib/utils/kioskSession.ts` browser persistence timing is out of scope for this policy
 
 ### Minor Data Architecture
 
