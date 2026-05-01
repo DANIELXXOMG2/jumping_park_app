@@ -74,7 +74,8 @@ export async function buildAdminStatsRouteResponse(options: {
 	getLiveStats?: typeof adminMetricsService.buildAdminLiveStatsResponse;
 }): Promise<AdminStatsRoutePayload> {
 	const getLiveStats =
-		options.getLiveStats ?? adminMetricsService.buildAdminLiveStatsResponse.bind(adminMetricsService);
+		options.getLiveStats ??
+		adminMetricsService.buildAdminLiveStatsResponse.bind(adminMetricsService);
 	if (!options.aggregatesEnabled) {
 		return getLiveStats();
 	}

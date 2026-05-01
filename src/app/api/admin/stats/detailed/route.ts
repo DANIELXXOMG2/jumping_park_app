@@ -4,6 +4,7 @@ import { resolveHardeningPolicy } from "@/lib/hardeningPolicy";
 import { createLogger } from "@/lib/logger";
 import {
 	ADMIN_METRIC_PERIOD,
+	type AdminDetailedStats,
 	type AdminMetricPeriod,
 	adminMetricsService,
 } from "@/services/adminMetricsService";
@@ -14,6 +15,65 @@ export const ADMIN_DETAILED_STATS_ROUTE_SOURCE = {
 	AGGREGATE: "aggregate",
 	LIVE: "live",
 } as const;
+
+type AdminDetailedStatsRoutePayload = AdminDetailedStats & {
+	meta: {
+		source: "aggregate" | "live";
+		fallbackApplied: boolean;
+	};
+};
+
+export async function buildAdminLiveDetailedStatsResponse(
+	period: AdminMetricPeriod,
+): Promise<AdminDetailedStatsRoutePayload> {
+	return adminMetricsService.buildAdminLiveDetailedStatsResponse(
+		period,
+	) as Promise<AdminDetailedStatsRoutePayload>;
+}
+
+export async function buildAdminDetailedStatsRouteResponse(options: {
+	aggregatesEnabled: boolean;
+	period: AdminMetricPeriod;
+	shouldRecompute: boolean;
+	getDetailed?: (
+		period: AdminMetricPeriod,
+		options?: { forceRecompute?: boolean },
+	) => Promise<Awaited<
+		ReturnType<typeof adminMetricsService.getDetailed>
+	> | null>;
+	getLiveDetailed?: typeof buildAdminLiveDetailedStatsResponse;
+}): Promise<AdminDetailedStatsRoutePayload> {
+	const getLiveDetailed =
+		options.getLiveDetailed ?? buildAdminLiveDetailedStatsResponse;
+	if (!options.aggregatesEnabled) {
+		return getLiveDetailed(options.period);
+	}
+
+	const getDetailed =
+		options.getDetailed ??
+		adminMetricsService.getDetailed.bind(adminMetricsService);
+	const result = await getDetailed(options.period, {
+		forceRecompute: options.shouldRecompute,
+	});
+	if (result) {
+		return {
+			...result,
+			meta: {
+				source: ADMIN_DETAILED_STATS_ROUTE_SOURCE.AGGREGATE,
+				fallbackApplied: false,
+			},
+		};
+	}
+
+	const fallbackPayload = await getLiveDetailed(options.period);
+	return {
+		...fallbackPayload,
+		meta: {
+			source: ADMIN_DETAILED_STATS_ROUTE_SOURCE.LIVE,
+			fallbackApplied: true,
+		},
+	};
+}
 
 export async function GET(request: NextRequest) {
 	try {
@@ -32,32 +92,11 @@ export async function GET(request: NextRequest) {
 		const shouldRecompute = searchParams.get("recompute") === "true";
 		const hardeningPolicy = resolveHardeningPolicy();
 
-		let payload;
-		if (!hardeningPolicy.aggregatesEnabled) {
-			payload = await adminMetricsService.buildAdminLiveDetailedStatsResponse(period);
-		} else {
-			const result = await adminMetricsService.getDetailed(period, {
-				forceRecompute: shouldRecompute,
-			});
-			if (result) {
-				payload = {
-					...result,
-					meta: {
-						source: ADMIN_DETAILED_STATS_ROUTE_SOURCE.AGGREGATE,
-						fallbackApplied: false,
-					},
-				};
-			} else {
-				const fallback = await adminMetricsService.buildAdminLiveDetailedStatsResponse(period);
-				payload = {
-					...fallback,
-					meta: {
-						source: ADMIN_DETAILED_STATS_ROUTE_SOURCE.LIVE,
-						fallbackApplied: true,
-					},
-				};
-			}
-		}
+		const payload = await buildAdminDetailedStatsRouteResponse({
+			aggregatesEnabled: hardeningPolicy.aggregatesEnabled,
+			period,
+			shouldRecompute,
+		});
 
 		return NextResponse.json(payload);
 	} catch (error) {

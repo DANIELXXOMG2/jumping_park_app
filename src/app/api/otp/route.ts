@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
+import type { z } from "zod";
 import { apiHandler, getValidatedBody } from "@/lib/apiHandler";
 import { sendOtpSchema } from "@/lib/schemas/auth.schema";
 import { requestOtpChallenge } from "@/services/authService";
