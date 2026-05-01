@@ -46,7 +46,10 @@ interface MultiLanguageContent {
 	en: ConsentContentStructure;
 }
 
-const LANGUAGE_CONFIG: Record<SupportedLanguage, { flag: string; label: string }> = {
+const LANGUAGE_CONFIG: Record<
+	SupportedLanguage,
+	{ flag: string; label: string }
+> = {
 	es: { flag: "🇪🇸", label: "Español" },
 	en: { flag: "🇺🇸", label: "English" },
 };
@@ -280,10 +283,12 @@ function RuleEditor({ rule, index, onChange, onDelete }: RuleEditorProps) {
 export default function ConfiguracionPage() {
 	// Estado multilenguaje
 	const [multiContent, setMultiContent] = useState<MultiLanguageContent>(
-		DEFAULT_MULTILANG_CONTENT
+		DEFAULT_MULTILANG_CONTENT,
 	);
 	// Contenido original para detectar cambios pendientes
-	const originalContentRef = useRef<MultiLanguageContent>(DEFAULT_MULTILANG_CONTENT);
+	const originalContentRef = useRef<MultiLanguageContent>(
+		DEFAULT_MULTILANG_CONTENT,
+	);
 	const [activeLanguage, setActiveLanguage] = useState<SupportedLanguage>("es");
 	const [isLoading, setIsLoading] = useState(true);
 	const [isSaving, setIsSaving] = useState(false);
@@ -297,7 +302,10 @@ export default function ConfiguracionPage() {
 
 	// Detectar si hay cambios pendientes comparando con el contenido original
 	const hasUnsavedChanges = useMemo(() => {
-		return JSON.stringify(multiContent) !== JSON.stringify(originalContentRef.current);
+		return (
+			JSON.stringify(multiContent) !==
+			JSON.stringify(originalContentRef.current)
+		);
 	}, [multiContent]);
 
 	// Contenido del idioma activo (computed)
@@ -311,25 +319,25 @@ export default function ConfiguracionPage() {
 				[activeLanguage]: newContent,
 			}));
 		},
-		[activeLanguage]
+		[activeLanguage],
 	);
 
 	// Cargar contenido actual (multilenguaje)
 	const fetchContent = useCallback(async () => {
 		setIsLoading(true);
 		try {
-			const result = await adminGet<{ data: MultiLanguageContent | ConsentContentStructure | null }>(
-				"/api/admin/settings/consent"
-			);
-			
+			const result = await adminGet<{
+				data: MultiLanguageContent | ConsentContentStructure | null;
+			}>("/api/admin/settings/consent");
+
 			let loadedContent: MultiLanguageContent;
-			
+
 			if (result.data) {
 				// Detectar si es formato antiguo (solo es) o nuevo (multilenguaje)
-				if ('es' in result.data && 'en' in result.data) {
+				if ("es" in result.data && "en" in result.data) {
 					// Formato nuevo multilenguaje
 					loadedContent = result.data as MultiLanguageContent;
-				} else if ('meta' in result.data && 'consent' in result.data) {
+				} else if ("meta" in result.data && "consent" in result.data) {
 					// Formato antiguo: usar como español, inglés por defecto
 					loadedContent = {
 						es: result.data as ConsentContentStructure,
@@ -341,7 +349,7 @@ export default function ConfiguracionPage() {
 			} else {
 				loadedContent = DEFAULT_MULTILANG_CONTENT;
 			}
-			
+
 			setMultiContent(loadedContent);
 			originalContentRef.current = loadedContent;
 		} catch {
@@ -407,7 +415,8 @@ export default function ConfiguracionPage() {
 	const handleLoadDefaults = () => {
 		setMultiContent(DEFAULT_MULTILANG_CONTENT);
 		toast.success("Datos predeterminados cargados", {
-			description: "Revisa el contenido y haz clic en 'Guardar Cambios' para persistir.",
+			description:
+				"Revisa el contenido y haz clic en 'Guardar Cambios' para persistir.",
 		});
 	};
 
@@ -532,21 +541,25 @@ export default function ConfiguracionPage() {
 				<CardContent>
 					<div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3 sm:items-center">
 						<div className="flex gap-2">
-							{(Object.keys(LANGUAGE_CONFIG) as SupportedLanguage[]).map((lang) => (
-								<button
-									key={lang}
-									type="button"
-									onClick={() => setActiveLanguage(lang)}
-									className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium transition-all text-sm sm:text-base ${
-										activeLanguage === lang
-											? "bg-primary text-primary-foreground shadow-md"
-											: "bg-surface-muted text-foreground/70 hover:bg-surface-muted/80 hover:text-foreground"
-									}`}
-								>
-									<span className="text-base sm:text-lg">{LANGUAGE_CONFIG[lang].flag}</span>
-									<span>{LANGUAGE_CONFIG[lang].label}</span>
-								</button>
-							))}
+							{(Object.keys(LANGUAGE_CONFIG) as SupportedLanguage[]).map(
+								(lang) => (
+									<button
+										key={lang}
+										type="button"
+										onClick={() => setActiveLanguage(lang)}
+										className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium transition-all text-sm sm:text-base ${
+											activeLanguage === lang
+												? "bg-primary text-primary-foreground shadow-md"
+												: "bg-surface-muted text-foreground/70 hover:bg-surface-muted/80 hover:text-foreground"
+										}`}
+									>
+										<span className="text-base sm:text-lg">
+											{LANGUAGE_CONFIG[lang].flag}
+										</span>
+										<span>{LANGUAGE_CONFIG[lang].label}</span>
+									</button>
+								),
+							)}
 						</div>
 
 						{/* Botón para cargar defaults del sistema */}
@@ -557,13 +570,15 @@ export default function ConfiguracionPage() {
 								className="border-blue-500/30 hover:border-blue-500/50 hover:bg-blue-500/10 text-xs sm:text-sm w-full sm:w-auto"
 							>
 								<RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
-								<span className="hidden sm:inline">🔄 Restaurar Defaults del Sistema</span>
+								<span className="hidden sm:inline">
+									🔄 Restaurar Defaults del Sistema
+								</span>
 								<span className="sm:hidden">🔄 Restaurar</span>
 							</Button>
 						</div>
 					</div>
 					<p className="text-[10px] sm:text-xs text-foreground/50 mt-2 sm:mt-3">
-						{activeLanguage === "es" 
+						{activeLanguage === "es"
 							? "Edita el contenido en español. Este es el idioma principal."
 							: "Edita el contenido en inglés."}
 					</p>
@@ -578,7 +593,10 @@ export default function ConfiguracionPage() {
 				<CardContent>
 					<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 						<div>
-							<label htmlFor="companyName" className="block text-sm font-medium text-foreground/70 mb-1">
+							<label
+								htmlFor="companyName"
+								className="block text-sm font-medium text-foreground/70 mb-1"
+							>
 								Nombre de la Empresa
 							</label>
 							<input
@@ -595,7 +613,10 @@ export default function ConfiguracionPage() {
 							/>
 						</div>
 						<div>
-							<label htmlFor="version" className="block text-sm font-medium text-foreground/70 mb-1">
+							<label
+								htmlFor="version"
+								className="block text-sm font-medium text-foreground/70 mb-1"
+							>
 								Versión
 							</label>
 							<input
@@ -612,7 +633,10 @@ export default function ConfiguracionPage() {
 							/>
 						</div>
 						<div>
-							<label htmlFor="lastUpdated" className="block text-sm font-medium text-foreground/70 mb-1">
+							<label
+								htmlFor="lastUpdated"
+								className="block text-sm font-medium text-foreground/70 mb-1"
+							>
 								Última Actualización
 							</label>
 							<input
@@ -640,8 +664,8 @@ export default function ConfiguracionPage() {
 				>
 					<FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
 					<span className="hidden xs:inline">Consentimiento</span>
-					<span className="xs:hidden">Consent.</span>
-					({content.consent.clauses.length})
+					<span className="xs:hidden">Consent.</span>(
+					{content.consent.clauses.length})
 				</button>
 				<button
 					type="button"
@@ -683,7 +707,10 @@ export default function ConfiguracionPage() {
 						</CardHeader>
 						<CardContent className="space-y-4">
 							<div>
-								<label htmlFor="consentTitle" className="block text-sm font-medium text-foreground/70 mb-1">
+								<label
+									htmlFor="consentTitle"
+									className="block text-sm font-medium text-foreground/70 mb-1"
+								>
 									Título
 								</label>
 								<input
@@ -700,7 +727,10 @@ export default function ConfiguracionPage() {
 								/>
 							</div>
 							<div>
-								<label htmlFor="consentSubtitle" className="block text-sm font-medium text-foreground/70 mb-1">
+								<label
+									htmlFor="consentSubtitle"
+									className="block text-sm font-medium text-foreground/70 mb-1"
+								>
 									Subtítulo
 								</label>
 								<input
@@ -717,7 +747,10 @@ export default function ConfiguracionPage() {
 								/>
 							</div>
 							<div>
-								<label htmlFor="consentIntro" className="block text-sm font-medium text-foreground/70 mb-1">
+								<label
+									htmlFor="consentIntro"
+									className="block text-sm font-medium text-foreground/70 mb-1"
+								>
 									Introducción
 								</label>
 								<textarea
@@ -737,7 +770,10 @@ export default function ConfiguracionPage() {
 								/>
 							</div>
 							<div>
-								<label htmlFor="consentClosing" className="block text-sm font-medium text-foreground/70 mb-1">
+								<label
+									htmlFor="consentClosing"
+									className="block text-sm font-medium text-foreground/70 mb-1"
+								>
 									Declaración de Cierre
 								</label>
 								<textarea
@@ -793,7 +829,10 @@ export default function ConfiguracionPage() {
 						</CardHeader>
 						<CardContent className="space-y-4">
 							<div>
-								<label htmlFor="rulesTitle" className="block text-sm font-medium text-foreground/70 mb-1">
+								<label
+									htmlFor="rulesTitle"
+									className="block text-sm font-medium text-foreground/70 mb-1"
+								>
 									Título
 								</label>
 								<input
@@ -810,7 +849,10 @@ export default function ConfiguracionPage() {
 								/>
 							</div>
 							<div>
-								<label htmlFor="rulesIntro" className="block text-sm font-medium text-foreground/70 mb-1">
+								<label
+									htmlFor="rulesIntro"
+									className="block text-sm font-medium text-foreground/70 mb-1"
+								>
 									Introducción
 								</label>
 								<textarea
@@ -827,7 +869,10 @@ export default function ConfiguracionPage() {
 								/>
 							</div>
 							<div>
-								<label htmlFor="rulesClosing" className="block text-sm font-medium text-foreground/70 mb-1">
+								<label
+									htmlFor="rulesClosing"
+									className="block text-sm font-medium text-foreground/70 mb-1"
+								>
 									Mensaje de Cierre
 								</label>
 								<input
@@ -886,8 +931,8 @@ export default function ConfiguracionPage() {
 						<code className="bg-blue-500/20 px-1 rounded">
 							{"{COMPANY_NAME}"}
 						</code>{" "}
-						en el texto de las cláusulas para que se reemplace automáticamente por
-						el nombre de la empresa.
+						en el texto de las cláusulas para que se reemplace automáticamente
+						por el nombre de la empresa.
 					</p>
 				</div>
 
@@ -897,9 +942,10 @@ export default function ConfiguracionPage() {
 						Restaurar Defaults
 					</p>
 					<p className="text-foreground/70">
-						Usa el botón &quot;Restaurar Defaults del Sistema&quot; para cargar 
-						las traducciones predeterminadas (Español e Inglés). Luego haz clic 
-						en &quot;Guardar Cambios&quot; para persistirlas en la base de datos.
+						Usa el botón &quot;Restaurar Defaults del Sistema&quot; para cargar
+						las traducciones predeterminadas (Español e Inglés). Luego haz clic
+						en &quot;Guardar Cambios&quot; para persistirlas en la base de
+						datos.
 					</p>
 				</div>
 			</div>
@@ -913,7 +959,7 @@ export default function ConfiguracionPage() {
 							Cambios sin guardar
 						</div>
 					)}
-					
+
 					{/* Success indicator */}
 					{saveStatus.type === "success" && (
 						<div className="bg-green-500/90 text-white px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg shadow-lg text-xs sm:text-sm font-medium flex items-center gap-1.5 sm:gap-2">
@@ -921,7 +967,7 @@ export default function ConfiguracionPage() {
 							Guardado
 						</div>
 					)}
-					
+
 					{/* Error indicator */}
 					{saveStatus.type === "error" && (
 						<div className="bg-red-500/90 text-white px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg shadow-lg text-xs sm:text-sm font-medium flex items-center gap-1.5 sm:gap-2">
@@ -929,7 +975,7 @@ export default function ConfiguracionPage() {
 							Error
 						</div>
 					)}
-					
+
 					{/* Save button */}
 					<Button
 						onClick={handleSave}
@@ -950,8 +996,12 @@ export default function ConfiguracionPage() {
 						) : (
 							<>
 								<Save className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
-								<span className="hidden sm:inline">{hasUnsavedChanges ? "Guardar Cambios" : "Sin cambios"}</span>
-								<span className="sm:hidden">{hasUnsavedChanges ? "Guardar" : ""}</span>
+								<span className="hidden sm:inline">
+									{hasUnsavedChanges ? "Guardar Cambios" : "Sin cambios"}
+								</span>
+								<span className="sm:hidden">
+									{hasUnsavedChanges ? "Guardar" : ""}
+								</span>
 							</>
 						)}
 					</Button>
