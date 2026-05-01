@@ -8,11 +8,13 @@
  */
 import { type NextRequest, NextResponse } from "next/server";
 import { verifyAdminTokenWithPermission } from "@/lib/adminAuth";
+import { admin } from "@/lib/firebaseAdmin";
 import { createLogger } from "@/lib/logger";
-import { consentService, loadConsentSignatureBuffer } from "@/services/consentService";
+import { loadConsentSignatureBuffer } from "@/services/consentService";
 import { generateConsentPdf } from "@/services/pdfService";
 import type { Consent } from "@/types/firestore";
 
+const db = admin.firestore();
 const logger = createLogger("ApiAdminConsentPdf");
 
 interface RouteParams {
@@ -43,15 +45,20 @@ export async function GET(
 			);
 		}
 
-		// 3. Buscar documento via servicio
-		const consentData = await consentService.getConsentById(id);
+		// 3. Buscar documento en Firestore
+		const consentDoc = await db.collection("consents").doc(id).get();
 
-		if (!consentData) {
+		if (!consentDoc.exists) {
 			return NextResponse.json(
 				{ error: "Consentimiento no encontrado" },
 				{ status: 404 },
 			);
 		}
+
+		const consentData = {
+			id: consentDoc.id,
+			...consentDoc.data(),
+		} as Consent;
 
 		let signatureBuffer: Buffer | undefined;
 
