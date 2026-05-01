@@ -12,3 +12,19 @@ export interface CheckUserResponse {
 		emailMasked: string;
 	};
 }
+
+/**
+ * Respuesta del endpoint /api/otp/validate
+ */
+export interface OtpValidateResponse {
+	success: boolean;
+	error?: string;
+	userData?: Record<string, unknown>;
+}
+
+/**
+ * Respuesta genérica de error de API.
+ */
+export interface ApiErrorResponse {
+	error: string;
+}
