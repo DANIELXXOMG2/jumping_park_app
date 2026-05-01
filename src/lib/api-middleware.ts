@@ -179,10 +179,9 @@ export function withAdminAuth<T = unknown>(
 					enrichedReq.validatedBody = parsed;
 				} catch (error) {
 					if (error && typeof error === "object" && "issues" in error) {
-						return NextResponse.json(
-							formatZodError(error as ZodError),
-							{ status: 400 },
-						);
+						return NextResponse.json(formatZodError(error as ZodError), {
+							status: 400,
+						});
 					}
 					return apiError("El body de la solicitud debe ser JSON válido", 400);
 				}
@@ -193,10 +192,9 @@ export function withAdminAuth<T = unknown>(
 		} catch (error) {
 			// Capturar errores de Zod que puedan escapar
 			if (error && typeof error === "object" && "issues" in error) {
-				return NextResponse.json(
-					formatZodError(error as ZodError),
-					{ status: 400 },
-				);
+				return NextResponse.json(formatZodError(error as ZodError), {
+					status: 400,
+				});
 			}
 
 			// Error genérico (no logueamos para evitar console.log en producción)
@@ -270,10 +268,9 @@ export function withAdminAuthParams<T = unknown, P = { id: string }>(
 					enrichedReq.validatedBody = parsed;
 				} catch (error) {
 					if (error && typeof error === "object" && "issues" in error) {
-						return NextResponse.json(
-							formatZodError(error as ZodError),
-							{ status: 400 },
-						);
+						return NextResponse.json(formatZodError(error as ZodError), {
+							status: 400,
+						});
 					}
 					return apiError("El body de la solicitud debe ser JSON válido", 400);
 				}
@@ -283,10 +280,9 @@ export function withAdminAuthParams<T = unknown, P = { id: string }>(
 			return await handler(enrichedReq, session, params);
 		} catch (error) {
 			if (error && typeof error === "object" && "issues" in error) {
-				return NextResponse.json(
-					formatZodError(error as ZodError),
-					{ status: 400 },
-				);
+				return NextResponse.json(formatZodError(error as ZodError), {
+					status: 400,
+				});
 			}
 
 			return apiError("Error interno del servidor", 500);
