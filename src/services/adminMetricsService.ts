@@ -10,6 +10,7 @@ import {
 	type AdminMetricFreshness,
 	type AdminMetricOverview,
 	type AdminMetricUnknownDateBuckets,
+	type ConsentDocument,
 } from "@/types/firestore";
 
 export const ADMIN_METRIC_PERIOD = {
@@ -735,5 +736,86 @@ export const adminMetricsService = {
 			start,
 			end,
 		});
+	},
+
+	async getAdminActivity(): Promise<{
+		consentsToday: number;
+		minorsToday: number;
+		latestConsents: Array<{
+			id: string;
+			consecutivo?: number;
+			adultName: string;
+			minorsCount: number;
+			signedAt: string | null;
+		}>;
+		hourlyData: Array<{ hour: number; label: string; count: number }>;
+	}> {
+		const todayStart = getTodayStartColombia();
+
+		const [todaySnapshot, latestSnapshot] = await Promise.all([
+			db
+				.collection("consents")
+				.where("signedAt", ">=", todayStart)
+				.select("signedAt", "minorsSnapshot")
+				.limit(1000)
+				.get(),
+			db
+				.collection("consents")
+				.orderBy("signedAt", "desc")
+				.limit(10)
+				.select("consecutivo", "signedAt", "adultSnapshot", "minorsSnapshot")
+				.get(),
+		]);
+
+		let minorsToday = 0;
+		const hourlyStats: Record<number, number> = {};
+
+		todaySnapshot.docs.forEach((doc) => {
+			const data = doc.data() as ConsentDocument;
+			minorsToday += data.minorsSnapshot?.length || 0;
+
+			if (data.signedAt) {
+				const signedDate =
+					data.signedAt instanceof Date
+						? data.signedAt
+						: (data.signedAt as unknown as { toDate(): Date }).toDate();
+				const hour = signedDate.getHours();
+				hourlyStats[hour] = (hourlyStats[hour] || 0) + 1;
+			}
+		});
+
+		const latestConsents = latestSnapshot.docs.map((doc) => {
+			const data = doc.data() as ConsentDocument;
+
+			let signedAt: string | null = null;
+			if (data.signedAt) {
+				if (data.signedAt instanceof Date) {
+					signedAt = data.signedAt.toISOString();
+				} else if (typeof (data.signedAt as unknown as { toDate?(): Date }).toDate === "function") {
+					signedAt = (data.signedAt as unknown as { toDate(): Date }).toDate().toISOString();
+				}
+			}
+
+			return {
+				id: doc.id,
+				consecutivo: data.consecutivo,
+				adultName: data.adultSnapshot?.fullName || "N/A",
+				minorsCount: data.minorsSnapshot?.length || 0,
+				signedAt,
+			};
+		});
+
+		const hourlyData = Array.from({ length: 24 }, (_, hour) => ({
+			hour,
+			label: `${hour.toString().padStart(2, "0")}:00`,
+			count: hourlyStats[hour] || 0,
+		})).filter((h) => h.hour >= 8 && h.hour <= 22);
+
+		return {
+			consentsToday: todaySnapshot.size,
+			minorsToday,
+			latestConsents,
+			hourlyData,
+		};
 	},
 };
