@@ -14,8 +14,11 @@ import {
 import { createLogger } from "@/lib/logger";
 import { env } from "@/lib/env";
 import { getEffectivePermissions, type UserRole } from "@/types/auth";
-import type { Consent, ConsentDocument } from "@/types/firestore";
-import { CURSOR_PAGE_META_SOURCE, type PaginatedResult } from "@/types/pagination";
+import type { ConsentDocument } from "@/types/firestore";
+import {
+	CURSOR_PAGE_META_SOURCE,
+	type PaginatedResult,
+} from "@/types/pagination";
 
 const logger = createLogger("UserService");
 
@@ -85,6 +88,36 @@ export interface ParentDetail {
 	phone: string;
 }
 
+export interface UserConsentRecord {
+	id: string;
+	consecutivo: number;
+	policyVersion: string;
+	signatureStatus: "available" | "missing";
+	signatureUrl: string | null;
+	minorsCount: number;
+	minors: NonNullable<ConsentDocument["minorsSnapshot"]>;
+	adultName: string;
+	adultEmail: string;
+	adultPhone: string;
+	userId: string;
+	ipAddress: string | null;
+	createdAt: string | null;
+	signedAt: string | null;
+	validUntil: string | null;
+}
+
+function toIsoDate(value: ConsentDocument["createdAt"]): string | null {
+	if (!value) {
+		return null;
+	}
+
+	if (value instanceof Date) {
+		return value.toISOString();
+	}
+
+	return value.toDate().toISOString();
+}
+
 export interface StaffListResult {
 	id: string;
 	uid: string;
@@ -141,10 +174,7 @@ interface UserDocument {
 	updatedAt?: FirebaseFirestore.Timestamp;
 }
 
-function mapUserListData(
-	id: string,
-	data: UserDocument,
-): UserListResult {
+function mapUserListData(id: string, data: UserDocument): UserListResult {
 	return {
 		id,
 		uid: data.uid,
@@ -284,7 +314,7 @@ export const userService = {
 					};
 				}
 
-			const user = mapUserListData(userDoc.id, data);
+				const user = mapUserListData(userDoc.id, data);
 				return {
 					items: [user],
 					pagination: {
@@ -520,7 +550,7 @@ export const userService = {
 	/**
 	 * Obtiene los consentimientos de un usuario.
 	 */
-	async getConsents(uid: string): Promise<Consent[]> {
+	async getConsents(uid: string): Promise<UserConsentRecord[]> {
 		const consentsSnap = await db
 			.collection("consents")
 			.where("userId", "==", uid)
@@ -531,21 +561,23 @@ export const userService = {
 				const data = doc.data() as ConsentDocument;
 				return {
 					id: doc.id,
-					consecutivo: data.consecutivo,
-					policyVersion: data.policyVersion,
+					consecutivo: data.consecutivo ?? 0,
+					policyVersion: data.policyVersion ?? "",
 					signatureStatus:
-						data.signaturePath || data.signatureUrl ? "available" : "missing",
-					signatureUrl: data.signatureUrl,
+						data.signaturePath || data.signatureUrl
+							? ("available" as const)
+							: ("missing" as const),
+					signatureUrl: data.signatureUrl ?? null,
 					minorsCount: data.minorsSnapshot?.length || 0,
 					minors: data.minorsSnapshot || [],
-					adultName: data.adultSnapshot?.fullName,
-					adultEmail: data.adultSnapshot?.email,
-					adultPhone: data.adultSnapshot?.phone,
-					userId: data.userId,
+					adultName: data.adultSnapshot?.fullName ?? "N/A",
+					adultEmail: data.adultSnapshot?.email ?? "N/A",
+					adultPhone: data.adultSnapshot?.phone ?? "N/A",
+					userId: data.userId ?? uid,
 					ipAddress: data.ipAddress || null,
-					createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
-					signedAt: data.signedAt?.toDate?.()?.toISOString() || null,
-					validUntil: data.validUntil?.toDate?.()?.toISOString() || null,
+					createdAt: toIsoDate(data.createdAt),
+					signedAt: toIsoDate(data.signedAt),
+					validUntil: toIsoDate(data.validUntil),
 				};
 			})
 			.sort((a, b) => {
@@ -652,7 +684,10 @@ export const staffService = {
 					offset: query.offset,
 					hasMore: query.offset + query.limit < total,
 				},
-				pageInfo: { nextCursor: null, hasNextPage: query.offset + query.limit < total },
+				pageInfo: {
+					nextCursor: null,
+					hasNextPage: query.offset + query.limit < total,
+				},
 				meta: buildCursorMeta(CURSOR_PAGE_META_SOURCE.CURSOR, total),
 			};
 		}
@@ -686,7 +721,10 @@ export const staffService = {
 				offset: query.offset,
 				hasMore: query.offset + query.limit < total,
 			},
-			pageInfo: { nextCursor: null, hasNextPage: query.offset + query.limit < total },
+			pageInfo: {
+				nextCursor: null,
+				hasNextPage: query.offset + query.limit < total,
+			},
 			meta: buildCursorMeta(CURSOR_PAGE_META_SOURCE.CURSOR, total),
 		};
 	},
@@ -811,9 +849,7 @@ export const staffService = {
 			.collection("admin_users")
 			.doc(authUserUid)
 			.get();
-		const authUserEmail = authUserDoc.exists
-			? (authUserDoc.data() as StaffDocument).email
-			: undefined;
+		const authUserEmail = authUserDoc.data()?.email;
 
 		// Solo Super Admin puede eliminar
 		if (!isSuperAdmin(authUserEmail)) {
@@ -840,9 +876,7 @@ export const staffService = {
 			};
 		}
 
-		const staffEmail = staffDoc.exists
-			? (staffDoc.data() as StaffDocument).email
-			: undefined;
+		const staffEmail = staffDoc.data()?.email;
 
 		// Proteger al Super Admin
 		if (isSuperAdmin(staffEmail)) {
@@ -856,7 +890,9 @@ export const staffService = {
 		try {
 			await adminAuth.deleteUser(id);
 		} catch (error) {
-			logger.warn("Firebase Auth deleteUser failed (user may not exist)", { error: error instanceof Error ? error.message : String(error) });
+			logger.warn("Firebase Auth deleteUser failed (user may not exist)", {
+				error: error instanceof Error ? error.message : String(error),
+			});
 		}
 
 		const batch = db.batch();
@@ -974,7 +1010,10 @@ export const minorService = {
 			items,
 			pagination: result.pagination,
 			pageInfo: { nextCursor: null, hasNextPage: result.pagination.hasMore },
-			meta: buildCursorMeta(CURSOR_PAGE_META_SOURCE.CURSOR, result.pagination.total),
+			meta: buildCursorMeta(
+				CURSOR_PAGE_META_SOURCE.CURSOR,
+				result.pagination.total,
+			),
 		};
 	},
 
@@ -999,12 +1038,12 @@ export const minorService = {
 			minor: {
 				id: minorDoc.idNumber,
 				fullName: minorDoc.fullName,
-				firstName: minorDoc.firstName,
-				lastName: minorDoc.lastName,
+				firstName: minorDoc.firstName ?? "",
+				lastName: minorDoc.lastName ?? "",
 				birthDate: minorDoc.birthDate,
 				relationship: minorDoc.relationship,
-				eps: minorDoc.eps,
-				idType: minorDoc.idType,
+				eps: minorDoc.eps ?? "",
+				idType: minorDoc.idType ?? "",
 				idNumber: minorDoc.idNumber,
 				medicalCondition: minorDoc.medicalCondition,
 			},
