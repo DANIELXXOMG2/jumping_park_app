@@ -1,10 +1,5 @@
 import { z } from "zod";
-
-/**
- * Regex para validar documentos alfanuméricos (soporta pasaportes).
- * Permite: letras mayúsculas/minúsculas y números.
- */
-const ALPHANUMERIC_DOC_REGEX = /^[a-zA-Z0-9]+$/;
+import { ALPHANUMERIC_DOC_REGEX } from "./shared.regex";
 
 export const sendOtpSchema = z
 	.object({
@@ -25,7 +20,10 @@ export const sendOtpSchema = z
 export const validateOtpSchema = z
 	.object({
 		email: z.string().email("Correo no válido").optional(),
-		cedula: z.string().regex(ALPHANUMERIC_DOC_REGEX, "Solo letras y números").optional(),
+		cedula: z
+			.string()
+			.regex(ALPHANUMERIC_DOC_REGEX, "Solo letras y números")
+			.optional(),
 		code: z.string().length(6, "El código debe tener 6 dígitos"),
 	})
 	.refine((data) => data.email || data.cedula, {

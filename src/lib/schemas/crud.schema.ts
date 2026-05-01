@@ -3,23 +3,8 @@
  * Cada colección tiene su schema de creación (POST) definido aquí.
  */
 import { z } from "zod";
-import { birthDateSchema, epsSchema } from "./consent.schema";
-
-// ============================================================================
-// REGEX PARA VALIDACIONES INTERNACIONALES
-// ============================================================================
-
-/**
- * Regex para validar nombres con soporte UTF-8 completo.
- * Permite: letras (incluyendo tildes, ñ, ü, caracteres internacionales), espacios, apóstrofes y guiones.
- */
-const UTF8_NAME_REGEX = /^[\p{L}\p{M}'\-\s]+$/u;
-
-/**
- * Regex para validar documentos alfanuméricos (soporta pasaportes).
- * Permite: letras mayúsculas/minúsculas y números.
- */
-const ALPHANUMERIC_DOC_REGEX = /^[a-zA-Z0-9]+$/;
+import { minorSchema } from "./consent.schema";
+import { ALPHANUMERIC_DOC_REGEX, UTF8_NAME_REGEX } from "./shared.regex";
 
 // ============================================================================
 // ACCESOS - Registro de entradas/salidas al parque
@@ -50,47 +35,11 @@ export const accesoCreateSchema = z.object({
 // MENORES - Menores registrados (standalone, fuera de consentimiento)
 // ============================================================================
 
-export const menorCreateSchema = z.object({
-	/** Nombre del menor */
-	firstName: z
-		.string()
-		.min(2, "El nombre es requerido")
-		.regex(
-			UTF8_NAME_REGEX,
-			"Solo letras (incluyendo tildes y ñ), espacios, apóstrofes y guiones",
-		),
-
-	/** Apellidos del menor */
-	lastName: z
-		.string()
-		.min(2, "Los apellidos son requeridos")
-		.regex(
-			UTF8_NAME_REGEX,
-			"Solo letras (incluyendo tildes y ñ), espacios, apóstrofes y guiones",
-		),
-
-	/** Fecha de nacimiento con validación robusta */
-	birthDate: birthDateSchema,
-
-	/** EPS como texto libre (compatible con datos legacy) */
-	eps: epsSchema,
-
-	/** Tipo de identificación */
-	idType: z.enum(["rc", "ti", "cc", "ce", "pa", "ppt", "otro"]),
-
-	/** Número de identificación: soporta cédulas y pasaportes alfanuméricos */
-	idNumber: z
-		.string()
-		.min(3, "Número de identificación es requerido")
-		.max(20, "Máximo 20 caracteres")
-		.regex(
-			ALPHANUMERIC_DOC_REGEX,
-			"Solo letras y números (sin espacios ni caracteres especiales)",
-		),
-
-	/** Parentesco con el responsable */
-	relationship: z.enum(["hijo", "sobrino", "nieto", "otro"]),
-
+/**
+ * Schema de creación de menor standalone.
+ * Reutiliza minorSchema y agrega el campo responsableId.
+ */
+export const menorCreateSchema = minorSchema.extend({
 	/** ID del adulto responsable (documento) */
 	responsableId: z
 		.string()
@@ -130,5 +79,5 @@ export const usuarioCreateSchema = z.object({
 	address: z.string().max(120).optional(),
 
 	/** Lista de menores a cargo (inicialmente vacía) */
-	minors: z.array(z.any()).default([]),
+	minors: z.array(minorSchema).default([]),
 });
