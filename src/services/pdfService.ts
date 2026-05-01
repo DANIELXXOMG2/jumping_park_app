@@ -22,8 +22,11 @@ import {
 	DEFAULT_CONSENT_CONTENT,
 	getConsentContent,
 } from "@/lib/data/legalContent";
+import { createLogger } from "@/lib/logger";
 import { toJsDate } from "@/lib/utils/dateUtils";
 import type { Consent } from "@/types/firestore";
+
+const logger = createLogger("PDFService");
 
 // ============================================================================
 // CONSTANTES DE DISEÑO
@@ -222,11 +225,13 @@ export async function generateConsentPdf(
 	}
 
 	if (!data.adultSnapshot) {
-		throw new Error("Datos del adulto responsable no encontrados (adultSnapshot)");
+		throw new Error(
+			"Datos del adulto responsable no encontrados (adultSnapshot)",
+		);
 	}
 
 	if (!data.minorsSnapshot || !Array.isArray(data.minorsSnapshot)) {
-		console.warn("[PDFService] minorsSnapshot no es un array, usando array vacío");
+		logger.warn("minorsSnapshot no es un array, usando array vacio");
 		data.minorsSnapshot = [];
 	}
 
@@ -287,7 +292,7 @@ export async function generateConsentPdf(
 		});
 	} catch (error) {
 		// Fallback: texto si no hay logo
-		console.error("[PDFService] Error cargando logo:", error);
+		logger.error("Error cargando logo", error);
 		const fallbackText = "JUMPING PARK";
 		const textWidth = boldFont.widthOfTextAtSize(fallbackText, 24);
 		page.drawText(fallbackText, {
@@ -643,7 +648,7 @@ export async function generateConsentPdf(
 			throw new Error("No signature buffer available");
 		}
 	} catch (error) {
-		console.error("[PDFService] Error embebiendo firma:", error);
+		logger.error("Error embebiendo firma", error);
 		finalPage.drawText("(Firma no disponible)", {
 			x: PAGE.marginX,
 			y: yPosition - 15,
