@@ -1020,7 +1020,10 @@ class ConsentService {
 		}
 
 		if (adultResult.status === "rejected") {
-			logger.error("Error buscando consentimiento por userId", adultResult.reason);
+			logger.error(
+				"Error buscando consentimiento por userId",
+				adultResult.reason,
+			);
 		}
 		if (minorResult.status === "rejected") {
 			logger.error(
