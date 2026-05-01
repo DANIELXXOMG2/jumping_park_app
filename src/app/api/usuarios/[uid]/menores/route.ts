@@ -4,13 +4,13 @@
  *
  * PROTEGIDO: Requiere sesión OTP válida (el usuario debe haber validado su identidad).
  * Usado para el historial de participantes en el kiosko.
- * 
+ *
  * OPTIMIZADO: Usa la colección denormalizada minors_index en lugar de leer
  * múltiples consentimientos. Reduce de ~21 lecturas a ~N lecturas (N = cantidad de menores).
  */
 import { type NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/firebaseAdmin";
 import { verifyOtpSession } from "@/services/authService";
+import { minorIndexService } from "@/services/minorIndexService";
 
 interface RouteParams {
 	params: Promise<{ uid: string }>;
@@ -51,26 +51,8 @@ export async function GET(
 
 		// OPTIMIZADO: Usar minors_index en lugar de leer users + múltiples consents
 		// Esto reduce de ~21 lecturas a solo N lecturas (N = cantidad de menores del usuario)
-		const minorsSnapshot = await db
-			.collection("minors_index")
-			.where("parentId", "==", uid)
-			.orderBy("updatedAt", "desc")
-			.limit(50) // Máximo 50 menores por usuario (más que suficiente)
-			.get();
-
-		const minors = minorsSnapshot.docs.map((doc) => {
-			const data = doc.data();
-			return {
-				firstName: data.firstName || "",
-				lastName: data.lastName || "",
-				birthDate: data.birthDate || "",
-				relationship: data.relationship || "otro",
-				eps: data.eps,
-				idType: data.idType || "ti",
-				idNumber: data.idNumber || doc.id,
-				medicalCondition: data.medicalCondition,
-				lastUsed: data.updatedAt?.toDate?.()?.toISOString(),
-			};
+		const minors = await minorIndexService.getMinorsByParentId(uid, {
+			limit: 50,
 		});
 
 		return NextResponse.json({
