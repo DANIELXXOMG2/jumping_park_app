@@ -1068,6 +1068,17 @@ class ConsentService {
 		if (!doc.exists) return null;
 		return doc.data() as Consent;
 	}
+
+	/**
+	 * Obtiene la configuración de contenido de consentimiento desde Firestore.
+	 * Retorna null si no existe.
+	 */
+	async getConsentSettings(language: string): Promise<unknown | null> {
+		const docId = language === "en" ? "consent_v1_en" : "consent_v1";
+		const doc = await db.collection("settings").doc(docId).get();
+		if (!doc.exists) return null;
+		return doc.data();
+	}
 }
 
 // ============================================================================
