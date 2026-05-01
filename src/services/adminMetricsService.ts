@@ -9,6 +9,8 @@ import {
 	type AdminMetricDaily,
 	type AdminMetricFreshness,
 	type AdminMetricOverview,
+	type AdminMetricRecentConsent,
+	type AdminMetricRecentUser,
 	type AdminMetricUnknownDateBuckets,
 	type ConsentDocument,
 } from "@/types/firestore";
@@ -816,6 +818,117 @@ export const adminMetricsService = {
 			minorsToday,
 			latestConsents,
 			hourlyData,
+		};
+	},
+
+	async buildAdminLiveStatsResponse(): Promise<{
+		stats: {
+			totalUsers: number;
+			totalConsents: number;
+			totalMinors: number;
+			usersToday: number;
+			consentsToday: number;
+			minorsToday: number;
+		};
+		recentUsers: AdminMetricRecentUser[];
+		recentConsents: AdminMetricRecentConsent[];
+		chartData: Array<{ name: string; value: number }>;
+		freshness: {
+			computedAt: string;
+			source: "live";
+			stale?: boolean;
+		};
+		meta: {
+			source: "live";
+			fallbackApplied: boolean;
+		};
+		unknownDateBuckets?: {
+			users: number;
+			consents: number;
+		};
+	}> {
+		const today = getTodayStartColombia();
+		const weekAgo = new Date();
+		weekAgo.setDate(weekAgo.getDate() - 7);
+
+		const [
+			usersCountSnap,
+			consentsCountSnap,
+			minorsCountSnap,
+			usersTodaySnap,
+			consentsTodaySnap,
+			recentUsersSnap,
+			recentConsentsSnap,
+			weeklyConsentsSnap,
+		] = await Promise.all([
+			db.collection("users").count().get(),
+			db.collection("consents").count().get(),
+			db.collection("minors_index").count().get(),
+			db.collection("users").where("createdAt", ">=", today).count().get(),
+			db.collection("consents").where("createdAt", ">=", today).count().get(),
+			db.collection("users").orderBy("createdAt", "desc").limit(5).get(),
+			db.collection("consents").orderBy("createdAt", "desc").limit(5).get(),
+			db
+				.collection("consents")
+				.where("createdAt", ">=", weekAgo)
+				.orderBy("createdAt", "desc")
+				.limit(100)
+				.get(),
+		]);
+
+		const recentUsers = recentUsersSnap.docs.map((doc) => ({
+			id: doc.id,
+			uid: doc.data().uid,
+			fullName: doc.data().fullName,
+			email: doc.data().email,
+			createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || null,
+		}));
+
+		const recentConsents = recentConsentsSnap.docs.map((doc) => ({
+			id: doc.id,
+			consecutivo: doc.data().consecutivo,
+			adultName: doc.data().adultSnapshot?.fullName || "N/A",
+			minorsCount: doc.data().minorsSnapshot?.length || 0,
+			createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || null,
+			signedAt: doc.data().signedAt?.toDate?.()?.toISOString() || null,
+		}));
+
+		const dailyStats: Record<string, number> = {};
+		const days = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+		for (const doc of weeklyConsentsSnap.docs) {
+			const date = doc.data().createdAt?.toDate?.();
+			if (date) {
+				const dayName = days[date.getDay()];
+				dailyStats[dayName] = (dailyStats[dayName] || 0) + 1;
+			}
+		}
+
+		const chartData = Object.entries(dailyStats).map(([name, value]) => ({
+			name,
+			value,
+		}));
+
+		return {
+			stats: {
+				totalUsers: usersCountSnap.data().count,
+				totalConsents: consentsCountSnap.data().count,
+				totalMinors: minorsCountSnap.data().count,
+				usersToday: usersTodaySnap.data().count,
+				consentsToday: consentsTodaySnap.data().count,
+				minorsToday: 0,
+			},
+			recentUsers,
+			recentConsents,
+			chartData,
+			freshness: {
+				computedAt: new Date().toISOString(),
+				source: "live" as const,
+				stale: false,
+			},
+			meta: {
+				source: "live" as const,
+				fallbackApplied: false,
+			},
 		};
 	},
 };
