@@ -22,7 +22,8 @@ interface Consent {
 	adultPhone: string;
 	minorsCount: number;
 	minors: Minor[];
-	signatureUrl: string;
+	signatureStatus: "available" | "missing";
+	signatureUrl: string | null;
 	policyVersion: string;
 	ipAddress?: string;
 	createdAt: string | null;
@@ -40,6 +41,14 @@ interface Pagination {
 interface ConsentsResponse {
 	consents: Consent[];
 	pagination: Pagination;
+	pageInfo?: {
+		nextCursor: string | null;
+		hasNextPage: boolean;
+	};
+	meta?: {
+		totalApprox?: number;
+		source: "cursor" | "search";
+	};
 }
 
 interface UseConsentsOptions {
