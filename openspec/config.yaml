@@ -1,0 +1,64 @@
+schema: spec-driven
+
+context: |
+  Stack: Next.js 16 App Router, React 19, TypeScript strict, Bun
+  Backend: Route Handlers + service layer + Zod schemas
+  Data/Auth: Firebase Admin/Firestore/Storage, Firebase Auth, Resend
+  UI: Tailwind CSS 4, Radix UI, Framer Motion
+  State: Zustand for kiosk, AuthContext for admin, SWR for admin data
+  Quality: Biome, TypeScript, Knip, jscpd, dependency-cruiser
+
+strict_tdd: true
+
+testing:
+  detected: 2026-04-30
+  test_runner:
+    available: true
+    framework: bun test
+    command: bun test
+  layers:
+    unit:
+      available: true
+      tool: bun test
+    integration:
+      available: false
+      tool: --
+    e2e:
+      available: true
+      tool: Playwright (@playwright/test)
+  coverage:
+    available: true
+    command: bun test --coverage
+  quality_tools:
+    linter:
+      available: true
+      command: bun run check:lint
+    type_checker:
+      available: true
+      command: bun run check:types
+    formatter:
+      available: true
+      command: bun run check:format
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+    - Identify affected modules/packages
+  specs:
+    - Use Given/When/Then format for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Include sequence diagrams for complex flows
+    - Document architecture decisions with rationale
+  tasks:
+    - Group tasks by phase (infrastructure, implementation, testing)
+    - Use hierarchical numbering (1.1, 1.2, etc.)
+    - Keep tasks small enough to complete in one session
+  apply:
+    - Follow existing code patterns and conventions
+    - Load relevant coding skills for the project stack
+  verify:
+    - Run tests if test infrastructure exists
+    - Compare implementation against every spec scenario
+  archive:
+    - Warn before merging destructive deltas (large removals)
