@@ -83,13 +83,13 @@ export default function AdminLoginPage() {
 				{/* Login Form */}
 				<div className="bg-surface rounded-2xl border border-border p-6 lg:p-8">
 					<form onSubmit={handleSubmit} className="space-y-5">
-						{/* Error Alert */}
-						{error && (
-							<div className="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
-								<AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
-								<p className="text-sm text-red-400">{error}</p>
-							</div>
-						)}
+							{/* Error Alert */}
+							{error && (
+								<div role="alert" className="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+									<AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" aria-hidden="true" />
+									<p className="text-sm text-red-400">{error}</p>
+								</div>
+							)}
 
 						{/* Email Field */}
 						<div>
@@ -135,12 +135,14 @@ export default function AdminLoginPage() {
 								<button
 									type="button"
 									onClick={() => setShowPassword(!showPassword)}
+									aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+									aria-pressed={showPassword}
 									className="absolute right-4 top-1/2 -translate-y-1/2 text-foreground/40 hover:text-foreground/60 min-h-0 p-0 !bg-transparent !border-none !shadow-none outline-none hover:!bg-transparent hover:!transform-none"
 								>
 									{showPassword ? (
-										<EyeOff className="w-5 h-5" />
+										<EyeOff className="w-5 h-5" aria-hidden="true" />
 									) : (
-										<Eye className="w-5 h-5" />
+										<Eye className="w-5 h-5" aria-hidden="true" />
 									)}
 								</button>
 							</div>
@@ -164,7 +166,7 @@ export default function AdminLoginPage() {
 					Acceso restringido a personal autorizado
 				</p>
 
-				{/* Botón dinámico para volver al Kiosco */}
+				{/* Enlace para volver al Kiosco */}
 				<div className="mt-8 flex justify-center">
 					<Link
 						href="/"
@@ -172,14 +174,14 @@ export default function AdminLoginPage() {
 					>
 						{/* Fondo animado */}
 						<span className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/20 to-primary/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out" />
-						
-						{/* Cohete con animación de despegue */}
+
+						{/* Icono con animación hover */}
 						<span className="relative flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 group-hover:bg-primary/30 transition-colors duration-300">
-							<Rocket 
-								className="w-4 h-4 text-primary transform -rotate-45 group-hover:animate-bounce group-hover:scale-110 transition-transform duration-300" 
+							<Rocket
+								className="w-4 h-4 text-primary transform -rotate-45 group-hover:animate-bounce group-hover:scale-110 transition-transform duration-300"
 								strokeWidth={2.5}
 							/>
-							{/* Partículas de propulsión */}
+							{/* Indicadores visuales hover */}
 							<span className="absolute -bottom-1 -left-1 w-2 h-2 rounded-full bg-yellow-400/0 group-hover:bg-yellow-400 group-hover:animate-ping transition-all duration-300" />
 							<span className="absolute -bottom-0.5 -left-0.5 w-1.5 h-1.5 rounded-full bg-orange-400/0 group-hover:bg-orange-400 group-hover:animate-pulse transition-all duration-300 delay-75" />
 						</span>
