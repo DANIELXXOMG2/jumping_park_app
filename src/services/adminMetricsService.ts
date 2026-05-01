@@ -931,4 +931,235 @@ export const adminMetricsService = {
 			},
 		};
 	},
+
+	async buildAdminLiveDetailedStatsResponse(
+		period: AdminMetricPeriod,
+	): Promise<AdminDetailedStats & { meta: { source: string; fallbackApplied: boolean } }> {
+		const { start, end } = getDateRangeColombia(period);
+		const duration = end.getTime() - start.getTime();
+		const previousRange = {
+			start: new Date(start.getTime() - duration),
+			end: new Date(start.getTime() - 1),
+		};
+		const now = new Date();
+		const maxDocsPerQuery = 2000;
+
+		const [
+			consentsSnap,
+			usersSnap,
+			prevConsentsSnap,
+			prevUsersSnap,
+			totalUsersCount,
+			totalConsentsCount,
+		] = await Promise.all([
+			db
+				.collection("consents")
+				.where("signedAt", ">=", start)
+				.where("signedAt", "<=", end)
+				.orderBy("signedAt", "desc")
+				.limit(maxDocsPerQuery)
+				.select("signedAt", "minorsSnapshot", "validUntil")
+				.get(),
+			db
+				.collection("users")
+				.where("createdAt", ">=", start)
+				.where("createdAt", "<=", end)
+				.limit(maxDocsPerQuery)
+				.select("createdAt")
+				.get(),
+			db
+				.collection("consents")
+				.where("signedAt", ">=", previousRange.start)
+				.where("signedAt", "<=", previousRange.end)
+				.limit(maxDocsPerQuery)
+				.select("minorsSnapshot")
+				.get(),
+			db
+				.collection("users")
+				.where("createdAt", ">=", previousRange.start)
+				.where("createdAt", "<=", previousRange.end)
+				.count()
+				.get(),
+			db.collection("users").count().get(),
+			db.collection("consents").count().get(),
+		]);
+
+		let minorsInPeriod = 0;
+		let activeConsents = 0;
+		let expiredConsents = 0;
+		const uniqueMinorIds = new Set<string>();
+		const dayActivity: Record<string, { consents: number; minors: number }> = {};
+
+		for (const doc of consentsSnap.docs) {
+			const data = doc.data();
+			const minorsSnapshot = data.minorsSnapshot || [];
+			const minorsCount = minorsSnapshot.length;
+			minorsInPeriod += minorsCount;
+
+			for (const minor of minorsSnapshot) {
+				if (minor.idNumber) uniqueMinorIds.add(minor.idNumber);
+			}
+
+			const validUntil = data.validUntil?.toDate?.();
+			if (validUntil && validUntil > now) activeConsents += 1;
+			else expiredConsents += 1;
+
+			const signedAt = data.signedAt?.toDate?.();
+			if (signedAt) {
+				const dayKey = signedAt.toISOString().split("T")[0] || "";
+				if (!dayActivity[dayKey]) dayActivity[dayKey] = { consents: 0, minors: 0 };
+				dayActivity[dayKey].consents += 1;
+				dayActivity[dayKey].minors += minorsCount;
+			}
+		}
+
+		const userDayActivity: Record<string, number> = {};
+		for (const doc of usersSnap.docs) {
+			const createdAt = doc.data().createdAt?.toDate?.();
+			if (createdAt) {
+				const dayKey = createdAt.toISOString().split("T")[0] || "";
+				userDayActivity[dayKey] = (userDayActivity[dayKey] || 0) + 1;
+			}
+		}
+
+		let prevMinors = 0;
+		for (const doc of prevConsentsSnap.docs) {
+			prevMinors += (doc.data().minorsSnapshot || []).length;
+		}
+
+		const chartData: Array<{
+			date: string;
+			consents: number;
+			users: number;
+			minors: number;
+		}> = [];
+		const dayMs = 24 * 60 * 60 * 1000;
+		const daysToShow =
+			period === ADMIN_METRIC_PERIOD.TODAY
+				? 1
+				: period === ADMIN_METRIC_PERIOD.WEEK
+					? 7
+					: period === ADMIN_METRIC_PERIOD.MONTH
+						? 30
+						: period === ADMIN_METRIC_PERIOD.YEAR
+							? 12
+							: 30;
+
+		if (period === ADMIN_METRIC_PERIOD.YEAR) {
+			for (let index = 11; index >= 0; index -= 1) {
+				const monthStart = new Date(now.getFullYear(), now.getMonth() - index, 1);
+				const monthKey = monthStart.toISOString().slice(0, 7);
+				let consents = 0;
+				let users = 0;
+				let minors = 0;
+
+				for (const [day, value] of Object.entries(dayActivity)) {
+					if (day.startsWith(monthKey)) {
+						consents += value.consents;
+						minors += value.minors;
+					}
+				}
+				for (const [day, value] of Object.entries(userDayActivity)) {
+					if (day.startsWith(monthKey)) users += value;
+				}
+
+				chartData.push({
+					date: monthStart.toLocaleDateString("es-CO", {
+						month: "short",
+						year: "2-digit",
+					}),
+					consents,
+					users,
+					minors,
+				});
+			}
+		} else {
+			for (let index = daysToShow - 1; index >= 0; index -= 1) {
+				const dayStart = new Date(now.getTime() - index * dayMs);
+				const dayKey = dayStart.toISOString().split("T")[0] || "";
+				chartData.push({
+					date: dayStart.toLocaleDateString("es-CO", {
+						day: "2-digit",
+						month: "short",
+					}),
+					consents: dayActivity[dayKey]?.consents || 0,
+					users: userDayActivity[dayKey] || 0,
+					minors: dayActivity[dayKey]?.minors || 0,
+				});
+			}
+		}
+
+		const topDays = Object.entries(dayActivity)
+			.sort((left, right) => right[1].consents - left[1].consents)
+			.slice(0, 5)
+			.map(([date, value]) => ({
+				date: new Date(date).toLocaleDateString("es-CO", {
+					weekday: "short",
+					day: "numeric",
+					month: "short",
+				}),
+				count: value.consents,
+			}));
+
+		const minorsCountResult = await db.collection("minors_index").count().get();
+		const calculateChange = (current: number, previous: number) => {
+			if (previous === 0) return current > 0 ? 100 : 0;
+			return Math.round(((current - previous) / previous) * 100);
+		};
+
+		return {
+			period,
+			dateRange: { start: start.toISOString(), end: end.toISOString() },
+			kpis: {
+				consents: {
+					value: consentsSnap.size,
+					change: calculateChange(consentsSnap.size, prevConsentsSnap.size),
+					previousValue: prevConsentsSnap.size,
+				},
+				users: {
+					value: usersSnap.size,
+					change: calculateChange(usersSnap.size, prevUsersSnap.data().count),
+					previousValue: prevUsersSnap.data().count,
+				},
+				minors: {
+					value: minorsInPeriod,
+					change: calculateChange(minorsInPeriod, prevMinors),
+					previousValue: prevMinors,
+				},
+				uniqueMinors: {
+					value: uniqueMinorIds.size,
+					label: "Participantes únicos",
+				},
+				activeConsents: { value: activeConsents, label: "Vigentes" },
+				expiredConsents: { value: expiredConsents, label: "Vencidos" },
+			},
+			totals: {
+				users: totalUsersCount.data().count,
+				consents: totalConsentsCount.data().count,
+				minors: minorsCountResult.data().count,
+			},
+			chartData,
+			topDays,
+			averages: {
+				consentsPerDay:
+					daysToShow > 0
+						? Math.round((consentsSnap.size / daysToShow) * 10) / 10
+						: 0,
+				minorsPerConsent:
+					consentsSnap.size > 0
+						? Math.round((minorsInPeriod / consentsSnap.size) * 10) / 10
+						: 0,
+			},
+			freshness: {
+				computedAt: new Date().toISOString(),
+				source: "live" as const,
+				stale: false,
+			},
+			unknownDateBuckets: EMPTY_ADMIN_UNKNOWN_DATE_BUCKETS,
+			meta: {
+				source: "live" as const,
+				fallbackApplied: false,
+			},
+		};
+	},
 };
