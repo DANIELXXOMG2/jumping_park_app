@@ -3,17 +3,26 @@ import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { verifyFullAdminToken } from "@/lib/adminAuth";
 import { adminAuth, db } from "@/lib/firebaseAdmin";
+import { createLogger } from "@/lib/logger";
+import {
+	buildAdminAuditActor,
+	buildAdminAuditRequest,
+	commitAdminAuditBatch,
+} from "@/services/adminAuditService";
 import type { UserRole } from "@/types/auth";
+
+const logger = createLogger("ApiAdminRoles");
 
 /**
  * Schema de validación para asignar rol
  */
 const setRoleSchema = z.object({
 	email: z.string().email("Email inválido"),
-	role: z.enum(["admin", "trabajador"]).refine(
-		(val) => ["admin", "trabajador"].includes(val),
-		{ message: "Rol inválido. Usar: admin o trabajador" }
-	),
+	role: z
+		.enum(["admin", "trabajador"])
+		.refine((val) => ["admin", "trabajador"].includes(val), {
+			message: "Rol inválido. Usar: admin o trabajador",
+		}),
 });
 
 /**
@@ -25,7 +34,7 @@ const revokeRoleSchema = z.object({
 
 /**
  * GET /api/admin/roles
- * 
+ *
  * Lista todos los usuarios con roles administrativos.
  * Solo accesible por admins.
  */
@@ -36,7 +45,7 @@ export async function GET(request: NextRequest) {
 	try {
 		// Obtener todos los admin_users de Firestore
 		const adminUsersSnapshot = await db.collection("admin_users").get();
-		
+
 		const users = adminUsersSnapshot.docs.map((doc) => {
 			const data = doc.data();
 			return {
@@ -56,7 +65,7 @@ export async function GET(request: NextRequest) {
 			count: users.length,
 		});
 	} catch (error) {
-		console.error("Error listing admin users:", error);
+		logger.error("Error listing admin users", error);
 		return NextResponse.json(
 			{ error: "Error al listar usuarios administrativos" },
 			{ status: 500 },
@@ -69,7 +78,7 @@ export async function GET(request: NextRequest) {
  *
  * Asigna un rol a un usuario mediante Custom Claims.
  * Solo accesible por admins.
- * 
+ *
  * Body: { email: string, role: "admin" | "trabajador" }
  */
 export async function POST(request: NextRequest) {
@@ -86,9 +95,10 @@ export async function POST(request: NextRequest) {
 			user = await adminAuth.getUserByEmail(email);
 		} catch {
 			return NextResponse.json(
-				{ 
-					error: "Usuario no encontrado", 
-					message: "El usuario debe iniciar sesión al menos una vez antes de asignarle un rol." 
+				{
+					error: "Usuario no encontrado",
+					message:
+						"El usuario debe iniciar sesión al menos una vez antes de asignarle un rol.",
 				},
 				{ status: 404 },
 			);
@@ -122,15 +132,26 @@ export async function POST(request: NextRequest) {
 			updatedBy: auth.uid,
 		};
 
-		if (adminUserDoc.exists) {
-			await adminUserRef.update(userData);
-		} else {
-			await adminUserRef.set({
-				...userData,
-				createdAt: Timestamp.now(),
-				createdBy: auth.uid,
-			});
-		}
+		await commitAdminAuditBatch({
+			apply: (batch) => {
+				batch.set(adminUserRef, {
+					...userData,
+					...(adminUserDoc.exists
+						? {}
+						: {
+								createdAt: Timestamp.now(),
+								createdBy: auth.uid,
+							}),
+				});
+			},
+			audit: {
+				action: "admin-role.assign",
+				actor: buildAdminAuditActor(auth),
+				target: { collection: "admin_users", id: user.uid, label: email },
+				request: buildAdminAuditRequest(request),
+				details: { role },
+			},
+		});
 
 		return NextResponse.json({
 			success: true,
@@ -151,7 +172,7 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		console.error("Error setting role:", error);
+		logger.error("Error setting role", error);
 		return NextResponse.json(
 			{ error: "Error al asignar rol" },
 			{ status: 500 },
@@ -164,7 +185,7 @@ export async function POST(request: NextRequest) {
  *
  * Revoca el rol de un usuario (lo elimina del panel admin).
  * Solo accesible por admins.
- * 
+ *
  * Body: { email: string }
  */
 export async function DELETE(request: NextRequest) {
@@ -200,9 +221,18 @@ export async function DELETE(request: NextRequest) {
 			admin: false,
 		});
 
-		// Eliminar de Firestore
 		const adminUserRef = db.collection("admin_users").doc(user.uid);
-		await adminUserRef.delete();
+		await commitAdminAuditBatch({
+			apply: (batch) => {
+				batch.delete(adminUserRef);
+			},
+			audit: {
+				action: "admin-role.revoke",
+				actor: buildAdminAuditActor(auth),
+				target: { collection: "admin_users", id: user.uid, label: email },
+				request: buildAdminAuditRequest(request),
+			},
+		});
 
 		return NextResponse.json({
 			success: true,
@@ -216,7 +246,7 @@ export async function DELETE(request: NextRequest) {
 			);
 		}
 
-		console.error("Error revoking role:", error);
+		logger.error("Error revoking role", error);
 		return NextResponse.json(
 			{ error: "Error al revocar rol" },
 			{ status: 500 },
