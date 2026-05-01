@@ -1,54 +1,24 @@
-import type { Metadata } from 'next'
-import Link from 'next/link'
-import Script from 'next/script'
+import type { Metadata } from "next";
+import Link from "next/link";
+import Script from "next/script";
 import {
-	APP_DESCRIPTION,
 	APP_NAME,
 	APP_URL,
+	buildPublicPageStructuredData,
 	createCanonicalUrl,
 	INDEXABLE_ROBOTS,
-} from '@/lib/seo'
+} from "@/lib/seo";
 
-const PAGE_PATH = '/consentimiento-digital'
-const PAGE_TITLE = 'Consentimiento digital para visitantes'
+const PAGE_PATH = "/consentimiento-digital";
+const PAGE_TITLE = "Consentimiento digital para visitantes";
 const PAGE_DESCRIPTION =
-	'Conoce como funciona el consentimiento digital de Jumping Park antes de llegar al parque: registro agil, validacion por OTP y firma segura para adultos y menores.'
+	"Conoce como funciona el consentimiento digital de Jumping Park antes de llegar al parque: registro agil, validacion por OTP y firma segura para adultos y menores.";
 
-const structuredData = {
-	'@context': 'https://schema.org',
-	'@graph': [
-		{
-			'@type': 'WebPage',
-			'@id': `${createCanonicalUrl(PAGE_PATH)}#webpage`,
-			url: createCanonicalUrl(PAGE_PATH),
-			name: PAGE_TITLE,
-			description: PAGE_DESCRIPTION,
-			isPartOf: {
-				'@id': `${APP_URL}/#website`,
-			},
-			about: {
-				'@id': `${APP_URL}/#organization`,
-			},
-		},
-		{
-			'@type': 'WebSite',
-			'@id': `${APP_URL}/#website`,
-			url: APP_URL,
-			name: APP_NAME,
-			description: APP_DESCRIPTION,
-			inLanguage: 'es-CO',
-		},
-		{
-			'@type': 'AmusementPark',
-			'@id': `${APP_URL}/#organization`,
-			name: APP_NAME,
-			url: APP_URL,
-			description: APP_DESCRIPTION,
-			image: `${APP_URL}/og-image.png`,
-			inLanguage: 'es-CO',
-		},
-	],
-}
+const structuredData = buildPublicPageStructuredData({
+	pathname: PAGE_PATH,
+	title: PAGE_TITLE,
+	description: PAGE_DESCRIPTION,
+});
 
 export const metadata: Metadata = {
 	title: PAGE_TITLE,
@@ -61,7 +31,7 @@ export const metadata: Metadata = {
 		title: `${PAGE_TITLE} | ${APP_NAME}`,
 		description: PAGE_DESCRIPTION,
 		url: createCanonicalUrl(PAGE_PATH),
-		type: 'article',
+		type: "website",
 		images: [
 			{
 				url: `${APP_URL}/og-image.png`,
@@ -72,12 +42,12 @@ export const metadata: Metadata = {
 		],
 	},
 	twitter: {
-		card: 'summary_large_image',
+		card: "summary_large_image",
 		title: `${PAGE_TITLE} | ${APP_NAME}`,
 		description: PAGE_DESCRIPTION,
 		images: [`${APP_URL}/og-image.png`],
 	},
-}
+};
 
 export default function ConsentimientoDigitalPage() {
 	return (
@@ -90,8 +60,8 @@ export default function ConsentimientoDigitalPage() {
 				{JSON.stringify(structuredData)}
 			</Script>
 
-			<div className="mx-auto flex max-w-5xl flex-col gap-12">
-				<section className="grid gap-8 rounded-[2rem] border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur sm:p-10 lg:grid-cols-[1.3fr_0.7fr]">
+			<article className="mx-auto flex max-w-5xl flex-col gap-12">
+				<header className="grid gap-8 rounded-[2rem] border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur sm:p-10 lg:grid-cols-[1.3fr_0.7fr]">
 					<div className="space-y-6">
 						<p className="text-sm uppercase tracking-[0.35em] text-emerald-300">
 							Experiencia previa a la visita
@@ -101,9 +71,9 @@ export default function ConsentimientoDigitalPage() {
 						</h1>
 						<p className="max-w-2xl text-lg leading-8 text-zinc-200">
 							En Jumping Park usamos un flujo digital para validar identidad,
-							confirmar responsables y capturar firmas con respaldo seguro.
-							 Eso reduce filas, mejora el control operativo y deja el ingreso
-							 listo para adultos y menores.
+							confirmar responsables y capturar firmas con respaldo seguro. Eso
+							reduce filas, mejora el control operativo y deja el ingreso listo
+							para adultos y menores.
 						</p>
 						<div className="flex flex-wrap gap-4">
 							<Link
@@ -137,14 +107,20 @@ export default function ConsentimientoDigitalPage() {
 							<li>Panel administrativo aislado del surface publico.</li>
 						</ul>
 					</div>
-				</section>
+				</header>
 
-				<section className="grid gap-6 md:grid-cols-3">
+				<section
+					aria-labelledby="flujo-title"
+					className="grid gap-6 md:grid-cols-3"
+				>
+					<h2 id="flujo-title" className="sr-only">
+						Resumen del flujo digital
+					</h2>
 					<article className="rounded-[1.5rem] border border-white/10 bg-white/5 p-6">
 						<h2 className="text-xl font-bold text-white">1. Registro</h2>
 						<p className="mt-3 text-sm leading-7 text-zinc-200">
 							El visitante ingresa su documento y el sistema recupera o valida
-							 la informacion necesaria para continuar.
+							la informacion necesaria para continuar.
 						</p>
 					</article>
 
@@ -152,7 +128,7 @@ export default function ConsentimientoDigitalPage() {
 						<h2 className="text-xl font-bold text-white">2. Validacion</h2>
 						<p className="mt-3 text-sm leading-7 text-zinc-200">
 							Se envia un OTP al correo del responsable y el flujo limita abuso,
-							 reintentos y sesiones bloqueadas.
+							reintentos y sesiones bloqueadas.
 						</p>
 					</article>
 
@@ -160,11 +136,34 @@ export default function ConsentimientoDigitalPage() {
 						<h2 className="text-xl font-bold text-white">3. Consentimiento</h2>
 						<p className="mt-3 text-sm leading-7 text-zinc-200">
 							La firma queda asociada al consentimiento y lista para consulta
-							 administrativa, descarga y soporte operativo.
+							administrativa, descarga y soporte operativo.
 						</p>
 					</article>
 				</section>
-			</div>
+
+				<section
+					aria-labelledby="seo-summary-title"
+					className="rounded-[1.5rem] border border-white/10 bg-black/20 p-6"
+				>
+					<h2 id="seo-summary-title" className="text-2xl font-bold text-white">
+						Resumen operativo publico
+					</h2>
+					<ul className="mt-4 space-y-3 text-sm leading-7 text-zinc-200">
+						<li>
+							La pagina publica describe un unico flujo oficial y enlaza al
+							kiosco real.
+						</li>
+						<li>
+							Las rutas administrativas, APIs y pantallas privadas del kiosco no
+							forman parte de la superficie indexable.
+						</li>
+						<li>
+							La URL canonica para compartir o citar esta experiencia es
+							`https://www.jumpingpark.lat/consentimiento-digital`.
+						</li>
+					</ul>
+				</section>
+			</article>
 		</main>
-	)
+	);
 }
