@@ -1,25 +1,23 @@
 import { FieldValue } from "firebase-admin/firestore";
-import { adminAuth, db } from "@/lib/firebaseAdmin";
 import {
-	extractEmailTokens,
-	generateSearchTokens,
-	normalizeText,
-} from "@/lib/utils/searchUtils";
+	applyCreatedAtCursor,
+	buildCreatedAtOrderedQuery,
+	buildCursorMeta,
+	buildCursorPageInfo,
+} from "@/lib/adminCursor";
+import { adminAuth, db } from "@/lib/firebaseAdmin";
+import { normalizeText } from "@/lib/utils/searchUtils";
+import {
+	addAdminAuditLogToBatch,
+	type AdminAuditWriteInput,
+} from "@/services/adminAuditService";
+import { createLogger } from "@/lib/logger";
+import { env } from "@/lib/env";
 import { getEffectivePermissions, type UserRole } from "@/types/auth";
+import type { Consent } from "@/types/firestore";
+import { CURSOR_PAGE_META_SOURCE, type PaginatedResult } from "@/types/pagination";
 
-// ============================================================================
-// UTILIDADES DE BÚSQUEDA
-// ============================================================================
-
-/**
- * Combina tokens de nombre y email para búsqueda completa.
- * Usa las utilidades centralizadas con normalización de tildes.
- */
-export function buildUserSearchTokens(fullName: string, email: string): string[] {
-	const nameTokens = generateSearchTokens(fullName);
-	const emailTokens = extractEmailTokens(email);
-	return [...new Set([...nameTokens, ...emailTokens])];
-}
+const logger = createLogger("UserService");
 
 // ============================================================================
 // TIPOS
@@ -29,10 +27,21 @@ export interface UserListQuery {
 	search?: string;
 	limit: number;
 	offset: number;
+	cursor?: string;
+	useCursor?: boolean;
 }
 
 export interface StaffListQuery extends UserListQuery {
 	role?: string;
+}
+
+/**
+ * Menor embebido en documentos de usuario (snapshot denormalizado).
+ */
+export interface EmbeddedMinor {
+	idNumber?: string;
+	firstName?: string;
+	lastName?: string;
 }
 
 export interface UserListResult {
@@ -44,9 +53,36 @@ export interface UserListResult {
 	role: string;
 	customPermissions: string[];
 	minorsCount: number;
-	minors: unknown[];
+	minors: EmbeddedMinor[];
 	createdAt: string | null;
 	updatedAt: string | null;
+}
+
+/**
+ * Detalle de menor retornado por minorService.getById.
+ */
+export interface MinorDetail {
+	id: string;
+	fullName: string;
+	firstName: string;
+	lastName: string;
+	birthDate: string;
+	relationship: string;
+	eps: string;
+	idType: string;
+	idNumber: string;
+	medicalCondition?: string;
+}
+
+/**
+ * Detalle de adulto responsable retornado por minorService.getById.
+ */
+export interface ParentDetail {
+	id: string;
+	uid: string;
+	fullName: string;
+	email: string;
+	phone: string;
 }
 
 export interface StaffListResult {
@@ -62,6 +98,38 @@ export interface StaffListResult {
 	updatedAt: string | null;
 }
 
+/**
+ * Shape crudo de un documento de staff en Firestore.
+ */
+interface StaffDocument {
+	uid?: string;
+	fullName: string;
+	email: string;
+	phone?: string;
+	role: string;
+	avatar?: string;
+	customPermissions?: string[];
+	createdAt?: FirebaseFirestore.Timestamp;
+	updatedAt?: FirebaseFirestore.Timestamp;
+}
+
+/**
+ * Shape crudo de un documento de consentimiento en Firestore.
+ */
+interface ConsentDocument {
+	consecutivo?: number;
+	policyVersion?: string;
+	signaturePath?: string;
+	signatureUrl?: string;
+	minorsSnapshot?: unknown[];
+	adultSnapshot?: { fullName?: string; email?: string; phone?: string };
+	userId?: string;
+	ipAddress?: string;
+	createdAt?: FirebaseFirestore.Timestamp;
+	signedAt?: FirebaseFirestore.Timestamp;
+	validUntil?: FirebaseFirestore.Timestamp;
+}
+
 export interface CreateStaffData {
 	email: string;
 	password: string;
@@ -72,14 +140,44 @@ export interface CreateStaffData {
 	customPermissions?: string[];
 }
 
-export interface PaginatedResult<T> {
-	items: T[];
-	pagination: {
-		total: number;
-		limit: number;
-		offset: number;
-		hasMore: boolean;
+/**
+ * Shape crudo de un documento de usuario en Firestore.
+ */
+interface UserDocument {
+	uid: string;
+	fullName: string;
+	email: string;
+	phone?: string;
+	role?: string;
+	customPermissions?: string[];
+	minors?: EmbeddedMinor[];
+	createdAt?: FirebaseFirestore.Timestamp;
+	updatedAt?: FirebaseFirestore.Timestamp;
+}
+
+function mapUserListData(
+	id: string,
+	data: UserDocument,
+): UserListResult {
+	return {
+		id,
+		uid: data.uid,
+		fullName: data.fullName,
+		email: data.email,
+		phone: data.phone || null,
+		role: data.role || "visitor",
+		customPermissions: data.customPermissions || [],
+		minorsCount: data.minors?.length || 0,
+		minors: data.minors || [],
+		createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
+		updatedAt: data.updatedAt?.toDate?.()?.toISOString() || null,
 	};
+}
+
+function mapUserListDoc(
+	doc: FirebaseFirestore.QueryDocumentSnapshot,
+): UserListResult {
+	return mapUserListData(doc.id, doc.data() as UserDocument);
 }
 
 // ============================================================================
@@ -98,10 +196,47 @@ export const userService = {
 			return this.listWithSearch(query);
 		}
 
+		if (query.useCursor) {
+			const baseQuery = buildCreatedAtOrderedQuery(db.collection("users"));
+			const dataQuery = query.cursor
+				? applyCreatedAtCursor(baseQuery, {
+						collection: "users",
+						cursor: query.cursor,
+					})
+				: baseQuery;
+
+			const [countSnap, cursorSnapshot] = await Promise.all([
+				db.collection("users").count().get(),
+				dataQuery.limit(query.limit + 1).get(),
+			]);
+
+			const total = countSnap.data().count;
+			const pageInfo = buildCursorPageInfo(cursorSnapshot.docs, {
+				collection: "users",
+				limit: query.limit,
+			});
+			const users = cursorSnapshot.docs
+				.slice(0, query.limit)
+				.map(mapUserListDoc);
+
+			return {
+				items: users,
+				pagination: {
+					total,
+					limit: query.limit,
+					offset: query.offset,
+					hasMore: pageInfo.hasNextPage,
+				},
+				pageInfo,
+				meta: buildCursorMeta(CURSOR_PAGE_META_SOURCE.CURSOR, total),
+			};
+		}
+
 		// Sin búsqueda: paginación real de Firestore
 		const [countSnap, snapshot] = await Promise.all([
 			db.collection("users").count().get(),
-			db.collection("users")
+			db
+				.collection("users")
 				.orderBy("createdAt", "desc")
 				.offset(query.offset)
 				.limit(query.limit)
@@ -109,22 +244,7 @@ export const userService = {
 		]);
 
 		const total = countSnap.data().count;
-		const users: UserListResult[] = snapshot.docs.map((doc) => {
-			const data = doc.data();
-			return {
-				id: doc.id,
-				uid: data.uid,
-				fullName: data.fullName,
-				email: data.email,
-				phone: data.phone || null,
-				role: data.role || "visitor",
-				customPermissions: data.customPermissions || [],
-				minorsCount: data.minors?.length || 0,
-				minors: data.minors || [],
-				createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
-				updatedAt: data.updatedAt?.toDate?.()?.toISOString() || null,
-			};
-		});
+		const users: UserListResult[] = snapshot.docs.map(mapUserListDoc);
 
 		return {
 			items: users,
@@ -134,6 +254,11 @@ export const userService = {
 				offset: query.offset,
 				hasMore: query.offset + query.limit < total,
 			},
+			pageInfo: {
+				nextCursor: null,
+				hasNextPage: query.offset + query.limit < total,
+			},
+			meta: buildCursorMeta(CURSOR_PAGE_META_SOURCE.CURSOR, total),
 		};
 	},
 
@@ -147,7 +272,9 @@ export const userService = {
 	 *
 	 * Los usuarios se guardan con ID = cédula.
 	 */
-	async listWithSearch(query: UserListQuery): Promise<PaginatedResult<UserListResult>> {
+	async listWithSearch(
+		query: UserListQuery,
+	): Promise<PaginatedResult<UserListResult>> {
 		const searchNormalized = normalizeText(query.search || "");
 		const searchTerm = query.search?.trim() || "";
 
@@ -156,7 +283,7 @@ export const userService = {
 			const userDoc = await db.collection("users").doc(searchTerm).get();
 
 			if (userDoc.exists) {
-				const data = userDoc.data();
+				const data = userDoc.data() as UserDocument;
 				if (!data) {
 					return {
 						items: [],
@@ -166,22 +293,12 @@ export const userService = {
 							offset: 0,
 							hasMore: false,
 						},
+						pageInfo: { nextCursor: null, hasNextPage: false },
+						meta: buildCursorMeta(CURSOR_PAGE_META_SOURCE.SEARCH, 0),
 					};
 				}
 
-				const user: UserListResult = {
-					id: userDoc.id,
-					uid: data.uid,
-					fullName: data.fullName,
-					email: data.email,
-					phone: data.phone || null,
-					role: data.role || "visitor",
-					customPermissions: data.customPermissions || [],
-					minorsCount: data.minors?.length || 0,
-					minors: data.minors || [],
-					createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
-					updatedAt: data.updatedAt?.toDate?.()?.toISOString() || null,
-				};
+			const user = mapUserListData(userDoc.id, data);
 				return {
 					items: [user],
 					pagination: {
@@ -190,6 +307,8 @@ export const userService = {
 						offset: 0,
 						hasMore: false,
 					},
+					pageInfo: { nextCursor: null, hasNextPage: false },
+					meta: buildCursorMeta(CURSOR_PAGE_META_SOURCE.SEARCH, 1),
 				};
 			}
 			return {
@@ -200,6 +319,8 @@ export const userService = {
 					offset: 0,
 					hasMore: false,
 				},
+				pageInfo: { nextCursor: null, hasNextPage: false },
+				meta: buildCursorMeta(CURSOR_PAGE_META_SOURCE.SEARCH, 0),
 			};
 		}
 
@@ -229,20 +350,7 @@ export const userService = {
 		// Combinar resultados sin duplicados
 		const userMap = new Map<string, UserListResult>();
 		for (const doc of fullTokenSnapshot.docs) {
-			const data = doc.data();
-			userMap.set(doc.id, {
-				id: doc.id,
-				uid: data.uid,
-				fullName: data.fullName,
-				email: data.email,
-				phone: data.phone || null,
-				role: data.role || "visitor",
-				customPermissions: data.customPermissions || [],
-				minorsCount: data.minors?.length || 0,
-				minors: data.minors || [],
-				createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
-				updatedAt: data.updatedAt?.toDate?.()?.toISOString() || null,
-			});
+			userMap.set(doc.id, mapUserListDoc(doc));
 		}
 
 		// Solo si no hay suficientes resultados del token completo, buscar por palabras individuales
@@ -265,20 +373,7 @@ export const userService = {
 
 			for (const doc of snapshot.docs) {
 				if (!userMap.has(doc.id)) {
-					const data = doc.data();
-					userMap.set(doc.id, {
-						id: doc.id,
-						uid: data.uid,
-						fullName: data.fullName,
-						email: data.email,
-						phone: data.phone || null,
-						role: data.role || "visitor",
-						customPermissions: data.customPermissions || [],
-						minorsCount: data.minors?.length || 0,
-						minors: data.minors || [],
-						createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
-						updatedAt: data.updatedAt?.toDate?.()?.toISOString() || null,
-					});
+					userMap.set(doc.id, mapUserListDoc(doc));
 				}
 			}
 		}
@@ -336,7 +431,10 @@ export const userService = {
 		});
 
 		const total = users.length;
-		const paginatedUsers = users.slice(query.offset, query.offset + query.limit);
+		const paginatedUsers = users.slice(
+			query.offset,
+			query.offset + query.limit,
+		);
 
 		return {
 			items: paginatedUsers,
@@ -346,6 +444,11 @@ export const userService = {
 				offset: query.offset,
 				hasMore: query.offset + query.limit < total,
 			},
+			pageInfo: {
+				nextCursor: null,
+				hasNextPage: query.offset + query.limit < total,
+			},
+			meta: buildCursorMeta(CURSOR_PAGE_META_SOURCE.SEARCH, total),
 		};
 	},
 
@@ -353,31 +456,19 @@ export const userService = {
 	 * Fallback para búsquedas que no pueden usar searchTokens.
 	 * Carga últimos 100 documentos y filtra en memoria.
 	 */
-	async listWithSearchFallback(query: UserListQuery): Promise<PaginatedResult<UserListResult>> {
+	async listWithSearchFallback(
+		query: UserListQuery,
+	): Promise<PaginatedResult<UserListResult>> {
 		const searchNormalized = normalizeText(query.search || "");
 		const searchTerm = query.search || "";
 
-		const snapshot = await db.collection("users")
+		const snapshot = await db
+			.collection("users")
 			.orderBy("createdAt", "desc")
 			.limit(100)
 			.get();
 
-		let users: UserListResult[] = snapshot.docs.map((doc) => {
-			const data = doc.data();
-			return {
-				id: doc.id,
-				uid: data.uid,
-				fullName: data.fullName,
-				email: data.email,
-				phone: data.phone || null,
-				role: data.role || "visitor",
-				customPermissions: data.customPermissions || [],
-				minorsCount: data.minors?.length || 0,
-				minors: data.minors || [],
-				createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
-				updatedAt: data.updatedAt?.toDate?.()?.toISOString() || null,
-			};
-		});
+		let users: UserListResult[] = snapshot.docs.map(mapUserListDoc);
 
 		// Filtrar usando normalizeText para ignorar tildes
 		users = users.filter(
@@ -388,7 +479,10 @@ export const userService = {
 		);
 
 		const total = users.length;
-		const paginatedUsers = users.slice(query.offset, query.offset + query.limit);
+		const paginatedUsers = users.slice(
+			query.offset,
+			query.offset + query.limit,
+		);
 
 		return {
 			items: paginatedUsers,
@@ -398,6 +492,11 @@ export const userService = {
 				offset: query.offset,
 				hasMore: query.offset + query.limit < total,
 			},
+			pageInfo: {
+				nextCursor: null,
+				hasNextPage: query.offset + query.limit < total,
+			},
+			meta: buildCursorMeta(CURSOR_PAGE_META_SOURCE.SEARCH, total),
 		};
 	},
 
@@ -423,31 +522,19 @@ export const userService = {
 			userDoc = byUid.docs[0];
 		}
 
-		const data = userDoc.data();
+		const data = userDoc.data() as UserDocument;
 		if (!data) return null;
 
 		return {
 			docId: userDoc.id,
-			user: {
-				id: userDoc.id,
-				uid: data.uid,
-				fullName: data.fullName,
-				email: data.email,
-				phone: data.phone || null,
-				role: data.role || "visitor",
-				customPermissions: data.customPermissions || [],
-				minorsCount: data.minors?.length || 0,
-				minors: data.minors || [],
-				createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
-				updatedAt: data.updatedAt?.toDate?.()?.toISOString() || null,
-			},
+			user: mapUserListData(userDoc.id, data),
 		};
 	},
 
 	/**
 	 * Obtiene los consentimientos de un usuario.
 	 */
-	async getConsents(uid: string): Promise<unknown[]> {
+	async getConsents(uid: string): Promise<Consent[]> {
 		const consentsSnap = await db
 			.collection("consents")
 			.where("userId", "==", uid)
@@ -455,11 +542,13 @@ export const userService = {
 
 		return consentsSnap.docs
 			.map((doc) => {
-				const data = doc.data();
+				const data = doc.data() as ConsentDocument;
 				return {
 					id: doc.id,
 					consecutivo: data.consecutivo,
 					policyVersion: data.policyVersion,
+					signatureStatus:
+						data.signaturePath || data.signatureUrl ? "available" : "missing",
 					signatureUrl: data.signatureUrl,
 					minorsCount: data.minorsSnapshot?.length || 0,
 					minors: data.minorsSnapshot || [],
@@ -475,14 +564,18 @@ export const userService = {
 			})
 			.sort((a, b) => {
 				if (!a.createdAt || !b.createdAt) return 0;
-				return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+				return (
+					new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+				);
 			});
 	},
 
 	/**
 	 * Elimina un usuario por ID.
 	 */
-	async delete(id: string): Promise<{ success: boolean; deletedId: string } | null> {
+	async delete(
+		id: string,
+	): Promise<{ success: boolean; deletedId: string } | null> {
 		const result = await this.getById(id);
 		if (!result) return null;
 
@@ -499,11 +592,12 @@ export const userService = {
 // SERVICIO DE STAFF (ADMIN/TRABAJADORES)
 // ============================================================================
 
-const SUPER_ADMIN_EMAIL = "jumpingadmin@gmail.com";
+function getSuperAdminEmail(): string {
+	return env.SUPER_ADMIN_EMAIL;
+}
 
-function isSuperAdmin(email: string | null | undefined): boolean {
-	if (!email) return false;
-	return email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+function isSuperAdmin(email: string): boolean {
+	return email.toLowerCase() === getSuperAdminEmail().toLowerCase();
 }
 
 /**
@@ -512,7 +606,7 @@ function isSuperAdmin(email: string | null | undefined): boolean {
  */
 function mapDocToStaffResult(
 	doc: FirebaseFirestore.DocumentSnapshot,
-	data: FirebaseFirestore.DocumentData,
+	data: StaffDocument,
 ): StaffListResult {
 	return {
 		id: doc.id,
@@ -550,7 +644,7 @@ export const staffService = {
 			const searchTerm = query.search;
 
 			let staff: StaffListResult[] = snapshot.docs
-				.map((doc) => mapDocToStaffResult(doc, doc.data()))
+				.map((doc) => mapDocToStaffResult(doc, doc.data() as StaffDocument))
 				.filter(
 					(user) =>
 						user.fullName?.toLowerCase().includes(searchLower) ||
@@ -559,7 +653,10 @@ export const staffService = {
 				);
 
 			const total = staff.length;
-			const paginatedStaff = staff.slice(query.offset, query.offset + query.limit);
+			const paginatedStaff = staff.slice(
+				query.offset,
+				query.offset + query.limit,
+			);
 
 			return {
 				items: paginatedStaff,
@@ -569,6 +666,8 @@ export const staffService = {
 					offset: query.offset,
 					hasMore: query.offset + query.limit < total,
 				},
+				pageInfo: { nextCursor: null, hasNextPage: query.offset + query.limit < total },
+				meta: buildCursorMeta(CURSOR_PAGE_META_SOURCE.CURSOR, total),
 			};
 		}
 
@@ -578,7 +677,9 @@ export const staffService = {
 			: baseCollection;
 
 		const dataQueryBase = query.role
-			? baseCollection.where("role", "==", query.role).orderBy("createdAt", "desc")
+			? baseCollection
+					.where("role", "==", query.role)
+					.orderBy("createdAt", "desc")
 			: baseCollection.orderBy("createdAt", "desc");
 
 		const [countSnap, snapshot] = await Promise.all([
@@ -588,7 +689,7 @@ export const staffService = {
 
 		const total = countSnap.data().count;
 		const staff: StaffListResult[] = snapshot.docs.map((doc) =>
-			mapDocToStaffResult(doc, doc.data()),
+			mapDocToStaffResult(doc, doc.data() as StaffDocument),
 		);
 
 		return {
@@ -599,6 +700,8 @@ export const staffService = {
 				offset: query.offset,
 				hasMore: query.offset + query.limit < total,
 			},
+			pageInfo: { nextCursor: null, hasNextPage: query.offset + query.limit < total },
+			meta: buildCursorMeta(CURSOR_PAGE_META_SOURCE.CURSOR, total),
 		};
 	},
 
@@ -610,7 +713,7 @@ export const staffService = {
 
 		if (!staffDoc.exists) return null;
 
-		const data = staffDoc.data();
+		const data = staffDoc.data() as StaffDocument;
 		if (!data) return null;
 
 		return mapDocToStaffResult(staffDoc, data);
@@ -713,10 +816,18 @@ export const staffService = {
 	async delete(
 		id: string,
 		authUserUid: string,
-	): Promise<{ success: boolean; deletedId: string } | { error: string; status: number }> {
+		audit?: AdminAuditWriteInput,
+	): Promise<
+		{ success: boolean; deletedId: string } | { error: string; status: number }
+	> {
 		// Obtener email del usuario autenticado
-		const authUserDoc = await db.collection("admin_users").doc(authUserUid).get();
-		const authUserEmail = authUserDoc.data()?.email;
+		const authUserDoc = await db
+			.collection("admin_users")
+			.doc(authUserUid)
+			.get();
+		const authUserEmail = authUserDoc.exists
+			? (authUserDoc.data() as StaffDocument).email
+			: undefined;
 
 		// Solo Super Admin puede eliminar
 		if (!isSuperAdmin(authUserEmail)) {
@@ -743,7 +854,9 @@ export const staffService = {
 			};
 		}
 
-		const staffEmail = staffDoc.data()?.email;
+		const staffEmail = staffDoc.exists
+			? (staffDoc.data() as StaffDocument).email
+			: undefined;
 
 		// Proteger al Super Admin
 		if (isSuperAdmin(staffEmail)) {
@@ -756,12 +869,16 @@ export const staffService = {
 		// Eliminar de Firebase Auth (ignorar si no existe)
 		try {
 			await adminAuth.deleteUser(id);
-		} catch {
-			// Usuario no existe en Auth, continuamos
+		} catch (error) {
+			logger.warn("Firebase Auth deleteUser failed (user may not exist)", { error: error instanceof Error ? error.message : String(error) });
 		}
 
-		// Eliminar documento
-		await db.collection("admin_users").doc(id).delete();
+		const batch = db.batch();
+		batch.delete(db.collection("admin_users").doc(id));
+		if (audit) {
+			addAdminAuditLogToBatch(batch, db.collection("admin_audit_logs"), audit);
+		}
+		await batch.commit();
 
 		return {
 			success: true,
@@ -782,21 +899,32 @@ export const staffService = {
 			return { hasPermission: false, role: "unknown", permissions: [] };
 		}
 
-		const userData = userDoc.data();
+		const userData = userDoc.data() as StaffDocument;
 		const userRole = (userData?.role || "visitor") as UserRole;
 		const customPermissions = userData?.customPermissions || [];
 
-		const effectivePermissions = getEffectivePermissions(userRole, customPermissions);
+		const effectivePermissions = getEffectivePermissions(
+			userRole,
+			customPermissions,
+		);
 
 		if (userRole === "admin") {
-			return { hasPermission: true, role: userRole, permissions: effectivePermissions };
+			return {
+				hasPermission: true,
+				role: userRole,
+				permissions: effectivePermissions,
+			};
 		}
 
 		const canCreate =
 			effectivePermissions.includes("users:create") ||
 			effectivePermissions.includes("roles:manage");
 
-		return { hasPermission: canCreate, role: userRole, permissions: effectivePermissions };
+		return {
+			hasPermission: canCreate,
+			role: userRole,
+			permissions: effectivePermissions,
+		};
 	},
 };
 
@@ -834,6 +962,8 @@ export const minorService = {
 			search: query.search,
 			limit: query.limit,
 			offset: query.offset,
+			cursor: query.cursor,
+			useCursor: query.useCursor,
 		});
 
 		// Mapear al formato esperado por la API existente
@@ -857,6 +987,8 @@ export const minorService = {
 		return {
 			items,
 			pagination: result.pagination,
+			pageInfo: { nextCursor: null, hasNextPage: result.pagination.hasMore },
+			meta: buildCursorMeta(CURSOR_PAGE_META_SOURCE.CURSOR, result.pagination.total),
 		};
 	},
 
@@ -865,8 +997,8 @@ export const minorService = {
 	 * OPTIMIZADO: Lee un solo documento.
 	 */
 	async getById(id: string): Promise<{
-		minor: Record<string, unknown>;
-		parent: Record<string, unknown>;
+		minor: MinorDetail;
+		parent: ParentDetail;
 		userDocId: string;
 		minorIndex: number;
 	} | null> {
@@ -904,10 +1036,16 @@ export const minorService = {
 	 * Elimina un menor por ID (idNumber).
 	 * OPTIMIZADO: Elimina de ambas colecciones.
 	 */
-	async delete(id: string): Promise<{
-		success: boolean;
-		deletedMinor: { fullName: string };
-	} | { error: string; status: number }> {
+	async delete(
+		id: string,
+		audit?: AdminAuditWriteInput,
+	): Promise<
+		| {
+				success: boolean;
+				deletedMinor: { fullName: string };
+		  }
+		| { error: string; status: number }
+	> {
 		const { minorIndexService } = await import("@/services/minorIndexService");
 
 		// Obtener datos del menor antes de eliminar
@@ -916,9 +1054,6 @@ export const minorService = {
 			return { error: "Menor no encontrado", status: 404 };
 		}
 
-		// Eliminar de minors_index
-		await minorIndexService.delete(id);
-
 		// También eliminar del array embebido en users (para consistencia)
 		const userSnap = await db
 			.collection("users")
@@ -926,19 +1061,26 @@ export const minorService = {
 			.limit(1)
 			.get();
 
+		const batch = db.batch();
+		batch.delete(db.collection("minors_index").doc(id));
+
 		if (!userSnap.empty) {
 			const userDoc = userSnap.docs[0];
-			const userData = userDoc.data();
+			const userData = userDoc.data() as UserDocument;
 			if (userData.minors && Array.isArray(userData.minors)) {
 				const updatedMinors = userData.minors.filter(
-					(m: { idNumber?: string }) => m.idNumber !== id,
+					(m: EmbeddedMinor) => m.idNumber !== id,
 				);
-				await userDoc.ref.update({
+				batch.update(userDoc.ref, {
 					minors: updatedMinors,
 					updatedAt: FieldValue.serverTimestamp(),
 				});
 			}
 		}
+		if (audit) {
+			addAdminAuditLogToBatch(batch, db.collection("admin_audit_logs"), audit);
+		}
+		await batch.commit();
 
 		return {
 			success: true,
