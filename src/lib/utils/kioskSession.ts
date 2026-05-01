@@ -1,9 +1,9 @@
 /**
  * Utilidades para persistencia de sesión del Kiosco.
- * 
+ *
  * Usa localStorage para mantener la sesión del visitante por 15 minutos,
  * evitando re-envío de OTPs costosos si el usuario recarga la página.
- * 
+ *
  * SEGURIDAD: La validación crítica se hace en el backend al firmar el consentimiento.
  * Esta persistencia es solo para UX y optimización de costos.
  */
@@ -30,16 +30,18 @@ export interface KioskSession {
 }
 
 /**
- * Guarda la sesión del kiosco en localStorage con expiración de 10 minutos.
+ * Guarda la sesión del kiosco en localStorage con expiración de 15 minutos.
  */
-export function saveKioskSession(session: Omit<KioskSession, "expiresAt">): void {
+export function saveKioskSession(
+	session: Omit<KioskSession, "expiresAt">,
+): void {
 	if (typeof window === "undefined") return;
-	
+
 	const sessionWithExpiry: KioskSession = {
 		...session,
 		expiresAt: Date.now() + SESSION_DURATION_MS,
 	};
-	
+
 	try {
 		localStorage.setItem(KIOSK_SESSION_KEY, JSON.stringify(sessionWithExpiry));
 	} catch (error) {
@@ -53,19 +55,19 @@ export function saveKioskSession(session: Omit<KioskSession, "expiresAt">): void
  */
 export function getKioskSession(): KioskSession | null {
 	if (typeof window === "undefined") return null;
-	
+
 	try {
 		const stored = localStorage.getItem(KIOSK_SESSION_KEY);
 		if (!stored) return null;
-		
+
 		const session: KioskSession = JSON.parse(stored);
-		
+
 		// Verificar expiración
 		if (Date.now() >= session.expiresAt) {
 			clearKioskSession();
 			return null;
 		}
-		
+
 		return session;
 	} catch (error) {
 		console.warn("[KioskSession] Error leyendo sesión:", error);
@@ -81,7 +83,7 @@ export function getKioskSession(): KioskSession | null {
  */
 export function clearKioskSession(): void {
 	if (typeof window === "undefined") return;
-	
+
 	try {
 		localStorage.removeItem(KIOSK_SESSION_KEY);
 	} catch (error) {
