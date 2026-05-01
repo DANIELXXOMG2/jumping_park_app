@@ -27,12 +27,7 @@ const checkUserSchema = z.object({
 // TYPES
 // ============================================================================
 
-interface CheckUserResponse {
-	exists: boolean;
-	userData?: {
-		emailMasked: string;
-	};
-}
+import type { CheckUserResponse } from "@/types/api";
 
 // ============================================================================
 // HELPER
