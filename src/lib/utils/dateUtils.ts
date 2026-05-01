@@ -138,30 +138,37 @@ export function getDateRangeColombia(
 
 	switch (period) {
 		case "today":
-			colombiaStartTimestamp = Math.floor(colombiaTimestamp / 86400000) * 86400000;
+			colombiaStartTimestamp =
+				Math.floor(colombiaTimestamp / 86400000) * 86400000;
 			break;
 		case "week":
-			colombiaStartTimestamp = Math.floor(colombiaTimestamp / 86400000) * 86400000 - 7 * 86400000;
+			colombiaStartTimestamp =
+				Math.floor(colombiaTimestamp / 86400000) * 86400000 - 7 * 86400000;
 			break;
 		case "month": {
 			const colombiaDate = new Date(colombiaTimestamp);
 			colombiaDate.setUTCMonth(colombiaDate.getUTCMonth() - 1);
-			colombiaStartTimestamp = Math.floor(colombiaDate.getTime() / 86400000) * 86400000;
+			colombiaStartTimestamp =
+				Math.floor(colombiaDate.getTime() / 86400000) * 86400000;
 			break;
 		}
 		case "year": {
 			const colombiaDate = new Date(colombiaTimestamp);
 			colombiaDate.setUTCFullYear(colombiaDate.getUTCFullYear() - 1);
-			colombiaStartTimestamp = Math.floor(colombiaDate.getTime() / 86400000) * 86400000;
+			colombiaStartTimestamp =
+				Math.floor(colombiaDate.getTime() / 86400000) * 86400000;
 			break;
 		}
 		default:
-			colombiaStartTimestamp = Math.floor(new Date("2020-01-01").getTime() / 86400000) * 86400000;
+			colombiaStartTimestamp =
+				Math.floor(new Date("2020-01-01").getTime() / 86400000) * 86400000;
 			break;
 	}
 
 	// Convertir start de Colombia a UTC
-	const start = new Date(colombiaStartTimestamp - COLOMBIA_OFFSET_HOURS * 3600000);
+	const start = new Date(
+		colombiaStartTimestamp - COLOMBIA_OFFSET_HOURS * 3600000,
+	);
 
 	return { start, end };
 }
