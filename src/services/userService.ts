@@ -14,7 +14,7 @@ import {
 import { createLogger } from "@/lib/logger";
 import { env } from "@/lib/env";
 import { getEffectivePermissions, type UserRole } from "@/types/auth";
-import type { Consent } from "@/types/firestore";
+import type { Consent, ConsentDocument } from "@/types/firestore";
 import { CURSOR_PAGE_META_SOURCE, type PaginatedResult } from "@/types/pagination";
 
 const logger = createLogger("UserService");
@@ -116,20 +116,6 @@ interface StaffDocument {
 /**
  * Shape crudo de un documento de consentimiento en Firestore.
  */
-interface ConsentDocument {
-	consecutivo?: number;
-	policyVersion?: string;
-	signaturePath?: string;
-	signatureUrl?: string;
-	minorsSnapshot?: unknown[];
-	adultSnapshot?: { fullName?: string; email?: string; phone?: string };
-	userId?: string;
-	ipAddress?: string;
-	createdAt?: FirebaseFirestore.Timestamp;
-	signedAt?: FirebaseFirestore.Timestamp;
-	validUntil?: FirebaseFirestore.Timestamp;
-}
-
 export interface CreateStaffData {
 	email: string;
 	password: string;
