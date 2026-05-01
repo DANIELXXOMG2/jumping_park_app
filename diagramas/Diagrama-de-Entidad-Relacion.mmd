@@ -1,0 +1,118 @@
+erDiagram
+    USERS ||--o{ CONSENTS : "firma"
+    USERS ||--o{ MINORS_INDEX : "proyecta"
+    USERS ||--o| OTP_ACCESS_SESSIONS : "valida kiosk"
+    USERS ||--o{ OFFLINE_SYNC : "ack idempotente"
+    CONSENTS ||--o| OFFLINE_SYNC : "dedupeKey resuelve consentimiento"
+    CONSENTS ||--o{ ADMIN_AUDIT_LOGS : "acciones admin"
+    ADMIN_METRICS_OVERVIEW ||--o{ ADMIN_METRICS_DAILY : "resume por fecha"
+
+    USERS {
+        string uid PK "Cedula del responsable"
+        string fullName
+        string email
+        string phone
+        string address
+        string role
+        array customPermissions
+        array minors_embebidos
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    MINORS_INDEX {
+        string idNumber PK "Documento del menor"
+        string fullName
+        string relationship
+        string parentId FK "Ref a USERS.uid"
+        string parentEmail
+        string fullNameLower
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    CONSENTS {
+        string id PK "Auto-ID Firestore"
+        int consecutivo
+        string userId FK "Ref a USERS.uid"
+        json adultSnapshot
+        array minorsSnapshot
+        string signaturePath
+        string signatureUrl
+        string policyVersion
+        string ipAddress
+        timestamp signedAt
+        timestamp validUntil
+        timestamp createdAt
+    }
+
+    OTP_CHALLENGES {
+        string email PK
+        string code
+        timestamp expiresAt
+        int attempts
+        timestamp lockedUntil
+        timestamp lastSentAt
+        timestamp lastValidatedAt
+    }
+
+    OTP_ACCESS_SESSIONS {
+        string userId PK "Ref a USERS.uid"
+        string email
+        timestamp validatedAt
+        timestamp expiresAt
+        string challengeEmail
+    }
+
+    OTP_SESSIONS_LEGACY {
+        string id PK "legacy email o cedula"
+        string email
+        timestamp expiresAt
+        string userId
+    }
+
+    OFFLINE_SYNC {
+        string dedupeKey PK
+        string consentId FK
+        int consecutivo
+        string userId FK
+        string policyVersion
+        string signedAtLocal
+        string status
+        string source
+        timestamp acknowledgedAt
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    ADMIN_METRICS_OVERVIEW {
+        string id PK "overview"
+        json stats
+        array recentUsers
+        array recentConsents
+        array chartData
+        json freshness
+        json unknownDateBuckets
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    ADMIN_METRICS_DAILY {
+        string id PK "daily:yyyy-mm-dd"
+        string dateKey
+        json counts
+        array minorIds
+        json freshness
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    ADMIN_AUDIT_LOGS {
+        string id PK
+        string action
+        json actor
+        json target
+        json request
+        json details
+        timestamp createdAt
+    }

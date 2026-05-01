@@ -1,31 +1,46 @@
 sequenceDiagram
-    participant User as Visitante (Kiosko)
-    participant Front as Frontend (Next.js)
-    participant API as API Route (/api/otp)
-    participant DB as Firestore
-    participant Mail as Resend API
-    participant Email as Correo Usuario
+    participant Visitor as Visitante (Kiosk)
+    participant UI as Kiosk UI (Next.js)
+    participant OtpAPI as API (/api/otp)
+    participant ValidateAPI as API (/api/otp/validate)
+    participant ConsentAPI as API (/api/consentimientos)
+    participant AuthSvc as authService
+    participant ConsentSvc as consentService
+    participant FS as Firestore
+    participant Storage as Firebase Storage
+    participant Mail as Resend
 
-    User->>Front: Ingresa Cédula
-    Front->>API: POST /api/usuarios/check {cedula}
-    API->>DB: ¿Existe usuario?
-    DB-->>API: (Si/No)
-    
-    alt Usuario Nuevo o Existente
-        API->>API: Generar código OTP (ej. 4582)
-        API->>DB: Guardar OTP temporal con expiración
-        API->>Mail: Enviar OTP via Resend
-        Mail->>Email: "Tu código es 4582"
-        API-->>Front: OK (Esperando OTP)
-    end
+    Visitor->>UI: Ingresa documento y correo asociado
+    UI->>OtpAPI: Solicitar OTP
+    OtpAPI->>AuthSvc: requestOtpChallenge(...)
+    AuthSvc->>FS: Leer/escribir otp_challenges
+    AuthSvc->>Mail: Enviar OTP
+    Mail-->>Visitor: Código OTP por correo
+    OtpAPI-->>UI: OK / rate-limited / locked
 
-    User->>Front: Ingresa OTP
-    Front->>API: POST /api/otp/validate
-    API->>DB: Verificar OTP
-    
-    alt OTP Correcto
-        DB-->>API: Valido
-        API-->>Front: Token de Sesión / Permitir Acceso
-    else OTP Incorrecto
-        API-->>Front: Error 401
+    Visitor->>UI: Ingresa OTP recibido
+    UI->>ValidateAPI: Validar OTP
+    ValidateAPI->>AuthSvc: validateOtpChallengeRequest(...)
+    AuthSvc->>FS: Validar otp_challenges
+    AuthSvc->>FS: Crear otp_access_sessions (split model)
+    AuthSvc->>FS: Fallback legacy otp_sessions si aplica
+    ValidateAPI-->>UI: Acceso validado / error / lockout
+
+    alt Flujo online normal
+        Visitor->>UI: Firma consentimiento
+        UI->>ConsentAPI: POST /api/consentimientos
+        ConsentAPI->>AuthSvc: verifyOtpSession(userId)
+        AuthSvc->>FS: Leer otp_access_sessions / fallback otp_sessions
+        ConsentAPI->>ConsentSvc: createConsent(...)
+        ConsentSvc->>Storage: Guardar firma
+        ConsentSvc->>FS: Crear consent + actualizar users/minors_index + contador
+        ConsentAPI-->>UI: 201 consentId/consecutivo
+    else Flujo offline diferido
+        UI->>UI: Guardar payload en cola local
+        UI-->>Visitor: Confirmación local / pendiente de sync
+        UI->>ConsentAPI: Reintento al volver online
+        ConsentAPI->>ConsentSvc: createConsent(...offlineSync)
+        ConsentSvc->>FS: Resolver offline_sync/{dedupeKey}
+        ConsentSvc->>FS: Reusar ack previo o crear consentimiento idempotente
+        ConsentAPI-->>UI: ACK idempotente / conflicto controlado
     end
