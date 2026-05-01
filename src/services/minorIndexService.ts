@@ -71,11 +71,56 @@ export interface PaginatedMinorResult {
 	};
 }
 
+export interface ParentMinorsQuery {
+	limit: number;
+}
+
 // ============================================================================
 // SERVICIO
 // ============================================================================
 
 export const minorIndexService = {
+	/**
+	 * Lista menores asociados a un padre usando la colección optimizada.
+	 */
+	async getMinorsByParentId(
+		parentId: string,
+		query: ParentMinorsQuery,
+	): Promise<
+		Array<{
+			firstName: string;
+			lastName: string;
+			birthDate: string;
+			relationship: string;
+			eps?: string;
+			idType: string;
+			idNumber: string;
+			medicalCondition?: string;
+			lastUsed?: string;
+		}>
+	> {
+		const minorsSnapshot = await db
+			.collection(MINORS_INDEX_COLLECTION)
+			.where("parentId", "==", parentId)
+			.orderBy("updatedAt", "desc")
+			.limit(query.limit)
+			.get();
+
+		return minorsSnapshot.docs.map((doc) => {
+			const data = doc.data();
+			return {
+				firstName: data.firstName || "",
+				lastName: data.lastName || "",
+				birthDate: data.birthDate || "",
+				relationship: data.relationship || "otro",
+				eps: data.eps,
+				idType: data.idType || "ti",
+				idNumber: data.idNumber || doc.id,
+				medicalCondition: data.medicalCondition,
+				lastUsed: data.updatedAt?.toDate?.()?.toISOString(),
+			};
+		});
+	},
 	/**
 	 * Sincroniza menores de un usuario a la colección minors_index.
 	 * Llamar después de crear/actualizar consentimiento o usuario.
