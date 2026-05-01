@@ -101,24 +101,18 @@ const COLOMBIA_OFFSET_HOURS = -5;
  *   .get();
  */
 export function getTodayStartColombia(): Date {
-	const now = new Date();
+	const utcTimestamp = Date.now();
 
-	// Obtener la hora actual en Colombia
-	const utcTime = now.getTime() + now.getTimezoneOffset() * 60000;
-	const colombiaTime = new Date(utcTime + COLOMBIA_OFFSET_HOURS * 3600000);
+	// Ajustar a zona horaria de Colombia (UTC-5)
+	const colombiaTimestamp = utcTimestamp + COLOMBIA_OFFSET_HOURS * 3600000;
 
-	// Obtener medianoche de Colombia
-	const colombiaMidnight = new Date(colombiaTime);
-	colombiaMidnight.setHours(0, 0, 0, 0);
+	// Calcular inicio del día en Colombia (truncate a día)
+	const colombiaDayStart = Math.floor(colombiaTimestamp / 86400000) * 86400000;
 
-	// Convertir medianoche de Colombia de vuelta a UTC para la query
-	const midnightUtc = new Date(
-		colombiaMidnight.getTime() -
-			COLOMBIA_OFFSET_HOURS * 3600000 -
-			now.getTimezoneOffset() * 60000,
-	);
+	// Convertir de vuelta a UTC
+	const utcDayStart = colombiaDayStart - COLOMBIA_OFFSET_HOURS * 3600000;
 
-	return midnightUtc;
+	return new Date(utcDayStart);
 }
 
 /**
@@ -130,55 +124,44 @@ export function getTodayStartColombia(): Date {
 export function getDateRangeColombia(
 	period: "today" | "week" | "month" | "year" | "all",
 ): { start: Date; end: Date } {
-	const now = new Date();
+	const utcTimestamp = Date.now();
 
-	// Obtener la hora actual en Colombia
-	const utcTime = now.getTime() + now.getTimezoneOffset() * 60000;
-	const colombiaTime = new Date(utcTime + COLOMBIA_OFFSET_HOURS * 3600000);
+	// Ajustar a zona horaria de Colombia (UTC-5)
+	const colombiaTimestamp = utcTimestamp + COLOMBIA_OFFSET_HOURS * 3600000;
 
 	// Calcular fin del día en Colombia y convertir a UTC
-	const colombiaEndOfDay = new Date(colombiaTime);
-	colombiaEndOfDay.setHours(23, 59, 59, 999);
-	const end = new Date(
-		colombiaEndOfDay.getTime() -
-			COLOMBIA_OFFSET_HOURS * 3600000 -
-			now.getTimezoneOffset() * 60000,
-	);
+	const colombiaDayEnd = Math.ceil(colombiaTimestamp / 86400000) * 86400000 - 1;
+	const end = new Date(colombiaDayEnd - COLOMBIA_OFFSET_HOURS * 3600000);
 
 	// Calcular inicio según el período
-	let colombiaStart: Date;
+	let colombiaStartTimestamp: number;
 
 	switch (period) {
 		case "today":
-			colombiaStart = new Date(colombiaTime);
-			colombiaStart.setHours(0, 0, 0, 0);
+			colombiaStartTimestamp = Math.floor(colombiaTimestamp / 86400000) * 86400000;
 			break;
 		case "week":
-			colombiaStart = new Date(colombiaTime);
-			colombiaStart.setDate(colombiaTime.getDate() - 7);
-			colombiaStart.setHours(0, 0, 0, 0);
+			colombiaStartTimestamp = Math.floor(colombiaTimestamp / 86400000) * 86400000 - 7 * 86400000;
 			break;
-		case "month":
-			colombiaStart = new Date(colombiaTime);
-			colombiaStart.setMonth(colombiaTime.getMonth() - 1);
-			colombiaStart.setHours(0, 0, 0, 0);
+		case "month": {
+			const colombiaDate = new Date(colombiaTimestamp);
+			colombiaDate.setUTCMonth(colombiaDate.getUTCMonth() - 1);
+			colombiaStartTimestamp = Math.floor(colombiaDate.getTime() / 86400000) * 86400000;
 			break;
-		case "year":
-			colombiaStart = new Date(colombiaTime);
-			colombiaStart.setFullYear(colombiaTime.getFullYear() - 1);
-			colombiaStart.setHours(0, 0, 0, 0);
+		}
+		case "year": {
+			const colombiaDate = new Date(colombiaTimestamp);
+			colombiaDate.setUTCFullYear(colombiaDate.getUTCFullYear() - 1);
+			colombiaStartTimestamp = Math.floor(colombiaDate.getTime() / 86400000) * 86400000;
 			break;
+		}
 		default:
-			colombiaStart = new Date(2020, 0, 1);
+			colombiaStartTimestamp = Math.floor(new Date("2020-01-01").getTime() / 86400000) * 86400000;
 			break;
 	}
 
-	// Convertir start a UTC
-	const start = new Date(
-		colombiaStart.getTime() -
-			COLOMBIA_OFFSET_HOURS * 3600000 -
-			now.getTimezoneOffset() * 60000,
-	);
+	// Convertir start de Colombia a UTC
+	const start = new Date(colombiaStartTimestamp - COLOMBIA_OFFSET_HOURS * 3600000);
 
 	return { start, end };
 }
@@ -189,30 +172,33 @@ export function getDateRangeColombia(
 
 /**
  * Calcula la edad en años a partir de una fecha de nacimiento.
- * 
+ *
  * @param birthDate - Fecha de nacimiento (string ISO, Date, o Firestore Timestamp)
  * @returns La edad en años como número
- * 
+ *
  * @example
  * calculateAge("2015-06-15") // => 10 (si hoy es 2026)
  * calculateAge(new Date("2010-03-20")) // => 15
  */
-export function calculateAge(birthDate: string | Date | FirestoreDateValue): number {
+export function calculateAge(
+	birthDate: string | Date | FirestoreDateValue,
+): number {
 	if (!birthDate) return 0;
-	
-	const birth = birthDate instanceof Date 
-		? birthDate 
-		: typeof birthDate === "string" 
-			? new Date(birthDate)
-			: toJsDate(birthDate);
-	
+
+	const birth =
+		birthDate instanceof Date
+			? birthDate
+			: typeof birthDate === "string"
+				? new Date(birthDate)
+				: toJsDate(birthDate);
+
 	const today = new Date();
 	let age = today.getFullYear() - birth.getFullYear();
 	const monthDiff = today.getMonth() - birth.getMonth();
-	
+
 	if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
 		age--;
 	}
-	
+
 	return age;
 }
