@@ -1,6 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { verifyAdminTokenWithPermission } from "@/lib/adminAuth";
+import { createLogger } from "@/lib/logger";
 import { minorIndexService } from "@/services/minorIndexService";
+
+const logger = createLogger("ApiAdminMigrateMinors");
 
 /**
  * POST /api/admin/migrate/minors
@@ -11,21 +14,24 @@ import { minorIndexService } from "@/services/minorIndexService";
 export async function POST(request: NextRequest) {
 	try {
 		// Verificar autenticación y permiso admin (solo super_admin debería ejecutar esto)
-		const authResult = await verifyAdminTokenWithPermission(request, "settings:manage");
+		const authResult = await verifyAdminTokenWithPermission(
+			request,
+			"settings:manage",
+		);
 		if (!authResult.success) {
 			return authResult.response;
 		}
 
-		console.log("[Migration] Iniciando migración de menores a minors_index...");
+		logger.info("Iniciando migracion de menores a minors_index");
 
 		const result = await minorIndexService.migrateFromUsers();
 
-		console.log(
-			`[Migration] Migración completada: ${result.usersProcessed} usuarios procesados, ${result.minorsMigrated} menores migrados`,
+		logger.info(
+			`Migracion completada: ${result.usersProcessed} usuarios procesados, ${result.minorsMigrated} menores migrados`,
 		);
 
 		if (result.errors.length > 0) {
-			console.warn("[Migration] Errores durante migración:", result.errors);
+			logger.warn("Errores durante migracion", result.errors);
 		}
 
 		return NextResponse.json({
@@ -39,7 +45,7 @@ export async function POST(request: NextRequest) {
 			errors: result.errors.slice(0, 50), // Limitar errores mostrados
 		});
 	} catch (error) {
-		console.error("[Migration] Error durante migración:", error);
+		logger.error("Error durante migracion", error);
 		return NextResponse.json(
 			{
 				success: false,
@@ -56,7 +62,10 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
 	try {
-		const authResult = await verifyAdminTokenWithPermission(request, "settings:manage");
+		const authResult = await verifyAdminTokenWithPermission(
+			request,
+			"settings:manage",
+		);
 		if (!authResult.success) {
 			return authResult.response;
 		}
@@ -66,9 +75,10 @@ export async function GET(request: NextRequest) {
 		return NextResponse.json({
 			success: true,
 			minorsIndexCount: count,
-			message: count > 0 
-				? "La colección minors_index tiene datos" 
-				: "La colección minors_index está vacía - ejecutar migración",
+			message:
+				count > 0
+					? "La colección minors_index tiene datos"
+					: "La colección minors_index está vacía - ejecutar migración",
 		});
 	} catch (error) {
 		return NextResponse.json(
