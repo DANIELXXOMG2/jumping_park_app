@@ -1,4 +1,4 @@
-import { getApp, getApps, initializeApp } from "firebase/app";
+import { type FirebaseOptions, getApp, getApps, initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import {
 	CACHE_SIZE_UNLIMITED,
@@ -9,7 +9,7 @@ import {
 	persistentMultipleTabManager,
 } from "firebase/firestore";
 
-const firebaseConfig = {
+const firebaseConfig: FirebaseOptions = {
 	apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
 	authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
 	projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
@@ -29,11 +29,6 @@ const auth = getAuth(app);
  * En el servidor: usa getFirestore básico.
  */
 function initializeFirestoreWithPersistence(): Firestore {
-	// Si ya hay apps inicializadas, Firestore ya existe - usar getFirestore
-	if (getApps().length > 1) {
-		return getFirestore(app);
-	}
-
 	// En el servidor (SSR), usar inicialización básica
 	if (typeof window === "undefined") {
 		return getFirestore(app);
@@ -49,11 +44,14 @@ function initializeFirestoreWithPersistence(): Firestore {
 		});
 	} catch (error) {
 		// Si Firestore ya fue inicializado (Fast Refresh), retornar instancia existente
-		console.warn("[Firestore] Ya inicializado, usando instancia existente:", error);
+		console.warn(
+			"[Firestore] Ya inicializado, usando instancia existente:",
+			error,
+		);
 		return getFirestore(app);
 	}
 }
 
-const firestore = initializeFirestoreWithPersistence();
+initializeFirestoreWithPersistence();
 
-export { app, auth, firestore };
+export { app, auth };
