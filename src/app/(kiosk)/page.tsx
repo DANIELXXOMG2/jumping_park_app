@@ -80,13 +80,15 @@ export default function HomePage() {
 					<div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none translate-x-[35%] sm:translate-x-[38%] md:translate-x-[40%] lg:translate-x-[40%]">
 						<div className="relative">
 							{/* Máscara con degradado suave para integrar con el fondo */}
-							<div 
+							<div
 								className="relative overflow-hidden"
 								style={{
-									maskImage: 'radial-gradient(ellipse 80% 80% at 70% 50%, black 20%, transparent 70%), linear-gradient(to right, transparent 0%, black 25%, black 100%)',
-									WebkitMaskImage: 'radial-gradient(ellipse 80% 80% at 70% 50%, black 20%, transparent 70%), linear-gradient(to right, transparent 0%, black 25%, black 100%)',
-									maskComposite: 'intersect',
-									WebkitMaskComposite: 'source-in',
+									maskImage:
+										"radial-gradient(ellipse 80% 80% at 70% 50%, black 20%, transparent 70%), linear-gradient(to right, transparent 0%, black 25%, black 100%)",
+									WebkitMaskImage:
+										"radial-gradient(ellipse 80% 80% at 70% 50%, black 20%, transparent 70%), linear-gradient(to right, transparent 0%, black 25%, black 100%)",
+									maskComposite: "intersect",
+									WebkitMaskComposite: "source-in",
 								}}
 							>
 								<Image
@@ -95,7 +97,7 @@ export default function HomePage() {
 									width={2000}
 									height={1560}
 									className="h-auto opacity-60 mix-blend-screen md:opacity-50"
-									style={{ minWidth: '600px' }}
+									style={{ minWidth: "600px" }}
 								/>
 							</div>
 							{/* Glow suave que se mezcla con el fondo espacial */}
@@ -112,9 +114,9 @@ export default function HomePage() {
 								alt="Jumping Park - Logo"
 								width={280}
 								height={100}
-							priority
-							className="h-auto w-48 drop-shadow-[0_0_30px_rgba(255,255,255,0.3)] sm:w-56 md:w-64 lg:w-72"
-						/>
+								priority
+								className="h-auto w-48 drop-shadow-[0_0_30px_rgba(255,255,255,0.3)] sm:w-56 md:w-64 lg:w-72"
+							/>
 						</SecretAdminTrigger>
 					</div>
 
