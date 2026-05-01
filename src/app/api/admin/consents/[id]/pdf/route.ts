@@ -8,12 +8,12 @@
  */
 import { type NextRequest, NextResponse } from "next/server";
 import { verifyAdminTokenWithPermission } from "@/lib/adminAuth";
-import { admin } from "@/lib/firebaseAdmin";
-import { loadConsentSignatureBuffer } from "@/services/consentService";
+import { createLogger } from "@/lib/logger";
+import { consentService, loadConsentSignatureBuffer } from "@/services/consentService";
 import { generateConsentPdf } from "@/services/pdfService";
 import type { Consent } from "@/types/firestore";
 
-const db = admin.firestore();
+const logger = createLogger("ApiAdminConsentPdf");
 
 interface RouteParams {
 	params: Promise<{ id: string }>;
@@ -24,7 +24,10 @@ export async function GET(
 	{ params }: RouteParams,
 ): Promise<NextResponse> {
 	// 1. Verificar autenticación y permiso consents:view
-	const authResult = await verifyAdminTokenWithPermission(request, "consents:view");
+	const authResult = await verifyAdminTokenWithPermission(
+		request,
+		"consents:view",
+	);
 	if (!authResult.success) {
 		return authResult.response;
 	}
@@ -40,34 +43,30 @@ export async function GET(
 			);
 		}
 
-		// 3. Buscar documento en Firestore
-		const consentDoc = await db.collection("consents").doc(id).get();
+		// 3. Buscar documento via servicio
+		const consentData = await consentService.getConsentById(id);
 
-		if (!consentDoc.exists) {
+		if (!consentData) {
 			return NextResponse.json(
 				{ error: "Consentimiento no encontrado" },
 				{ status: 404 },
 			);
 		}
 
-		const consentData = {
-			id: consentDoc.id,
-			...consentDoc.data(),
-		} as Consent;
-
 		let signatureBuffer: Buffer | undefined;
 
 		try {
-			signatureBuffer = await loadConsentSignatureBuffer(consentData)
+			signatureBuffer = await loadConsentSignatureBuffer(consentData);
 		} catch (error) {
-			console.warn("[PDF Admin] No se pudo obtener la firma:", error);
+			logger.warn("No se pudo obtener la firma", error);
 		}
 
 		// 5. Generar PDF
 		const pdfBuffer = await generateConsentPdf(consentData, signatureBuffer);
 
 		// 6. Retornar PDF con headers adecuados
-		const consecutivo = consentData.consecutivo || consentData.id?.slice(0, 8) || "sin-numero";
+		const consecutivo =
+			consentData.consecutivo || consentData.id?.slice(0, 8) || "sin-numero";
 		const filename = `consentimiento-${consecutivo}.pdf`;
 
 		// Convertir Buffer a Uint8Array para compatibilidad con NextResponse
@@ -83,8 +82,9 @@ export async function GET(
 			},
 		});
 	} catch (error) {
-		console.error("[API Admin Consent PDF] Error:", error);
-		const errorMessage = error instanceof Error ? error.message : "Error desconocido";
+		logger.error("Error generando PDF administrativo", error);
+		const errorMessage =
+			error instanceof Error ? error.message : "Error desconocido";
 		return NextResponse.json(
 			{ error: "Error al generar el PDF", details: errorMessage },
 			{ status: 500 },

@@ -1058,6 +1058,16 @@ class ConsentService {
 			signedAt,
 		};
 	}
+
+	/**
+	 * Obtiene un consentimiento por su ID.
+	 * Retorna null si no existe.
+	 */
+	async getConsentById(id: string): Promise<Consent | null> {
+		const doc = await db.collection(this.CONSENTS_COLLECTION).doc(id).get();
+		if (!doc.exists) return null;
+		return doc.data() as Consent;
+	}
 }
 
 // ============================================================================
