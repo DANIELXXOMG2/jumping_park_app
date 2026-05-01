@@ -793,8 +793,13 @@ export const adminMetricsService = {
 			if (data.signedAt) {
 				if (data.signedAt instanceof Date) {
 					signedAt = data.signedAt.toISOString();
-				} else if (typeof (data.signedAt as unknown as { toDate?(): Date }).toDate === "function") {
-					signedAt = (data.signedAt as unknown as { toDate(): Date }).toDate().toISOString();
+				} else if (
+					typeof (data.signedAt as unknown as { toDate?(): Date }).toDate ===
+					"function"
+				) {
+					signedAt = (data.signedAt as unknown as { toDate(): Date })
+						.toDate()
+						.toISOString();
 				}
 			}
 
@@ -934,7 +939,9 @@ export const adminMetricsService = {
 
 	async buildAdminLiveDetailedStatsResponse(
 		period: AdminMetricPeriod,
-	): Promise<AdminDetailedStats & { meta: { source: string; fallbackApplied: boolean } }> {
+	): Promise<
+		AdminDetailedStats & { meta: { source: string; fallbackApplied: boolean } }
+	> {
 		const { start, end } = getDateRangeColombia(period);
 		const duration = end.getTime() - start.getTime();
 		const previousRange = {
@@ -988,7 +995,8 @@ export const adminMetricsService = {
 		let activeConsents = 0;
 		let expiredConsents = 0;
 		const uniqueMinorIds = new Set<string>();
-		const dayActivity: Record<string, { consents: number; minors: number }> = {};
+		const dayActivity: Record<string, { consents: number; minors: number }> =
+			{};
 
 		for (const doc of consentsSnap.docs) {
 			const data = doc.data();
@@ -1007,7 +1015,8 @@ export const adminMetricsService = {
 			const signedAt = data.signedAt?.toDate?.();
 			if (signedAt) {
 				const dayKey = signedAt.toISOString().split("T")[0] || "";
-				if (!dayActivity[dayKey]) dayActivity[dayKey] = { consents: 0, minors: 0 };
+				if (!dayActivity[dayKey])
+					dayActivity[dayKey] = { consents: 0, minors: 0 };
 				dayActivity[dayKey].consents += 1;
 				dayActivity[dayKey].minors += minorsCount;
 			}
@@ -1047,7 +1056,11 @@ export const adminMetricsService = {
 
 		if (period === ADMIN_METRIC_PERIOD.YEAR) {
 			for (let index = 11; index >= 0; index -= 1) {
-				const monthStart = new Date(now.getFullYear(), now.getMonth() - index, 1);
+				const monthStart = new Date(
+					now.getFullYear(),
+					now.getMonth() - index,
+					1,
+				);
 				const monthKey = monthStart.toISOString().slice(0, 7);
 				let consents = 0;
 				let users = 0;
