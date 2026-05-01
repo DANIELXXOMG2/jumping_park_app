@@ -1,18 +1,24 @@
 /**
  * API Route: /api/admin/users/recent
  * Retorna usuarios registrados en los últimos N días.
- * 
+ *
  * 🔥 OPTIMIZADO: Este endpoint reemplaza las consultas directas de Firestore
  * desde el cliente, permitiendo caché SWR y reduciendo lecturas.
  */
 import { type NextRequest, NextResponse } from "next/server";
 import { verifyAdminTokenWithPermission } from "@/lib/adminAuth";
 import { db } from "@/lib/firebaseAdmin";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("ApiAdminRecentUsers");
 
 export async function GET(request: NextRequest) {
 	try {
 		// Verificar autenticación y permiso dashboard:view
-		const authResult = await verifyAdminTokenWithPermission(request, "dashboard:view");
+		const authResult = await verifyAdminTokenWithPermission(
+			request,
+			"dashboard:view",
+		);
 		if (!authResult.success) {
 			return authResult.response;
 		}
@@ -46,10 +52,10 @@ export async function GET(request: NextRequest) {
 			daysRange: days,
 		});
 	} catch (error) {
-		console.error("[API /admin/users/recent] Error:", error);
+		logger.error("Error obteniendo usuarios recientes", error);
 		return NextResponse.json(
 			{ error: "Error al obtener usuarios recientes" },
-			{ status: 500 }
+			{ status: 500 },
 		);
 	}
 }
