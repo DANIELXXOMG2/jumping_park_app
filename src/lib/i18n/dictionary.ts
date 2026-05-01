@@ -558,8 +558,8 @@ export const dictionary = {
 		en: "No previously registered participants",
 	},
 	"minors.history.useAddNew": {
-		es: "Usa \"Agregar Nuevo\" para registrar nuevos participantes",
-		en: "Use \"Add New\" to register new participants",
+		es: 'Usa "Agregar Nuevo" para registrar nuevos participantes',
+		en: 'Use "Add New" to register new participants',
 	},
 	"minors.history.selectPrompt": {
 		es: "Toca para seleccionar los participantes de hoy:",
@@ -932,7 +932,7 @@ export type DictionaryKey = keyof typeof dictionary;
 export function getTranslation(
 	key: DictionaryKey,
 	language: Language,
-	replacements?: Record<string, string | number>
+	replacements?: Record<string, string | number>,
 ): string {
 	const entry = dictionary[key];
 	if (!entry) {
@@ -945,7 +945,10 @@ export function getTranslation(
 	// Reemplazar placeholders como {min}, {max}, etc.
 	if (replacements) {
 		for (const [placeholder, value] of Object.entries(replacements)) {
-			text = text.replace(new RegExp(`\\{${placeholder}\\}`, "g"), String(value));
+			text = text.replace(
+				new RegExp(`\\{${placeholder}\\}`, "g"),
+				String(value),
+			);
 		}
 	}
 
