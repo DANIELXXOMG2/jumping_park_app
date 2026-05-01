@@ -181,6 +181,24 @@ export interface Consent {
 	offlineSync?: OfflineIdempotencyDescriptor;
 }
 
+/**
+ * Shape crudo de un documento de consentimiento en Firestore.
+ * Usado para tipar doc.data() en lecturas administrativas.
+ */
+export interface ConsentDocument {
+	consecutivo?: number;
+	policyVersion?: string;
+	signaturePath?: string;
+	signatureUrl?: string;
+	minorsSnapshot?: Minor[];
+	adultSnapshot?: UserProfile;
+	userId?: string;
+	ipAddress?: string;
+	createdAt?: FirestoreDateValue;
+	signedAt?: FirestoreDateValue;
+	validUntil?: FirestoreDateValue;
+}
+
 export interface OfflineSyncLedger {
 	dedupeKey: string;
 	consentId: string;
