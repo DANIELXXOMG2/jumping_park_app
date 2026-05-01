@@ -10,12 +10,16 @@
  * 3. Se elimina un menor
  */
 import { FieldValue } from "firebase-admin/firestore";
-import { db } from "@/lib/firebaseAdmin";
 import {
-	generateSearchTokens,
-	normalizeText,
-} from "@/lib/utils/searchUtils";
+	applyCreatedAtCursor,
+	buildCreatedAtOrderedQuery,
+	buildCursorMeta,
+	buildCursorPageInfo,
+} from "@/lib/adminCursor";
+import { db } from "@/lib/firebaseAdmin";
+import { generateSearchTokens, normalizeText } from "@/lib/utils/searchUtils";
 import type { Minor, MinorDocument, UserProfile } from "@/types/firestore";
+import { CURSOR_PAGE_META_SOURCE } from "@/types/pagination";
 
 const MINORS_INDEX_COLLECTION = "minors_index";
 const COUNTERS_COLLECTION = "_counters";
@@ -27,7 +31,10 @@ const COUNTERS_COLLECTION = "_counters";
 /**
  * Combina tokens de menor y padre usando normalización de tildes.
  */
-function buildMinorSearchTokens(minorName: string, parentName: string): string[] {
+function buildMinorSearchTokens(
+	minorName: string,
+	parentName: string,
+): string[] {
 	const minorTokens = generateSearchTokens(minorName);
 	const parentTokens = generateSearchTokens(parentName);
 	return [...new Set([...minorTokens, ...parentTokens])];
@@ -42,6 +49,8 @@ export interface MinorIndexQuery {
 	limit: number;
 	offset: number;
 	parentId?: string;
+	cursor?: string;
+	useCursor?: boolean;
 }
 
 export interface PaginatedMinorResult {
@@ -51,6 +60,14 @@ export interface PaginatedMinorResult {
 		limit: number;
 		offset: number;
 		hasMore: boolean;
+	};
+	pageInfo?: {
+		nextCursor: string | null;
+		hasNextPage: boolean;
+	};
+	meta?: {
+		totalApprox?: number;
+		source: "cursor" | "search";
 	};
 }
 
@@ -140,16 +157,17 @@ export const minorIndexService = {
 	 * - Sin búsqueda: Paginación directa
 	 */
 	async list(query: MinorIndexQuery): Promise<PaginatedMinorResult> {
-		let firestoreQuery = db
-			.collection(MINORS_INDEX_COLLECTION)
-			.orderBy("createdAt", "desc");
+		let firestoreQuery = buildCreatedAtOrderedQuery(
+			db.collection(MINORS_INDEX_COLLECTION),
+		);
 
 		// Filtrar por padre si se especifica
 		if (query.parentId) {
-			firestoreQuery = db
-				.collection(MINORS_INDEX_COLLECTION)
-				.where("parentId", "==", query.parentId)
-				.orderBy("createdAt", "desc");
+			firestoreQuery = buildCreatedAtOrderedQuery(
+				db
+					.collection(MINORS_INDEX_COLLECTION)
+					.where("parentId", "==", query.parentId),
+			);
 		}
 
 		// Obtener total para paginación
@@ -246,7 +264,10 @@ export const minorIndexService = {
 						}
 						for (const doc of snapshot.docs) {
 							if (!itemMap.has(doc.id)) {
-								itemMap.set(doc.id, { id: doc.id, ...doc.data() } as MinorDocument);
+								itemMap.set(doc.id, {
+									id: doc.id,
+									...doc.data(),
+								} as MinorDocument);
 							}
 						}
 						allItems = Array.from(itemMap.values());
@@ -301,15 +322,46 @@ export const minorIndexService = {
 			}
 		} else {
 			// Sin búsqueda: paginación directa
-			const snapshot = await firestoreQuery
-				.offset(query.offset)
-				.limit(query.limit)
-				.get();
+			const snapshot = await (query.useCursor
+				? (query.cursor
+						? applyCreatedAtCursor(firestoreQuery, {
+								collection: MINORS_INDEX_COLLECTION,
+								cursor: query.cursor,
+							})
+						: firestoreQuery
+					)
+						.limit(query.limit + 1)
+						.get()
+				: firestoreQuery.offset(query.offset).limit(query.limit).get());
 
-			items = snapshot.docs.map((doc) => ({
-				id: doc.id,
-				...doc.data(),
-			})) as MinorDocument[];
+			items = snapshot.docs
+				.slice(0, query.useCursor ? query.limit : snapshot.docs.length)
+				.map((doc) => ({
+					id: doc.id,
+					...doc.data(),
+				})) as MinorDocument[];
+
+			const pageInfo = query.useCursor
+				? buildCursorPageInfo(snapshot.docs, {
+						collection: MINORS_INDEX_COLLECTION,
+						limit: query.limit,
+					})
+				: {
+						nextCursor: null,
+						hasNextPage: query.offset + query.limit < total,
+					};
+
+			return {
+				items,
+				pagination: {
+					total,
+					limit: query.limit,
+					offset: query.offset,
+					hasMore: pageInfo.hasNextPage,
+				},
+				pageInfo,
+				meta: buildCursorMeta(CURSOR_PAGE_META_SOURCE.CURSOR, total),
+			};
 		}
 
 		return {
@@ -320,6 +372,11 @@ export const minorIndexService = {
 				offset: query.offset,
 				hasMore: query.offset + query.limit < total,
 			},
+			pageInfo: {
+				nextCursor: null,
+				hasNextPage: query.offset + query.limit < total,
+			},
+			meta: buildCursorMeta(CURSOR_PAGE_META_SOURCE.SEARCH, total),
 		};
 	},
 
@@ -327,7 +384,9 @@ export const minorIndexService = {
 	 * Fallback para búsquedas que no pueden usar searchTokens.
 	 * Busca en fullNameLower y parentName directamente.
 	 */
-	async listWithSearchFallback(query: MinorIndexQuery): Promise<PaginatedMinorResult> {
+	async listWithSearchFallback(
+		query: MinorIndexQuery,
+	): Promise<PaginatedMinorResult> {
 		const searchNormalized = normalizeText(query.search || "");
 		const searchWords = searchNormalized
 			.split(/\s+/)
@@ -402,7 +461,10 @@ export const minorIndexService = {
 	 * Obtiene un menor por idNumber.
 	 */
 	async getById(idNumber: string): Promise<MinorDocument | null> {
-		const doc = await db.collection(MINORS_INDEX_COLLECTION).doc(idNumber).get();
+		const doc = await db
+			.collection(MINORS_INDEX_COLLECTION)
+			.doc(idNumber)
+			.get();
 		if (!doc.exists) return null;
 		return { id: doc.id, ...doc.data() } as MinorDocument;
 	},
@@ -426,7 +488,9 @@ export const minorIndexService = {
 	 */
 	async updateParentInfo(
 		parentId: string,
-		updates: Partial<Pick<MinorDocument, "parentName" | "parentEmail" | "parentPhone">>,
+		updates: Partial<
+			Pick<MinorDocument, "parentName" | "parentEmail" | "parentPhone">
+		>,
 	): Promise<number> {
 		const snapshot = await db
 			.collection(MINORS_INDEX_COLLECTION)
@@ -472,7 +536,10 @@ export const minorIndexService = {
 	 * Recalcula el contador de menores (usar con cuidado).
 	 */
 	async recalculateMinorsCount(): Promise<number> {
-		const countSnap = await db.collection(MINORS_INDEX_COLLECTION).count().get();
+		const countSnap = await db
+			.collection(MINORS_INDEX_COLLECTION)
+			.count()
+			.get();
 		const count = countSnap.data().count;
 
 		await db.collection(COUNTERS_COLLECTION).doc("minors_index").set({
@@ -487,7 +554,10 @@ export const minorIndexService = {
 	 * Actualiza el contador de menores después de sync.
 	 */
 	async updateMinorsCount(): Promise<void> {
-		const countSnap = await db.collection(MINORS_INDEX_COLLECTION).count().get();
+		const countSnap = await db
+			.collection(MINORS_INDEX_COLLECTION)
+			.count()
+			.get();
 		await db.collection(COUNTERS_COLLECTION).doc("minors_index").set({
 			count: countSnap.data().count,
 			updatedAt: FieldValue.serverTimestamp(),
