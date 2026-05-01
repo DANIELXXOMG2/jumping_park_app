@@ -28,3 +28,33 @@ export interface OtpValidateResponse {
 export interface ApiErrorResponse {
 	error: string;
 }
+
+/**
+ * Snapshot de un menor en un consentimiento.
+ */
+export interface MinorSnapshot {
+	firstName: string;
+	lastName: string;
+	idType?: string;
+	idNumber?: string;
+	medicalCondition?: string;
+}
+
+/**
+ * Resultado de verificación de consentimiento.
+ */
+export interface ConsentResult {
+	found: boolean;
+	consent?: {
+		id: string;
+		consecutivo: number;
+		adultSnapshot: {
+			fullName: string;
+			uid: string;
+		};
+		minorsSnapshot: MinorSnapshot[];
+		createdAt: string;
+		expiresAt?: string;
+	};
+	isExpired?: boolean;
+}

@@ -24,32 +24,12 @@ import {
 } from "@/components/admin/Card";
 import { StatCard } from "@/components/admin/StatCard";
 import { useActivity } from "@/hooks/useActivity";
-import { adminGet, adminDownload } from "@/lib/adminApi";
+import { adminDownload, adminGet } from "@/lib/adminApi";
+import { createLogger } from "@/lib/logger";
 import { formatRelativeTime } from "@/lib/utils";
+import type { ConsentResult } from "@/types/api";
 
-interface MinorSnapshot {
-	firstName: string;
-	lastName: string;
-	idType?: string;
-	idNumber?: string;
-	medicalCondition?: string;
-}
-
-interface ConsentResult {
-	found: boolean;
-	consent?: {
-		id: string;
-		consecutivo: number;
-		adultSnapshot: {
-			fullName: string;
-			uid: string;
-		};
-		minorsSnapshot: MinorSnapshot[];
-		createdAt: string;
-		expiresAt?: string;
-	};
-	isExpired?: boolean;
-}
+const logger = createLogger("AdminDashboardPage");
 
 export default function AdminDashboard() {
 	const [cedula, setCedula] = useState("");
@@ -59,7 +39,12 @@ export default function AdminDashboard() {
 
 	// 🔥 OPTIMIZADO: Usar hook con SWR en lugar de setInterval
 	// Refresco automático cada 5 minutos, no 30 segundos
-	const { data: activityData, isLoading: activityLoading, isValidating, mutate } = useActivity();
+	const {
+		data: activityData,
+		isLoading: activityLoading,
+		isValidating,
+		mutate,
+	} = useActivity();
 
 	// Focus en el input al cargar
 	useEffect(() => {
@@ -104,7 +89,8 @@ export default function AdminDashboard() {
 					Visor de Verificación
 				</h1>
 				<p className="text-foreground/60 mt-1.5 sm:mt-2 text-sm sm:text-base px-2">
-					Ingresa el documento de identidad para verificar el consentimiento vigente
+					Ingresa el documento de identidad para verificar el consentimiento
+					vigente
 				</p>
 			</div>
 
@@ -157,6 +143,7 @@ export default function AdminDashboard() {
 						onChange={(e) => setCedula(e.target.value.replace(/\D/g, ""))}
 						onKeyDown={handleKeyDown}
 						placeholder="Ingresa número de cédula..."
+						aria-label="Número de cédula para verificar consentimiento"
 						className="w-full pl-14 pr-4 py-4 text-xl bg-surface border-2 border-border rounded-2xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-foreground placeholder:text-foreground/40"
 						maxLength={12}
 						autoComplete="off"
@@ -195,7 +182,7 @@ export default function AdminDashboard() {
 
 			{/* Resultado de búsqueda */}
 			{searchResult && (
-				<div className="w-full max-w-xl animate-in fade-in slide-in-from-bottom-4 duration-300">
+				<div className="w-full max-w-xl animate-in fade-in slide-in-from-bottom-4 duration-300" aria-live="polite" role="status">
 					{searchResult.found &&
 					searchResult.consent &&
 					!searchResult.isExpired ? (
@@ -210,7 +197,7 @@ export default function AdminDashboard() {
 								<h2 className="text-2xl font-bold text-center text-green-500 mb-2">
 									CONSENTIMIENTO VIGENTE
 								</h2>
-								
+
 								{/* Información del Responsable */}
 								<div className="mt-6 p-4 bg-surface-muted rounded-xl border border-green-500/20">
 									<div className="flex items-center gap-3 mb-3">
@@ -236,12 +223,13 @@ export default function AdminDashboard() {
 										<div className="inline-flex items-center gap-2 px-3 py-1.5 bg-surface rounded-lg">
 											<Baby className="w-4 h-4 text-foreground/60" />
 											<span className="text-sm text-foreground/70">
-												{searchResult.consent.minorsSnapshot.length} participante(s)
+												{searchResult.consent.minorsSnapshot.length}{" "}
+												participante(s)
 											</span>
 										</div>
 									</div>
 								</div>
-								
+
 								{/* Lista de Participantes */}
 								{searchResult.consent.minorsSnapshot.length > 0 && (
 									<div className="mt-4">
@@ -264,7 +252,10 @@ export default function AdminDashboard() {
 																	</span>
 																</div>
 																{minor.medicalCondition && (
-																	<div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500/20 border border-red-500/50 flex items-center justify-center" title="Condición médica">
+																	<div
+																		className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500/20 border border-red-500/50 flex items-center justify-center"
+																		title="Condición médica"
+																	>
 																		<Heart className="w-3 h-3 text-red-400 fill-red-400" />
 																	</div>
 																)}
@@ -275,7 +266,8 @@ export default function AdminDashboard() {
 																</p>
 																<div className="flex flex-wrap items-center gap-2 mt-0.5">
 																	<span className="text-xs text-foreground/50 font-mono bg-surface px-1.5 py-0.5 rounded">
-																		{minor.idType?.toUpperCase() || "T.I."}: {minor.idNumber}
+																		{minor.idType?.toUpperCase() || "T.I."}:{" "}
+																		{minor.idNumber}
 																	</span>
 																	{minor.medicalCondition && (
 																		<span className="text-xs text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded border border-red-500/30">
@@ -302,12 +294,15 @@ export default function AdminDashboard() {
 									onClick={async () => {
 										try {
 											const consentId = searchResult.consent?.id;
-											if (!consentId) throw new Error("ID de consentimiento no disponible");
+											if (!consentId) {
+												throw new Error("ID de consentimiento no disponible");
+											}
+
 											const pdfUrl = `/api/admin/consents/${consentId}/pdf`;
 											const filename = `consentimiento-${searchResult.consent?.consecutivo || consentId.slice(0, 8)}.pdf`;
 											await adminDownload(pdfUrl, filename);
 										} catch (error) {
-											console.error("Error descargando PDF:", error);
+											logger.error("Error descargando PDF", error);
 										}
 									}}
 									className="mt-6 w-full py-3 bg-green-500 text-white font-semibold rounded-xl hover:bg-green-600 transition-all flex items-center justify-center gap-2"
