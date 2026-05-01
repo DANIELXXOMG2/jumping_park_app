@@ -3,6 +3,10 @@ import {
 	apiSuccess,
 	withAdminAuthParams,
 } from "@/lib/api-middleware";
+import {
+	buildAdminAuditActor,
+	buildAdminAuditRequest,
+} from "@/services/adminAuditService";
 import { staffService } from "@/services/userService";
 
 // ============================================================================
@@ -29,8 +33,17 @@ export const GET = withAdminAuthParams(
 // ============================================================================
 
 export const DELETE = withAdminAuthParams(
-	async (_req, session, params) => {
-		const result = await staffService.delete(params.id, session.uid);
+	async (req, session, params) => {
+		const result = await staffService.delete(params.id, session.uid, {
+			action: "staff.delete",
+			actor: buildAdminAuditActor(session),
+			target: {
+				collection: "admin_users",
+				id: params.id,
+				label: params.id,
+			},
+			request: buildAdminAuditRequest(req),
+		});
 
 		if ("error" in result) {
 			return apiError(result.error, result.status);
