@@ -12,16 +12,6 @@ service cloud.firestore {
              (request.auth.token.role == 'admin' || request.auth.token.admin == true);
     }
     
-    // Verifica si el usuario tiene rol trabajador (via custom claim)
-    function isTrabajador() {
-      return request.auth != null && request.auth.token.role == 'trabajador';
-    }
-    
-    // Verifica si el usuario tiene acceso al panel admin (admin o trabajador)
-    function hasAdminAccess() {
-      return isAdmin() || isTrabajador();
-    }
-    
     // Verifica si el usuario está autenticado
     function isAuthenticated() {
       return request.auth != null;
@@ -48,9 +38,45 @@ service cloud.firestore {
     }
 
     // =========================================================================
-    // COLECCIÓN: otp_sessions (Solo acceso server-side via Admin SDK)
+    // COLECCIONES OTP (Solo acceso server-side via Admin SDK)
     // =========================================================================
+    match /otp_challenges/{documentId} {
+      allow read, write: if false;
+    }
+
+    match /otp_access_sessions/{documentId} {
+      allow read, write: if false;
+    }
+
     match /otp_sessions/{documentId} {
+      allow read, write: if false;
+    }
+
+    // =========================================================================
+    // COLECCIÓN: offline_sync (ledger server-side de replay offline)
+    // =========================================================================
+    match /offline_sync/{documentId} {
+      allow read, write: if false;
+    }
+
+    // =========================================================================
+    // COLECCIÓN: minors_index (proyección denormalizada solo server-side)
+    // =========================================================================
+    match /minors_index/{documentId} {
+      allow read, write: if false;
+    }
+
+    // =========================================================================
+    // COLECCIÓN: admin_metrics (read model server-side)
+    // =========================================================================
+    match /admin_metrics/{documentId} {
+      allow read, write: if false;
+    }
+
+    // =========================================================================
+    // COLECCIÓN: admin_audit_logs (traza inmutable solo server-side)
+    // =========================================================================
+    match /admin_audit_logs/{documentId} {
       allow read, write: if false;
     }
 

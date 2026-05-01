@@ -1,245 +1,53 @@
-# Production Hardening Smoke Pack
+# Production hardening hub
 
-Use this smoke pack after each hardening PR or before production rollout. All examples assume the app is running at `http://localhost:3000`; replace the origin as needed for preview or production.
+Este documento es la puerta de entrada operativa. Si vas a validar, habilitar o revertir una capacidad del roadmap, arrancas aca y despues seguis el runbook especializado.
 
-## 0. Rollout flags and deploy semantics
+Companeros actuales de este hub:
 
-Set the hardening flags explicitly in every environment before smoke testing:
+- `docs/README.md` para distinguir docs vigentes vs historicas.
+- `docs/runbooks/dependency-risk-note.md` para el estado actual de `bun audit` y el riesgo residual aceptado (hoy: solo transitivo/tooling, no dependencias runtime directas reportadas).
 
-- `OTP_HARDENING_ENABLED=true` keeps OTP throttling and lockout enforcement on.
-- `EXPORT_BOUNDS_ENFORCED=true` keeps bounded export rejection on.
-- `PUBLIC_SEO_ENABLED=false` blocks public indexing until the SEO batch is approved.
+## Orden recomendado
 
-Operational rule:
+1. Confirmar flags y entorno con `docs/runbooks/rollback-flags.md`.
+2. Validar admin cost plane con `docs/runbooks/admin-cost-smoke-checklist.md`.
+3. Ejecutar drill offline con `docs/runbooks/offline-replay-drill.md` si `OFFLINE_QUEUE_ENABLED=true` y `NEXT_PUBLIC_OFFLINE_QUEUE_ENABLED=true`.
+4. Validar SEO/AI-SEO + notas a11y con `docs/runbooks/seo-ai-seo-validation-checklist.md` antes de abrir indexacion.
+5. Revisar `docs/runbooks/dependency-risk-note.md` antes de endurecer el gate de dependencias o aceptar upgrades grandes.
 
-- Local/dev flag flips require restarting `bun dev`.
-- Preview/production flag flips on Vercel require a fresh deployment before `robots.txt`, `sitemap.xml`, OTP routes, or export routes reflect the new value.
+Firebase IaC parity: review `firebase/firestore.indexes.json`, `firebase/firestore.rules`, and `firebase/storage.rules` before any flag enablement.
 
-## 1. Admin session smoke
+## Smoke pack minimo por release
 
-Goal: confirm the cookie-first admin session works, and `ADMIN_SESSION_MODE=dual` still accepts the Bearer baseline during rollout.
+- `bun test`
+- `bun test tests/phase4-production-artifacts.test.ts`
+- `bun run check:lint`
+- `bun run check:types`
+- `bun run check:phase5`
 
-### 1.1 Cookie-first session baseline
+## Nota importante sobre CI
 
-1. Sign in from `POST /api/admin/session` with a valid Firebase ID token.
+- `bun run check:format` y `bun run check:lint` ya no escriben archivos.
+- Si necesitás corregir localmente, usá `bun run fix:format` y `bun run fix:lint`.
+- No uses un gate que muta el workspace: eso rompe reproducibilidad y te ensucia la evidencia.
 
-```bash
-curl -i -X POST http://localhost:3000/api/admin/session \
-  -H "Content-Type: application/json" \
-  -d '{"idToken":"<firebase-id-token>"}'
-```
+## Criterio de aprobacion
 
-Expected:
-- `HTTP/1.1 200 OK`
-- `Set-Cookie: jp_admin_session=...; HttpOnly; Path=/; SameSite=Lax`
-- JSON body contains `session.role` and `session.expiresAt`
+No habilitar flags nuevos en produccion si falta alguno de estos puntos:
 
-2. Reuse the cookie against an admin API.
+- rollback documentado y probado;
+- smoke de costo admin estable;
+- replay offline sin duplicados cuando aplica;
+- SEO/AI-SEO validado sobre el deploy real;
+- notas manuales de a11y registradas.
 
-```bash
-curl -i http://localhost:3000/api/admin/session \
-  -H "Cookie: jp_admin_session=<cookie-from-login>"
-```
+## Limitaciones vigentes que NO hay que maquillar
 
-Expected:
-- `HTTP/1.1 200 OK`
-- body confirms `authenticated: true`
-- no `WWW-Authenticate` challenge
+- Dependencias: `bun audit` sigue mostrando riesgo residual transitivo/tooling. El gate actual bloquea hallazgos directos nuevos, pero no inventa que la deuda upstream ya desaparecio.
+- Accesibilidad: ya existe smoke browser reproducible con Axe/Playwright (`bun run test:a11y:e2e`), pero todavia no cubre una matriz E2E completa de todas las rutas admin/kiosk.
 
-3. Hit a protected admin route without cookie.
+## CSP staged tightening
 
-```bash
-curl -i http://localhost:3000/admin/usuarios
-```
-
-Expected:
-- `HTTP/1.1 307 Temporary Redirect`
-- `Location: /admin/login?redirect=%2Fadmin%2Fusuarios&reason=session-required`
-- `X-Robots-Tag: noindex, nofollow`
-
-### 1.2 Dual-mode Bearer fallback baseline
-
-Precondition: `ADMIN_SESSION_MODE=dual`.
-
-```bash
-curl -i http://localhost:3000/api/admin/roles \
-  -H "Authorization: Bearer <firebase-id-token>"
-```
-
-Expected:
-- `HTTP/1.1 200 OK`
-- request succeeds without `jp_admin_session`
-- use only during rollout; remove from smoke once cookie-only mode is enabled
-
-## 2. OTP abuse and lock behavior
-
-Goal: verify request throttling and validation lockouts stay stable.
-
-### 2.1 Request budget: 3 in 5 minutes
-
-Replay the same request four times.
-
-```bash
-curl -i -X POST http://localhost:3000/api/otp \
-  -H "Content-Type: application/json" \
-  -d '{"cedula":"12345678"}'
-```
-
-Expected:
-- attempts 1-3: `HTTP/1.1 200 OK`
-- attempt 4: `HTTP/1.1 429 Too Many Requests`
-- headers include `Retry-After: <seconds>`
-- headers include `X-Hardening-Feature: otp-hardening` and `X-Hardening-Status: enabled`
-- body includes `{"code":"OTP_RATE_LIMITED","retryAfter":<seconds>}`
-
-### 2.2 Validation lock after 5 bad codes
-
-Submit an incorrect code five times for the same pending challenge.
-
-```bash
-curl -i -X POST http://localhost:3000/api/otp/validate \
-  -H "Content-Type: application/json" \
-  -d '{"cedula":"12345678","code":"000000"}'
-```
-
-Expected:
-- attempts 1-4: `HTTP/1.1 404 Not Found`
-- attempt 5: `HTTP/1.1 429 Too Many Requests`
-- headers include `Retry-After: <seconds>`
-- headers include `X-Hardening-Feature: otp-hardening` and `X-Hardening-Status: enabled`
-- body includes `{"code":"OTP_LOCKED","error":"Session locked","retryAfter":<seconds>}`
-
-## 3. Export bounds behavior
-
-Goal: confirm admin exports reject unbounded and wide ranges with explicit metadata.
-
-### 3.1 Reject missing `to`
-
-```bash
-curl -i "http://localhost:3000/api/admin/export/users?from=2026-01-01" \
-  -H "Cookie: jp_admin_session=<cookie-from-login>"
-```
-
-Expected:
-- `HTTP/1.1 400 Bad Request`
-- body mentions `Los exports requieren un rango acotado con from y to.`
-
-### 3.2 Reject `>30d` range
-
-```bash
-curl -i "http://localhost:3000/api/admin/export/consents?field=signedAt&from=2026-01-01&to=2026-02-01" \
-  -H "Cookie: jp_admin_session=<cookie-from-login>"
-```
-
-Expected:
-- `HTTP/1.1 400 Bad Request`
-- body mentions `El rango maximo permitido es de 30 dias.`
-
-### 3.3 Accept bounded range and inspect headers
-
-```bash
-curl -i "http://localhost:3000/api/admin/export/users?field=createdAt&from=2026-01-01&to=2026-01-30" \
-  -H "Cookie: jp_admin_session=<cookie-from-login>"
-```
-
-Expected:
-- `HTTP/1.1 200 OK`
-- CSV body downloads normally
-- headers include `X-Hardening-Feature: export-bounds`
-- headers include `X-Hardening-Status: enabled`
-- headers include:
-  - `X-Export-Range-Field: createdAt`
-  - `X-Export-Range-From: 2026-01-01`
-  - `X-Export-Range-To: 2026-01-30`
-  - `X-Export-Max-Days: 30`
-  - `X-Export-Rejected: false`
-
-### 3.4 Fallback smoke when export bounds are intentionally disabled
-
-Precondition: `EXPORT_BOUNDS_ENFORCED=false` and the app has been restarted or redeployed.
-
-```bash
-curl -i "http://localhost:3000/api/admin/export/users?from=2026-01-01&to=2026-12-31" \
-  -H "Cookie: jp_admin_session=<cookie-from-login>"
-```
-
-Expected:
-- `HTTP/1.1 200 OK`
-- headers include `X-Hardening-Status: disabled`
-- headers include `X-Export-Row-Cap: 5000`
-- rollback by restoring `EXPORT_BOUNDS_ENFORCED=true` and redeploying
-
-## 4. Robots and sitemap checks
-
-Goal: confirm only the public SEO surface is discoverable.
-
-### 4.0 Pre-flight for SEO rollout
-
-Before enabling SEO in preview or production:
-
-1. Set `PUBLIC_SEO_ENABLED=true`.
-2. Redeploy.
-3. Run the checks below against the deployed URL, not a stale build.
-
-### 4.1 `robots.txt`
-
-```bash
-curl -i http://localhost:3000/robots.txt
-```
-
-Expected:
-- `HTTP/1.1 200 OK`
-- content includes:
-  - `Allow: /consentimiento-digital`
-  - `Disallow: /admin/`
-  - `Disallow: /ingreso/`
-  - `Disallow: /otp/`
-  - `Sitemap: https://www.jumpingpark.lat/sitemap.xml`
-
-### 4.2 `sitemap.xml`
-
-```bash
-curl -i http://localhost:3000/sitemap.xml
-```
-
-Expected:
-- `HTTP/1.1 200 OK`
-- XML contains only public URLs
-- current baseline contains `https://www.jumpingpark.lat/consentimiento-digital`
-- XML does not include `/admin`, `/ingreso`, `/otp`, `/registro`, `/consentimiento`, or `/exito`
-
-### 4.3 Verify page-source boundary
-
-```bash
-curl -s http://localhost:3000/consentimiento-digital
-curl -i http://localhost:3000/
-```
-
-Expected public page (`/consentimiento-digital`):
-- has `<script type="application/ld+json">`
-- has canonical metadata for `/consentimiento-digital`
-- renders indexable robots metadata
-
-Expected kiosk root (`/`):
-- header `X-Robots-Tag: noindex, nofollow`
-- HTML includes `<meta name="robots" content="noindex, nofollow">`
-
-### 4.4 Rollback smoke for SEO disable
-
-Precondition: `PUBLIC_SEO_ENABLED=false` after redeploy.
-
-```bash
-curl -i http://localhost:3000/robots.txt
-curl -i http://localhost:3000/sitemap.xml
-curl -s http://localhost:3000/consentimiento-digital
-```
-
-Expected:
-- `robots.txt` includes `Disallow: /`
-- `sitemap.xml` returns no public entries
-- `/consentimiento-digital` renders `noindex, nofollow` metadata
-
-## Rollback notes
-
-- If public discovery must be rolled back, remove the public route entries from `src/app/robots.ts` and `src/app/sitemap.ts`, then revert the page metadata in `src/app/(public)/consentimiento-digital/page.tsx`.
-- If admin cookie rollout fails, keep `ADMIN_SESSION_MODE=dual` and rerun Section 1 before attempting cookie-only mode.
+- Baseline enforced: `src/proxy.ts` siempre emite un CSP activo con `frame-src 'none'`, `object-src 'none'`, `worker-src 'self' blob:`, `manifest-src 'self'` y sin origenes remotos amplios para scripts.
+- Canary opcional: `CSP_REPORT_ONLY_ENABLED=true` agrega un header `Content-Security-Policy-Report-Only` mas estricto para observar compatibilidad antes de endurecer enforcement.
+- Limitacion conocida: `unsafe-inline` sigue presente por compatibilidad con el runtime actual y el JSON-LD inline del surface publico; NO lo saques en produccion sin primero cubrir nonces/hashes y smoke browser real.
