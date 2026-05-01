@@ -1,18 +1,13 @@
 "use client";
 
-import {
-	ExternalLink,
-	FileText,
-	Heart,
-	Loader2,
-	Send,
-} from "lucide-react";
+import { ExternalLink, FileText, Heart, Loader2, Send } from "lucide-react";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/admin/Badge";
 import { Button } from "@/components/admin/Button";
 import { Modal } from "@/components/admin/Modal";
 import type { Consent, Minor } from "@/hooks";
-import { getAuthToken } from "@/lib/adminApi";
+import { adminGet, getAuthToken } from "@/lib/adminApi";
 import { formatEPS } from "@/lib/utils/formatters";
 
 interface ConsentDetailModalProps {
@@ -44,6 +39,43 @@ export function ConsentDetailModal({
 	isValidConsent,
 	userFallback,
 }: ConsentDetailModalProps) {
+	const [resolvedSignatureUrl, setResolvedSignatureUrl] = useState<
+		string | null
+	>(consent?.signatureUrl ?? null);
+	const [isLoadingSignature, setIsLoadingSignature] = useState(false);
+
+	useEffect(() => {
+		setResolvedSignatureUrl(consent?.signatureUrl ?? null);
+		if (!consent || consent.signatureStatus !== "available") {
+			return;
+		}
+
+		let isMounted = true;
+		setIsLoadingSignature(true);
+		void adminGet<{ consent: { signatureUrl: string | null } }>(
+			`/api/admin/consents/${consent.id}`,
+		)
+			.then((response) => {
+				if (isMounted) {
+					setResolvedSignatureUrl(response.consent.signatureUrl);
+				}
+			})
+			.catch(() => {
+				if (isMounted) {
+					setResolvedSignatureUrl(null);
+				}
+			})
+			.finally(() => {
+				if (isMounted) {
+					setIsLoadingSignature(false);
+				}
+			});
+
+		return () => {
+			isMounted = false;
+		};
+	}, [consent]);
+
 	const handleViewPdf = async () => {
 		if (!consent) return;
 		const token = await getAuthToken();
@@ -75,7 +107,8 @@ export function ConsentDetailModal({
 					<div>
 						<p className="text-sm font-medium">{fullName}</p>
 						<p className="text-xs text-foreground/50">
-							{minor.relationship} • {minor.birthDate} • EPS: {formatEPS(minor.eps)}
+							{minor.relationship} • {minor.birthDate} • EPS:{" "}
+							{formatEPS(minor.eps)}
 						</p>
 					</div>
 					<Badge variant="default" className="text-xs">
@@ -141,7 +174,7 @@ export function ConsentDetailModal({
 							</h4>
 							<div className="space-y-2">
 								{consent.minors.map((minor, index) =>
-									renderMinorItem(minor, index)
+									renderMinorItem(minor, index),
 								)}
 							</div>
 						</div>
@@ -172,7 +205,9 @@ export function ConsentDetailModal({
 								</span>
 							</div>
 							<div className="flex justify-between">
-								<span className="text-sm text-foreground/60">Válido hasta:</span>
+								<span className="text-sm text-foreground/60">
+									Válido hasta:
+								</span>
 								<span className="text-sm">
 									{consent.validUntil
 										? new Date(consent.validUntil).toLocaleString("es-CO")
@@ -182,7 +217,9 @@ export function ConsentDetailModal({
 							<div className="flex justify-between items-center">
 								<span className="text-sm text-foreground/60">Estado:</span>
 								<Badge
-									variant={isValidConsent(consent.validUntil) ? "success" : "error"}
+									variant={
+										isValidConsent(consent.validUntil) ? "success" : "error"
+									}
 								>
 									{isValidConsent(consent.validUntil) ? "Vigente" : "Vencido"}
 								</Badge>
@@ -191,14 +228,14 @@ export function ConsentDetailModal({
 					</div>
 
 					{/* Signature */}
-					{consent.signatureUrl && (
+					{resolvedSignatureUrl && (
 						<div>
 							<h4 className="text-sm font-semibold text-foreground/60 uppercase mb-3">
 								Firma Digital
 							</h4>
 							<div className="bg-white rounded-lg p-4 relative h-24">
 								<Image
-									src={consent.signatureUrl}
+									src={resolvedSignatureUrl}
 									alt="Firma"
 									fill
 									className="object-contain"
@@ -206,6 +243,9 @@ export function ConsentDetailModal({
 								/>
 							</div>
 						</div>
+					)}
+					{!resolvedSignatureUrl && isLoadingSignature && (
+						<div className="text-xs text-foreground/50">Cargando firma...</div>
 					)}
 
 					{/* Actions */}
@@ -237,11 +277,12 @@ export function ConsentDetailModal({
 							)}
 							Reenviar Email
 						</Button>
-						{consent.signatureUrl && (
+						{resolvedSignatureUrl && (
 							<Button
 								variant="ghost"
-								onClick={() => window.open(consent.signatureUrl, "_blank")}
+								onClick={() => window.open(resolvedSignatureUrl, "_blank")}
 								title="Ver firma"
+								aria-label="Abrir firma en una nueva pestaña"
 							>
 								<ExternalLink className="w-4 h-4" />
 							</Button>
