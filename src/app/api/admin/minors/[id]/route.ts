@@ -3,6 +3,10 @@ import {
 	apiSuccess,
 	withAdminAuthParams,
 } from "@/lib/api-middleware";
+import {
+	buildAdminAuditActor,
+	buildAdminAuditRequest,
+} from "@/services/adminAuditService";
 import { minorService } from "@/services/userService";
 
 /**
@@ -39,8 +43,17 @@ export const GET = withAdminAuthParams(
  * Solo accesible por usuarios con permiso 'minors:edit'.
  */
 export const DELETE = withAdminAuthParams(
-	async (_req, _session, params) => {
-		const result = await minorService.delete(params.id);
+	async (req, session, params) => {
+		const result = await minorService.delete(params.id, {
+			action: "minor.delete",
+			actor: buildAdminAuditActor(session),
+			target: {
+				collection: "minors_index",
+				id: params.id,
+				label: params.id,
+			},
+			request: buildAdminAuditRequest(req),
+		});
 
 		if ("error" in result) {
 			return apiError(result.error, result.status);
