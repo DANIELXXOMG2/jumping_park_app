@@ -1,9 +1,46 @@
 import {
 	apiError,
 	apiSuccess,
+	type AdminSession,
 	withAdminAuthParams,
 } from "@/lib/api-middleware";
+import {
+	buildAdminAuditActor,
+	buildAdminAuditRequest,
+	writeAdminAuditLog,
+} from "@/services/adminAuditService";
 import { userService } from "@/services/userService";
+
+export async function buildAdminUserDeleteResponse(
+	request: Parameters<typeof buildAdminAuditRequest>[0],
+	session: AdminSession,
+	params: { id: string },
+	options: {
+		deleteUser?: typeof userService.delete;
+		writeAuditLog?: typeof writeAdminAuditLog;
+	} = {},
+) {
+	const deleteUser = options.deleteUser ?? userService.delete.bind(userService);
+	const writeAuditLog = options.writeAuditLog ?? writeAdminAuditLog;
+	const result = await deleteUser(params.id);
+
+	if (!result) {
+		return null;
+	}
+
+	await writeAuditLog({
+		action: "user.delete",
+		actor: buildAdminAuditActor(session),
+		target: { collection: "users", id: result.deletedId, label: params.id },
+		request: buildAdminAuditRequest(request),
+	});
+
+	return {
+		success: true,
+		message: "Usuario eliminado correctamente",
+		deletedId: result.deletedId,
+	};
+}
 
 /**
  * GET /api/admin/users/[id]
@@ -43,21 +80,17 @@ export const GET = withAdminAuthParams(
 /**
  * DELETE /api/admin/users/[id]
  * Elimina un usuario y opcionalmente sus datos relacionados.
- * Solo accesible por usuarios con rol 'admin'.
+ * Requiere permiso 'users:delete'.
  */
 export const DELETE = withAdminAuthParams(
-	async (_req, _session, params) => {
-		const result = await userService.delete(params.id);
+	async (req, session, params) => {
+		const payload = await buildAdminUserDeleteResponse(req, session, params);
 
-		if (!result) {
+		if (!payload) {
 			return apiError("Usuario no encontrado", 404);
 		}
 
-		return apiSuccess({
-			success: true,
-			message: "Usuario eliminado correctamente",
-			deletedId: result.deletedId,
-		});
+		return apiSuccess(payload);
 	},
 	{ permission: "users:delete" },
 );
