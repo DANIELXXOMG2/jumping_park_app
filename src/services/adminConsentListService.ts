@@ -7,7 +7,7 @@ import {
 } from "@/lib/adminCursor";
 import { resolveHardeningPolicy } from "@/lib/hardeningPolicy";
 import { normalizeText } from "@/lib/utils/searchUtils";
-import type { Consent } from "@/types/firestore";
+import type { ConsentDocument, Minor } from "@/types/firestore";
 import { CURSOR_PAGE_META_SOURCE } from "@/types/pagination";
 
 const SIGNATURE_STATUS = {
@@ -37,7 +37,7 @@ export interface ConsentListItem {
 	adultEmail: string;
 	adultPhone: string;
 	minorsCount: number;
-	minors: unknown[];
+	minors: Minor[];
 	signaturePath: string | null;
 	signatureStatus: string;
 	signatureUrl: null;
@@ -48,31 +48,40 @@ export interface ConsentListItem {
 	validUntil: string | null;
 }
 
-function mapConsent(doc: FirebaseFirestore.DocumentSnapshot): ConsentListItem | null {
-	const data = doc.data();
-	if (!data) return null;
-	const consentData = data as Consent;
+function isConsentListItem(
+	value: ConsentListItem | null,
+): value is ConsentListItem {
+	return value !== null;
+}
+
+function mapConsent(
+	doc: FirebaseFirestore.DocumentSnapshot,
+): ConsentListItem | null {
+	const consentData: ConsentDocument | undefined = doc.data();
+	if (!consentData) return null;
+	const adultSnapshot = consentData.adultSnapshot;
+	const minorsSnapshot = consentData.minorsSnapshot ?? [];
 
 	return {
 		id: doc.id,
-		consecutivo: data.consecutivo,
-		userId: data.userId,
-		adultName: data.adultSnapshot?.fullName || "N/A",
-		adultEmail: data.adultSnapshot?.email || "N/A",
-		adultPhone: data.adultSnapshot?.phone || "N/A",
-		minorsCount: data.minorsSnapshot?.length || 0,
-		minors: data.minorsSnapshot || [],
-		signaturePath: consentData.signaturePath || null,
+		consecutivo: consentData.consecutivo,
+		userId: consentData.userId,
+		adultName: adultSnapshot?.fullName || "N/A",
+		adultEmail: adultSnapshot?.email || "N/A",
+		adultPhone: adultSnapshot?.phone || "N/A",
+		minorsCount: minorsSnapshot.length,
+		minors: minorsSnapshot,
+		signaturePath: consentData.signaturePath ?? null,
 		signatureStatus:
 			consentData.signaturePath || consentData.signatureUrl
 				? SIGNATURE_STATUS.AVAILABLE
 				: SIGNATURE_STATUS.MISSING,
 		signatureUrl: null,
-		policyVersion: data.policyVersion,
-		ipAddress: data.ipAddress,
-		createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
-		signedAt: data.signedAt?.toDate?.()?.toISOString() || null,
-		validUntil: data.validUntil?.toDate?.()?.toISOString() || null,
+		policyVersion: consentData.policyVersion,
+		ipAddress: consentData.ipAddress,
+		createdAt: consentData.createdAt?.toDate?.()?.toISOString() || null,
+		signedAt: consentData.signedAt?.toDate?.()?.toISOString() || null,
+		validUntil: consentData.validUntil?.toDate?.()?.toISOString() || null,
 	};
 }
 
@@ -141,7 +150,7 @@ export async function listAdminConsents(
 			.select(...CONSENT_LIST_FIELDS)
 			.get();
 
-		const consents = snapshot.docs.map(mapConsent).filter(Boolean) as ConsentListItem[];
+		const consents = snapshot.docs.map(mapConsent).filter(isConsentListItem);
 		return buildAdminConsentsListResponse({
 			consents,
 			pagination: {
@@ -187,7 +196,7 @@ export async function listAdminConsents(
 	const consents = snapshot.docs
 		.slice(0, useCursor ? query.limit : snapshot.docs.length)
 		.map(mapConsent)
-		.filter(Boolean) as ConsentListItem[];
+		.filter(isConsentListItem);
 
 	return buildAdminConsentsListResponse({
 		consents,
@@ -218,9 +227,7 @@ async function searchAdminConsents(
 			.limit(1)
 			.get();
 
-		const consents = snapshot.docs
-			.map(mapConsent)
-			.filter(Boolean) as ConsentListItem[];
+		const consents = snapshot.docs.map(mapConsent).filter(isConsentListItem);
 		return buildAdminConsentsListResponse({
 			consents,
 			pagination: {
@@ -279,7 +286,9 @@ async function searchAdminConsents(
 		});
 	}
 
-	const searchWords = searchNormalized.split(/\s+/).filter((word) => word.length >= 2);
+	const searchWords = searchNormalized
+		.split(/\s+/)
+		.filter((word) => word.length >= 2);
 	if (searchWords.length > 0) {
 		const termsToSearch = searchWords.slice(0, 10);
 		const fullToken = searchWords.join("");
@@ -304,11 +313,11 @@ async function searchAdminConsents(
 							.where("searchTokens", "array-contains", termsToSearch[0])
 							.select(...CONSENT_LIST_FIELDS)
 							.limit(50)
-						: db
-								.collection("consents")
-								.where("searchTokens", "array-contains-any", termsToSearch)
-								.select(...CONSENT_LIST_FIELDS)
-								.limit(100);
+					: db
+							.collection("consents")
+							.where("searchTokens", "array-contains-any", termsToSearch)
+							.select(...CONSENT_LIST_FIELDS)
+							.limit(100);
 
 			const snapshot = await tokenQuery.get();
 			for (const doc of snapshot.docs) {
@@ -348,11 +357,17 @@ async function searchAdminConsents(
 
 			const scoreDifference = getScore(right) - getScore(left);
 			if (scoreDifference !== 0) return scoreDifference;
-			return normalizeText(left.adultName).length - normalizeText(right.adultName).length;
+			return (
+				normalizeText(left.adultName).length -
+				normalizeText(right.adultName).length
+			);
 		});
 
 		const total = consents.length;
-		const paginatedConsents = consents.slice(query.offset, query.offset + query.limit);
+		const paginatedConsents = consents.slice(
+			query.offset,
+			query.offset + query.limit,
+		);
 		return buildAdminConsentsListResponse({
 			consents: paginatedConsents,
 			pagination: {
@@ -378,15 +393,18 @@ async function searchAdminConsents(
 
 	const consents = snapshot.docs
 		.map(mapConsent)
-		.filter(Boolean)
+		.filter(isConsentListItem)
 		.filter(
 			(consent) =>
 				normalizeText(consent.adultName).includes(searchNormalized) ||
 				normalizeText(consent.adultEmail).includes(searchNormalized),
-		) as ConsentListItem[];
+		);
 
 	const total = consents.length;
-	const paginatedConsents = consents.slice(query.offset, query.offset + query.limit);
+	const paginatedConsents = consents.slice(
+		query.offset,
+		query.offset + query.limit,
+	);
 	return buildAdminConsentsListResponse({
 		consents: paginatedConsents,
 		pagination: {
