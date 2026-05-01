@@ -1,13 +1,13 @@
-'use client'
+"use client";
 
-import { Lock, ShieldAlert } from 'lucide-react'
-import { usePathname, useRouter } from 'next/navigation'
-import { useEffect } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
-import { canAccessAdmin, canAccessRoute } from '@/types/auth'
+import { Lock, ShieldAlert } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { canAccessAdmin, canAccessRoute } from "@/types/auth";
 
 function UnauthorizedView() {
-	const router = useRouter()
+	const router = useRouter();
 
 	return (
 		<div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -25,18 +25,18 @@ function UnauthorizedView() {
 				</div>
 				<button
 					type="button"
-					onClick={() => router.push('/admin/login')}
+					onClick={() => router.push("/admin/login")}
 					className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
 				>
 					Volver al login
 				</button>
 			</div>
 		</div>
-	)
+	);
 }
 
 function RestrictedRouteView() {
-	const router = useRouter()
+	const router = useRouter();
 
 	return (
 		<div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -54,18 +54,18 @@ function RestrictedRouteView() {
 				</div>
 				<button
 					type="button"
-					onClick={() => router.push('/admin')}
+					onClick={() => router.push("/admin")}
 					className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
 				>
 					Ir al dashboard
 				</button>
 			</div>
 		</div>
-	)
+	);
 }
 
 interface AdminGuardProps {
-	children: React.ReactNode
+	children: React.ReactNode;
 }
 
 export function AdminGuard({ children }: AdminGuardProps) {
@@ -76,38 +76,38 @@ export function AdminGuard({ children }: AdminGuardProps) {
 		user,
 		isSessionExpired,
 		refreshSessionStatus,
-	} = useAuth()
-	const router = useRouter()
-	const pathname = usePathname()
+	} = useAuth();
+	const router = useRouter();
+	const pathname = usePathname();
 
 	useEffect(() => {
 		if (!user || !pathname) {
-			return
+			return;
 		}
 
-		void refreshSessionStatus()
-	}, [pathname, refreshSessionStatus, user])
+		void refreshSessionStatus();
+	}, [pathname, refreshSessionStatus, user]);
 
 	useEffect(() => {
 		const onFocus = () => {
 			if (user) {
-				void refreshSessionStatus({ force: true })
+				void refreshSessionStatus({ force: true });
 			}
-		}
+		};
 
-		window.addEventListener('focus', onFocus)
-		return () => window.removeEventListener('focus', onFocus)
-	}, [refreshSessionStatus, user])
+		window.addEventListener("focus", onFocus);
+		return () => window.removeEventListener("focus", onFocus);
+	}, [refreshSessionStatus, user]);
 
 	useEffect(() => {
 		if (isLoading) {
-			return
+			return;
 		}
 
 		if (!user || isSessionExpired || !session) {
-			router.replace('/admin/login?reason=session-expired')
+			router.replace("/admin/login?reason=session-expired");
 		}
-	}, [isLoading, isSessionExpired, router, session, user])
+	}, [isLoading, isSessionExpired, router, session, user]);
 
 	if (isLoading) {
 		return (
@@ -117,7 +117,7 @@ export function AdminGuard({ children }: AdminGuardProps) {
 					<p className="text-sm text-foreground/60">Verificando acceso...</p>
 				</div>
 			</div>
-		)
+		);
 	}
 
 	if (!user || !session) {
@@ -128,20 +128,20 @@ export function AdminGuard({ children }: AdminGuardProps) {
 					<p className="text-sm text-foreground/60">Redirigiendo...</p>
 				</div>
 			</div>
-		)
+		);
 	}
 
-	const hasAdminAccess = role && canAccessAdmin(role)
+	const hasAdminAccess = role && canAccessAdmin(role);
 
 	if (!hasAdminAccess) {
-		return <UnauthorizedView />
+		return <UnauthorizedView />;
 	}
 
-	const canAccessCurrentRoute = canAccessRoute(role, pathname)
+	const canAccessCurrentRoute = canAccessRoute(role, pathname);
 
 	if (!canAccessCurrentRoute) {
-		return <RestrictedRouteView />
+		return <RestrictedRouteView />;
 	}
 
-	return <>{children}</>
+	return <>{children}</>;
 }
