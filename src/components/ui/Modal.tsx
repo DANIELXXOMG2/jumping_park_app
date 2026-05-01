@@ -2,7 +2,8 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
-import { type ReactNode, useEffect } from "react";
+import { type ReactNode, useEffect, useId, useRef } from "react";
+import { useDialogAccessibility } from "@/lib/a11y/dialog";
 import { cn } from "@/lib/utils";
 
 interface BaseModalProps {
@@ -57,6 +58,8 @@ export function Modal(props: ModalProps) {
 		className,
 		variant = "dialog",
 	} = props;
+	const dialogRef = useRef<HTMLDivElement>(null);
+	const titleId = useId();
 
 	// Bloquear scroll del body cuando el modal está abierto
 	useEffect(() => {
@@ -71,30 +74,22 @@ export function Modal(props: ModalProps) {
 		};
 	}, [isOpen]);
 
-	// Cerrar con tecla Escape
-	useEffect(() => {
-		const handleEscape = (e: KeyboardEvent) => {
-			if (e.key === "Escape") {
-				onClose();
-			}
-		};
-
-		if (isOpen) {
-			document.addEventListener("keydown", handleEscape);
-		}
-
-		return () => {
-			document.removeEventListener("keydown", handleEscape);
-		};
-	}, [isOpen, onClose]);
+	useDialogAccessibility({ isOpen, onClose, dialogRef });
 
 	if (variant === "fullscreen") {
 		const { footerAction } = props as FullscreenModalProps;
+		const contentJumpTarget = title ? titleId : undefined;
 
 		return (
 			<AnimatePresence>
 				{isOpen && (
 					<motion.div
+						ref={dialogRef}
+						role="dialog"
+						aria-modal="true"
+						aria-labelledby={title ? titleId : undefined}
+						aria-label={title ? undefined : "Ventana modal"}
+						tabIndex={-1}
 						className={cn(
 							"fixed inset-0 z-100 flex flex-col bg-white dark:bg-gray-950",
 							className,
@@ -112,7 +107,10 @@ export function Modal(props: ModalProps) {
 						{/* Header fijo */}
 						<header className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800">
 							{title && (
-								<h2 className="text-lg font-bold text-gray-900 dark:text-white">
+								<h2
+									id={titleId}
+									className="text-lg font-bold text-gray-900 dark:text-white"
+								>
 									{title}
 								</h2>
 							)}
@@ -127,11 +125,22 @@ export function Modal(props: ModalProps) {
 						</header>
 
 						{/* Contenido scrolleable */}
-						<main className="flex-1 overflow-y-auto px-4 sm:px-8 py-6 pb-28">
+						<div
+							role="document"
+							className="flex-1 overflow-y-auto px-4 sm:px-8 py-6 pb-28"
+						>
+							{contentJumpTarget && (
+								<a
+									href={`#${contentJumpTarget}`}
+									className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-10 focus:rounded-full focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-gray-900"
+								>
+									Saltar al encabezado del modal
+								</a>
+							)}
 							<div className="max-w-3xl mx-auto text-gray-900 dark:text-gray-100 font-sans text-lg sm:text-xl leading-relaxed">
 								{children}
 							</div>
-						</main>
+						</div>
 
 						{/* Footer con acción (opcional) */}
 						{footerAction && (
@@ -154,12 +163,19 @@ export function Modal(props: ModalProps) {
 			<button
 				type="button"
 				aria-label="Cerrar modal"
+				tabIndex={-1}
 				className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-default"
 				onClick={onClose}
 			/>
 
 			{/* Modal content */}
 			<div
+				ref={dialogRef}
+				role="dialog"
+				aria-modal="true"
+				aria-labelledby={title ? titleId : undefined}
+				aria-label={title ? undefined : "Ventana modal"}
+				tabIndex={-1}
 				className={cn(
 					"relative bg-surface rounded-2xl border border-border shadow-xl max-h-[90vh] overflow-auto",
 					"w-[95vw] max-w-2xl",
@@ -170,7 +186,9 @@ export function Modal(props: ModalProps) {
 				{/* Header */}
 				{title && (
 					<div className="sticky top-0 flex items-center justify-between px-6 py-4 border-b border-border bg-surface z-10">
-						<h2 className="text-lg font-semibold text-foreground">{title}</h2>
+						<h2 id={titleId} className="text-lg font-semibold text-foreground">
+							{title}
+						</h2>
 						<button
 							type="button"
 							onClick={onClose}
@@ -183,7 +201,9 @@ export function Modal(props: ModalProps) {
 				)}
 
 				{/* Body */}
-				<div className="p-6">{children}</div>
+				<div role="document" className="p-6">
+					{children}
+				</div>
 			</div>
 		</div>
 	);
