@@ -5,9 +5,12 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { verifyAdminTokenWithPermission } from "@/lib/adminAuth";
 import { db } from "@/lib/firebaseAdmin";
+import { createLogger } from "@/lib/logger";
 import { sendConsentEmail } from "@/services/emailService";
 import { generateConsentPdf } from "@/services/pdfService";
 import type { Consent } from "@/types/firestore";
+
+const logger = createLogger("ApiAdminConsentResend");
 
 interface RouteParams {
 	params: Promise<{ id: string }>;
@@ -19,7 +22,10 @@ export async function POST(
 ): Promise<NextResponse> {
 	try {
 		// Verificar autenticación y permiso consents:view (reenviar requiere poder ver)
-		const authResult = await verifyAdminTokenWithPermission(request, "consents:view");
+		const authResult = await verifyAdminTokenWithPermission(
+			request,
+			"consents:view",
+		);
 		if (!authResult.success) {
 			return authResult.response;
 		}
@@ -55,7 +61,7 @@ export async function POST(
 		}
 
 		// Regenerar el PDF - pasamos el consentimiento completo
-		console.log(`[Resend Consent] Generando PDF para consentimiento ${id}`);
+		logger.info(`Generando PDF para consentimiento ${id}`);
 
 		// El objeto consent de Firestore ya tiene la estructura Consent
 		const consentForPdf: Consent = {
@@ -66,7 +72,7 @@ export async function POST(
 		const pdfBuffer = await generateConsentPdf(consentForPdf);
 
 		// Enviar el email
-		console.log(`[Resend Consent] Enviando email a ${email}`);
+		logger.info(`Enviando email a ${email}`);
 
 		const emailResult = await sendConsentEmail({
 			to: email,
@@ -76,16 +82,14 @@ export async function POST(
 		});
 
 		if (!emailResult.success) {
-			console.error(
-				`[Resend Consent] Error enviando email: ${emailResult.error}`,
-			);
+			logger.error(`Error enviando email: ${emailResult.error ?? "unknown"}`);
 			return NextResponse.json(
 				{ error: emailResult.error || "Error al enviar el email" },
 				{ status: 500 },
 			);
 		}
 
-		console.log(`[Resend Consent] Email reenviado exitosamente a ${email}`);
+		logger.info(`Email reenviado exitosamente a ${email}`);
 
 		return NextResponse.json({
 			success: true,
@@ -93,7 +97,7 @@ export async function POST(
 			email,
 		});
 	} catch (error) {
-		console.error("[API /admin/consents/[id]/resend] Error:", error);
+		logger.error("Error reenviando consentimiento", error);
 		return NextResponse.json(
 			{ error: "Error al reenviar el consentimiento" },
 			{ status: 500 },
