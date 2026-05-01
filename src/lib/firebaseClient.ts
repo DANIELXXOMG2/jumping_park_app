@@ -1,4 +1,9 @@
-import { type FirebaseOptions, getApp, getApps, initializeApp } from "firebase/app";
+import {
+	type FirebaseOptions,
+	getApp,
+	getApps,
+	initializeApp,
+} from "firebase/app";
 import { getAuth } from "firebase/auth";
 import {
 	CACHE_SIZE_UNLIMITED,

@@ -36,10 +36,7 @@ function readFallbackQueue(): OfflineConsentQueueItem[] {
 			return [];
 		}
 
-		const parsedValue: unknown = JSON.parse(storedValue);
-		if (!Array.isArray(parsedValue)) {
-			return [];
-		}
+		const parsedValue = JSON.parse(storedValue) as OfflineConsentQueueItem[];
 		return Array.isArray(parsedValue) ? parsedValue : [];
 	} catch {
 		return [];
@@ -94,9 +91,9 @@ async function withOfflineStore<T>(
 	}
 }
 
-function requestToPromise<T>(request: IDBRequest<unknown>): Promise<T> {
+function requestToPromise<T>(request: IDBRequest<T>): Promise<T> {
 	return new Promise((resolve, reject) => {
-		request.onsuccess = () => resolve(request.result as T);
+		request.onsuccess = () => resolve(request.result);
 		request.onerror = () => reject(request.error);
 	});
 }
@@ -112,7 +109,9 @@ export async function readOfflineConsentQueue(): Promise<
 
 	try {
 		const queue = await withOfflineStore("readonly", async (store) => {
-			return requestToPromise<OfflineConsentQueueItem[]>(store.getAll());
+			return requestToPromise(
+				store.getAll() as IDBRequest<OfflineConsentQueueItem[]>,
+			);
 		});
 
 		return queue.sort((left, right) =>
@@ -135,7 +134,9 @@ export async function writeOfflineConsentQueue(
 
 	try {
 		await withOfflineStore("readwrite", async (store) => {
-			const existingItems = await requestToPromise<IDBValidKey[]>(store.getAllKeys());
+			const existingItems = await requestToPromise(
+				store.getAllKeys() as IDBRequest<IDBValidKey[]>,
+			);
 
 			for (const key of existingItems) {
 				store.delete(key);

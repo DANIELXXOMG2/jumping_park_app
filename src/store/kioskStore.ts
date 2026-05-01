@@ -6,6 +6,18 @@ import {
 } from "@/lib/utils/kioskSession";
 import type { UserProfile } from "@/types/firestore";
 
+export interface KioskOfflineRuntimeState {
+	enabled: boolean;
+	isOnline: boolean;
+	shellReady: boolean;
+	queueSize: number;
+	isSyncing: boolean;
+	lastSyncAt?: string;
+	lastSyncError?: string;
+	lastRejectedAt?: string;
+	lastRejectedError?: string;
+}
+
 export interface ConsentFormState {
 	acceptedPolicy: boolean;
 	signatureData?: string;
@@ -20,6 +32,7 @@ interface KioskState {
 	isAuthenticated: boolean;
 	/** Indica si la sesión fue restaurada desde localStorage */
 	wasRestored: boolean;
+	offline: KioskOfflineRuntimeState;
 	setStep: (nextStep: number) => void;
 	updateVisitorData: (
 		payload: Partial<UserProfile>,
@@ -33,10 +46,19 @@ interface KioskState {
 	persistSession: () => void;
 	/** Limpia la sesión (localStorage + estado) - usar al finalizar */
 	clearSession: () => void;
+	setOfflineRuntime: (patch: Partial<KioskOfflineRuntimeState>) => void;
 }
 
 const createDefaultConsent = (): ConsentFormState => ({
 	acceptedPolicy: false,
+});
+
+const createDefaultOfflineRuntime = (): KioskOfflineRuntimeState => ({
+	enabled: false,
+	isOnline: true,
+	shellReady: false,
+	queueSize: 0,
+	isSyncing: false,
 });
 
 export const useKioskStore = create<KioskState>((set, get) => ({
@@ -45,6 +67,7 @@ export const useKioskStore = create<KioskState>((set, get) => ({
 	consent: createDefaultConsent(),
 	isAuthenticated: false,
 	wasRestored: false,
+	offline: createDefaultOfflineRuntime(),
 
 	setStep: (nextStep) => {
 		set({ step: nextStep });
@@ -122,4 +145,9 @@ export const useKioskStore = create<KioskState>((set, get) => ({
 			wasRestored: false,
 		});
 	},
+
+	setOfflineRuntime: (patch) =>
+		set((state) => ({
+			offline: { ...state.offline, ...patch },
+		})),
 }));

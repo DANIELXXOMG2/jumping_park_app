@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import {
 	ADMIN_SESSION_COOKIE_NAME,
-	AdminSessionPayload,
+	type AdminSessionPayload,
 	canAccessAdmin,
 } from "@/types/auth";
 

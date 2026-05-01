@@ -6,10 +6,11 @@ import { canAccessAdmin, getRoleFromClaims, hasPermission } from "@/types/auth";
 
 import {
 	ADMIN_SESSION_COOKIE_NAME,
-	AdminSessionPayload,
+	type AdminSessionPayload,
 } from "@/types/auth";
 
-export { ADMIN_SESSION_COOKIE_NAME, AdminSessionPayload };
+export { ADMIN_SESSION_COOKIE_NAME };
+export type { AdminSessionPayload };
 
 export const ADMIN_SESSION_MODE =
 	process.env.ADMIN_SESSION_MODE === "cookie" ? "cookie" : "dual";
