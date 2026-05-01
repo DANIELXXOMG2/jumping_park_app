@@ -3,26 +3,29 @@ import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { verifyAdminTokenWithPermission } from "@/lib/adminAuth";
 import { db } from "@/lib/firebaseAdmin";
+import { createLogger } from "@/lib/logger";
+import {
+	buildAdminAuditActor,
+	buildAdminAuditRequest,
+	commitAdminAuditBatch,
+} from "@/services/adminAuditService";
+
+const logger = createLogger("ApiAdminConsentSettings");
 
 // ============================================================================
 // SCHEMAS DE VALIDACIÓN
 // ============================================================================
 
-const ConsentClauseSchema = z.object({
+const ConsentItemSchema = z.object({
 	id: z.number(),
-	text: z.string().min(1, "El texto de la cláusula es requerido"),
+	text: z.string().min(1, "El texto es requerido"),
 	highlight: z.boolean().optional(),
 	icon: z.string().optional(),
 	highlightLabel: z.string().optional(),
 });
 
-const ParkRuleSchema = z.object({
-	id: z.number(),
-	text: z.string().min(1, "El texto de la regla es requerido"),
-	highlight: z.boolean().optional(),
-	icon: z.string().optional(),
-	highlightLabel: z.string().optional(),
-});
+const ConsentClauseSchema = ConsentItemSchema;
+const ParkRuleSchema = ConsentItemSchema;
 
 const ConsentContentSchema = z.object({
 	meta: z.object({
@@ -68,7 +71,10 @@ const MultiLanguageContentSchema = z.object({
 export async function GET(request: NextRequest) {
 	try {
 		// Verificar autenticación y permiso settings:manage
-		const authResult = await verifyAdminTokenWithPermission(request, "settings:manage");
+		const authResult = await verifyAdminTokenWithPermission(
+			request,
+			"settings:manage",
+		);
 		if (!authResult.success) {
 			return authResult.response;
 		}
@@ -102,11 +108,14 @@ export async function GET(request: NextRequest) {
 		return NextResponse.json({
 			success: true,
 			data: responseData,
-			updatedAt: esData?.updatedAt?.toDate?.()?.toISOString() || enData?.updatedAt?.toDate?.()?.toISOString() || null,
+			updatedAt:
+				esData?.updatedAt?.toDate?.()?.toISOString() ||
+				enData?.updatedAt?.toDate?.()?.toISOString() ||
+				null,
 			updatedBy: esData?.updatedBy || enData?.updatedBy || null,
 		});
 	} catch (error) {
-		console.error("Error fetching consent settings:", error);
+		logger.error("Error fetching consent settings", error);
 		return NextResponse.json(
 			{ success: false, error: "Error al obtener configuración" },
 			{ status: 500 },
@@ -124,7 +133,10 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
 	try {
 		// Verificar autenticación y permiso settings:manage
-		const authResult = await verifyAdminTokenWithPermission(request, "settings:manage");
+		const authResult = await verifyAdminTokenWithPermission(
+			request,
+			"settings:manage",
+		);
 		if (!authResult.success) {
 			return authResult.response;
 		}
@@ -168,11 +180,29 @@ export async function POST(request: NextRequest) {
 			updatedBy,
 		};
 
-		// Guardar ambos idiomas en paralelo
-		await Promise.all([
-			db.collection("settings").doc("consent_v1").set(esDataToSave, { merge: false }),
-			db.collection("settings").doc("consent_v1_en").set(enDataToSave, { merge: false }),
-		]);
+		await commitAdminAuditBatch({
+			apply: (batch) => {
+				batch.set(db.collection("settings").doc("consent_v1"), esDataToSave, {
+					merge: false,
+				});
+				batch.set(
+					db.collection("settings").doc("consent_v1_en"),
+					enDataToSave,
+					{ merge: false },
+				);
+			},
+			audit: {
+				action: "consent-settings.update",
+				actor: buildAdminAuditActor(authResult),
+				target: {
+					collection: "settings",
+					id: "consent_v1",
+					label: "consent_v1",
+				},
+				request: buildAdminAuditRequest(request),
+				details: { languages: ["es", "en"], version: es.meta.version },
+			},
+		});
 
 		return NextResponse.json({
 			success: true,
@@ -180,7 +210,7 @@ export async function POST(request: NextRequest) {
 			data: { es: esDataToSave, en: enDataToSave },
 		});
 	} catch (error) {
-		console.error("Error saving consent settings:", error);
+		logger.error("Error saving consent settings", error);
 		return NextResponse.json(
 			{ success: false, error: "Error al guardar configuración" },
 			{ status: 500 },
@@ -197,23 +227,38 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
 	try {
 		// Verificar autenticación y permiso settings:manage
-		const authResult = await verifyAdminTokenWithPermission(request, "settings:manage");
+		const authResult = await verifyAdminTokenWithPermission(
+			request,
+			"settings:manage",
+		);
 		if (!authResult.success) {
 			return authResult.response;
 		}
 
-		// Eliminar ambos documentos en paralelo
-		await Promise.all([
-			db.collection("settings").doc("consent_v1").delete(),
-			db.collection("settings").doc("consent_v1_en").delete(),
-		]);
+		await commitAdminAuditBatch({
+			apply: (batch) => {
+				batch.delete(db.collection("settings").doc("consent_v1"));
+				batch.delete(db.collection("settings").doc("consent_v1_en"));
+			},
+			audit: {
+				action: "consent-settings.delete",
+				actor: buildAdminAuditActor(authResult),
+				target: {
+					collection: "settings",
+					id: "consent_v1",
+					label: "consent_v1",
+				},
+				request: buildAdminAuditRequest(request),
+				details: { languages: ["es", "en"] },
+			},
+		});
 
 		return NextResponse.json({
 			success: true,
 			message: "Configuración eliminada. Se usará el contenido por defecto.",
 		});
 	} catch (error) {
-		console.error("Error deleting consent settings:", error);
+		logger.error("Error deleting consent settings", error);
 		return NextResponse.json(
 			{ success: false, error: "Error al eliminar configuración" },
 			{ status: 500 },
