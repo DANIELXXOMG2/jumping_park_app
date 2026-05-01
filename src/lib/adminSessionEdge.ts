@@ -5,6 +5,8 @@ import {
 	canAccessAdmin,
 } from "@/types/auth";
 
+export { ADMIN_SESSION_COOKIE_NAME };
+
 const SESSION_SECRET = process.env.ADMIN_JWT_SECRET ?? "";
 const textEncoder = new TextEncoder();
 
