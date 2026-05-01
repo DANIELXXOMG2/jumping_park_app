@@ -13,7 +13,7 @@ La regla editorial sigue igual de estricta: cada documento se marca segun su uso
 | `CLAUDE.md` | Current | Convenciones operativas, comandos Bun y arquitectura vigente |
 | `diagramas/README.md` | Current | Guia de diagramas editables presentes en el repo |
 | `diagramas/Diagrama-Secuencia.mmd` | Current | Mermaid editable del flujo de alto nivel |
-| `diagramas/Diagrama-de-Entidad-Relación.mmd` | Current | Mermaid editable del mapa de datos actual/referencial |
+| `diagramas/Diagrama-de-Entidad-Relacion.mmd` | Current | Mermaid editable del mapa de datos actual/referencial |
 | `docs/ARQUITECTURA.md` | Current | Narrativa tecnica vigente para kiosk, admin, SEO y rollout flags |
 | `docs/runbooks/production-hardening.md` | Current | Hub operativo para smoke checks, flags y release hardening |
 | `docs/runbooks/dependency-risk-note.md` | Current | Estado actual del riesgo de dependencias y politica de seguimiento |
