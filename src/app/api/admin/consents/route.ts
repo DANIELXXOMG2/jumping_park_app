@@ -2,7 +2,12 @@ import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { verifyAdminTokenWithPermission } from "@/lib/adminAuth";
 import { createLogger } from "@/lib/logger";
-import { listAdminConsents } from "@/services/adminConsentListService";
+import {
+	buildAdminConsentsListResponse,
+	listAdminConsents,
+} from "@/services/adminConsentListService";
+
+export { buildAdminConsentsListResponse };
 
 const logger = createLogger("ApiAdminConsents");
 

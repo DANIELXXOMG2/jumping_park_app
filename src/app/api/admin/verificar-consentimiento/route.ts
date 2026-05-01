@@ -2,7 +2,10 @@ import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { verifyAdminTokenWithPermission } from "@/lib/adminAuth";
 import { createLogger } from "@/lib/logger";
-import { consentService, getConsentSignatureAccessUrl } from "@/services/consentService";
+import {
+	consentService,
+	getConsentSignatureAccessUrl,
+} from "@/services/consentService";
 import type { Consent } from "@/types/firestore";
 
 const logger = createLogger("ApiVerifyConsent");
