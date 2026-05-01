@@ -1,12 +1,6 @@
 "use client";
 
-import {
-	Eye,
-	FileText,
-	MoreHorizontal,
-	PenTool,
-	Trash2,
-} from "lucide-react";
+import { Eye, FileText, MoreHorizontal, PenTool, Trash2 } from "lucide-react";
 import { Badge } from "@/components/admin/Badge";
 import { DataTable } from "@/components/admin/DataTable";
 import {
@@ -17,11 +11,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { Consent } from "@/hooks";
 import { formatRelativeTime } from "@/lib/utils";
+import type { ReactNode } from "react";
 
 interface ConsentTableColumn {
 	key: string;
 	header: string;
-	render?: (consent: Consent) => React.ReactNode;
+	render?: (consent: Consent) => ReactNode;
 }
 
 interface ConsentTableActions {
@@ -156,17 +151,18 @@ export function ConsentTable({
 							<FileText className="w-4 h-4" />
 							Descargar PDF
 						</DropdownMenuItem>
-						{consent.signatureUrl && actions.onViewSignature && (
-							<DropdownMenuItem
-								onClick={(e) => {
-									e.stopPropagation();
-									actions.onViewSignature?.(consent);
-								}}
-							>
-								<PenTool className="w-4 h-4" />
-								Ver Firma
-							</DropdownMenuItem>
-						)}
+						{consent.signatureStatus === "available" &&
+							actions.onViewSignature && (
+								<DropdownMenuItem
+									onClick={(e) => {
+										e.stopPropagation();
+										actions.onViewSignature?.(consent);
+									}}
+								>
+									<PenTool className="w-4 h-4" />
+									Ver Firma
+								</DropdownMenuItem>
+							)}
 						{actions.onDelete && (
 							<DropdownMenuItem
 								onClick={(e) => {
@@ -195,6 +191,9 @@ export function ConsentTable({
 			columns={columns}
 			keyExtractor={(consent) => consent.id}
 			onRowClick={actions.onView}
+			getRowAriaLabel={(consent) =>
+				`Abrir consentimiento #${consent.consecutivo} de ${consent.adultName}`
+			}
 			isLoading={isLoading}
 			fromCache={fromCache}
 			emptyMessage={emptyMessage}
