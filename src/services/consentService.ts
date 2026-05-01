@@ -960,6 +960,104 @@ class ConsentService {
 
 		return snapshot.docs[0].data() as Consent;
 	}
+
+	/**
+	 * Busca el consentimiento más reciente por cédula (adulto o menor).
+	 * Retorna null si no se encuentra.
+	 */
+	async findConsentByCedula(cedula: string): Promise<{
+		consentDoc: FirebaseFirestore.DocumentSnapshot;
+		consentData: FirebaseFirestore.DocumentData;
+		isExpired: boolean;
+		expiresAt: string | null;
+		signedAt: string | null;
+	} | null> {
+		const [adultResult, minorResult] = await Promise.allSettled([
+			db
+				.collection(this.CONSENTS_COLLECTION)
+				.where("userId", "==", cedula)
+				.orderBy("signedAt", "desc")
+				.limit(1)
+				.get(),
+			db
+				.collection(this.CONSENTS_COLLECTION)
+				.where("searchTokens", "array-contains", cedula)
+				.limit(50)
+				.get(),
+		]);
+
+		let consentDoc: FirebaseFirestore.DocumentSnapshot | null = null;
+		let consentData: FirebaseFirestore.DocumentData | null = null;
+		let latestSignedAt: Date | null = null;
+
+		if (adultResult.status === "fulfilled" && !adultResult.value.empty) {
+			consentDoc = adultResult.value.docs[0];
+			consentData = consentDoc.data() || null;
+			latestSignedAt = consentData?.signedAt?.toDate?.() || null;
+		}
+
+		if (minorResult.status === "fulfilled" && !minorResult.value.empty) {
+			const sortedDocs = minorResult.value.docs.sort((a, b) => {
+				const aDate = a.data().signedAt?.toDate?.() || new Date(0);
+				const bDate = b.data().signedAt?.toDate?.() || new Date(0);
+				return bDate.getTime() - aDate.getTime();
+			});
+
+			const minorDoc = sortedDocs[0];
+			const minorData = minorDoc.data() || null;
+			const minorSignedAt = minorData?.signedAt?.toDate?.() || null;
+
+			if (!consentDoc) {
+				consentDoc = minorDoc;
+				consentData = minorData;
+			} else if (
+				minorSignedAt &&
+				(!latestSignedAt || minorSignedAt > latestSignedAt)
+			) {
+				consentDoc = minorDoc;
+				consentData = minorData;
+			}
+		}
+
+		if (adultResult.status === "rejected") {
+			logger.error("Error buscando consentimiento por userId", adultResult.reason);
+		}
+		if (minorResult.status === "rejected") {
+			logger.error(
+				"Error buscando consentimiento por searchTokens",
+				minorResult.reason,
+			);
+		}
+
+		if (!consentDoc || !consentData) {
+			return null;
+		}
+
+		const now = new Date();
+		let isExpired = true;
+		let expiresAt: string | null = null;
+
+		if (consentData.validUntil) {
+			const validUntilDate = consentData.validUntil.toDate?.()
+				? consentData.validUntil.toDate()
+				: new Date(consentData.validUntil);
+			expiresAt = validUntilDate.toISOString();
+			isExpired = now > validUntilDate;
+		}
+
+		const signedAt =
+			consentData.signedAt?.toDate?.()?.toISOString() ||
+			consentData.createdAt?.toDate?.()?.toISOString() ||
+			null;
+
+		return {
+			consentDoc,
+			consentData,
+			isExpired,
+			expiresAt,
+			signedAt,
+		};
+	}
 }
 
 // ============================================================================
