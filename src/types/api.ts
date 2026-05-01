@@ -58,3 +58,61 @@ export interface ConsentResult {
 	};
 	isExpired?: boolean;
 }
+
+/**
+ * Periodos disponibles para estadísticas.
+ */
+export type StatsPeriod = "today" | "week" | "month" | "year" | "all";
+
+/**
+ * KPI individual para estadísticas.
+ */
+export interface KPI {
+	value: number;
+	change?: number;
+	previousValue?: number;
+	label?: string;
+}
+
+/**
+ * Datos de estadísticas del dashboard admin.
+ */
+export interface StatsData {
+	period: StatsPeriod;
+	dateRange: {
+		start: string;
+		end: string;
+	};
+	kpis: {
+		consents: KPI;
+		users: KPI;
+		minors: KPI;
+		uniqueMinors: KPI;
+		activeConsents: KPI;
+		expiredConsents: KPI;
+	};
+	totals: {
+		users: number;
+		consents: number;
+		minors: number;
+	};
+	chartData: Array<{
+		date: string;
+		consents: number;
+		users: number;
+		minors: number;
+	}>;
+	topDays: Array<{
+		date: string;
+		count: number;
+	}>;
+	averages: {
+		consentsPerDay: number;
+		minorsPerConsent: number;
+	};
+	freshness?: {
+		computedAt: string;
+		source: "aggregate" | "live";
+		stale?: boolean;
+	};
+}
