@@ -1,0 +1,21 @@
+# Non-runtime docs and planning artifacts
+docs/
+diagramas/
+postman/
+openspec/
+report/
+
+# Local/agent artifacts
+.claude/
+.playwright-mcp/
+.vscode/
+CLAUDE.md
+
+# Test and browser automation assets (not needed for production build)
+tests/
+playwright/
+playwright.config.ts
+
+# Local evidence screenshots
+block-e-consentimiento-digital.png
+block-e-kiosk-consent-dialog.png
