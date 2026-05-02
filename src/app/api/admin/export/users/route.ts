@@ -23,8 +23,8 @@ interface UsersExportRouteDeps {
 	buildUsersCsvExport: (range: ExportRangeResolution) => Promise<{
 		csv: string;
 		rowCount: number;
-		generatedAt: string;
-		source: "live";
+		generatedAt?: string;
+		source?: "live";
 	}>;
 }
 
@@ -76,8 +76,10 @@ export async function handleUsersExport(
 		throw error;
 	}
 
-	const { csv, rowCount, generatedAt, source } =
-		await deps.buildUsersCsvExport(range);
+	const exportResult = await deps.buildUsersCsvExport(range);
+	const generatedAt = exportResult.generatedAt ?? new Date().toISOString();
+	const source = exportResult.source ?? "live";
+	const { csv, rowCount } = exportResult;
 	const filename = `usuarios_${buildExportFilenameLabel(range.metadata)}.csv`;
 
 	return new NextResponse(csv, {
