@@ -159,7 +159,9 @@ export default function OtpPage() {
 			});
 
 			if (!response.ok) {
-				const data = (await response.json().catch(() => ({}))) as ApiErrorResponse;
+				const data = (await response
+					.json()
+					.catch(() => ({}))) as ApiErrorResponse;
 				throw new Error(data.error ?? "No pudimos reenviar el código");
 			}
 
@@ -321,7 +323,8 @@ export default function OtpPage() {
 						describedBy="otp-helper otp-feedback"
 					/>
 					<p id="otp-helper" className="sr-only">
-						{t("otp.helper")}
+						Ingresa o pega el codigo de seis digitos enviado al correo del
+						responsable.
 					</p>
 					<output id="otp-feedback" className="sr-only" aria-live="polite">
 						{errorMessage ??

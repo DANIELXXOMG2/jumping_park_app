@@ -35,16 +35,13 @@ export default function IngresoPage() {
 	 * Maneja la entrada directa desde el teclado físico.
 	 * Permite letras y números para soportar pasaportes.
 	 */
-	const handleInputChange = useCallback(
-		(e: ChangeEvent<HTMLInputElement>) => {
-			const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
-			if (value.length <= MAX_DIGITS) {
-				setCedula(value);
-				setErrorMessage(null);
-			}
-		},
-		[],
-	);
+	const handleInputChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+		const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+		if (value.length <= MAX_DIGITS) {
+			setCedula(value);
+			setErrorMessage(null);
+		}
+	}, []);
 
 	const handleDelete = useCallback(() => {
 		setCedula((prev) => prev.slice(0, -1));
