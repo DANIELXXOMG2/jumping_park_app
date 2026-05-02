@@ -83,13 +83,19 @@ export default function AdminLoginPage() {
 				{/* Login Form */}
 				<div className="bg-surface rounded-2xl border border-border p-6 lg:p-8">
 					<form onSubmit={handleSubmit} className="space-y-5">
-							{/* Error Alert */}
-							{error && (
-								<div role="alert" className="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
-									<AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" aria-hidden="true" />
-									<p className="text-sm text-red-400">{error}</p>
-								</div>
-							)}
+						{/* Error Alert */}
+						{error && (
+							<div
+								role="alert"
+								className="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/20 rounded-lg"
+							>
+								<AlertCircle
+									className="w-5 h-5 text-red-400 flex-shrink-0"
+									aria-hidden="true"
+								/>
+								<p className="text-sm text-red-400">{error}</p>
+							</div>
+						)}
 
 						{/* Email Field */}
 						<div>
@@ -135,7 +141,9 @@ export default function AdminLoginPage() {
 								<button
 									type="button"
 									onClick={() => setShowPassword(!showPassword)}
-									aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+									aria-label={
+										showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
+									}
 									aria-pressed={showPassword}
 									className="absolute right-4 top-1/2 -translate-y-1/2 text-foreground/40 hover:text-foreground/60 min-h-0 p-0 !bg-transparent !border-none !shadow-none outline-none hover:!bg-transparent hover:!transform-none"
 								>

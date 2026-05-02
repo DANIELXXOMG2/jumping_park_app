@@ -1,6 +1,13 @@
 "use client";
 
-import { Download, Loader2, MoreHorizontal, RefreshCw, Trash2, Users } from "lucide-react";
+import {
+	Download,
+	Loader2,
+	MoreHorizontal,
+	RefreshCw,
+	Trash2,
+	Users,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -66,7 +73,7 @@ export default function UsersPage() {
 				limit: PAGE_SIZE.toString(),
 				offset: offset.toString(),
 			});
-			
+
 			if (searchTerm.trim()) {
 				params.set("search", searchTerm);
 			}
@@ -243,7 +250,9 @@ export default function UsersPage() {
 						disabled={isLoading}
 						title="Recargar datos"
 					>
-						<RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
+						<RefreshCw
+							className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`}
+						/>
 					</Button>
 					<Button
 						variant="secondary"
@@ -282,7 +291,11 @@ export default function UsersPage() {
 					onRowClick={(user) => router.push(`/admin/usuarios/${user.uid}`)}
 					isLoading={isLoading}
 					fromCache={isOffline}
-					emptyMessage={search ? "No se encontraron usuarios" : "No hay usuarios registrados"}
+					emptyMessage={
+						search
+							? "No se encontraron usuarios"
+							: "No hay usuarios registrados"
+					}
 					pagination={{
 						total: pagination.total,
 						limit: pagination.limit,
