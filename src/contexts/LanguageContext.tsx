@@ -26,14 +26,19 @@ interface LanguageContextValue {
 	/** Alternar entre idiomas */
 	toggleLanguage: () => void;
 	/** Función de traducción */
-	t: (key: DictionaryKey, replacements?: Record<string, string | number>) => string;
+	t: (
+		key: DictionaryKey,
+		replacements?: Record<string, string | number>,
+	) => string;
 }
 
 // ============================================================================
 // CONTEXTO
 // ============================================================================
 
-const LanguageContext = createContext<LanguageContextValue | undefined>(undefined);
+const LanguageContext = createContext<LanguageContextValue | undefined>(
+	undefined,
+);
 
 const STORAGE_KEY = "kiosk-language";
 
@@ -78,10 +83,13 @@ interface LanguageProviderProps {
 	defaultLanguage?: Language;
 }
 
-export function LanguageProvider({ children, defaultLanguage }: LanguageProviderProps) {
+export function LanguageProvider({
+	children,
+	defaultLanguage,
+}: LanguageProviderProps) {
 	// Inicializar con el idioma por defecto o 'es' para evitar hydration mismatch
 	const [language, setLanguageState] = useState<Language>(
-		defaultLanguage || "es"
+		defaultLanguage || "es",
 	);
 	const [isInitialized, setIsInitialized] = useState(false);
 
@@ -117,10 +125,13 @@ export function LanguageProvider({ children, defaultLanguage }: LanguageProvider
 
 	// Función de traducción
 	const t = useCallback(
-		(key: DictionaryKey, replacements?: Record<string, string | number>): string => {
+		(
+			key: DictionaryKey,
+			replacements?: Record<string, string | number>,
+		): string => {
 			return getTranslation(key, language, replacements);
 		},
-		[language]
+		[language],
 	);
 
 	const value: LanguageContextValue = {

@@ -39,18 +39,18 @@ export interface ActivityData {
 
 /**
  * Hook para obtener la actividad del día con caché SWR.
- * 
+ *
  * Optimizado para reducir lecturas de Firestore:
  * - Refresco automático cada 5 minutos (no 30 segundos)
  * - Sin revalidación al cambiar de pestaña
  * - Deduplicación de 60 segundos
- * 
+ *
  * @returns Datos de actividad, estado de carga y función de refresco manual
- * 
+ *
  * @example
  * ```tsx
  * const { data, isLoading, isValidating, mutate } = useActivity();
- * 
+ *
  * // Refrescar manualmente
  * <button onClick={() => mutate()}>Actualizar</button>
  * ```
@@ -65,11 +65,11 @@ export function useActivity() {
 			revalidateOnReconnect: true, // Sí recargar al reconectarse a internet
 			dedupingInterval: 60000, // 1 minuto de deduplicación
 			refreshInterval: 5 * 60 * 1000, // Refrescar cada 5 minutos (no 30s!)
-			
+
 			// 📦 UX
 			keepPreviousData: true, // Mantener datos mientras revalida
 			errorRetryCount: 3, // Reintentar 3 veces en error
-		}
+		},
 	);
 
 	return {
@@ -80,5 +80,3 @@ export function useActivity() {
 		mutate, // Para refresh manual
 	};
 }
-
-export type { ActivityData as UseActivityData };
