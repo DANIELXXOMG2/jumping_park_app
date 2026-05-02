@@ -24,7 +24,7 @@ interface ShootingStar {
 
 /**
  * SpaceBackground - Fondo animado de galaxia/espacio
- * 
+ *
  * Features:
  * - Estrellas con efecto twinkle (parpadeo)
  * - Nebulosas con gradientes animados
@@ -70,15 +70,17 @@ export function SpaceBackground() {
 			}
 
 			// Inicializar estrellas fugaces
-			shootingStarsRef.current = Array(3).fill(null).map(() => ({
-				x: 0,
-				y: 0,
-				length: 0,
-				speed: 0,
-				opacity: 0,
-				angle: 0,
-				active: false,
-			}));
+			shootingStarsRef.current = Array(3)
+				.fill(null)
+				.map(() => ({
+					x: 0,
+					y: 0,
+					length: 0,
+					speed: 0,
+					opacity: 0,
+					angle: 0,
+					active: false,
+				}));
 		};
 
 		// Crear estrella fugaz
@@ -101,7 +103,7 @@ export function SpaceBackground() {
 				0,
 				canvas.width * 0.2,
 				canvas.height * 0.7,
-				canvas.width * 0.5
+				canvas.width * 0.5,
 			);
 			gradientGreen1.addColorStop(0, "rgba(46, 204, 113, 0.2)");
 			gradientGreen1.addColorStop(0.4, "rgba(46, 204, 113, 0.08)");
@@ -116,7 +118,7 @@ export function SpaceBackground() {
 				0,
 				canvas.width * 0.75,
 				canvas.height * 0.3,
-				canvas.width * 0.35
+				canvas.width * 0.35,
 			);
 			gradient1.addColorStop(0, "rgba(139, 92, 246, 0.15)");
 			gradient1.addColorStop(0.5, "rgba(139, 92, 246, 0.05)");
@@ -131,7 +133,7 @@ export function SpaceBackground() {
 				0,
 				canvas.width * 0.85,
 				canvas.height * 0.15,
-				canvas.width * 0.25
+				canvas.width * 0.25,
 			);
 			gradientGreen2.addColorStop(0, "rgba(46, 204, 113, 0.18)");
 			gradientGreen2.addColorStop(0.5, "rgba(46, 204, 113, 0.06)");
@@ -146,7 +148,7 @@ export function SpaceBackground() {
 				0,
 				canvas.width * 0.5,
 				canvas.height * 0.5,
-				canvas.width * 0.4
+				canvas.width * 0.4,
 			);
 			gradient2.addColorStop(0, "rgba(46, 184, 143, 0.12)"); // Verde-azulado
 			gradient2.addColorStop(0.5, "rgba(59, 130, 246, 0.06)");
@@ -161,7 +163,7 @@ export function SpaceBackground() {
 				0,
 				canvas.width * 0.4,
 				canvas.height * 0.4,
-				canvas.width * 0.3
+				canvas.width * 0.3,
 			);
 			gradientGreen3.addColorStop(0, "rgba(46, 204, 113, 0.1)");
 			gradientGreen3.addColorStop(0.5, "rgba(46, 204, 113, 0.03)");
@@ -178,8 +180,12 @@ export function SpaceBackground() {
 
 			// Glow effect
 			const gradient = ctx.createRadialGradient(
-				star.x, star.y, 0,
-				star.x, star.y, size * 3
+				star.x,
+				star.y,
+				0,
+				star.x,
+				star.y,
+				size * 3,
 			);
 			gradient.addColorStop(0, `rgba(255, 255, 255, ${opacity})`);
 			gradient.addColorStop(0.5, `rgba(255, 255, 255, ${opacity * 0.3})`);
@@ -232,7 +238,11 @@ export function SpaceBackground() {
 					star.y += Math.sin(star.angle) * star.speed;
 					star.opacity -= 0.01;
 
-					if (star.opacity <= 0 || star.x > canvas.width || star.y > canvas.height) {
+					if (
+						star.opacity <= 0 ||
+						star.x > canvas.width ||
+						star.y > canvas.height
+					) {
 						star.active = false;
 					}
 				} else if (Math.random() < 0.002) {
@@ -256,7 +266,12 @@ export function SpaceBackground() {
 			lastTime = time;
 
 			// Limpiar canvas con fondo degradado (con tonos verdes sutiles)
-			const bgGradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+			const bgGradient = ctx.createLinearGradient(
+				0,
+				0,
+				canvas.width,
+				canvas.height,
+			);
 			bgGradient.addColorStop(0, "#0a1a12"); // Verde muy oscuro
 			bgGradient.addColorStop(0.3, "#0a0a1a"); // Azul oscuro
 			bgGradient.addColorStop(0.6, "#0d1a14"); // Verde-azul oscuro
@@ -271,10 +286,10 @@ export function SpaceBackground() {
 			starsRef.current.forEach((star) => {
 				const parallaxX = mouseRef.current.x * star.speed * 0.5;
 				const parallaxY = mouseRef.current.y * star.speed * 0.5;
-				
+
 				const drawX = star.x + parallaxX;
 				const drawY = star.y + parallaxY;
-				
+
 				drawStar({ ...star, x: drawX, y: drawY }, time);
 
 				// Movimiento lento hacia abajo
@@ -308,18 +323,17 @@ export function SpaceBackground() {
 	return (
 		<>
 			{/* Canvas principal */}
-			<canvas
-				ref={canvasRef}
-				className="absolute inset-0 z-0"
-				tabIndex={-1}
-			/>
+			<canvas ref={canvasRef} className="absolute inset-0 z-0" tabIndex={-1} />
 
 			{/* Capas CSS adicionales para profundidad */}
-			<div className="absolute inset-0 z-[1] pointer-events-none" aria-hidden="true">
+			<div
+				className="absolute inset-0 z-[1] pointer-events-none"
+				aria-hidden="true"
+			>
 				{/* Estrellas lejanas con CSS */}
 				<div className="stars-layer-1" />
 				<div className="stars-layer-2" />
-				
+
 				{/* Efecto de vignette */}
 				<div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.4)_100%)]" />
 			</div>

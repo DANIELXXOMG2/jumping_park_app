@@ -112,10 +112,22 @@ export function StartActionButton({
 			/>
 
 			{/* ═══ PARTÍCULAS DECORATIVAS ═══ */}
-			<span className="absolute top-2 left-4 w-2 h-2 rounded-full bg-white/40 group-hover:bg-white/60 animate-pulse" aria-hidden="true" />
-			<span className="absolute top-4 right-6 w-1.5 h-1.5 rounded-full bg-white/30 group-hover:bg-white/50 animate-pulse delay-150" aria-hidden="true" />
-			<span className="absolute bottom-3 left-8 w-1 h-1 rounded-full bg-white/20 group-hover:bg-white/40 animate-pulse delay-300" aria-hidden="true" />
-			<span className="absolute bottom-2 right-4 w-2.5 h-2.5 rounded-full bg-white/25 group-hover:bg-white/45 animate-pulse delay-500" aria-hidden="true" />
+			<span
+				className="absolute top-2 left-4 w-2 h-2 rounded-full bg-white/40 group-hover:bg-white/60 animate-pulse"
+				aria-hidden="true"
+			/>
+			<span
+				className="absolute top-4 right-6 w-1.5 h-1.5 rounded-full bg-white/30 group-hover:bg-white/50 animate-pulse delay-150"
+				aria-hidden="true"
+			/>
+			<span
+				className="absolute bottom-3 left-8 w-1 h-1 rounded-full bg-white/20 group-hover:bg-white/40 animate-pulse delay-300"
+				aria-hidden="true"
+			/>
+			<span
+				className="absolute bottom-2 right-4 w-2.5 h-2.5 rounded-full bg-white/25 group-hover:bg-white/45 animate-pulse delay-500"
+				aria-hidden="true"
+			/>
 
 			{/* ═══ CONTENIDO DEL BOTÓN ═══ */}
 			<span className="relative z-10 flex items-center justify-center gap-3 sm:gap-4">
@@ -147,12 +159,15 @@ export function StartActionButton({
 					<>
 						{/* Ícono con animación */}
 						<span className="relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-zinc-900/20 group-hover:bg-zinc-900/30 transition-colors duration-300">
-							<Sparkles 
-								className="w-5 h-5 sm:w-6 sm:h-6 group-hover:scale-110 group-hover:rotate-12 transition-transform duration-300" 
+							<Sparkles
+								className="w-5 h-5 sm:w-6 sm:h-6 group-hover:scale-110 group-hover:rotate-12 transition-transform duration-300"
 								strokeWidth={2.5}
 							/>
 							{/* Ping de atención */}
-							<span className="absolute inset-0 rounded-full bg-white/20 animate-ping opacity-0 group-hover:opacity-100" aria-hidden="true" />
+							<span
+								className="absolute inset-0 rounded-full bg-white/20 animate-ping opacity-0 group-hover:opacity-100"
+								aria-hidden="true"
+							/>
 						</span>
 						<span className="drop-shadow-sm">{t("common.tapToStart")}</span>
 						{/* Cohete con animación de despegue */}
