@@ -52,11 +52,7 @@ export function DeleteConfirmModal({
 
 				{/* Actions */}
 				<div className="flex gap-3 justify-end">
-					<Button
-						variant="ghost"
-						onClick={onClose}
-						disabled={isDeleting}
-					>
+					<Button variant="ghost" onClick={onClose} disabled={isDeleting}>
 						Cancelar
 					</Button>
 					<Button

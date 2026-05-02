@@ -15,6 +15,7 @@ interface DataTableProps<T> {
 	columns: Column<T>[];
 	keyExtractor: (item: T) => string;
 	onRowClick?: (item: T) => void;
+	getRowAriaLabel?: (item: T, index: number) => string;
 	isLoading?: boolean;
 	emptyMessage?: string;
 	/** Indica si los datos provienen de caché local (modo offline) */
@@ -27,11 +28,16 @@ interface DataTableProps<T> {
 	};
 }
 
+export function isDataTableRowActivationKey(key: string): boolean {
+	return key === "Enter" || key === " ";
+}
+
 export function DataTable<T extends object>({
 	data,
 	columns,
 	keyExtractor,
 	onRowClick,
+	getRowAriaLabel,
 	isLoading,
 	emptyMessage = "No hay datos disponibles",
 	fromCache = false,
@@ -64,6 +70,10 @@ export function DataTable<T extends object>({
 		return (item as Record<string, unknown>)[key];
 	};
 
+	const activateRow = (item: T) => {
+		onRowClick?.(item);
+	};
+
 	return (
 		<div className="w-full">
 			{/* Cache Warning Banner */}
@@ -81,10 +91,12 @@ export function DataTable<T extends object>({
 			)}
 
 			{/* Desktop Table */}
-			<div className={cn(
-				"hidden lg:block overflow-x-auto",
-				fromCache && "ring-2 ring-warning/30 rounded-lg"
-			)}>
+			<div
+				className={cn(
+					"hidden lg:block overflow-x-auto",
+					fromCache && "ring-2 ring-warning/30 rounded-lg",
+				)}
+			>
 				<table className="w-full">
 					<thead>
 						<tr className="border-b border-border">
@@ -102,10 +114,28 @@ export function DataTable<T extends object>({
 						</tr>
 					</thead>
 					<tbody>
-						{data.map((item) => (
+						{data.map((item, index) => (
 							<tr
 								key={keyExtractor(item)}
-								onClick={() => onRowClick?.(item)}
+								onClick={() => activateRow(item)}
+								onKeyDown={(event) => {
+									if (!onRowClick) {
+										return;
+									}
+
+									if (isDataTableRowActivationKey(event.key)) {
+										event.preventDefault();
+										activateRow(item);
+									}
+								}}
+								tabIndex={onRowClick ? 0 : undefined}
+								role={onRowClick ? "button" : undefined}
+								aria-label={
+									onRowClick
+										? (getRowAriaLabel?.(item, index) ??
+											`Abrir fila ${index + 1}`)
+										: undefined
+								}
 								className={cn(
 									"border-b border-border/50 transition-colors",
 									onRowClick && "cursor-pointer hover:bg-surface-muted",
@@ -131,16 +161,23 @@ export function DataTable<T extends object>({
 			</div>
 
 			{/* Mobile Cards */}
-			<div className={cn(
-				"lg:hidden space-y-3",
-				fromCache && "ring-2 ring-warning/30 rounded-lg p-2"
-			)}>
-				{data.map((item) => (
+			<div
+				className={cn(
+					"lg:hidden space-y-3",
+					fromCache && "ring-2 ring-warning/30 rounded-lg p-2",
+				)}
+			>
+				{data.map((item, index) => (
 					<button
 						key={keyExtractor(item)}
 						type="button"
-						onClick={() => onRowClick?.(item)}
+						onClick={() => activateRow(item)}
 						disabled={!onRowClick}
+						aria-label={
+							onRowClick
+								? (getRowAriaLabel?.(item, index) ?? `Abrir fila ${index + 1}`)
+								: undefined
+						}
 						className={cn(
 							"bg-card rounded-lg p-4 border border-border/50 w-full text-left disabled:opacity-100",
 							onRowClick &&
