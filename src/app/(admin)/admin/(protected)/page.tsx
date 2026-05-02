@@ -182,7 +182,11 @@ export default function AdminDashboard() {
 
 			{/* Resultado de búsqueda */}
 			{searchResult && (
-				<div className="w-full max-w-xl animate-in fade-in slide-in-from-bottom-4 duration-300" aria-live="polite" role="status">
+				<div
+					className="w-full max-w-xl animate-in fade-in slide-in-from-bottom-4 duration-300"
+					aria-live="polite"
+					role="status"
+				>
 					{searchResult.found &&
 					searchResult.consent &&
 					!searchResult.isExpired ? (
