@@ -3,7 +3,8 @@
 import { forwardRef, type InputHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
-export interface KioskInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
+export interface KioskInputProps
+	extends Omit<InputHTMLAttributes<HTMLInputElement>, "size"> {
 	/** Variante del input */
 	variant?: "default" | "premium" | "glass";
 	/** Tamaño del input */
@@ -20,7 +21,7 @@ export interface KioskInputProps extends Omit<InputHTMLAttributes<HTMLInputEleme
 
 /**
  * KioskInput - Input profesional y moderno para el ecosistema kiosk
- * 
+ *
  * Características:
  * - Diseño glassmorphism premium
  * - Estados táctiles optimizados para móviles
@@ -41,7 +42,7 @@ export const KioskInput = forwardRef<HTMLInputElement, KioskInputProps>(
 			disabled,
 			...props
 		},
-		ref
+		ref,
 	) => {
 		// Estilos base compartidos
 		const baseStyles = cn(
@@ -52,7 +53,7 @@ export const KioskInput = forwardRef<HTMLInputElement, KioskInputProps>(
 			// Transiciones suaves
 			"transition-all duration-300 ease-out",
 			// Deshabilitado
-			disabled && "opacity-50 cursor-not-allowed pointer-events-none"
+			disabled && "opacity-50 cursor-not-allowed pointer-events-none",
 		);
 
 		// Estilos por tamaño
@@ -60,17 +61,17 @@ export const KioskInput = forwardRef<HTMLInputElement, KioskInputProps>(
 			sm: cn(
 				"text-sm px-3 py-2.5 rounded-lg",
 				leftIcon && "pl-9",
-				rightIcon && "pr-9"
+				rightIcon && "pr-9",
 			),
 			md: cn(
 				"text-base px-4 py-3.5 rounded-xl",
 				leftIcon && "pl-11",
-				rightIcon && "pr-11"
+				rightIcon && "pr-11",
 			),
 			lg: cn(
 				"text-lg px-5 py-4 rounded-2xl",
 				leftIcon && "pl-14",
-				rightIcon && "pr-14"
+				rightIcon && "pr-14",
 			),
 		};
 
@@ -91,7 +92,7 @@ export const KioskInput = forwardRef<HTMLInputElement, KioskInputProps>(
 				"focus:ring-4 focus:ring-primary/20",
 				"focus:shadow-[0_0_30px_rgba(46,204,113,0.15)]",
 				// Active/Pressed (móvil)
-				"active:scale-[0.99] active:border-primary/60"
+				"active:scale-[0.99] active:border-primary/60",
 			),
 			premium: cn(
 				// Fondo con gradiente
@@ -111,7 +112,7 @@ export const KioskInput = forwardRef<HTMLInputElement, KioskInputProps>(
 				"focus:bg-gradient-to-br focus:from-primary/15 focus:via-white/10 focus:to-primary/15",
 				"dark:focus:from-primary/15 dark:focus:via-zinc-800/80 dark:focus:to-primary/15",
 				// Active/Pressed (móvil)
-				"active:scale-[0.98] active:shadow-[0_4px_15px_rgba(46,204,113,0.3)]"
+				"active:scale-[0.98] active:shadow-[0_4px_15px_rgba(46,204,113,0.3)]",
 			),
 			glass: cn(
 				// Glassmorphism
@@ -129,7 +130,7 @@ export const KioskInput = forwardRef<HTMLInputElement, KioskInputProps>(
 				"focus:bg-white/20 focus:border-primary/50 focus:ring-4 focus:ring-primary/20",
 				"focus:shadow-[0_16px_50px_rgba(46,204,113,0.15),inset_0_1px_0_rgba(255,255,255,0.3)]",
 				// Active/Pressed (móvil)
-				"active:scale-[0.99] active:bg-white/25"
+				"active:scale-[0.99] active:bg-white/25",
 			),
 		};
 
@@ -140,8 +141,8 @@ export const KioskInput = forwardRef<HTMLInputElement, KioskInputProps>(
 					"bg-red-500/5 dark:bg-red-500/10",
 					"ring-2 ring-red-500/20",
 					"focus:border-red-500/80 focus:ring-red-500/30",
-					"hover:border-red-500/70"
-			  )
+					"hover:border-red-500/70",
+				)
 			: "";
 
 		// Estilos de íconos
@@ -167,7 +168,7 @@ export const KioskInput = forwardRef<HTMLInputElement, KioskInputProps>(
 							"text-foreground/40 group-hover:text-foreground/60 group-focus-within:text-primary/80",
 							"transition-colors duration-300",
 							iconPositionStyles[inputSize].left,
-							iconSizeStyles[inputSize]
+							iconSizeStyles[inputSize],
 						)}
 					>
 						{leftIcon}
@@ -183,7 +184,7 @@ export const KioskInput = forwardRef<HTMLInputElement, KioskInputProps>(
 						sizeStyles[inputSize],
 						variantStyles[variant],
 						errorStyles,
-						className
+						className,
 					)}
 					{...props}
 				/>
@@ -196,7 +197,7 @@ export const KioskInput = forwardRef<HTMLInputElement, KioskInputProps>(
 							"text-foreground/40 group-hover:text-foreground/60 group-focus-within:text-primary/80",
 							"transition-colors duration-300",
 							iconPositionStyles[inputSize].right,
-							iconSizeStyles[inputSize]
+							iconSizeStyles[inputSize],
 						)}
 					>
 						{rightIcon}
@@ -208,7 +209,8 @@ export const KioskInput = forwardRef<HTMLInputElement, KioskInputProps>(
 					<div
 						className="absolute inset-0 rounded-inherit opacity-0 group-focus-within:opacity-100 pointer-events-none transition-opacity duration-500"
 						style={{
-							background: "radial-gradient(ellipse at center, rgba(46,204,113,0.08) 0%, transparent 70%)",
+							background:
+								"radial-gradient(ellipse at center, rgba(46,204,113,0.08) 0%, transparent 70%)",
 							borderRadius: "inherit",
 						}}
 						aria-hidden="true"
@@ -216,7 +218,7 @@ export const KioskInput = forwardRef<HTMLInputElement, KioskInputProps>(
 				)}
 			</div>
 		);
-	}
+	},
 );
 
 KioskInput.displayName = "KioskInput";
@@ -225,7 +227,8 @@ KioskInput.displayName = "KioskInput";
 // ESTILOS PARA SELECT
 // ============================================================================
 
-export interface KioskSelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'size'> {
+export interface KioskSelectProps
+	extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, "size"> {
 	variant?: "default" | "premium" | "glass";
 	inputSize?: "sm" | "md" | "lg";
 	hasError?: boolean;
@@ -246,7 +249,7 @@ export const KioskSelect = forwardRef<HTMLSelectElement, KioskSelectProps>(
 			children,
 			...props
 		},
-		ref
+		ref,
 	) => {
 		// Estilos base compartidos
 		const baseStyles = cn(
@@ -254,7 +257,7 @@ export const KioskSelect = forwardRef<HTMLSelectElement, KioskSelectProps>(
 			"font-medium text-foreground",
 			"transition-all duration-300 ease-out",
 			"pr-10", // Espacio para el chevron
-			disabled && "opacity-50 cursor-not-allowed pointer-events-none"
+			disabled && "opacity-50 cursor-not-allowed pointer-events-none",
 		);
 
 		const sizeStyles = {
@@ -270,7 +273,7 @@ export const KioskSelect = forwardRef<HTMLSelectElement, KioskSelectProps>(
 				"shadow-inner shadow-black/5 dark:shadow-black/20",
 				"hover:border-primary/30 hover:bg-white/10 dark:hover:bg-zinc-800/60",
 				"focus:border-primary/50 focus:bg-white/15 focus:ring-4 focus:ring-primary/20",
-				"active:scale-[0.99]"
+				"active:scale-[0.99]",
 			),
 			premium: cn(
 				"bg-gradient-to-br from-white/10 via-white/5 to-white/10",
@@ -279,7 +282,7 @@ export const KioskSelect = forwardRef<HTMLSelectElement, KioskSelectProps>(
 				"shadow-[0_4px_20px_rgba(0,0,0,0.15)]",
 				"hover:border-primary/40 hover:shadow-[0_8px_30px_rgba(46,204,113,0.2)]",
 				"focus:border-primary/60 focus:ring-4 focus:ring-primary/30",
-				"active:scale-[0.98]"
+				"active:scale-[0.98]",
 			),
 			glass: cn(
 				"bg-white/10 backdrop-blur-xl dark:bg-zinc-900/40",
@@ -287,15 +290,15 @@ export const KioskSelect = forwardRef<HTMLSelectElement, KioskSelectProps>(
 				"shadow-[0_8px_32px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.2)]",
 				"hover:bg-white/15 hover:border-white/40",
 				"focus:bg-white/20 focus:border-primary/50 focus:ring-4 focus:ring-primary/20",
-				"active:scale-[0.99]"
+				"active:scale-[0.99]",
 			),
 		};
 
 		const errorStyles = hasError
 			? cn(
 					"border-red-500/60 bg-red-500/5 ring-2 ring-red-500/20",
-					"focus:border-red-500/80 focus:ring-red-500/30"
-			  )
+					"focus:border-red-500/80 focus:ring-red-500/30",
+				)
 			: "";
 
 		const iconSizeStyles = {
@@ -319,7 +322,7 @@ export const KioskSelect = forwardRef<HTMLSelectElement, KioskSelectProps>(
 							"text-foreground/40 group-hover:text-foreground/60 group-focus-within:text-primary/80",
 							"transition-colors duration-300",
 							iconPositionStyles[inputSize],
-							iconSizeStyles[inputSize]
+							iconSizeStyles[inputSize],
 						)}
 					>
 						{leftIcon}
@@ -334,7 +337,7 @@ export const KioskSelect = forwardRef<HTMLSelectElement, KioskSelectProps>(
 						sizeStyles[inputSize],
 						variantStyles[variant],
 						errorStyles,
-						className
+						className,
 					)}
 					{...props}
 				>
@@ -349,18 +352,22 @@ export const KioskSelect = forwardRef<HTMLSelectElement, KioskSelectProps>(
 						"text-foreground/40 group-hover:text-foreground/60 group-focus-within:text-primary/80",
 						"transition-all duration-300",
 						"group-focus-within:rotate-180",
-						iconSizeStyles[inputSize]
+						iconSizeStyles[inputSize],
 					)}
 					fill="none"
 					viewBox="0 0 24 24"
 					stroke="currentColor"
 					strokeWidth={2}
 				>
-					<path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+					<path
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						d="M19 9l-7 7-7-7"
+					/>
 				</svg>
 			</div>
 		);
-	}
+	},
 );
 
 KioskSelect.displayName = "KioskSelect";
@@ -369,14 +376,18 @@ KioskSelect.displayName = "KioskSelect";
 // ESTILOS PARA TEXTAREA
 // ============================================================================
 
-export interface KioskTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+export interface KioskTextareaProps
+	extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
 	variant?: "default" | "premium" | "glass";
 	inputSize?: "sm" | "md" | "lg";
 	hasError?: boolean;
 	containerClassName?: string;
 }
 
-export const KioskTextarea = forwardRef<HTMLTextAreaElement, KioskTextareaProps>(
+export const KioskTextarea = forwardRef<
+	HTMLTextAreaElement,
+	KioskTextareaProps
+>(
 	(
 		{
 			className,
@@ -387,13 +398,13 @@ export const KioskTextarea = forwardRef<HTMLTextAreaElement, KioskTextareaProps>
 			disabled,
 			...props
 		},
-		ref
+		ref,
 	) => {
 		const baseStyles = cn(
 			"w-full appearance-none outline-none resize-none",
 			"font-medium text-foreground placeholder:text-foreground/40",
 			"transition-all duration-300 ease-out",
-			disabled && "opacity-50 cursor-not-allowed pointer-events-none"
+			disabled && "opacity-50 cursor-not-allowed pointer-events-none",
 		);
 
 		const sizeStyles = {
@@ -409,7 +420,7 @@ export const KioskTextarea = forwardRef<HTMLTextAreaElement, KioskTextareaProps>
 				"shadow-inner shadow-black/5",
 				"hover:border-primary/30 hover:bg-white/10",
 				"focus:border-primary/50 focus:bg-white/15 focus:ring-4 focus:ring-primary/20",
-				"active:scale-[0.995]"
+				"active:scale-[0.995]",
 			),
 			premium: cn(
 				"bg-gradient-to-br from-white/10 via-white/5 to-white/10",
@@ -417,22 +428,22 @@ export const KioskTextarea = forwardRef<HTMLTextAreaElement, KioskTextareaProps>
 				"border-2 border-white/20 dark:border-zinc-600/50",
 				"shadow-[0_4px_20px_rgba(0,0,0,0.15)]",
 				"hover:border-primary/40 hover:shadow-[0_8px_30px_rgba(46,204,113,0.2)]",
-				"focus:border-primary/60 focus:ring-4 focus:ring-primary/30"
+				"focus:border-primary/60 focus:ring-4 focus:ring-primary/30",
 			),
 			glass: cn(
 				"bg-white/10 backdrop-blur-xl dark:bg-zinc-900/40",
 				"border border-white/30 dark:border-white/10",
 				"shadow-[0_8px_32px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.2)]",
 				"hover:bg-white/15 hover:border-white/40",
-				"focus:bg-white/20 focus:border-primary/50 focus:ring-4 focus:ring-primary/20"
+				"focus:bg-white/20 focus:border-primary/50 focus:ring-4 focus:ring-primary/20",
 			),
 		};
 
 		const errorStyles = hasError
 			? cn(
 					"border-red-500/60 bg-red-500/5 ring-2 ring-red-500/20",
-					"focus:border-red-500/80 focus:ring-red-500/30"
-			  )
+					"focus:border-red-500/80 focus:ring-red-500/30",
+				)
 			: "";
 
 		return (
@@ -445,13 +456,13 @@ export const KioskTextarea = forwardRef<HTMLTextAreaElement, KioskTextareaProps>
 						sizeStyles[inputSize],
 						variantStyles[variant],
 						errorStyles,
-						className
+						className,
 					)}
 					{...props}
 				/>
 			</div>
 		);
-	}
+	},
 );
 
 KioskTextarea.displayName = "KioskTextarea";
