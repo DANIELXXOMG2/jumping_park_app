@@ -1,13 +1,13 @@
-'use client'
+"use client";
 
-import dynamic from 'next/dynamic'
-import type { ReactNode } from 'react'
-import { SWRConfig } from 'swr'
+import dynamic from "next/dynamic";
+import type { ReactNode } from "react";
+import { SWRConfig } from "swr";
 
 const AuthProvider = dynamic(
-	() => import('@/contexts/AuthContext').then((mod) => mod.AuthProvider),
+	() => import("@/contexts/AuthContext").then((mod) => mod.AuthProvider),
 	{ ssr: false },
-)
+);
 
 const swrConfig = {
 	revalidateOnFocus: false,
@@ -16,10 +16,10 @@ const swrConfig = {
 	focusThrottleInterval: 120000,
 	errorRetryCount: 3,
 	keepPreviousData: true,
-}
+};
 
 interface AdminLayoutShellProps {
-	children: ReactNode
+	children: ReactNode;
 }
 
 export function AdminLayoutShell({ children }: AdminLayoutShellProps) {
@@ -27,5 +27,5 @@ export function AdminLayoutShell({ children }: AdminLayoutShellProps) {
 		<SWRConfig value={swrConfig}>
 			<AuthProvider>{children}</AuthProvider>
 		</SWRConfig>
-	)
+	);
 }

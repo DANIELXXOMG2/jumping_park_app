@@ -61,7 +61,8 @@ function checkIsInstalled(): boolean {
  * ```
  */
 export function usePWAInstall(): UsePWAInstallReturn {
-	const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+	const [deferredPrompt, setDeferredPrompt] =
+		useState<BeforeInstallPromptEvent | null>(null);
 	// Inicializar estados con funciones para evitar cascading renders
 	const [isInstalled, setIsInstalled] = useState(() => checkIsInstalled());
 	const [isSupported] = useState(() => checkBrowserSupport());
@@ -97,7 +98,10 @@ export function usePWAInstall(): UsePWAInstallReturn {
 
 		return () => {
 			mediaQuery.removeEventListener("change", handleDisplayModeChange);
-			window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+			window.removeEventListener(
+				"beforeinstallprompt",
+				handleBeforeInstallPrompt,
+			);
 			window.removeEventListener("appinstalled", handleAppInstalled);
 		};
 	}, []);
