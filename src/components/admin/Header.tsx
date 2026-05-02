@@ -14,7 +14,10 @@ import { useAuth } from "@/contexts/AuthContext";
  */
 const ROLE_LABELS: Record<string, { label: string; color: string }> = {
 	admin: { label: "Admin", color: "bg-primary/10 text-primary" },
-	trabajador: { label: "Trabajador", color: "bg-yellow-500/10 text-yellow-600" },
+	trabajador: {
+		label: "Trabajador",
+		color: "bg-yellow-500/10 text-yellow-600",
+	},
 };
 
 export function Header() {
@@ -56,7 +59,9 @@ export function Header() {
 
 					{/* Badge de rol */}
 					{roleInfo && (
-						<div className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${roleInfo.color}`}>
+						<div
+							className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${roleInfo.color}`}
+						>
 							{role === "admin" ? (
 								<Shield className="w-3.5 h-3.5" />
 							) : (
