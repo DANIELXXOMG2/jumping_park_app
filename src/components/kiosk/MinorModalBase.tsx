@@ -49,16 +49,14 @@ export function MinorModalBase({
 						<div
 							className={cn(
 								"w-8 h-8 rounded-full flex items-center justify-center",
-								iconBgClass
+								iconBgClass,
 							)}
 						>
 							{icon}
 						</div>
 						<div>
 							<span className="text-sm font-semibold text-white">{title}</span>
-							{subtitle && (
-								<p className="text-xs text-gray-400">{subtitle}</p>
-							)}
+							{subtitle && <p className="text-xs text-gray-400">{subtitle}</p>}
 						</div>
 					</div>
 					<button
