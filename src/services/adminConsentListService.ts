@@ -6,6 +6,7 @@ import {
 	buildCursorPageInfo,
 } from "@/lib/adminCursor";
 import { resolveHardeningPolicy } from "@/lib/hardeningPolicy";
+import { toJsDate } from "@/lib/utils/dateUtils";
 import { normalizeText } from "@/lib/utils/searchUtils";
 import type { ConsentDocument, Minor } from "@/types/firestore";
 import { CURSOR_PAGE_META_SOURCE } from "@/types/pagination";
@@ -79,9 +80,15 @@ function mapConsent(
 		signatureUrl: null,
 		policyVersion: consentData.policyVersion,
 		ipAddress: consentData.ipAddress,
-		createdAt: consentData.createdAt?.toDate?.()?.toISOString() || null,
-		signedAt: consentData.signedAt?.toDate?.()?.toISOString() || null,
-		validUntil: consentData.validUntil?.toDate?.()?.toISOString() || null,
+		createdAt: consentData.createdAt
+			? toJsDate(consentData.createdAt).toISOString()
+			: null,
+		signedAt: consentData.signedAt
+			? toJsDate(consentData.signedAt).toISOString()
+			: null,
+		validUntil: consentData.validUntil
+			? toJsDate(consentData.validUntil).toISOString()
+			: null,
 	};
 }
 
@@ -214,7 +221,20 @@ export async function listAdminConsents(
 async function searchAdminConsents(
 	query: AdminConsentListQuery,
 ): Promise<ReturnType<typeof buildAdminConsentsListResponse>> {
-	const searchTerm = query.search!.trim();
+	const searchTerm = query.search?.trim();
+	if (!searchTerm) {
+		return buildAdminConsentsListResponse({
+			consents: [],
+			pagination: {
+				total: 0,
+				limit: query.limit,
+				offset: query.offset,
+				hasMore: false,
+			},
+			pageInfo: { nextCursor: null, hasNextPage: false },
+			meta: buildCursorMeta(CURSOR_PAGE_META_SOURCE.SEARCH, 0),
+		});
+	}
 	const searchNormalized = normalizeText(searchTerm);
 
 	const consecutivoMatch = searchTerm.match(/^#?(\d{1,7})$/);
