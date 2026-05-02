@@ -13,11 +13,11 @@ const PUBLIC_ROUTES = ["/", "/ingreso", "/otp", "/registro"];
 
 /**
  * Componente que maneja la sesión del kiosko:
- * 
+ *
  * 1. PROTECCIÓN: Si intenta acceder a rutas protegidas sin OTP → redirige a /
  * 2. RESTAURACIÓN: Si hay sesión válida y recarga → fuerza a /consentimiento
  * 3. PERSISTENCIA: La sesión dura 10 minutos (configurable en kioskSession.ts)
- * 
+ *
  * La ÚNICA forma de salir del flujo autenticado es:
  * - Clic en botón Home (Jumping Park) → Hard Reset
  * - Expiración de la sesión (10 minutos)
@@ -28,7 +28,7 @@ export function KioskSessionRestorer() {
 	const restoreSession = useKioskStore((state) => state.restoreSession);
 	const isAuthenticated = useKioskStore((state) => state.isAuthenticated);
 	const clearSession = useKioskStore((state) => state.clearSession);
-	
+
 	// Referencia para tracking de la ruta ya procesada
 	const lastProcessedPath = useRef<string | null>(null);
 
@@ -50,7 +50,9 @@ export function KioskSessionRestorer() {
 		if (isAuthenticated) {
 			// Si está autenticado pero intenta ir a ruta pública, forzar a consentimiento
 			if (PUBLIC_ROUTES.includes(pathname)) {
-				console.log("[KioskSession] Autenticado intentando ir a ruta pública, forzando /consentimiento");
+				console.log(
+					"[KioskSession] Autenticado intentando ir a ruta pública, forzando /consentimiento",
+				);
 				router.replace("/consentimiento");
 			}
 			return;
@@ -63,9 +65,11 @@ export function KioskSessionRestorer() {
 		if (hasValidSession) {
 			console.log("[KioskSession] Sesión válida encontrada, restaurando...");
 			const restored = restoreSession();
-			
+
 			if (restored) {
-				console.log("[KioskSession] Sesión restaurada, forzando a /consentimiento");
+				console.log(
+					"[KioskSession] Sesión restaurada, forzando a /consentimiento",
+				);
 				router.replace("/consentimiento");
 				return;
 			}
@@ -75,12 +79,17 @@ export function KioskSessionRestorer() {
 		// CASO 3: NO hay sesión válida (ni en store ni en localStorage)
 		// → Proteger rutas que requieren autenticación
 		// ═══════════════════════════════════════════════════════════════
-		if (!hasValidSession && !isAuthenticated && PROTECTED_ROUTES.includes(pathname)) {
-			console.log("[KioskSession] Acceso a ruta protegida sin sesión, redirigiendo a /");
+		if (
+			!hasValidSession &&
+			!isAuthenticated &&
+			PROTECTED_ROUTES.includes(pathname)
+		) {
+			console.log(
+				"[KioskSession] Acceso a ruta protegida sin sesión, redirigiendo a /",
+			);
 			clearSession(); // Limpiar cualquier residuo
 			router.replace("/");
 		}
-
 	}, [isAuthenticated, pathname, restoreSession, clearSession, router]);
 
 	// Este componente no renderiza nada visible
