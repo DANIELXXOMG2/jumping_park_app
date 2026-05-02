@@ -60,33 +60,39 @@ export function MinorHistoryModal({
 		try {
 			// Usar cache: 'no-store' para evitar problemas con el Service Worker
 			const response = await fetch(`/api/usuarios/${userId}/menores`, {
-				cache: 'no-store',
+				cache: "no-store",
 				headers: {
-					'Content-Type': 'application/json',
+					"Content-Type": "application/json",
 				},
 			});
-			
+
 			if (!response.ok) {
 				const data = await response.json().catch(() => ({}));
-				
+
 				// Manejar error 401 de forma especial
 				if (response.status === 401) {
-					throw new Error("La sesión ha expirado. Por favor, vuelve a verificar tu identidad.");
+					throw new Error(
+						"La sesión ha expirado. Por favor, vuelve a verificar tu identidad.",
+					);
 				}
-				
-				throw new Error(data.error || `Error del servidor (${response.status})`);
+
+				throw new Error(
+					data.error || `Error del servidor (${response.status})`,
+				);
 			}
-			
+
 			const data = await response.json();
 			setHistoricalMinors(data.minors || []);
 		} catch (err) {
 			console.error("[MinorHistoryModal] Error:", err);
-			
+
 			// Detectar errores de red específicos
-			if (err instanceof TypeError && err.message === 'Failed to fetch') {
+			if (err instanceof TypeError && err.message === "Failed to fetch") {
 				setError("Error de conexión. Verifica tu internet e intenta de nuevo.");
 			} else {
-				setError(err instanceof Error ? err.message : "Error al cargar historial");
+				setError(
+					err instanceof Error ? err.message : "Error al cargar historial",
+				);
 			}
 		} finally {
 			setIsLoading(false);
@@ -175,31 +181,32 @@ export function MinorHistoryModal({
 		(m) => !alreadyAddedIds.includes(m.idNumber),
 	);
 
-	const footer = availableMinors.length > 0 ? (
-		<div className="flex gap-3">
-			<button
-				type="button"
-				onClick={onClose}
-				className="flex-1 py-3 px-4 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-xl transition-all"
-			>
-				{t("minors.cancel")}
-			</button>
-			<button
-				type="button"
-				onClick={handleConfirm}
-				disabled={selectedIds.size === 0}
-				className={cn(
-					"flex-1 py-3 px-4 font-bold rounded-xl transition-all flex items-center justify-center gap-2",
-					selectedIds.size > 0
-						? "bg-neon-green hover:bg-green-500 text-black"
-						: "bg-gray-700 text-gray-500 cursor-not-allowed",
-				)}
-			>
-				<CheckCircle2 size={18} />
-				{t("minors.history.addCount")} ({selectedIds.size})
-			</button>
-		</div>
-	) : undefined;
+	const footer =
+		availableMinors.length > 0 ? (
+			<div className="flex gap-3">
+				<button
+					type="button"
+					onClick={onClose}
+					className="flex-1 py-3 px-4 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-xl transition-all"
+				>
+					{t("minors.cancel")}
+				</button>
+				<button
+					type="button"
+					onClick={handleConfirm}
+					disabled={selectedIds.size === 0}
+					className={cn(
+						"flex-1 py-3 px-4 font-bold rounded-xl transition-all flex items-center justify-center gap-2",
+						selectedIds.size > 0
+							? "bg-neon-green hover:bg-green-500 text-black"
+							: "bg-gray-700 text-gray-500 cursor-not-allowed",
+					)}
+				>
+					<CheckCircle2 size={18} />
+					{t("minors.history.addCount")} ({selectedIds.size})
+				</button>
+			</div>
+		) : undefined;
 
 	const renderContent = () => {
 		if (isLoading) {
@@ -289,13 +296,15 @@ export function MinorHistoryModal({
 									<div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
 										<div className="flex items-center gap-1.5 text-gray-200">
 											<Calendar size={12} className="text-neon-blue" />
-											<span>{calculateAge(minor.birthDate)} {t("minors.section.years")}</span>
+											<span>
+												{calculateAge(minor.birthDate)}{" "}
+												{t("minors.section.years")}
+											</span>
 										</div>
 										<div className="flex items-center gap-1.5 text-gray-200">
 											<CreditCard size={12} className="text-neon-pink" />
 											<span>
-												{formatIdType(minor.idType || "ti")}{" "}
-												{minor.idNumber}
+												{formatIdType(minor.idType || "ti")} {minor.idNumber}
 											</span>
 										</div>
 									</div>
@@ -327,9 +336,7 @@ export function MinorHistoryModal({
 			iconBgClass="bg-neon-blue/20"
 			footer={footer}
 		>
-			<div className="p-4">
-				{renderContent()}
-			</div>
+			<div className="p-4">{renderContent()}</div>
 		</MinorModalBase>
 	);
 }

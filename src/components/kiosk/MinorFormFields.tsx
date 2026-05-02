@@ -1,12 +1,6 @@
 "use client";
 
-import {
-	AlertCircle,
-	Calendar,
-	CreditCard,
-	Heart,
-	User,
-} from "lucide-react";
+import { AlertCircle, Calendar, CreditCard, Heart, User } from "lucide-react";
 import type { FieldErrors, UseFormRegister } from "react-hook-form";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { Minor } from "@/lib/schemas/consent.schema";
@@ -28,7 +22,7 @@ interface MinorFormFieldsProps {
 /**
  * Campos reutilizables para el formulario de menores.
  * Se usa tanto en MinorInlineForm como en MinorFormModal.
- * 
+ *
  * Beneficios:
  * - DRY: Un solo lugar para mantener los campos
  * - Consistencia: Mismo diseño en creación y edición
@@ -58,7 +52,7 @@ export function MinorFormFields({
 		"active:scale-[0.99]",
 		"transition-all duration-300 ease-out",
 		"appearance-none cursor-pointer",
-		"[&_option]:bg-zinc-800 [&_option]:text-white"
+		"[&_option]:bg-zinc-800 [&_option]:text-white",
 	);
 
 	return (
@@ -68,7 +62,10 @@ export function MinorFormFields({
 				<div>
 					<label
 						htmlFor={`${idPrefix}FirstName`}
-						className={cn("flex items-center gap-1 text-xs mb-1.5", labelColorClass)}
+						className={cn(
+							"flex items-center gap-1 text-xs mb-1.5",
+							labelColorClass,
+						)}
 					>
 						<User size={12} />
 						{t("minors.form.firstName")} *
@@ -91,7 +88,10 @@ export function MinorFormFields({
 				<div>
 					<label
 						htmlFor={`${idPrefix}LastName`}
-						className={cn("flex items-center gap-1 text-xs mb-1.5", labelColorClass)}
+						className={cn(
+							"flex items-center gap-1 text-xs mb-1.5",
+							labelColorClass,
+						)}
 					>
 						<User size={12} />
 						{t("minors.form.lastName")} *
@@ -116,7 +116,10 @@ export function MinorFormFields({
 			<div>
 				<label
 					htmlFor={`${idPrefix}BirthDate`}
-					className={cn("flex items-center gap-1 text-xs mb-1.5", labelColorClass)}
+					className={cn(
+						"flex items-center gap-1 text-xs mb-1.5",
+						labelColorClass,
+					)}
 				>
 					<Calendar size={12} />
 					{t("minors.form.birthDate")} *
@@ -140,7 +143,10 @@ export function MinorFormFields({
 			<div>
 				<label
 					htmlFor={`${idPrefix}Eps`}
-					className={cn("flex items-center gap-1 text-xs mb-1.5", labelColorClass)}
+					className={cn(
+						"flex items-center gap-1 text-xs mb-1.5",
+						labelColorClass,
+					)}
 				>
 					<Heart size={12} />
 					{t("forms.health.epsName")} *
@@ -165,7 +171,10 @@ export function MinorFormFields({
 				<div>
 					<label
 						htmlFor={`${idPrefix}IdType`}
-						className={cn("flex items-center gap-1 text-xs mb-1.5", labelColorClass)}
+						className={cn(
+							"flex items-center gap-1 text-xs mb-1.5",
+							labelColorClass,
+						)}
 					>
 						<CreditCard size={12} />
 						{t("minors.form.idType")} *
@@ -186,7 +195,10 @@ export function MinorFormFields({
 				<div>
 					<label
 						htmlFor={`${idPrefix}IdNumber`}
-						className={cn("flex items-center gap-1 text-xs mb-1.5", labelColorClass)}
+						className={cn(
+							"flex items-center gap-1 text-xs mb-1.5",
+							labelColorClass,
+						)}
 					>
 						<CreditCard size={12} />
 						{t("minors.form.idNumber")} *
@@ -211,7 +223,10 @@ export function MinorFormFields({
 			<div>
 				<label
 					htmlFor={`${idPrefix}Relationship`}
-					className={cn("flex items-center gap-1 text-xs mb-1.5", labelColorClass)}
+					className={cn(
+						"flex items-center gap-1 text-xs mb-1.5",
+						labelColorClass,
+					)}
 				>
 					<Heart size={12} />
 					{t("minors.form.relationship")} *
@@ -232,7 +247,10 @@ export function MinorFormFields({
 			<div>
 				<label
 					htmlFor={`${idPrefix}MedicalCondition`}
-					className={cn("flex items-center gap-1 text-xs mb-1.5", labelColorClass)}
+					className={cn(
+						"flex items-center gap-1 text-xs mb-1.5",
+						labelColorClass,
+					)}
 				>
 					<Heart size={12} className="text-red-400" />
 					{t("minors.form.medicalCondition")}
