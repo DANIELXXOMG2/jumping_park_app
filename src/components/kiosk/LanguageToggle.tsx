@@ -44,7 +44,7 @@ export function LanguageToggle({
 					"text-xs font-medium text-foreground/70 hover:text-foreground",
 					"bg-white/5 hover:bg-white/10 border border-white/10",
 					"transition-all duration-200",
-					className
+					className,
 				)}
 				aria-label={isEnglish ? "Cambiar a Español" : "Switch to English"}
 				title={isEnglish ? "Cambiar a Español" : "Switch to English"}
@@ -67,7 +67,7 @@ export function LanguageToggle({
 					"hover:bg-surface hover:border-primary/50",
 					"shadow-lg shadow-black/20",
 					"transition-all duration-200 transform hover:scale-105",
-					className
+					className,
 				)}
 				aria-label={isEnglish ? "Cambiar a Español" : "Switch to English"}
 				title={isEnglish ? "Cambiar a Español" : "Switch to English"}
@@ -77,7 +77,7 @@ export function LanguageToggle({
 					<span
 						className={cn(
 							"transition-colors",
-							!isEnglish ? "text-primary" : "text-foreground/50"
+							!isEnglish ? "text-primary" : "text-foreground/50",
 						)}
 					>
 						ES
@@ -86,7 +86,7 @@ export function LanguageToggle({
 					<span
 						className={cn(
 							"transition-colors",
-							isEnglish ? "text-primary" : "text-foreground/50"
+							isEnglish ? "text-primary" : "text-foreground/50",
 						)}
 					>
 						EN
@@ -108,22 +108,28 @@ export function LanguageToggle({
 				"border border-primary/20 hover:border-primary/40",
 				"shadow-lg shadow-black/10 hover:shadow-[0_0_25px_rgba(46,204,113,0.25)]",
 				"transition-all duration-300",
-				className
+				className,
 			)}
 			aria-label={isEnglish ? "Cambiar a Español" : "Switch to English"}
 			title={isEnglish ? "Cambiar a Español" : "Switch to English"}
 		>
 			{/* Efecto shimmer */}
-			<span className="absolute inset-0 bg-linear-to-r from-primary/0 via-primary/20 to-primary/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" aria-hidden="true" />
-			
+			<span
+				className="absolute inset-0 bg-linear-to-r from-primary/0 via-primary/20 to-primary/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out"
+				aria-hidden="true"
+			/>
+
 			{/* Ícono con animación */}
 			<span className="relative flex items-center justify-center w-8 h-8 rounded-lg bg-primary/20 group-hover:bg-primary/30 transition-colors duration-300">
-				<Languages 
-					className="w-4 h-4 text-primary group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300" 
+				<Languages
+					className="w-4 h-4 text-primary group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300"
 					strokeWidth={2.5}
 				/>
 				{/* Ping de atención */}
-				<span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-primary/0 group-hover:bg-primary animate-pulse transition-colors duration-300" aria-hidden="true" />
+				<span
+					className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-primary/0 group-hover:bg-primary animate-pulse transition-colors duration-300"
+					aria-hidden="true"
+				/>
 			</span>
 
 			{/* Selector de idioma */}
@@ -131,9 +137,9 @@ export function LanguageToggle({
 				<span
 					className={cn(
 						"text-sm font-bold transition-all duration-300",
-						!isEnglish 
-							? "text-primary scale-110" 
-							: "text-foreground/40 group-hover:text-foreground/60"
+						!isEnglish
+							? "text-primary scale-110"
+							: "text-foreground/40 group-hover:text-foreground/60",
 					)}
 				>
 					ES
@@ -142,9 +148,9 @@ export function LanguageToggle({
 				<span
 					className={cn(
 						"text-sm font-bold transition-all duration-300",
-						isEnglish 
-							? "text-primary scale-110" 
-							: "text-foreground/40 group-hover:text-foreground/60"
+						isEnglish
+							? "text-primary scale-110"
+							: "text-foreground/40 group-hover:text-foreground/60",
 					)}
 				>
 					EN
