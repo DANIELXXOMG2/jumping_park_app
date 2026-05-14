@@ -1,6 +1,6 @@
-import type { MetadataRoute } from 'next'
-import { buildPublicSitemap } from '@/lib/seo'
+import type { MetadataRoute } from "next";
+import { buildPublicSitemap } from "@/lib/seo";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-	return buildPublicSitemap()
+	return buildPublicSitemap();
 }

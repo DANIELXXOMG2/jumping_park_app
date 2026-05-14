@@ -1,7 +1,12 @@
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import type { Consent } from "@/hooks";
-import { adminDelete, adminDownload, adminPost, getAuthToken } from "@/lib/adminApi";
+import {
+	adminDelete,
+	adminDownload,
+	adminPost,
+	getAuthToken,
+} from "@/lib/adminApi";
 
 interface UseConsentsTableOptions {
 	onMutate?: () => void;
@@ -28,7 +33,7 @@ interface UseConsentsTableReturn {
  * Centraliza acciones como reenviar email, eliminar, exportar y ver PDF.
  */
 export function useConsentsTable(
-	options: UseConsentsTableOptions = {}
+	options: UseConsentsTableOptions = {},
 ): UseConsentsTableReturn {
 	const { onMutate } = options;
 

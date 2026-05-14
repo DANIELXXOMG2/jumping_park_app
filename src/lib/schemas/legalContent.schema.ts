@@ -2,7 +2,7 @@ import { z } from "zod";
 
 /**
  * Esquemas Zod para validar la estructura del contenido legal.
- * 
+ *
  * IMPORTANTE: Estos esquemas validan ESTRUCTURA, no CANTIDAD.
  * El admin puede agregar o eliminar cláusulas/reglas libremente.
  * Solo se rechaza si la estructura está corrupta (campos faltantes).
@@ -104,11 +104,13 @@ export type LocalizedConsentValidated = z.infer<typeof localizedConsentSchema>;
 
 /**
  * Valida el contenido de UN idioma específico.
- * 
+ *
  * @param data - Datos a validar (estructura de un solo idioma)
  * @returns { success: true, data } si es válido, { success: false, error } si no
  */
-export function validateLocalizedContent(data: unknown): 
+export function validateLocalizedContent(
+	data: unknown,
+):
 	| { success: true; data: LocalizedConsentValidated }
 	| { success: false; error: string } {
 	try {
@@ -116,10 +118,18 @@ export function validateLocalizedContent(data: unknown):
 		return { success: true, data: validated };
 	} catch (error) {
 		if (error instanceof z.ZodError) {
-			const messages = error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
-			return { success: false, error: `Estructura de idioma inválida: ${messages}` };
+			const messages = error.issues
+				.map((e) => `${e.path.join(".")}: ${e.message}`)
+				.join(", ");
+			return {
+				success: false,
+				error: `Estructura de idioma inválida: ${messages}`,
+			};
 		}
-		return { success: false, error: "Error desconocido al validar estructura de idioma" };
+		return {
+			success: false,
+			error: "Error desconocido al validar estructura de idioma",
+		};
 	}
 }
 
@@ -127,25 +137,27 @@ export function validateLocalizedContent(data: unknown):
  * Detecta si los datos están en formato antiguo (plano) o nuevo (multilenguaje).
  * Formato antiguo: tiene 'meta', 'consent', 'rules' en la raíz.
  * Formato nuevo: tiene claves de idioma ('es', 'en', etc.) en la raíz.
- * 
+ *
  * @param data - Datos a analizar
  * @returns 'legacy' | 'multilang' | 'unknown'
  */
-export function detectConsentFormat(data: unknown): 'legacy' | 'multilang' | 'unknown' {
-	if (!data || typeof data !== 'object') return 'unknown';
-	
+export function detectConsentFormat(
+	data: unknown,
+): "legacy" | "multilang" | "unknown" {
+	if (!data || typeof data !== "object") return "unknown";
+
 	const obj = data as Record<string, unknown>;
-	
+
 	// Formato antiguo: tiene meta, consent, rules en la raíz
-	if ('meta' in obj && 'consent' in obj && 'rules' in obj) {
-		return 'legacy';
+	if ("meta" in obj && "consent" in obj && "rules" in obj) {
+		return "legacy";
 	}
-	
+
 	// Formato nuevo: las claves son códigos de idioma
 	const keys = Object.keys(obj);
-	if (keys.length > 0 && keys.every(k => /^[a-z]{2}(-[A-Z]{2})?$/.test(k))) {
-		return 'multilang';
+	if (keys.length > 0 && keys.every((k) => /^[a-z]{2}(-[A-Z]{2})?$/.test(k))) {
+		return "multilang";
 	}
-	
-	return 'unknown';
+
+	return "unknown";
 }

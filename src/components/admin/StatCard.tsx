@@ -32,12 +32,16 @@ export function StatCard({
 		>
 			<div className="flex items-start justify-between gap-2">
 				<div className="flex-1 min-w-0">
-					<p className="text-xs sm:text-sm font-medium text-foreground/60 truncate">{title}</p>
+					<p className="text-xs sm:text-sm font-medium text-foreground/60 truncate">
+						{title}
+					</p>
 					<p className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground mt-0.5 sm:mt-1">
 						{value}
 					</p>
 					{subtitle && (
-						<p className="text-[10px] sm:text-xs text-foreground/50 mt-0.5 sm:mt-1 truncate">{subtitle}</p>
+						<p className="text-[10px] sm:text-xs text-foreground/50 mt-0.5 sm:mt-1 truncate">
+							{subtitle}
+						</p>
 					)}
 					{trend && (
 						<div className="flex items-center gap-1 mt-1 sm:mt-2">
@@ -50,7 +54,9 @@ export function StatCard({
 								{trend.isPositive ? "+" : ""}
 								{trend.value}%
 							</span>
-							<span className="text-[10px] sm:text-xs text-foreground/40">vs ayer</span>
+							<span className="text-[10px] sm:text-xs text-foreground/40">
+								vs ayer
+							</span>
 						</div>
 					)}
 				</div>

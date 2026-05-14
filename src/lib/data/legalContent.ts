@@ -10,10 +10,10 @@
  */
 
 import type { Language } from "@/lib/i18n/dictionary";
-import { 
+import {
 	detectConsentFormat,
-	type LocalizedConsentValidated, 
-	validateLocalizedContent 
+	type LocalizedConsentValidated,
+	validateLocalizedContent,
 } from "@/lib/schemas/legalContent.schema";
 
 // ============================================================================
@@ -610,7 +610,10 @@ export const ENGLISH_CONSENT_CONTENT: ConsentContentStructure = {
  * Mapa de contenido legal por idioma.
  * Se usa como fallback cuando Firestore no tiene datos.
  */
-export const CONSENT_CONTENT_BY_LANGUAGE: Record<Language, ConsentContentStructure> = {
+export const CONSENT_CONTENT_BY_LANGUAGE: Record<
+	Language,
+	ConsentContentStructure
+> = {
 	es: DEFAULT_CONSENT_CONTENT,
 	en: ENGLISH_CONSENT_CONTENT,
 };
@@ -631,7 +634,9 @@ export function replaceCompanyName(text: string, companyName: string): string {
  * @param content - Contenido base a procesar
  * @returns Contenido con placeholders reemplazados
  */
-function processConsentContent(content: ConsentContentStructure): ConsentContentStructure {
+function processConsentContent(
+	content: ConsentContentStructure,
+): ConsentContentStructure {
 	const companyName = content.meta.companyName;
 
 	// Reemplazar placeholders en todas las cláusulas
@@ -652,29 +657,29 @@ function processConsentContent(content: ConsentContentStructure): ConsentContent
 /**
  * Extrae el contenido para un idioma específico desde datos multilenguaje de Firestore.
  * Implementa lógica de fallback: idioma solicitado -> español -> null
- * 
+ *
  * @param firestoreData - Datos crudos de Firestore (puede ser formato antiguo o nuevo)
  * @param language - Idioma solicitado
  * @returns Contenido validado para el idioma o null si no existe
  */
 export function extractLocalizedContent(
 	firestoreData: unknown,
-	language: Language
+	language: Language,
 ): LocalizedConsentValidated | null {
-	if (!firestoreData || typeof firestoreData !== 'object') {
+	if (!firestoreData || typeof firestoreData !== "object") {
 		return null;
 	}
 
 	const format = detectConsentFormat(firestoreData);
 
 	// Formato antiguo: el documento raíz ES el contenido (sin claves de idioma)
-	if (format === 'legacy') {
+	if (format === "legacy") {
 		const validation = validateLocalizedContent(firestoreData);
 		return validation.success ? validation.data : null;
 	}
 
 	// Formato nuevo: buscar por clave de idioma
-	if (format === 'multilang') {
+	if (format === "multilang") {
 		const data = firestoreData as Record<string, unknown>;
 
 		// Intentar idioma solicitado
@@ -686,10 +691,12 @@ export function extractLocalizedContent(
 		}
 
 		// Fallback a español si el idioma no existe
-		if (language !== 'es' && 'es' in data) {
+		if (language !== "es" && "es" in data) {
 			const validation = validateLocalizedContent(data.es);
 			if (validation.success) {
-				console.warn(`[LegalContent] Idioma '${language}' no encontrado, usando fallback 'es'`);
+				console.warn(
+					`[LegalContent] Idioma '${language}' no encontrado, usando fallback 'es'`,
+				);
 				return validation.data;
 			}
 		}
@@ -701,15 +708,15 @@ export function extractLocalizedContent(
 /**
  * Obtiene el contenido del consentimiento con los placeholders reemplazados.
  * Soporta tanto datos de Firestore (multilenguaje) como fallback estático.
- * 
+ *
  * @param language - Idioma del contenido ('es' | 'en')
  * @param firestoreData - Datos opcionales de Firestore (documento settings/consent_v1)
  * @returns Contenido procesado del consentimiento
- * 
+ *
  * @example
  * // Uso básico con fallback estático
  * const content = getConsentContent('es');
- * 
+ *
  * @example
  * // Uso con datos de Firestore
  * const dbData = await getDoc(doc(db, 'settings', 'consent_v1'));
@@ -742,10 +749,13 @@ export function getConsentContent(
 			};
 			return processConsentContent(content);
 		}
-		console.warn(`[LegalContent] No se pudo extraer contenido de Firestore, usando fallback estático`);
+		console.warn(
+			`[LegalContent] No se pudo extraer contenido de Firestore, usando fallback estático`,
+		);
 	}
 
 	// Fallback: usar contenido estático hardcodeado
-	const baseContent = CONSENT_CONTENT_BY_LANGUAGE[language] || DEFAULT_CONSENT_CONTENT;
+	const baseContent =
+		CONSENT_CONTENT_BY_LANGUAGE[language] || DEFAULT_CONSENT_CONTENT;
 	return processConsentContent(baseContent);
 }

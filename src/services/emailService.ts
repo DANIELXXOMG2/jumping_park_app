@@ -9,12 +9,14 @@
 import { Resend } from "resend";
 import { generateConsentEmailHtml } from "@/components/emails/ConsentEmail";
 import { generateOtpEmailHtml } from "@/components/emails/OtpEmail";
+import { createLogger } from "@/lib/logger";
 
 // ============================================================================
 // SINGLETON RESEND CLIENT
 // ============================================================================
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+const logger = createLogger("EmailService");
 
 // Configuración del remitente
 const FROM_EMAIL = "Jumping Park <acceso@jumpingpark.lat>";
@@ -63,12 +65,12 @@ export async function sendOtpEmail(
 	const { to, otp } = params;
 
 	if (!process.env.RESEND_API_KEY) {
-		console.error("[EmailService] RESEND_API_KEY no configurada");
+		logger.error("RESEND_API_KEY no configurada");
 		return { success: false, error: "Servicio de email no configurado" };
 	}
 
 	try {
-		console.log(`[EmailService] Enviando OTP a: ${to}`);
+		logger.info("Enviando OTP");
 
 		const htmlContent = generateOtpEmailHtml({ otp });
 
@@ -80,14 +82,14 @@ export async function sendOtpEmail(
 		});
 
 		if (error) {
-			console.error("[EmailService] Error de Resend:", error);
+			logger.error("Error de Resend enviando OTP", { message: error.message });
 			return { success: false, error: error.message };
 		}
 
-		console.log(`[EmailService] OTP enviado exitosamente. ID: ${data?.id}`);
+		logger.info("OTP enviado exitosamente", { messageId: data?.id ?? null });
 		return { success: true, messageId: data?.id };
 	} catch (error) {
-		console.error("[EmailService] Excepción enviando OTP:", error);
+		logger.error("Excepción enviando OTP", error);
 		return {
 			success: false,
 			error: error instanceof Error ? error.message : "Error desconocido",
@@ -115,14 +117,12 @@ export async function sendConsentEmail(
 	const { to, fullName, consecutivo, pdfBuffer } = params;
 
 	if (!process.env.RESEND_API_KEY) {
-		console.error("[EmailService] RESEND_API_KEY no configurada");
+		logger.error("RESEND_API_KEY no configurada");
 		return { success: false, error: "Servicio de email no configurado" };
 	}
 
 	try {
-		console.log(
-			`[EmailService] Enviando consentimiento #${consecutivo} a: ${to}`,
-		);
+		logger.info("Enviando email de consentimiento", { consecutivo });
 
 		const htmlContent = generateConsentEmailHtml({ fullName, consecutivo });
 
@@ -140,16 +140,20 @@ export async function sendConsentEmail(
 		});
 
 		if (error) {
-			console.error("[EmailService] Error de Resend:", error);
+			logger.error("Error de Resend enviando consentimiento", {
+				message: error.message,
+				consecutivo,
+			});
 			return { success: false, error: error.message };
 		}
 
-		console.log(
-			`[EmailService] Consentimiento enviado exitosamente. ID: ${data?.id}`,
-		);
+		logger.info("Consentimiento enviado exitosamente", {
+			consecutivo,
+			messageId: data?.id ?? null,
+		});
 		return { success: true, messageId: data?.id };
 	} catch (error) {
-		console.error("[EmailService] Excepción enviando consentimiento:", error);
+		logger.error("Excepción enviando consentimiento", { consecutivo, error });
 		return {
 			success: false,
 			error: error instanceof Error ? error.message : "Error desconocido",

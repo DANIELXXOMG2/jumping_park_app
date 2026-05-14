@@ -1,7 +1,10 @@
 "use client";
 
 import { CloudOff, RefreshCw, WifiOff } from "lucide-react";
-import { useOfflineConnection, useRecentRegistrations } from "@/hooks/useOfflineData";
+import {
+	useOfflineConnection,
+	useRecentRegistrations,
+} from "@/hooks/useOfflineData";
 import { cn } from "@/lib/utils";
 
 /**
@@ -21,22 +24,25 @@ interface NetworkStatusProps {
 
 /**
  * Componente que muestra el estado de conexión de red y sincronización con Firestore.
- * 
+ *
  * Estados visuales:
  * - **Online**: Invisible o punto verde sutil (todo funcionando correctamente)
  * - **Offline**: Badge amarillo/naranja visible indicando "Modo Offline"
  * - **Syncing**: Indicador de "Sincronizando..." cuando hay escrituras pendientes
- * 
+ *
  * @example
  * ```tsx
  * // En el Header
  * <NetworkStatus />
- * 
+ *
  * // Versión compacta para espacios reducidos
  * <NetworkStatus compact />
  * ```
  */
-export function NetworkStatus({ compact = false, className }: NetworkStatusProps) {
+export function NetworkStatus({
+	compact = false,
+	className,
+}: NetworkStatusProps) {
 	const { isOnline, isFirestoreConnected } = useOfflineConnection();
 	const { fromCache, hasPendingWrites, loading } = useRecentRegistrations(3);
 
@@ -58,7 +64,7 @@ export function NetworkStatus({ compact = false, className }: NetworkStatusProps
 				<output
 					className={cn(
 						"flex items-center justify-center w-2 h-2 rounded-full bg-success",
-						className
+						className,
 					)}
 					title="Conectado"
 					aria-label="Estado: Conectado"
@@ -77,7 +83,7 @@ export function NetworkStatus({ compact = false, className }: NetworkStatusProps
 					"flex items-center gap-1.5 px-2.5 py-1 rounded-full",
 					"bg-blue-500/10 text-blue-600 dark:text-blue-400",
 					"text-xs font-medium animate-pulse",
-					className
+					className,
 				)}
 				title="Sincronizando datos con el servidor"
 				aria-label="Estado: Sincronizando"
@@ -95,7 +101,7 @@ export function NetworkStatus({ compact = false, className }: NetworkStatusProps
 				"flex items-center gap-1.5 px-2.5 py-1 rounded-full",
 				"bg-warning/10 text-warning",
 				"text-xs font-medium",
-				className
+				className,
 			)}
 			title={
 				fromCache
@@ -140,7 +146,7 @@ export function CacheWarningBanner({ className }: { className?: string }) {
 				"flex items-center gap-2 px-3 py-2 rounded-lg",
 				"bg-warning/10 border border-warning/20",
 				"text-sm text-warning",
-				className
+				className,
 			)}
 			role="alert"
 		>

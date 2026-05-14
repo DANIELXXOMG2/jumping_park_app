@@ -1,5 +1,10 @@
 import { z } from "zod";
 import { apiError, apiSuccess, withAdminAuth } from "@/lib/api-middleware";
+import {
+	buildAdminAuditActor,
+	buildAdminAuditRequest,
+	writeAdminAuditLog,
+} from "@/services/adminAuditService";
 import { type CreateStaffData, staffService } from "@/services/userService";
 
 // ============================================================================
@@ -64,6 +69,18 @@ export const POST = withAdminAuth<CreateStaffData>(
 		if ("error" in result) {
 			return apiError(result.error, result.status);
 		}
+
+		await writeAdminAuditLog({
+			action: "staff.create",
+			actor: buildAdminAuditActor(session),
+			target: {
+				collection: "admin_users",
+				id: result.staff.id,
+				label: result.staff.email,
+			},
+			request: buildAdminAuditRequest(req),
+			details: { role: result.staff.role },
+		});
 
 		return apiSuccess(
 			{

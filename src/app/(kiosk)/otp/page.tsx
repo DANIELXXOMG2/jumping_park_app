@@ -1,11 +1,19 @@
 "use client";
 
-import { AlertTriangle, Loader2, Mail, RefreshCw, ShieldCheck, Sparkles } from "lucide-react";
+import {
+	AlertTriangle,
+	Loader2,
+	Mail,
+	RefreshCw,
+	ShieldCheck,
+	Sparkles,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { SmartOtpInput } from "@/components/ui/SmartOtpInput";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useKioskStore } from "@/store/kioskStore";
+import type { ApiErrorResponse, OtpValidateResponse } from "@/types/api";
 
 const OTP_LENGTH = 6;
 const CONSENT_ROUTE = "/consentimiento";
@@ -75,7 +83,7 @@ export default function OtpPage() {
 					body: JSON.stringify(payload),
 				});
 
-				const data = await response.json();
+				const data = (await response.json()) as OtpValidateResponse;
 
 				if (!response.ok) {
 					if (response.status === 404) {
@@ -151,7 +159,9 @@ export default function OtpPage() {
 			});
 
 			if (!response.ok) {
-				const data = await response.json().catch(() => ({}));
+				const data = (await response
+					.json()
+					.catch(() => ({}))) as ApiErrorResponse;
 				throw new Error(data.error ?? "No pudimos reenviar el código");
 			}
 
@@ -179,8 +189,12 @@ export default function OtpPage() {
 
 	if (!isReady) {
 		return (
-			<section className="flex flex-1 items-center justify-center px-3 sm:px-6 py-4 sm:py-8">
-				<div className="group/card relative flex w-full max-w-3xl flex-col items-center gap-4 sm:gap-6 rounded-2xl sm:rounded-3xl overflow-hidden
+			<main
+				className="flex flex-1 items-center justify-center px-3 py-4 sm:px-6 sm:py-8"
+				aria-labelledby="otp-no-data-title"
+			>
+				<div
+					className="group/card relative flex w-full max-w-3xl flex-col items-center gap-4 sm:gap-6 rounded-2xl sm:rounded-3xl overflow-hidden
 					bg-gradient-to-br from-white/10 via-white/5 to-white/10
 					dark:from-zinc-900/90 dark:via-zinc-950/80 dark:to-zinc-900/90
 					border-2 border-white/20 dark:border-zinc-700/50
@@ -188,20 +202,29 @@ export default function OtpPage() {
 					shadow-[0_40px_140px_rgba(0,0,0,0.45)] backdrop-blur-lg"
 				>
 					{/* Shimmer de fondo */}
-					<div className="absolute inset-0 bg-gradient-to-r from-transparent via-red-500/5 to-transparent translate-x-[-100%] group-hover/card:translate-x-[100%] transition-transform duration-1000 pointer-events-none" aria-hidden="true" />
-					
+					<div
+						className="absolute inset-0 bg-gradient-to-r from-transparent via-red-500/5 to-transparent translate-x-[-100%] group-hover/card:translate-x-[100%] transition-transform duration-1000 pointer-events-none"
+						aria-hidden="true"
+					/>
+
 					{/* Ícono de error */}
 					<div className="relative mb-2">
 						<div className="absolute inset-0 bg-red-500/20 rounded-full blur-xl animate-pulse" />
 						<div className="relative p-4 rounded-full bg-gradient-to-br from-red-500/20 via-red-500/10 to-red-500/20 border border-red-500/30">
-							<ShieldCheck className="w-10 h-10 text-red-400" strokeWidth={1.5} />
+							<ShieldCheck
+								className="w-10 h-10 text-red-400"
+								strokeWidth={1.5}
+							/>
 						</div>
 					</div>
-					
+
 					<p className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.4em] text-red-400">
 						{t("otp.step")}
 					</p>
-					<h1 className="text-xl sm:text-2xl md:text-4xl font-semibold text-white">
+					<h1
+						id="otp-no-data-title"
+						className="text-xl sm:text-2xl md:text-4xl font-semibold text-white"
+					>
 						{t("otp.noData.title")}
 					</h1>
 					<p className="text-sm sm:text-base text-white/70">
@@ -218,17 +241,24 @@ export default function OtpPage() {
 							hover:shadow-[0_12px_40px_rgba(46,204,113,0.5)] hover:scale-[1.02]
 							active:scale-[0.98]"
 					>
-						<span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" aria-hidden="true" />
+						<span
+							className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"
+							aria-hidden="true"
+						/>
 						<span className="relative">{t("otp.noData.button")}</span>
 					</button>
 				</div>
-			</section>
+			</main>
 		);
 	}
 
 	return (
-		<section className="flex flex-1 items-center justify-center px-3 sm:px-6 py-4 sm:py-8">
-			<div className="group/form relative flex w-full max-w-4xl flex-col items-center gap-4 sm:gap-6 md:gap-8 rounded-2xl sm:rounded-3xl overflow-hidden
+		<main
+			className="flex flex-1 items-center justify-center px-3 py-4 sm:px-6 sm:py-8"
+			aria-labelledby="otp-title"
+		>
+			<div
+				className="group/form relative flex w-full max-w-4xl flex-col items-center gap-4 sm:gap-6 md:gap-8 rounded-2xl sm:rounded-3xl overflow-hidden
 				bg-gradient-to-br from-white/10 via-white/5 to-white/10
 				dark:from-zinc-900/90 dark:via-zinc-950/80 dark:to-zinc-900/90
 				border-2 border-white/20 dark:border-zinc-700/50
@@ -236,12 +266,24 @@ export default function OtpPage() {
 				shadow-[0_40px_140px_rgba(0,0,0,0.45)] backdrop-blur-lg"
 			>
 				{/* ═══ SHIMMER DE FONDO ═══ */}
-				<div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent translate-x-[-100%] group-hover/form:translate-x-[100%] transition-transform duration-1000 pointer-events-none" aria-hidden="true" />
-				
+				<div
+					className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent translate-x-[-100%] group-hover/form:translate-x-[100%] transition-transform duration-1000 pointer-events-none"
+					aria-hidden="true"
+				/>
+
 				{/* ═══ PARTÍCULAS DECORATIVAS ═══ */}
-				<span className="absolute top-4 left-6 w-2 h-2 rounded-full bg-primary/20 animate-pulse" aria-hidden="true" />
-				<span className="absolute top-8 right-8 w-1.5 h-1.5 rounded-full bg-purple-500/20 animate-pulse delay-150" aria-hidden="true" />
-				<span className="absolute bottom-6 left-10 w-1 h-1 rounded-full bg-emerald-500/20 animate-pulse delay-300" aria-hidden="true" />
+				<span
+					className="absolute top-4 left-6 w-2 h-2 rounded-full bg-primary/20 animate-pulse"
+					aria-hidden="true"
+				/>
+				<span
+					className="absolute top-8 right-8 w-1.5 h-1.5 rounded-full bg-purple-500/20 animate-pulse delay-150"
+					aria-hidden="true"
+				/>
+				<span
+					className="absolute bottom-6 left-10 w-1 h-1 rounded-full bg-emerald-500/20 animate-pulse delay-300"
+					aria-hidden="true"
+				/>
 
 				{/* ═══ ENCABEZADO ═══ */}
 				<div className="relative space-y-2 sm:space-y-3">
@@ -252,14 +294,19 @@ export default function OtpPage() {
 							{t("otp.step")}
 						</p>
 					</div>
-					
-					<h1 className="text-xl sm:text-2xl md:text-4xl font-semibold text-white">
+
+					<h1
+						id="otp-title"
+						className="text-xl sm:text-2xl md:text-4xl font-semibold text-white"
+					>
 						{t("otp.heading")}
 					</h1>
 					<p className="text-sm sm:text-base text-white/70 flex items-center justify-center gap-2 flex-wrap">
 						<Mail className="w-4 h-4 text-white/50" />
 						{t("otp.sentToEmail")}{" "}
-						<span className="text-amber-400 font-bold bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">{maskedEmail}</span>
+						<span className="text-amber-400 font-bold bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
+							{maskedEmail}
+						</span>
 					</p>
 				</div>
 
@@ -273,20 +320,37 @@ export default function OtpPage() {
 						disabled={isValidating}
 						hasError={!!errorMessage}
 						shouldClear={shouldClearOtp}
+						describedBy="otp-helper otp-feedback"
 					/>
+					<p id="otp-helper" className="sr-only">
+						Ingresa o pega el codigo de seis digitos enviado al correo del
+						responsable.
+					</p>
+					<output id="otp-feedback" className="sr-only" aria-live="polite">
+						{errorMessage ??
+							resendMessage ??
+							(isValidating ? t("otp.validating") : "")}
+					</output>
 				</div>
 
 				{/* ═══ INDICADOR DE VALIDACIÓN ═══ */}
 				{isValidating && (
-					<div className="flex items-center gap-3 text-base sm:text-lg text-primary px-6 py-3 rounded-2xl bg-primary/10 border-2 border-primary/30 shadow-[0_0_30px_rgba(46,204,113,0.15)]">
+					<output
+						aria-live="polite"
+						className="flex items-center gap-3 rounded-2xl border-2 border-primary/30 bg-primary/10 px-6 py-3 text-base text-primary shadow-[0_0_30px_rgba(46,204,113,0.15)] sm:text-lg"
+					>
 						<Loader2 className="h-5 w-5 sm:h-6 sm:w-6 animate-spin" />
 						<span className="font-semibold">{t("otp.validating")}</span>
-					</div>
+					</output>
 				)}
 
 				{/* ═══ MENSAJE DE ERROR ═══ */}
 				{errorMessage && (
-					<div className="w-full max-w-3xl rounded-xl sm:rounded-2xl border-2 border-red-500/30 bg-gradient-to-r from-red-500/10 via-red-500/5 to-red-500/10 px-4 sm:px-6 py-3 sm:py-4 text-sm sm:text-base md:text-lg text-red-400 dark:text-red-300 flex items-center justify-center gap-2">
+					<div
+						role="alert"
+						aria-live="assertive"
+						className="flex w-full max-w-3xl items-center justify-center gap-2 rounded-xl border-2 border-red-500/30 bg-gradient-to-r from-red-500/10 via-red-500/5 to-red-500/10 px-4 py-3 text-sm text-red-400 dark:text-red-300 sm:rounded-2xl sm:px-6 sm:py-4 sm:text-base md:text-lg"
+					>
 						<AlertTriangle className="w-5 h-5 shrink-0" />
 						{errorMessage}
 					</div>
@@ -294,10 +358,13 @@ export default function OtpPage() {
 
 				{/* ═══ MENSAJE DE ÉXITO (REENVÍO) ═══ */}
 				{resendMessage && !errorMessage && (
-					<div className="w-full max-w-3xl rounded-xl sm:rounded-2xl border-2 border-primary/30 bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base text-primary flex items-center justify-center gap-2">
+					<output
+						aria-live="polite"
+						className="flex w-full max-w-3xl items-center justify-center gap-2 rounded-xl border-2 border-primary/30 bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 px-4 py-2 text-sm text-primary sm:rounded-2xl sm:px-6 sm:py-3 sm:text-base"
+					>
 						<Sparkles className="w-4 h-4" />
 						{resendMessage}
-					</div>
+					</output>
 				)}
 
 				{/* ═══ ACCIONES SECUNDARIAS ═══ */}
@@ -310,12 +377,18 @@ export default function OtpPage() {
 						className="group relative flex items-center gap-2 rounded-xl overflow-hidden border-2 border-white/20 dark:border-zinc-700/50 bg-gradient-to-r from-white/5 via-white/10 to-white/5 dark:from-zinc-800/50 dark:via-zinc-800/30 dark:to-zinc-800/50 px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-semibold text-white transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_20px_rgba(46,204,113,0.15)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-white/20"
 					>
 						{/* Shimmer */}
-						<span className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500 group-disabled:hidden" aria-hidden="true" />
-						
+						<span
+							className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500 group-disabled:hidden"
+							aria-hidden="true"
+						/>
+
 						{isResending ? (
 							<Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin text-primary" />
 						) : (
-							<RefreshCw className="h-4 w-4 sm:h-5 sm:w-5 text-primary group-hover:rotate-180 transition-transform duration-500" strokeWidth={1.5} />
+							<RefreshCw
+								className="h-4 w-4 sm:h-5 sm:w-5 text-primary group-hover:rotate-180 transition-transform duration-500"
+								strokeWidth={1.5}
+							/>
 						)}
 						<span className="relative">
 							{resendCooldown > 0
@@ -328,8 +401,11 @@ export default function OtpPage() {
 				{/* ═══ WARNING BANNER ═══ */}
 				<div className="w-full max-w-3xl rounded-xl sm:rounded-2xl border-2 border-yellow-500/30 bg-gradient-to-r from-yellow-500/10 via-yellow-500/5 to-yellow-500/10 px-4 sm:px-6 py-3 sm:py-4 mt-1 sm:mt-2 overflow-hidden relative">
 					{/* Decoración */}
-					<span className="absolute top-2 right-4 w-1.5 h-1.5 rounded-full bg-yellow-400/40 animate-pulse" aria-hidden="true" />
-					
+					<span
+						className="absolute top-2 right-4 w-1.5 h-1.5 rounded-full bg-yellow-400/40 animate-pulse"
+						aria-hidden="true"
+					/>
+
 					<div className="flex items-start gap-2 sm:gap-3">
 						<div className="p-1.5 rounded-lg bg-yellow-500/20">
 							<AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400 shrink-0" />
@@ -345,6 +421,6 @@ export default function OtpPage() {
 					</div>
 				</div>
 			</div>
-		</section>
+		</main>
 	);
 }

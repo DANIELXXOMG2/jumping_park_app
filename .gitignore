@@ -11,9 +11,13 @@ yarn-error.log*
 .pnpm-debug.log*
 pnpm-debug.log*
 lerna-debug.log*
+firebase-debug.log*
+firestore-debug.log*
 seo-network.log
 .playwright-mcp/
 .gga
+playwright-report/
+test-results/
 
 # Reportes de auditoría (knip, jscpd, dependency-cruiser)
 /report/
@@ -24,6 +28,7 @@ jscpd-report.*
 .env*
 !.env.example
 .atl/
+.claude/settings.local.json
 .vercel
 .firebase/
 .secrets/
@@ -57,11 +62,20 @@ public/sw*
 public/swe-worker*
 
 # Archivos de dato temporales
+.tmp_vercel_link/
 *.pem
 *.pid
 *.seed
 *.tgz
 *.orig
+*.tmp
+*.bak
+
+# Archivos fuente temporales para docs/portfolio
+*.psd
+*.ai
+*.sketch
+*.fig
 
 # Backups locales de Firestore
 /backups/
@@ -114,3 +128,7 @@ public/workbox-*.js
 public/workbox-*.js.map
 public/worker-*.js
 public/worker-*.js.map
+
+# Local verification screenshots (not product assets)
+block-e-consentimiento-digital.png
+block-e-kiosk-consent-dialog.png

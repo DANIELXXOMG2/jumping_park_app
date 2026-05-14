@@ -7,9 +7,36 @@ on:
       - master
   pull_request:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   quality:
+    name: Format, lint, types, tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      ADMIN_SESSION_MODE: dual
+      ADMIN_IDLE_TIMEOUT_MINUTES: "30"
+      OTP_LOCKOUT_MINUTES: "15"
+      OTP_HARDENING_ENABLED: "true"
+      EXPORT_BOUNDS_ENFORCED: "true"
+      PUBLIC_SEO_ENABLED: "true"
+      CURSOR_PAGINATION_ENABLED: "false"
+      ADMIN_AGGREGATES_ENABLED: "false"
+      OFFLINE_QUEUE_ENABLED: "false"
+      NEXT_PUBLIC_OFFLINE_QUEUE_ENABLED: "false"
+      CSP_REPORT_ONLY_ENABLED: "false"
+      NEXT_PUBLIC_FIREBASE_API_KEY: ci-placeholder
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ci-placeholder.firebaseapp.com
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: ci-placeholder
+      NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ci-placeholder.appspot.com
+      NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "000000000000"
+      NEXT_PUBLIC_FIREBASE_APP_ID: "1:000000000000:web:ci"
 
     steps:
       - name: Checkout
@@ -23,11 +50,117 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Run repository checks
+      - name: Prepare CI secrets and Firebase placeholders
+        shell: bash
+        run: |
+          echo "ADMIN_JWT_SECRET=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "ADMIN_SECRET_KEY=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "RESEND_API_KEY=re_ci_placeholder" >> "$GITHUB_ENV"
+          echo "FIREBASE_PROJECT_ID=ci-placeholder" >> "$GITHUB_ENV"
+          echo "FIREBASE_CLIENT_EMAIL=ci@example.com" >> "$GITHUB_ENV"
+          echo "FIREBASE_STORAGE_BUCKET=ci-placeholder.appspot.com" >> "$GITHUB_ENV"
+          echo "FIREBASE_PRIVATE_KEY<<EOF" >> "$GITHUB_ENV"
+          openssl genrsa 2048 >> "$GITHUB_ENV"
+          echo "EOF" >> "$GITHUB_ENV"
+
+      - name: Run static quality checks
         run: bun run check
 
-      - name: Run fast type check
-        run: bun run check:types
+      - name: Run production-readiness artifact parity proof
+        run: bun test tests/phase4-production-artifacts.test.ts
 
       - name: Run tests
         run: bun test
+
+  dependency-audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Audit direct runtime dependencies
+        shell: bash
+        run: |
+          set +e
+          bun audit > audit-output.txt 2>&1
+          audit_status=$?
+          cat audit-output.txt
+
+          {
+            echo "## Dependency audit"
+            if grep -q "(direct dependency)" audit-output.txt; then
+              echo "- Blocking: direct dependency vulnerabilities were reported by bun audit."
+            elif [ "$audit_status" -ne 0 ]; then
+              echo "- Non-blocking: only transitive/tooling vulnerabilities remain. See docs/runbooks/dependency-risk-note.md."
+            else
+              echo "- Clean audit: no vulnerabilities reported."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if grep -q "(direct dependency)" audit-output.txt; then
+            exit 1
+          fi
+
+  build-verification:
+    name: Build verification
+    runs-on: ubuntu-latest
+    needs:
+      - quality
+      - dependency-audit
+    timeout-minutes: 20
+    env:
+      NEXT_PUBLIC_FIREBASE_API_KEY: ci-placeholder
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ci-placeholder.firebaseapp.com
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: ci-placeholder
+      NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ci-placeholder.appspot.com
+      NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "000000000000"
+      NEXT_PUBLIC_FIREBASE_APP_ID: "1:000000000000:web:ci"
+      ADMIN_SESSION_MODE: dual
+      ADMIN_IDLE_TIMEOUT_MINUTES: "30"
+      OTP_LOCKOUT_MINUTES: "15"
+      ALLOW_ADMIN_SETUP: "false"
+      PUBLIC_SEO_ENABLED: "true"
+      CURSOR_PAGINATION_ENABLED: "false"
+      ADMIN_AGGREGATES_ENABLED: "false"
+      OFFLINE_QUEUE_ENABLED: "false"
+      NEXT_PUBLIC_OFFLINE_QUEUE_ENABLED: "false"
+      CSP_REPORT_ONLY_ENABLED: "false"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Prepare build verification secrets and Firebase placeholders
+        shell: bash
+        run: |
+          echo "ADMIN_JWT_SECRET=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "ADMIN_SECRET_KEY=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "RESEND_API_KEY=re_ci_placeholder" >> "$GITHUB_ENV"
+          echo "FIREBASE_PROJECT_ID=ci-placeholder" >> "$GITHUB_ENV"
+          echo "FIREBASE_CLIENT_EMAIL=ci@example.com" >> "$GITHUB_ENV"
+          echo "FIREBASE_STORAGE_BUCKET=ci-placeholder.appspot.com" >> "$GITHUB_ENV"
+          echo "FIREBASE_PRIVATE_KEY<<EOF" >> "$GITHUB_ENV"
+          openssl genrsa 2048 >> "$GITHUB_ENV"
+          echo "EOF" >> "$GITHUB_ENV"
+
+      - name: Verify production build
+        run: bun run build

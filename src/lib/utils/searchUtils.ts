@@ -81,33 +81,3 @@ export function extractEmailTokens(email: string): string[] {
 
 	return Array.from(tokens);
 }
-
-/**
- * Comprueba si un texto coincide con un término de búsqueda,
- * ignorando tildes y diferencias de mayúsculas/minúsculas.
- *
- * Ejemplo: matchText("María José", "maria jose") → true
- */
-export function matchText(text: string, searchTerm: string): boolean {
-	if (!text || !searchTerm) return false;
-
-	const normalizedText = normalizeText(text);
-	const normalizedSearch = normalizeText(searchTerm);
-
-	return normalizedText.includes(normalizedSearch);
-}
-
-/**
- * Comprueba si todas las palabras de búsqueda están presentes en el texto.
- *
- * Ejemplo: matchAllWords("María José Cubides", "maria cubides") → true
- */
-export function matchAllWords(text: string, searchWords: string[]): boolean {
-	if (!text || searchWords.length === 0) return false;
-
-	const normalizedText = normalizeText(text);
-
-	return searchWords.every((word) =>
-		normalizedText.includes(normalizeText(word)),
-	);
-}

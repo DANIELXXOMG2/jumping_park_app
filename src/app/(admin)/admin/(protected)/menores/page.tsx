@@ -1,6 +1,16 @@
 "use client";
 
-import { Baby, Eye, FileCheck, Heart, Mail, MoreHorizontal, Phone, Trash2, User } from "lucide-react";
+import {
+	Baby,
+	Eye,
+	FileCheck,
+	Heart,
+	Mail,
+	MoreHorizontal,
+	Phone,
+	Trash2,
+	User,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -191,7 +201,10 @@ export default function MinorsPage() {
 							</span>
 						</div>
 						{minor.medicalCondition && (
-							<div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500/20 border border-red-500/50 flex items-center justify-center" title="Tiene condición médica">
+							<div
+								className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500/20 border border-red-500/50 flex items-center justify-center"
+								title="Tiene condición médica"
+							>
 								<Heart className="w-2.5 h-2.5 text-red-400 fill-red-400" />
 							</div>
 						)}
@@ -229,9 +242,7 @@ export default function MinorsPage() {
 			key: "eps",
 			header: "EPS",
 			render: (minor: Minor) => (
-				<span className="text-foreground/70">
-					{formatEPS(minor.eps)}
-				</span>
+				<span className="text-foreground/70">{formatEPS(minor.eps)}</span>
 			),
 		},
 		{
@@ -361,26 +372,34 @@ export default function MinorsPage() {
 										{selectedMinor.fullName}
 									</h3>
 									<p className="text-sm text-foreground/60">
-										{calculateAge(selectedMinor.birthDate)} años • {selectedMinor.relationship}
+										{calculateAge(selectedMinor.birthDate)} años •{" "}
+										{selectedMinor.relationship}
 									</p>
 								</div>
 							</div>
 
 							<div className="grid grid-cols-2 gap-4 pt-2">
 								<div>
-									<p className="text-xs text-foreground/50 uppercase tracking-wide">Documento</p>
+									<p className="text-xs text-foreground/50 uppercase tracking-wide">
+										Documento
+									</p>
 									<p className="text-sm font-mono text-foreground mt-1">
-										{selectedMinor.idType?.toUpperCase()} {selectedMinor.idNumber || "-"}
+										{selectedMinor.idType?.toUpperCase()}{" "}
+										{selectedMinor.idNumber || "-"}
 									</p>
 								</div>
 								<div>
-									<p className="text-xs text-foreground/50 uppercase tracking-wide">EPS</p>
+									<p className="text-xs text-foreground/50 uppercase tracking-wide">
+										EPS
+									</p>
 									<p className="text-sm text-foreground mt-1">
 										{formatEPS(selectedMinor.eps)}
 									</p>
 								</div>
 								<div>
-									<p className="text-xs text-foreground/50 uppercase tracking-wide">Fecha de Nacimiento</p>
+									<p className="text-xs text-foreground/50 uppercase tracking-wide">
+										Fecha de Nacimiento
+									</p>
 									<p className="text-sm text-foreground mt-1">
 										{formatDate(selectedMinor.birthDate)}
 									</p>
@@ -390,7 +409,9 @@ export default function MinorsPage() {
 										<Heart className="w-3 h-3" />
 										Condición Médica / Alergias
 									</p>
-									<p className={`text-sm mt-1 ${selectedMinor.medicalCondition ? "text-red-400 font-medium" : "text-foreground"}`}>
+									<p
+										className={`text-sm mt-1 ${selectedMinor.medicalCondition ? "text-red-400 font-medium" : "text-foreground"}`}
+									>
 										{selectedMinor.medicalCondition || "Ninguna"}
 									</p>
 								</div>
@@ -401,11 +422,15 @@ export default function MinorsPage() {
 						<div className="bg-surface-muted rounded-xl p-4 space-y-3">
 							<div className="flex items-center gap-2 text-foreground/70">
 								<User className="w-4 h-4" />
-								<span className="text-sm font-medium uppercase tracking-wide">Responsable</span>
+								<span className="text-sm font-medium uppercase tracking-wide">
+									Responsable
+								</span>
 							</div>
 
 							<div className="space-y-2">
-								<p className="text-foreground font-medium">{selectedMinor.parentName}</p>
+								<p className="text-foreground font-medium">
+									{selectedMinor.parentName}
+								</p>
 								<div className="flex items-center gap-2 text-sm text-foreground/60">
 									<span className="font-mono">{selectedMinor.parentId}</span>
 								</div>
@@ -428,7 +453,9 @@ export default function MinorsPage() {
 						<div className="bg-surface-muted rounded-xl p-4 space-y-3">
 							<div className="flex items-center gap-2 text-foreground/70">
 								<FileCheck className="w-4 h-4" />
-								<span className="text-sm font-medium uppercase tracking-wide">Consentimiento</span>
+								<span className="text-sm font-medium uppercase tracking-wide">
+									Consentimiento
+								</span>
 							</div>
 
 							{loadingConsent ? (
@@ -441,25 +468,33 @@ export default function MinorsPage() {
 										<span className="text-foreground font-medium">
 											#{consentInfo.consecutivo}
 										</span>
-										<Badge variant={!consentInfo.isExpired ? "success" : "error"}>
+										<Badge
+											variant={!consentInfo.isExpired ? "success" : "error"}
+										>
 											{!consentInfo.isExpired ? "Vigente" : "Vencido"}
 										</Badge>
 									</div>
 									<div className="grid grid-cols-2 gap-2 text-sm">
 										<div>
 											<p className="text-foreground/50">Firmado</p>
-											<p className="text-foreground">{formatDate(consentInfo.signedAt)}</p>
+											<p className="text-foreground">
+												{formatDate(consentInfo.signedAt)}
+											</p>
 										</div>
 										<div>
 											<p className="text-foreground/50">Válido hasta</p>
-											<p className="text-foreground">{formatDate(consentInfo.expiresAt)}</p>
+											<p className="text-foreground">
+												{formatDate(consentInfo.expiresAt)}
+											</p>
 										</div>
 									</div>
 								</div>
 							) : (
 								<div className="text-center py-4 text-foreground/50">
 									<FileCheck className="w-8 h-8 mx-auto mb-2 opacity-50" />
-									<p className="text-sm">No se encontró consentimiento activo</p>
+									<p className="text-sm">
+										No se encontró consentimiento activo
+									</p>
 								</div>
 							)}
 						</div>
@@ -469,7 +504,9 @@ export default function MinorsPage() {
 							{canEdit && (
 								<button
 									type="button"
-									onClick={() => router.push(`/admin/usuarios/${selectedMinor.parentId}`)}
+									onClick={() =>
+										router.push(`/admin/usuarios/${selectedMinor.parentId}`)
+									}
 									className="px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 transition-colors text-white"
 								>
 									Ver perfil completo

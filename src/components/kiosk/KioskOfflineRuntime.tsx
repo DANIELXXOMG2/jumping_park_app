@@ -1,0 +1,134 @@
+"use client";
+
+import { useEffect } from "react";
+import { toast } from "sonner";
+import { useHydrationSafeHardeningFlag } from "@/lib/hardeningClient";
+import { HARDENING_FLAG } from "@/lib/hardeningPolicy";
+import { registerOfflineServiceWorker } from "@/lib/offline/serviceWorker";
+import {
+	getOfflineConsentQueueSize,
+	OFFLINE_QUEUE_UPDATED_EVENT,
+} from "@/lib/offline/storage";
+import { syncOfflineConsentQueue } from "@/lib/offline/sync";
+import { useKioskStore } from "@/store/kioskStore";
+
+export function KioskOfflineRuntime() {
+	const setOfflineRuntime = useKioskStore((state) => state.setOfflineRuntime);
+	const offlineQueueEnabled = useHydrationSafeHardeningFlag(
+		HARDENING_FLAG.OFFLINE_QUEUE,
+	);
+
+	useEffect(() => {
+		let disposed = false;
+
+		async function refreshQueueSize() {
+			const queueSize = await getOfflineConsentQueueSize();
+			if (!disposed) {
+				setOfflineRuntime({ queueSize });
+			}
+		}
+
+		async function bootstrapOfflineRuntime() {
+			setOfflineRuntime({
+				enabled: offlineQueueEnabled,
+				isOnline: typeof navigator === "undefined" ? true : navigator.onLine,
+			});
+
+			if (!offlineQueueEnabled) {
+				return;
+			}
+
+			const shellReady = await registerOfflineServiceWorker();
+			if (!disposed) {
+				setOfflineRuntime({ shellReady });
+			}
+
+			await refreshQueueSize();
+
+			await syncOfflineConsentQueue({
+				beforeSync: () =>
+					setOfflineRuntime({
+						isSyncing: true,
+						lastRejectedError: undefined,
+						lastSyncError: undefined,
+					}),
+				afterSync: (result) => {
+					const now = new Date().toISOString();
+					setOfflineRuntime({
+						isSyncing: false,
+						queueSize: result.remaining,
+						lastRejectedAt: result.rejected ? now : undefined,
+						lastRejectedError: result.lastRejectedError,
+						lastSyncAt: result.synced > 0 || result.rejected ? now : undefined,
+						lastSyncError: result.lastError,
+					});
+
+					if (result.synced > 0) {
+						toast.success("Consentimientos sincronizados", {
+							description: `${result.synced} envio(s) offline llegaron al servidor`,
+						});
+					}
+				},
+			});
+
+			await refreshQueueSize();
+		}
+
+		function handleQueueUpdated() {
+			if (!offlineQueueEnabled) {
+				return;
+			}
+
+			void refreshQueueSize();
+		}
+
+		function handleOnline() {
+			setOfflineRuntime({ isOnline: true });
+
+			if (!offlineQueueEnabled) {
+				return;
+			}
+
+			void syncOfflineConsentQueue({
+				beforeSync: () =>
+					setOfflineRuntime({
+						isSyncing: true,
+						lastRejectedError: undefined,
+						lastSyncError: undefined,
+					}),
+				afterSync: (result) => {
+					const now = new Date().toISOString();
+					setOfflineRuntime({
+						isSyncing: false,
+						queueSize: result.remaining,
+						lastRejectedAt: result.rejected ? now : undefined,
+						lastRejectedError: result.lastRejectedError,
+						lastSyncAt: result.synced > 0 || result.rejected ? now : undefined,
+						lastSyncError: result.lastError,
+					});
+				},
+			});
+		}
+
+		function handleOffline() {
+			setOfflineRuntime({ isOnline: false, isSyncing: false });
+		}
+
+		void bootstrapOfflineRuntime();
+		window.addEventListener(OFFLINE_QUEUE_UPDATED_EVENT, handleQueueUpdated);
+		window.addEventListener("online", handleOnline);
+		window.addEventListener("offline", handleOffline);
+
+		return () => {
+			disposed = true;
+			window.removeEventListener(
+				OFFLINE_QUEUE_UPDATED_EVENT,
+				handleQueueUpdated,
+			);
+			window.removeEventListener("online", handleOnline);
+			window.removeEventListener("offline", handleOffline);
+		};
+	}, [offlineQueueEnabled, setOfflineRuntime]);
+
+	return null;
+}

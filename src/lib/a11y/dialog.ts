@@ -1,0 +1,132 @@
+import { type RefObject, useEffect } from "react";
+
+const FOCUSABLE_SELECTOR = [
+	"a[href]",
+	"button:not([disabled])",
+	"textarea:not([disabled])",
+	"input:not([disabled])",
+	"select:not([disabled])",
+	'[tabindex]:not([tabindex="-1"])',
+].join(",");
+
+export function getDialogFocusableElements(
+	container: HTMLElement,
+): HTMLElement[] {
+	return Array.from(
+		container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
+	).filter(
+		(element) =>
+			!element.hasAttribute("disabled") &&
+			element.getAttribute("aria-hidden") !== "true",
+	);
+}
+
+export function getDialogFocusLoopTarget(params: {
+	activeElement: HTMLElement | null;
+	firstElement: HTMLElement | null;
+	lastElement: HTMLElement | null;
+	shiftKey: boolean;
+}): HTMLElement | null {
+	const { activeElement, firstElement, lastElement, shiftKey } = params;
+
+	if (!firstElement || !lastElement) {
+		return null;
+	}
+
+	if (!activeElement) {
+		return shiftKey ? lastElement : firstElement;
+	}
+
+	if (shiftKey && activeElement === firstElement) {
+		return lastElement;
+	}
+
+	if (!shiftKey && activeElement === lastElement) {
+		return firstElement;
+	}
+
+	return null;
+}
+
+export function useDialogAccessibility({
+	isOpen,
+	onClose,
+	dialogRef,
+}: {
+	isOpen: boolean;
+	onClose: () => void;
+	dialogRef: RefObject<HTMLElement | null>;
+}) {
+	useEffect(() => {
+		if (!isOpen) {
+			return;
+		}
+
+		const dialog = dialogRef.current;
+		if (!dialog) {
+			return;
+		}
+
+		const previousActiveElement =
+			document.activeElement instanceof HTMLElement
+				? document.activeElement
+				: null;
+
+		const frame = window.requestAnimationFrame(() => {
+			const focusableElements = getDialogFocusableElements(dialog);
+			const initialFocusTarget = focusableElements[0] ?? dialog;
+			initialFocusTarget.focus();
+		});
+
+		const handleKeyDown = (event: KeyboardEvent) => {
+			if (event.key === "Escape") {
+				event.preventDefault();
+				onClose();
+				return;
+			}
+
+			if (event.key !== "Tab") {
+				return;
+			}
+
+			const focusableElements = getDialogFocusableElements(dialog);
+			if (focusableElements.length === 0) {
+				event.preventDefault();
+				dialog.focus();
+				return;
+			}
+
+			const firstElement = focusableElements[0];
+			const lastElement = focusableElements[focusableElements.length - 1];
+			const activeElement =
+				document.activeElement instanceof HTMLElement
+					? dialog.contains(document.activeElement)
+						? document.activeElement
+						: null
+					: null;
+			const focusLoopTarget = getDialogFocusLoopTarget({
+				activeElement,
+				firstElement,
+				lastElement,
+				shiftKey: event.shiftKey,
+			});
+
+			if (focusLoopTarget) {
+				event.preventDefault();
+				focusLoopTarget.focus();
+			}
+		};
+
+		document.addEventListener("keydown", handleKeyDown);
+
+		return () => {
+			window.cancelAnimationFrame(frame);
+			document.removeEventListener("keydown", handleKeyDown);
+			if (previousActiveElement) {
+				window.requestAnimationFrame(() => {
+					previousActiveElement.focus();
+				});
+			}
+		};
+	}, [dialogRef, isOpen, onClose]);
+}

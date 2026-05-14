@@ -39,7 +39,7 @@ const baseButtonStyles = cn(
 	// Focus
 	"focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/40",
 	// Disabled
-	"disabled:opacity-50 disabled:pointer-events-none disabled:hover:scale-100"
+	"disabled:opacity-50 disabled:pointer-events-none disabled:hover:scale-100",
 );
 
 export function VirtualKeypad({
@@ -97,12 +97,15 @@ export function VirtualKeypad({
 						disabled={isLoading}
 						className={cn(
 							baseButtonStyles,
-							"group relative overflow-hidden backdrop-blur-sm"
+							"group relative overflow-hidden backdrop-blur-sm",
 						)}
 						aria-label={t("keypad.enterDigit", { digit })}
 					>
 						{/* Efecto shimmer al hover */}
-						<span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500" aria-hidden="true" />
+						<span
+							className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500"
+							aria-hidden="true"
+						/>
 						<span className="relative">{digit}</span>
 					</button>
 				))}
@@ -119,11 +122,14 @@ export function VirtualKeypad({
 						"text-xl sm:text-2xl md:text-3xl",
 						// Estilo especial para delete
 						"hover:border-red-500/30 hover:from-red-500/10 hover:to-red-500/10",
-						"text-primary hover:text-red-400"
+						"text-primary hover:text-red-400",
 					)}
 					aria-label={t("keypad.deleteLastDigit")}
 				>
-					<span className="absolute inset-0 bg-gradient-to-r from-transparent via-red-500/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500" aria-hidden="true" />
+					<span
+						className="absolute inset-0 bg-gradient-to-r from-transparent via-red-500/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500"
+						aria-hidden="true"
+					/>
 					<Delete className="relative h-6 w-6 sm:h-8 sm:w-8 md:h-12 md:w-12 group-hover:scale-110 transition-transform duration-200" />
 				</button>
 
@@ -134,11 +140,14 @@ export function VirtualKeypad({
 					disabled={isLoading}
 					className={cn(
 						baseButtonStyles,
-						"group relative overflow-hidden backdrop-blur-sm"
+						"group relative overflow-hidden backdrop-blur-sm",
 					)}
 					aria-label={t("keypad.enterDigit", { digit: "0" })}
 				>
-					<span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500" aria-hidden="true" />
+					<span
+						className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500"
+						aria-hidden="true"
+					/>
 					<span className="relative">0</span>
 				</button>
 
@@ -171,19 +180,31 @@ export function VirtualKeypad({
 						// Disabled
 						"disabled:opacity-50 disabled:pointer-events-none",
 						// Layout
-						"group relative overflow-hidden flex items-center justify-center"
+						"group relative overflow-hidden flex items-center justify-center",
 					)}
 					aria-label={t("keypad.confirmDocument")}
 				>
 					{/* Efecto shimmer */}
-					<span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" aria-hidden="true" />
-					
+					<span
+						className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"
+						aria-hidden="true"
+					/>
+
 					{/* Partículas decorativas */}
-					<span className="absolute top-2 left-3 w-1.5 h-1.5 rounded-full bg-white/40 group-hover:bg-white/60 animate-pulse" aria-hidden="true" />
-					<span className="absolute bottom-2 right-3 w-2 h-2 rounded-full bg-white/30 group-hover:bg-white/50 animate-pulse delay-150" aria-hidden="true" />
-					
+					<span
+						className="absolute top-2 left-3 w-1.5 h-1.5 rounded-full bg-white/40 group-hover:bg-white/60 animate-pulse"
+						aria-hidden="true"
+					/>
+					<span
+						className="absolute bottom-2 right-3 w-2 h-2 rounded-full bg-white/30 group-hover:bg-white/50 animate-pulse delay-150"
+						aria-hidden="true"
+					/>
+
 					<span className="relative flex items-center gap-1 sm:gap-2 text-lg sm:text-2xl md:text-3xl">
-						<Sparkles className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 group-hover:rotate-12 transition-transform duration-300" strokeWidth={2.5} />
+						<Sparkles
+							className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 group-hover:rotate-12 transition-transform duration-300"
+							strokeWidth={2.5}
+						/>
 						OK
 						<Check
 							className="h-5 w-5 sm:h-7 sm:w-7 md:h-10 md:w-10 group-hover:scale-110 transition-transform duration-200"
@@ -202,7 +223,9 @@ export function VirtualKeypad({
 					className="group mt-4 w-full py-3 text-sm text-foreground/40 hover:text-red-400 transition-all duration-300 flex items-center justify-center gap-2"
 					aria-label={t("keypad.clearAll")}
 				>
-					<span className="group-hover:scale-110 transition-transform duration-200">🗑️</span>
+					<span className="group-hover:scale-110 transition-transform duration-200">
+						🗑️
+					</span>
 					<span className="group-hover:underline">{t("keypad.clearAll")}</span>
 				</button>
 			)}

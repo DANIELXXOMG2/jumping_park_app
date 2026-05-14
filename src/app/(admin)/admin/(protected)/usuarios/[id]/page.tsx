@@ -58,7 +58,8 @@ interface Consent {
 	id: string;
 	consecutivo: number;
 	policyVersion: string;
-	signatureUrl: string;
+	signatureStatus: "available" | "missing";
+	signatureUrl: string | null;
 	minorsCount: number;
 	minors: Minor[];
 	adultName: string;
@@ -248,7 +249,10 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
 														"Sin nombre"}
 												</p>
 												{minor.medicalCondition && (
-													<div className="w-5 h-5 rounded-full bg-red-500/20 border border-red-500/50 flex items-center justify-center" title="Tiene condición médica">
+													<div
+														className="w-5 h-5 rounded-full bg-red-500/20 border border-red-500/50 flex items-center justify-center"
+														title="Tiene condición médica"
+													>
 														<Heart className="w-3 h-3 text-red-400 fill-red-400" />
 													</div>
 												)}
@@ -410,8 +414,12 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
 									</span>
 								</div>
 								<div className="flex justify-between items-start">
-									<span className="text-sm text-foreground/60">Condición Médica / Alergias:</span>
-									<span className={`text-sm font-medium text-right max-w-[60%] ${selectedMinor.medicalCondition ? "text-red-400" : ""}`}>
+									<span className="text-sm text-foreground/60">
+										Condición Médica / Alergias:
+									</span>
+									<span
+										className={`text-sm font-medium text-right max-w-[60%] ${selectedMinor.medicalCondition ? "text-red-400" : ""}`}
+									>
 										{selectedMinor.medicalCondition || "Ninguna"}
 									</span>
 								</div>

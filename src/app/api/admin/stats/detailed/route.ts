@@ -1,325 +1,106 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { verifyAdminTokenWithPermission } from "@/lib/adminAuth";
-import { db } from "@/lib/firebaseAdmin";
-import { getDateRangeColombia } from "@/lib/utils/dateUtils";
+import { resolveHardeningPolicy } from "@/lib/hardeningPolicy";
+import { createLogger } from "@/lib/logger";
+import {
+	ADMIN_METRIC_PERIOD,
+	type AdminDetailedStats,
+	type AdminMetricPeriod,
+	adminMetricsService,
+} from "@/services/adminMetricsService";
 
-type Period = "today" | "week" | "month" | "year" | "all";
+const logger = createLogger("ApiAdminDetailedStats");
 
-interface DailyData {
-	date: string;
-	consents: number;
-	users: number;
-	minors: number;
+export const ADMIN_DETAILED_STATS_ROUTE_SOURCE = {
+	AGGREGATE: "aggregate",
+	LIVE: "live",
+} as const;
+
+type AdminDetailedStatsRoutePayload = AdminDetailedStats & {
+	meta: {
+		source: "aggregate" | "live";
+		fallbackApplied: boolean;
+	};
+};
+
+export async function buildAdminLiveDetailedStatsResponse(
+	period: AdminMetricPeriod,
+): Promise<AdminDetailedStatsRoutePayload> {
+	return adminMetricsService.buildAdminLiveDetailedStatsResponse(
+		period,
+	) as Promise<AdminDetailedStatsRoutePayload>;
 }
 
-function getPreviousPeriodRange(period: Period): { start: Date; end: Date } {
-	const { start: currentStart, end: currentEnd } = getDateRangeColombia(period);
-	const duration = currentEnd.getTime() - currentStart.getTime();
+export async function buildAdminDetailedStatsRouteResponse(options: {
+	aggregatesEnabled: boolean;
+	period: AdminMetricPeriod;
+	shouldRecompute: boolean;
+	getDetailed?: (
+		period: AdminMetricPeriod,
+		options?: { forceRecompute?: boolean },
+	) => Promise<Awaited<
+		ReturnType<typeof adminMetricsService.getDetailed>
+	> | null>;
+	getLiveDetailed?: typeof buildAdminLiveDetailedStatsResponse;
+}): Promise<AdminDetailedStatsRoutePayload> {
+	const getLiveDetailed =
+		options.getLiveDetailed ?? buildAdminLiveDetailedStatsResponse;
+	if (!options.aggregatesEnabled) {
+		return getLiveDetailed(options.period);
+	}
 
+	const getDetailed =
+		options.getDetailed ??
+		adminMetricsService.getDetailed.bind(adminMetricsService);
+	const result = await getDetailed(options.period, {
+		forceRecompute: options.shouldRecompute,
+	});
+	if (result) {
+		return {
+			...result,
+			meta: {
+				source: ADMIN_DETAILED_STATS_ROUTE_SOURCE.AGGREGATE,
+				fallbackApplied: false,
+			},
+		};
+	}
+
+	const fallbackPayload = await getLiveDetailed(options.period);
 	return {
-		start: new Date(currentStart.getTime() - duration),
-		end: new Date(currentStart.getTime() - 1),
+		...fallbackPayload,
+		meta: {
+			source: ADMIN_DETAILED_STATS_ROUTE_SOURCE.LIVE,
+			fallbackApplied: true,
+		},
 	};
 }
 
 export async function GET(request: NextRequest) {
 	try {
-		// Verificar autenticación y permiso statistics:view
-		const authResult = await verifyAdminTokenWithPermission(request, "statistics:view");
+		const authResult = await verifyAdminTokenWithPermission(
+			request,
+			"statistics:view",
+		);
 		if (!authResult.success) {
 			return authResult.response;
 		}
 
 		const { searchParams } = new URL(request.url);
-		const period = (searchParams.get("period") || "month") as Period;
+		const period =
+			(searchParams.get("period") as AdminMetricPeriod | null) ||
+			ADMIN_METRIC_PERIOD.MONTH;
+		const shouldRecompute = searchParams.get("recompute") === "true";
+		const hardeningPolicy = resolveHardeningPolicy();
 
-		// Usar zona horaria de Colombia para los rangos de fecha
-		const { start, end } = getDateRangeColombia(period);
-		const previousRange = getPreviousPeriodRange(period);
-		const now = new Date();
-
-		// =========================================================================
-		// EJECUTAR TODAS LAS CONSULTAS EN PARALELO
-		// =========================================================================
-		
-		// OPTIMIZACIÓN: Limitar consultas para evitar costos excesivos en Firebase
-		// Para períodos largos (year, all), limitamos a 2000 documentos máximo
-		const MAX_DOCS_PER_QUERY = 2000;
-
-		const [
-			consentsSnap,
-			usersSnap,
-			prevConsentsSnap,
-			prevUsersSnap,
-			totalUsersCount,
-			totalConsentsCount,
-		] = await Promise.all([
-			// Período actual - con límite para proteger costos
-			db
-				.collection("consents")
-				.where("signedAt", ">=", start)
-				.where("signedAt", "<=", end)
-				.orderBy("signedAt", "desc")
-				.limit(MAX_DOCS_PER_QUERY)
-				.select("signedAt", "minorsSnapshot", "validUntil") // Solo campos necesarios
-				.get(),
-
-			db
-				.collection("users")
-				.where("createdAt", ">=", start)
-				.where("createdAt", "<=", end)
-				.limit(MAX_DOCS_PER_QUERY)
-				.select("createdAt") // Solo campos necesarios
-				.get(),
-
-			// Período anterior - con límite
-			db
-				.collection("consents")
-				.where("signedAt", ">=", previousRange.start)
-				.where("signedAt", "<=", previousRange.end)
-				.limit(MAX_DOCS_PER_QUERY)
-				.select("minorsSnapshot")
-				.get(),
-
-			db
-				.collection("users")
-				.where("createdAt", ">=", previousRange.start)
-				.where("createdAt", "<=", previousRange.end)
-				.count()
-				.get(),
-
-			// Totales globales (usando count() es más rápido)
-			db
-				.collection("users")
-				.count()
-				.get(),
-			db.collection("consents").count().get(),
-		]);
-
-		// =========================================================================
-		// PROCESAR DATOS DEL PERÍODO ACTUAL
-		// =========================================================================
-
-		let minorsInPeriod = 0;
-		let activeConsents = 0;
-		let expiredConsents = 0;
-		const uniqueMinorsIds = new Set<string>();
-		const dayActivity: Record<string, { consents: number; minors: number }> =
-			{};
-
-		consentsSnap.docs.forEach((doc) => {
-			const data = doc.data();
-			const minorsSnapshot = data.minorsSnapshot || [];
-			const minorsCount = minorsSnapshot.length;
-
-			minorsInPeriod += minorsCount;
-
-			// Menores únicos
-			minorsSnapshot.forEach((m: { idNumber?: string }) => {
-				if (m.idNumber) uniqueMinorsIds.add(m.idNumber);
-			});
-
-			// Vigente/Vencido
-			const validUntil = data.validUntil?.toDate?.();
-			if (validUntil && validUntil > now) {
-				activeConsents++;
-			} else {
-				expiredConsents++;
-			}
-
-			// Actividad por día
-			const signedAt = data.signedAt?.toDate?.();
-			if (signedAt) {
-				const dayKey = signedAt.toISOString().split("T")[0];
-				if (!dayActivity[dayKey]) {
-					dayActivity[dayKey] = { consents: 0, minors: 0 };
-				}
-				dayActivity[dayKey].consents++;
-				dayActivity[dayKey].minors += minorsCount;
-			}
-		});
-
-		// Actividad de usuarios por día
-		const userDayActivity: Record<string, number> = {};
-		usersSnap.docs.forEach((doc) => {
-			const createdAt = doc.data().createdAt?.toDate?.();
-			if (createdAt) {
-				const dayKey = createdAt.toISOString().split("T")[0];
-				userDayActivity[dayKey] = (userDayActivity[dayKey] || 0) + 1;
-			}
-		});
-
-		// =========================================================================
-		// PROCESAR PERÍODO ANTERIOR
-		// =========================================================================
-
-		let prevMinors = 0;
-		prevConsentsSnap.docs.forEach((doc) => {
-			prevMinors += (doc.data().minorsSnapshot || []).length;
-		});
-
-		// =========================================================================
-		// GENERAR DATOS DEL GRÁFICO
-		// =========================================================================
-
-		const dailyData: DailyData[] = [];
-		const dayMs = 24 * 60 * 60 * 1000;
-		const daysToShow =
-			period === "today"
-				? 1
-				: period === "week"
-					? 7
-					: period === "month"
-						? 30
-						: period === "year"
-							? 12
-							: 30;
-
-		if (period === "year") {
-			// Agrupar por mes
-			for (let i = 11; i >= 0; i--) {
-				const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
-				const _monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
-				const monthKey = monthStart.toISOString().slice(0, 7); // YYYY-MM
-
-				let consents = 0;
-				let users = 0;
-				let minors = 0;
-
-				// Sumar días del mes
-				Object.entries(dayActivity).forEach(([day, data]) => {
-					if (day.startsWith(monthKey)) {
-						consents += data.consents;
-						minors += data.minors;
-					}
-				});
-
-				Object.entries(userDayActivity).forEach(([day, count]) => {
-					if (day.startsWith(monthKey)) {
-						users += count;
-					}
-				});
-
-				dailyData.push({
-					date: monthStart.toLocaleDateString("es-CO", {
-						month: "short",
-						year: "2-digit",
-					}),
-					consents,
-					users,
-					minors,
-				});
-			}
-		} else {
-			// Agrupar por día
-			for (let i = daysToShow - 1; i >= 0; i--) {
-				const dayStart = new Date(now.getTime() - i * dayMs);
-				const dayKey = dayStart.toISOString().split("T")[0];
-
-				dailyData.push({
-					date: dayStart.toLocaleDateString("es-CO", {
-						day: "2-digit",
-						month: "short",
-					}),
-					consents: dayActivity[dayKey]?.consents || 0,
-					users: userDayActivity[dayKey] || 0,
-					minors: dayActivity[dayKey]?.minors || 0,
-				});
-			}
-		}
-
-		// =========================================================================
-		// TOP DÍAS
-		// =========================================================================
-
-		const topDays = Object.entries(dayActivity)
-			.sort((a, b) => b[1].consents - a[1].consents)
-			.slice(0, 5)
-			.map(([date, data]) => ({
-				date: new Date(date).toLocaleDateString("es-CO", {
-					weekday: "short",
-					day: "numeric",
-					month: "short",
-				}),
-				count: data.consents,
-			}));
-
-		// =========================================================================
-		// TOTALES DE MENORES (usando colección denormalizada minors_index)
-		// =========================================================================
-
-		// OPTIMIZADO: Usar count() en minors_index en lugar de leer 1000 docs de users
-		const minorsCountResult = await db.collection("minors_index").count().get();
-		const totalMinors = minorsCountResult.data().count;
-
-		// =========================================================================
-		// CALCULAR VARIACIONES
-		// =========================================================================
-
-		const calculateChange = (current: number, previous: number): number => {
-			if (previous === 0) return current > 0 ? 100 : 0;
-			return Math.round(((current - previous) / previous) * 100);
-		};
-
-		// =========================================================================
-		// RESPUESTA
-		// =========================================================================
-
-		return NextResponse.json({
+		const payload = await buildAdminDetailedStatsRouteResponse({
+			aggregatesEnabled: hardeningPolicy.aggregatesEnabled,
 			period,
-			dateRange: {
-				start: start.toISOString(),
-				end: end.toISOString(),
-			},
-			kpis: {
-				consents: {
-					value: consentsSnap.size,
-					change: calculateChange(consentsSnap.size, prevConsentsSnap.size),
-					previousValue: prevConsentsSnap.size,
-				},
-				users: {
-					value: usersSnap.size,
-					change: calculateChange(usersSnap.size, prevUsersSnap.data().count),
-					previousValue: prevUsersSnap.data().count,
-				},
-				minors: {
-					value: minorsInPeriod,
-					change: calculateChange(minorsInPeriod, prevMinors),
-					previousValue: prevMinors,
-				},
-				uniqueMinors: {
-					value: uniqueMinorsIds.size,
-					label: "Participantes únicos",
-				},
-				activeConsents: {
-					value: activeConsents,
-					label: "Vigentes",
-				},
-				expiredConsents: {
-					value: expiredConsents,
-					label: "Vencidos",
-				},
-			},
-			totals: {
-				users: totalUsersCount.data().count,
-				consents: totalConsentsCount.data().count,
-				minors: totalMinors,
-			},
-			chartData: dailyData,
-			topDays,
-			averages: {
-				consentsPerDay:
-					daysToShow > 0
-						? Math.round((consentsSnap.size / daysToShow) * 10) / 10
-						: 0,
-				minorsPerConsent:
-					consentsSnap.size > 0
-						? Math.round((minorsInPeriod / consentsSnap.size) * 10) / 10
-						: 0,
-			},
+			shouldRecompute,
 		});
+
+		return NextResponse.json(payload);
 	} catch (error) {
-		console.error("[API /admin/stats/detailed] Error:", error);
+		logger.error("Error obteniendo estadisticas detalladas", error);
 		return NextResponse.json(
 			{ error: "Error al obtener estadísticas" },
 			{ status: 500 },

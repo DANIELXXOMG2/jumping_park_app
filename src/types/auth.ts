@@ -4,7 +4,7 @@
  * ============================================================================
  *
  * Control de Acceso Basado en Roles (RBAC) para Jumping Park.
- * 
+ *
  * IMPORTANTE: Los roles se almacenan en Firebase Custom Claims, NO en Firestore.
  * Esto sigue la mejor práctica recomendada por Firebase:
  * - Los claims viajan en el token JWT
@@ -59,7 +59,12 @@ export type Permission =
  */
 export const ALL_PERMISSIONS = {
 	Dashboard: ["dashboard:view"] as const,
-	Usuarios: ["users:view", "users:create", "users:edit", "users:delete"] as const,
+	Usuarios: [
+		"users:view",
+		"users:create",
+		"users:edit",
+		"users:delete",
+	] as const,
 	Consentimientos: ["consents:view", "consents:export"] as const,
 	Menores: ["minors:view", "minors:edit"] as const,
 	Estadísticas: ["statistics:view"] as const,
@@ -71,7 +76,9 @@ export const ALL_PERMISSIONS = {
 /**
  * Lista plana de todos los permisos (para validaciones).
  */
-export const AVAILABLE_PERMISSIONS: Permission[] = Object.values(ALL_PERMISSIONS).flat() as Permission[];
+export const AVAILABLE_PERMISSIONS: Permission[] = Object.values(
+	ALL_PERMISSIONS,
+).flat() as Permission[];
 
 /**
  * Permisos por rol para diferentes acciones.
@@ -92,10 +99,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
 		"settings:manage",
 		"roles:manage",
 	],
-	trabajador: [
-		"dashboard:view",
-		"minors:view",
-	],
+	trabajador: ["dashboard:view", "minors:view"],
 	visitor: ["kiosk:access", "consent:sign"],
 };
 
@@ -111,10 +115,11 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
 export function hasPermission(
 	role: UserRole,
 	permission: Permission | string,
-	userPermissions?: string[]
+	userPermissions?: string[],
 ): boolean {
 	// Verificar en permisos del rol base
-	const hasRolePermission = ROLE_PERMISSIONS[role]?.includes(permission as Permission) ?? false;
+	const hasRolePermission =
+		ROLE_PERMISSIONS[role]?.includes(permission as Permission) ?? false;
 
 	// Si tiene el permiso por rol, retornar true
 	if (hasRolePermission) {
@@ -138,11 +143,11 @@ export function hasPermission(
  */
 export function getEffectivePermissions(
 	role: UserRole,
-	customPermissions?: string[]
+	customPermissions?: string[],
 ): Permission[] {
 	const rolePerms = ROLE_PERMISSIONS[role] ?? [];
-	const customPerms = (customPermissions ?? []).filter(
-		(p): p is Permission => AVAILABLE_PERMISSIONS.includes(p as Permission)
+	const customPerms = (customPermissions ?? []).filter((p): p is Permission =>
+		AVAILABLE_PERMISSIONS.includes(p as Permission),
 	);
 
 	// Combinar y eliminar duplicados
@@ -180,16 +185,18 @@ export const ROUTE_ACCESS: Record<string, UserRole[]> = {
 export function canAccessRoute(role: UserRole, pathname: string): boolean {
 	// Admin tiene acceso total
 	if (role === "admin") return true;
-	
+
 	// Buscar la ruta más específica que coincida
-	const sortedRoutes = Object.keys(ROUTE_ACCESS).sort((a, b) => b.length - a.length);
-	
+	const sortedRoutes = Object.keys(ROUTE_ACCESS).sort(
+		(a, b) => b.length - a.length,
+	);
+
 	for (const route of sortedRoutes) {
 		if (pathname === route || pathname.startsWith(`${route}/`)) {
 			return ROUTE_ACCESS[route].includes(role);
 		}
 	}
-	
+
 	// Por defecto, roles no-admin no pueden acceder a rutas no especificadas
 	return false;
 }
@@ -212,11 +219,27 @@ export function getRoleFromClaims(claims: CustomClaims): UserRole | null {
 	if (claims.role && ADMIN_ROLES.includes(claims.role)) {
 		return claims.role;
 	}
-	
+
 	// Compatibilidad con sistema anterior (admin claim boolean)
 	if (claims.admin === true) {
 		return "admin";
 	}
-	
+
 	return null;
+}
+
+// ============================================================================
+// ADMIN SESSION (SHARED BETWEEN NODE AND EDGE RUNTIMES)
+// ============================================================================
+
+/** Nombre de la cookie de sesión admin */
+export const ADMIN_SESSION_COOKIE_NAME = "jp_admin_session";
+
+/** Payload de la sesión admin (edge-safe, no depende de node:crypto) */
+export interface AdminSessionPayload {
+	uid: string;
+	email: string;
+	role: UserRole;
+	issuedAt: number;
+	expiresAt: number;
 }

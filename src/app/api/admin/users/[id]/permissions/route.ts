@@ -2,7 +2,15 @@ import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { verifyAdminTokenWithPermission } from "@/lib/adminAuth";
 import { db } from "@/lib/firebaseAdmin";
+import { createLogger } from "@/lib/logger";
+import {
+	buildAdminAuditActor,
+	buildAdminAuditRequest,
+	writeAdminAuditLog,
+} from "@/services/adminAuditService";
 import { AVAILABLE_PERMISSIONS, type Permission } from "@/types/auth";
+
+const logger = createLogger("ApiAdminUserPermissions");
 
 interface RouteParams {
 	params: Promise<{ id: string }>;
@@ -16,13 +24,11 @@ const updatePermissionsSchema = z.object({
 		.array(z.string())
 		.refine(
 			(perms) =>
-				perms.every((p) =>
-					AVAILABLE_PERMISSIONS.includes(p as Permission)
-				),
+				perms.every((p) => AVAILABLE_PERMISSIONS.includes(p as Permission)),
 			{
 				message:
 					"Uno o más permisos no son válidos. Consulta el catálogo de permisos disponibles.",
-			}
+			},
 		),
 });
 
@@ -35,7 +41,10 @@ const updatePermissionsSchema = z.object({
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
 	try {
 		// 1. Verificar autenticación y permiso roles:manage
-		const authResult = await verifyAdminTokenWithPermission(request, "roles:manage");
+		const authResult = await verifyAdminTokenWithPermission(
+			request,
+			"roles:manage",
+		);
 		if (!authResult.success) {
 			return authResult.response;
 		}
@@ -49,7 +58,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 		} catch {
 			return NextResponse.json(
 				{ error: "El body de la solicitud debe ser JSON válido" },
-				{ status: 400 }
+				{ status: 400 },
 			);
 		}
 
@@ -60,7 +69,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 					error: "Datos inválidos",
 					details: parseResult.error.flatten().fieldErrors,
 				},
-				{ status: 400 }
+				{ status: 400 },
 			);
 		}
 
@@ -81,7 +90,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 			if (byUid.empty) {
 				return NextResponse.json(
 					{ error: "Usuario administrativo no encontrado" },
-					{ status: 404 }
+					{ status: 404 },
 				);
 			}
 
@@ -93,7 +102,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 		if (!userData) {
 			return NextResponse.json(
 				{ error: "Usuario administrativo no encontrado" },
-				{ status: 404 }
+				{ status: 404 },
 			);
 		}
 
@@ -101,6 +110,18 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 		await userRef.update({
 			customPermissions: permissions,
 			updatedAt: new Date(),
+		});
+
+		await writeAdminAuditLog({
+			action: "admin-user.permissions.update",
+			actor: buildAdminAuditActor(authResult),
+			target: {
+				collection: "admin_users",
+				id: userRef.id,
+				label: userData.email || userData.uid,
+			},
+			request: buildAdminAuditRequest(request),
+			details: { permissions },
 		});
 
 		return NextResponse.json({
@@ -112,7 +133,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 			},
 		});
 	} catch (error) {
-		console.error("[PATCH /api/admin/users/[id]/permissions] Error:", error);
+		logger.error("Error updating admin user permissions", error);
 
 		return NextResponse.json(
 			{
@@ -122,7 +143,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 						? error.message
 						: undefined,
 			},
-			{ status: 500 }
+			{ status: 500 },
 		);
 	}
 }
@@ -135,7 +156,10 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 export async function GET(request: NextRequest, { params }: RouteParams) {
 	try {
 		// 1. Verificar autenticación y permiso roles:manage
-		const authResult = await verifyAdminTokenWithPermission(request, "roles:manage");
+		const authResult = await verifyAdminTokenWithPermission(
+			request,
+			"roles:manage",
+		);
 		if (!authResult.success) {
 			return authResult.response;
 		}
@@ -155,7 +179,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 			if (byUid.empty) {
 				return NextResponse.json(
 					{ error: "Usuario administrativo no encontrado" },
-					{ status: 404 }
+					{ status: 404 },
 				);
 			}
 
@@ -166,7 +190,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 		if (!userData) {
 			return NextResponse.json(
 				{ error: "Usuario administrativo no encontrado" },
-				{ status: 404 }
+				{ status: 404 },
 			);
 		}
 
@@ -177,7 +201,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 			availablePermissions: AVAILABLE_PERMISSIONS,
 		});
 	} catch (error) {
-		console.error("[GET /api/admin/users/[id]/permissions] Error:", error);
+		logger.error("Error getting admin user permissions", error);
 
 		return NextResponse.json(
 			{
@@ -187,7 +211,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 						? error.message
 						: undefined,
 			},
-			{ status: 500 }
+			{ status: 500 },
 		);
 	}
 }

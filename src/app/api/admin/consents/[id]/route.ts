@@ -1,6 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { verifyAdminTokenWithPermission } from "@/lib/adminAuth";
 import { db } from "@/lib/firebaseAdmin";
+import {
+	buildAdminAuditActor,
+	buildAdminAuditRequest,
+	commitAdminAuditBatch,
+} from "@/services/adminAuditService";
 import { getConsentSignatureAccessUrl } from "@/services/consentService";
 import type { Consent } from "@/types/firestore";
 
@@ -8,10 +13,77 @@ interface RouteParams {
 	params: Promise<{ id: string }>;
 }
 
+interface ConsentDocSnapshotLike {
+	exists: boolean;
+}
+
+interface ConsentDeleteRefLike {
+	id: string;
+	parent?: {
+		id: string;
+	};
+}
+
+interface ConsentDeleteBatchDeps {
+	readConsent?: (id: string) => Promise<ConsentDocSnapshotLike>;
+	commitAuditBatch?: typeof commitAdminAuditBatch;
+	getConsentRef?: (id: string) => ConsentDeleteRefLike;
+}
+
+export async function buildAdminConsentDeleteResponse(
+	request: NextRequest,
+	session: {
+		uid: string;
+		email: string;
+		role: string;
+	},
+	params: { id: string },
+	deps: ConsentDeleteBatchDeps = {},
+) {
+	const readConsent =
+		deps.readConsent ??
+		((id: string) => db.collection("consents").doc(id).get());
+	const commitAuditBatch = deps.commitAuditBatch ?? commitAdminAuditBatch;
+	const getConsentRef =
+		deps.getConsentRef ?? ((id: string) => db.collection("consents").doc(id));
+	const consentDoc = await readConsent(params.id);
+
+	if (!consentDoc.exists) {
+		return null;
+	}
+
+	await commitAuditBatch({
+		apply: (batch) => {
+			batch.delete(
+				getConsentRef(params.id) as FirebaseFirestore.DocumentReference,
+			);
+		},
+		audit: {
+			action: "consent.delete",
+			actor: buildAdminAuditActor(session),
+			target: {
+				collection: "consents",
+				id: params.id,
+				label: `consent:${params.id}`,
+			},
+			request: buildAdminAuditRequest(request),
+		},
+	});
+
+	return {
+		success: true,
+		message: "Consentimiento eliminado correctamente",
+		deletedId: params.id,
+	};
+}
+
 export async function GET(request: NextRequest, { params }: RouteParams) {
 	try {
 		// Verificar autenticación y permiso consents:view
-		const authResult = await verifyAdminTokenWithPermission(request, "consents:view");
+		const authResult = await verifyAdminTokenWithPermission(
+			request,
+			"consents:view",
+		);
 		if (!authResult.success) {
 			return authResult.response;
 		}
@@ -35,7 +107,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 			);
 		}
 
-		const signatureUrl = await getConsentSignatureAccessUrl(data as Consent)
+		const signatureUrl = await getConsentSignatureAccessUrl(data as Consent);
 
 		let currentUser = null;
 		if (data.userId) {
@@ -91,31 +163,27 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
 	try {
 		// Verificar autenticación y permiso roles:manage (solo admin puede eliminar)
-		const authResult = await verifyAdminTokenWithPermission(request, "roles:manage");
+		const authResult = await verifyAdminTokenWithPermission(
+			request,
+			"roles:manage",
+		);
 		if (!authResult.success) {
 			return authResult.response;
 		}
 
 		const { id } = await params;
+		const payload = await buildAdminConsentDeleteResponse(request, authResult, {
+			id,
+		});
 
-		// Verificar que el consentimiento existe
-		const consentDoc = await db.collection("consents").doc(id).get();
-
-		if (!consentDoc.exists) {
+		if (!payload) {
 			return NextResponse.json(
 				{ error: "Consentimiento no encontrado" },
 				{ status: 404 },
 			);
 		}
 
-		// Eliminar el consentimiento
-		await db.collection("consents").doc(id).delete();
-
-		return NextResponse.json({
-			success: true,
-			message: "Consentimiento eliminado correctamente",
-			deletedId: id,
-		});
+		return NextResponse.json(payload);
 	} catch {
 		return NextResponse.json(
 			{ error: "Error al eliminar el consentimiento" },

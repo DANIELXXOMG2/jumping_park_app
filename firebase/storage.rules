@@ -1,12 +1,22 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    // Firmas: Solo el admin puede leer, usuarios autenticados pueden subir su propia firma
-    match /signatures/{fileName} {
-      // Solo admins pueden leer cualquier firma (verificado via custom claims)
-      allow read: if request.auth != null && request.auth.token.admin == true;
-      // Usuarios pueden subir firmas (el nombre incluye su userId)
-      allow write: if request.auth != null;
+    function isAdmin() {
+      return request.auth != null &&
+        (request.auth.token.role == 'admin' || request.auth.token.admin == true);
+    }
+
+    // Las firmas reales viven en rutas anidadas `signatures/{documentId}/...`.
+    // La carga/lectura productiva se hace via Admin SDK + signed URLs, no desde el cliente.
+    match /signatures/{userId}/{assetPath=**} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // Los PDFs de consentimiento se generan on-demand via API y no deben persistirse
+    // desde clientes. Este namespace queda explícitamente reservado/bloqueado.
+    match /generated-pdfs/{documentPath=**} {
+      allow read, write: if false;
     }
 
     match /{allPaths=**} {

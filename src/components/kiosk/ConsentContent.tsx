@@ -58,7 +58,10 @@ function ClauseItem({
 	const parts = clause.text.split(companyName);
 	const formattedText = parts.flatMap((part, idx) =>
 		idx < parts.length - 1
-			? [part, <strong key={`${clause.id}-company-${idx}`}>{companyName}</strong>]
+			? [
+					part,
+					<strong key={`${clause.id}-company-${idx}`}>{companyName}</strong>,
+				]
 			: [part],
 	);
 
@@ -140,23 +143,23 @@ export function ConsentContent({ variant = "compact" }: ConsentContentProps) {
 					const result = await response.json();
 					if (result.success && result.data) {
 						const apiData = result.data;
-						
+
 						// Validar ESTRUCTURA de un solo idioma (no cantidad) usando Zod
 						const validation = validateLocalizedContent(apiData);
-						
+
 						if (!validation.success) {
 							console.warn(
-								`[ConsentContent] API returned invalid structure: ${validation.error}. Using static content.`
+								`[ConsentContent] API returned invalid structure: ${validation.error}. Using static content.`,
 							);
 							// Estructura corrupta → usar contenido estático
 							setIsLoading(false);
 							return;
 						}
-						
+
 						// Estructura válida → procesar y usar datos de la DB
 						const validData = validation.data;
 						const companyName = validData.meta.companyName;
-						
+
 						// Procesar el contenido para reemplazar placeholders
 						const processedClauses = validData.consent.clauses.map(
 							(clause) => ({
@@ -172,9 +175,9 @@ export function ConsentContent({ variant = "compact" }: ConsentContentProps) {
 								clauses: processedClauses,
 							},
 						});
-						
+
 						console.info(
-							`[ConsentContent] Using Firestore data (clauses: ${validData.consent.clauses.length}, rules: ${validData.rules.items.length})`
+							`[ConsentContent] Using Firestore data (clauses: ${validData.consent.clauses.length}, rules: ${validData.rules.items.length})`,
 						);
 					}
 				}
@@ -192,10 +195,11 @@ export function ConsentContent({ variant = "compact" }: ConsentContentProps) {
 	const { consent, rules, meta } = content;
 
 	// Determinar el texto de "firma" según el idioma para el split de la introducción
-	const signatureText = language === "en" 
-		? "BY MY SIGNATURE, DECLARE THAT:" 
-		: "CON MI FIRMA, MANIFIESTO QUE:";
-	
+	const signatureText =
+		language === "en"
+			? "BY MY SIGNATURE, DECLARE THAT:"
+			: "CON MI FIRMA, MANIFIESTO QUE:";
+
 	// Dividir la introducción en dos partes para resaltar la firma
 	const introductionParts = consent.introduction.split(signatureText);
 	const hasSignatureSplit = introductionParts.length > 1;

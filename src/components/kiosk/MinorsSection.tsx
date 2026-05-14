@@ -50,15 +50,16 @@ export function MinorsSection({
 	const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
 	const [editingIndex, setEditingIndex] = useState<number | null>(null);
 	// Estado para controlar si el usuario cerró manualmente el formulario inline
-	const [wasInlineManuallyMinimized, setWasInlineManuallyMinimized] = useState(false);
+	const [wasInlineManuallyMinimized, setWasInlineManuallyMinimized] =
+		useState(false);
 	// Estado para evitar problemas de hidratación - solo renderizar después de montar en cliente
 	const [hasMounted, setHasMounted] = useState(false);
-	
+
 	// Marcar como montado después del primer render en el cliente
 	useEffect(() => {
 		setHasMounted(true);
 	}, []);
-	
+
 	// El formulario inline está minimizado si:
 	// 1. Ya hay al menos un participante, O
 	// 2. El usuario lo minimizó manualmente
@@ -210,7 +211,7 @@ export function MinorsSection({
 				{/* Efecto de brillo decorativo */}
 				<div className="absolute -top-10 -right-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl" />
 				<div className="absolute -bottom-10 -left-10 w-24 h-24 bg-cyan-500/10 rounded-full blur-2xl" />
-				
+
 				<div className="relative flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
 					<div className="flex flex-col gap-1.5">
 						<div className="flex items-center gap-3">
@@ -242,8 +243,13 @@ export function MinorsSection({
 								onClick={handleOpenHistory}
 								className="group relative flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 hover:from-blue-500/20 hover:to-indigo-500/20 text-blue-400 font-semibold rounded-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] border border-blue-500/30 hover:border-blue-400/50 flex-1 sm:flex-none justify-center shadow-lg shadow-blue-500/5 hover:shadow-blue-500/20"
 							>
-								<History size={18} className="group-hover:rotate-[-20deg] transition-transform duration-300" />
-								<span className="hidden sm:inline">{t("minors.section.historyBtn")}</span>
+								<History
+									size={18}
+									className="group-hover:rotate-[-20deg] transition-transform duration-300"
+								/>
+								<span className="hidden sm:inline">
+									{t("minors.section.historyBtn")}
+								</span>
 							</button>
 						)}
 
@@ -253,8 +259,14 @@ export function MinorsSection({
 							onClick={handleAddMinor}
 							className="group relative flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 hover:from-emerald-500/25 hover:to-teal-500/25 text-emerald-400 font-semibold rounded-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] border border-emerald-500/30 hover:border-emerald-400/50 flex-1 sm:flex-none justify-center shadow-lg shadow-emerald-500/5 hover:shadow-emerald-500/20"
 						>
-							<Plus size={18} className="group-hover:rotate-90 transition-transform duration-300" />
-							<span className="hidden sm:inline">{t("minors.section.addBtn")}</span> {t("minors.section.addBtnNew")}
+							<Plus
+								size={18}
+								className="group-hover:rotate-90 transition-transform duration-300"
+							/>
+							<span className="hidden sm:inline">
+								{t("minors.section.addBtn")}
+							</span>{" "}
+							{t("minors.section.addBtnNew")}
 						</button>
 					</div>
 				</div>
@@ -272,7 +284,8 @@ export function MinorsSection({
 
 			{/* Estado vacío con botón para expandir formulario inline */}
 			{/* En SSR o antes de montar, mostramos el estado vacío por defecto */}
-			{((!hasMounted && fields.length === 0) || (hasMounted && fields.length === 0 && isInlineMinimized)) && (
+			{((!hasMounted && fields.length === 0) ||
+				(hasMounted && fields.length === 0 && isInlineMinimized)) && (
 				<div className="relative overflow-hidden text-center py-10 border-2 border-dashed border-gray-700/50 rounded-2xl bg-gradient-to-b from-gray-900/50 to-gray-800/30 backdrop-blur-sm group hover:border-emerald-500/30 transition-all duration-500">
 					{/* Efecto de partículas decorativas */}
 					<div className="absolute inset-0 opacity-30">
@@ -280,12 +293,14 @@ export function MinorsSection({
 						<div className="absolute top-8 right-1/3 w-1.5 h-1.5 bg-cyan-500/40 rounded-full animate-pulse delay-300" />
 						<div className="absolute bottom-6 left-1/3 w-1 h-1 bg-teal-500/40 rounded-full animate-pulse delay-500" />
 					</div>
-					
+
 					<div className="relative">
 						<div className="inline-flex p-4 rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-700/50 border border-gray-600/30 mb-4 group-hover:scale-110 group-hover:border-emerald-500/30 transition-all duration-500">
 							<Baby className="w-10 h-10 text-gray-500 group-hover:text-emerald-400 transition-colors duration-500" />
 						</div>
-						<p className="text-gray-300 font-medium">{t("minors.section.emptyTitle")}</p>
+						<p className="text-gray-300 font-medium">
+							{t("minors.section.emptyTitle")}
+						</p>
 						<p className="text-gray-500 text-sm mt-1.5 max-w-xs mx-auto">
 							{t("minors.section.emptySubtitle")}
 						</p>
@@ -362,7 +377,10 @@ interface MinorCompactCardProps {
 	formatIdType: (type: string) => string;
 	formatRelationship: (rel: string) => string;
 	getEPSDisplayLabel: (eps: string) => string;
-	t: (key: DictionaryKey, replacements?: Record<string, string | number>) => string;
+	t: (
+		key: DictionaryKey,
+		replacements?: Record<string, string | number>,
+	) => string;
 }
 
 function MinorCompactCard({
@@ -391,18 +409,23 @@ function MinorCompactCard({
 		<div className="group relative overflow-hidden bg-gradient-to-r from-gray-900/90 via-gray-800/80 to-gray-900/90 border border-gray-700/50 rounded-2xl hover:border-emerald-500/40 transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/10">
 			{/* Efecto de brillo al hover */}
 			<div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-			
+
 			{/* Línea de acento lateral */}
 			<div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 via-teal-500 to-cyan-500 opacity-60 group-hover:opacity-100 transition-opacity duration-300" />
-			
+
 			<div className="relative flex items-center gap-4 p-4 pl-5">
 				{/* Avatar/Número con gradiente */}
 				<div className="relative">
 					<div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 via-teal-500/15 to-cyan-500/20 flex items-center justify-center border border-emerald-500/30 shadow-lg shadow-emerald-500/10 group-hover:scale-105 transition-transform duration-300">
-						<span className="text-emerald-400 font-bold text-lg">{index + 1}</span>
+						<span className="text-emerald-400 font-bold text-lg">
+							{index + 1}
+						</span>
 					</div>
 					{hasMedicalCondition && (
-						<div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500/20 border border-red-500/50 flex items-center justify-center" title={t("minors.section.hasMedicalCondition")}>
+						<div
+							className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500/20 border border-red-500/50 flex items-center justify-center"
+							title={t("minors.section.hasMedicalCondition")}
+						>
 							<Heart size={10} className="text-red-400 fill-red-400" />
 						</div>
 					)}
@@ -415,7 +438,7 @@ function MinorCompactCard({
 							{fullName}
 						</h3>
 					</div>
-					
+
 					{/* Info Pills */}
 					<div className="flex flex-wrap items-center gap-2 mt-2">
 						{age && (
@@ -433,7 +456,7 @@ function MinorCompactCard({
 							{relationship}
 						</span>
 					</div>
-					
+
 					{/* EPS Info */}
 					<p className="text-xs text-gray-500 mt-2 flex items-center gap-1.5">
 						<span className="inline-block w-1.5 h-1.5 rounded-full bg-teal-500/60" />

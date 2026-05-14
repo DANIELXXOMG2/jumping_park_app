@@ -2,7 +2,7 @@
 
 import { Fingerprint, Loader2, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useCallback, useState } from "react";
+import { type ChangeEvent, type FormEvent, useCallback, useState } from "react";
 import { VirtualKeypad } from "@/components/kiosk/VirtualKeypad";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useKioskStore } from "@/store/kioskStore";
@@ -12,12 +12,7 @@ const MAX_DIGITS = 20;
 const OTP_ROUTE = "/otp";
 const REGISTER_ROUTE = "/registro";
 
-type CheckUserResponse = {
-	exists: boolean;
-	userData?: {
-		emailMasked?: string;
-	};
-};
+import type { CheckUserResponse } from "@/types/api";
 
 export default function IngresoPage() {
 	const router = useRouter();
@@ -40,8 +35,8 @@ export default function IngresoPage() {
 	 * Maneja la entrada directa desde el teclado físico.
 	 * Permite letras y números para soportar pasaportes.
 	 */
-	const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-		const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+	const handleInputChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+		const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
 		if (value.length <= MAX_DIGITS) {
 			setCedula(value);
 			setErrorMessage(null);
@@ -55,8 +50,7 @@ export default function IngresoPage() {
 
 	const handleCheckUser = useCallback(async () => {
 		if (!cedula || isChecking) {
-			if (!cedula)
-				setErrorMessage(t("ingreso.error.empty"));
+			if (!cedula) setErrorMessage(t("ingreso.error.empty"));
 			return;
 		}
 
@@ -95,7 +89,7 @@ export default function IngresoPage() {
 				});
 
 				const otpPayload = await otpResponse.json().catch(() => ({}));
-				
+
 				// Caso especial: ya existe un OTP activo - redirigir a /otp para ingresarlo
 				if (!otpResponse.ok && otpPayload.otpAlreadySent) {
 					updateVisitorData({
@@ -106,7 +100,7 @@ export default function IngresoPage() {
 					router.push(OTP_ROUTE);
 					return;
 				}
-				
+
 				if (!otpResponse.ok) {
 					throw new Error(
 						otpPayload.error ?? "No pudimos enviar el código OTP",
@@ -150,9 +144,13 @@ export default function IngresoPage() {
 	);
 
 	return (
-		<section className="flex flex-1 items-center justify-center px-3 sm:px-6 py-4 sm:py-8 bg-background text-foreground">
+		<main
+			className="flex flex-1 items-center justify-center bg-background px-3 py-4 text-foreground sm:px-6 sm:py-8"
+			aria-labelledby="ingreso-title"
+		>
 			<form
 				onSubmit={handleSubmit}
+				aria-describedby="ingreso-hint ingreso-feedback"
 				className="group/form relative flex w-full max-w-4xl flex-col items-center gap-4 sm:gap-6 md:gap-8 rounded-2xl sm:rounded-3xl md:rounded-4xl overflow-hidden
 					/* ═══ FONDO CON GRADIENTE ═══ */
 					bg-gradient-to-br from-white/10 via-white/5 to-white/10
@@ -167,16 +165,28 @@ export default function IngresoPage() {
 				"
 			>
 				{/* ═══ EFECTO SHIMMER DE FONDO ═══ */}
-				<div 
-					className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent translate-x-[-100%] group-hover/form:translate-x-[100%] transition-transform duration-1000 ease-in-out pointer-events-none" 
-					aria-hidden="true" 
+				<div
+					className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent translate-x-[-100%] group-hover/form:translate-x-[100%] transition-transform duration-1000 ease-in-out pointer-events-none"
+					aria-hidden="true"
 				/>
-				
+
 				{/* ═══ PARTÍCULAS DECORATIVAS ═══ */}
-				<span className="absolute top-4 left-6 w-2 h-2 rounded-full bg-primary/20 animate-pulse" aria-hidden="true" />
-				<span className="absolute top-8 right-8 w-1.5 h-1.5 rounded-full bg-purple-500/20 animate-pulse delay-150" aria-hidden="true" />
-				<span className="absolute bottom-6 left-10 w-1 h-1 rounded-full bg-emerald-500/20 animate-pulse delay-300" aria-hidden="true" />
-				<span className="absolute bottom-4 right-6 w-2.5 h-2.5 rounded-full bg-primary/15 animate-pulse delay-500" aria-hidden="true" />
+				<span
+					className="absolute top-4 left-6 w-2 h-2 rounded-full bg-primary/20 animate-pulse"
+					aria-hidden="true"
+				/>
+				<span
+					className="absolute top-8 right-8 w-1.5 h-1.5 rounded-full bg-purple-500/20 animate-pulse delay-150"
+					aria-hidden="true"
+				/>
+				<span
+					className="absolute bottom-6 left-10 w-1 h-1 rounded-full bg-emerald-500/20 animate-pulse delay-300"
+					aria-hidden="true"
+				/>
+				<span
+					className="absolute bottom-4 right-6 w-2.5 h-2.5 rounded-full bg-primary/15 animate-pulse delay-500"
+					aria-hidden="true"
+				/>
 
 				{/* ═══ ENCABEZADO ═══ */}
 				<div className="relative space-y-2 sm:space-y-4">
@@ -187,8 +197,11 @@ export default function IngresoPage() {
 							{t("ingreso.step")}
 						</p>
 					</div>
-					
-					<h1 className="text-xl sm:text-2xl md:text-4xl font-semibold text-foreground">
+
+					<h1
+						id="ingreso-title"
+						className="text-xl sm:text-2xl md:text-4xl font-semibold text-foreground"
+					>
 						{t("ingreso.title")}
 					</h1>
 					<p className="text-sm sm:text-base text-foreground/70">
@@ -201,6 +214,7 @@ export default function IngresoPage() {
 					{/* Input con estilo premium */}
 					<div className="relative group">
 						<input
+							id="cedula"
 							type="text"
 							inputMode="text"
 							value={cedula}
@@ -245,26 +259,40 @@ export default function IngresoPage() {
 							aria-label={t("ingreso.placeholder")}
 							autoComplete="off"
 							autoCapitalize="characters"
+							aria-describedby="ingreso-hint ingreso-feedback"
+							aria-invalid={Boolean(errorMessage)}
 						/>
 						{/* Efecto glow al focus */}
-						<div 
+						<div
 							className="absolute inset-0 rounded-xl sm:rounded-2xl md:rounded-[2.5rem] opacity-0 group-focus-within:opacity-100 transition-opacity duration-500 pointer-events-none"
 							style={{
-								background: "radial-gradient(ellipse at center, rgba(46,204,113,0.1) 0%, transparent 70%)"
+								background:
+									"radial-gradient(ellipse at center, rgba(46,204,113,0.1) 0%, transparent 70%)",
 							}}
-							aria-hidden="true" 
+							aria-hidden="true"
 						/>
 					</div>
-					
-					<p className="mt-2 sm:mt-3 text-xs sm:text-sm text-foreground/60 flex items-center justify-center gap-1.5">
+
+					<p
+						id="ingreso-hint"
+						className="mt-2 flex items-center justify-center gap-1.5 text-xs text-foreground/60 sm:mt-3 sm:text-sm"
+					>
 						<Sparkles className="w-3 h-3 text-primary/60" />
 						{t("ingreso.hint", { min: MIN_DIGITS })}
 					</p>
 				</div>
 
+				<output id="ingreso-feedback" className="sr-only" aria-live="polite">
+					{errorMessage ?? (isChecking ? t("ingreso.verifying") : "")}
+				</output>
+
 				{/* ═══ MENSAJE DE ERROR ═══ */}
 				{errorMessage && (
-					<div className="w-full max-w-3xl rounded-xl sm:rounded-2xl md:rounded-3xl border-2 border-red-500/30 bg-gradient-to-r from-red-500/10 via-red-500/5 to-red-500/10 px-4 sm:px-6 py-3 sm:py-4 text-sm sm:text-base md:text-lg text-red-500 dark:text-red-300 animate-shake">
+					<div
+						role="alert"
+						aria-live="assertive"
+						className="w-full max-w-3xl animate-shake rounded-xl border-2 border-red-500/30 bg-gradient-to-r from-red-500/10 via-red-500/5 to-red-500/10 px-4 py-3 text-sm text-red-500 dark:text-red-300 sm:rounded-2xl sm:px-6 sm:py-4 sm:text-base md:rounded-3xl md:text-lg"
+					>
 						{errorMessage}
 					</div>
 				)}
@@ -282,12 +310,15 @@ export default function IngresoPage() {
 
 				{/* ═══ INDICADOR DE CARGA ═══ */}
 				{isChecking && (
-					<div className="flex items-center gap-3 text-lg text-foreground/80 px-6 py-3 rounded-full bg-primary/10 border border-primary/20">
+					<output
+						aria-live="polite"
+						className="flex items-center gap-3 rounded-full border border-primary/20 bg-primary/10 px-6 py-3 text-lg text-foreground/80"
+					>
 						<Loader2 className="h-5 w-5 animate-spin text-primary" />
 						<span>{t("ingreso.verifying")}</span>
-					</div>
+					</output>
 				)}
 			</form>
-		</section>
+		</main>
 	);
 }

@@ -22,53 +22,18 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/admin/Card";
-import { CacheWarningBanner, useNetworkStatus } from "@/components/admin/NetworkStatus";
+import {
+	CacheWarningBanner,
+	useNetworkStatus,
+} from "@/components/admin/NetworkStatus";
 import { adminGet } from "@/lib/adminApi";
+import { createLogger } from "@/lib/logger";
 import { cn } from "@/lib/utils";
+import type { StatsData, StatsPeriod } from "@/types/api";
 
-type Period = "today" | "week" | "month" | "year" | "all";
+const logger = createLogger("AdminStatsPage");
 
-interface KPI {
-	value: number;
-	change?: number;
-	previousValue?: number;
-	label?: string;
-}
-
-interface StatsData {
-	period: Period;
-	dateRange: {
-		start: string;
-		end: string;
-	};
-	kpis: {
-		consents: KPI;
-		users: KPI;
-		minors: KPI;
-		uniqueMinors: KPI;
-		activeConsents: KPI;
-		expiredConsents: KPI;
-	};
-	totals: {
-		users: number;
-		consents: number;
-		minors: number;
-	};
-	chartData: Array<{
-		date: string;
-		consents: number;
-		users: number;
-		minors: number;
-	}>;
-	topDays: Array<{
-		date: string;
-		count: number;
-	}>;
-	averages: {
-		consentsPerDay: number;
-		minorsPerConsent: number;
-	};
-}
+type Period = StatsPeriod;
 
 const periodLabels: Record<Period, string> = {
 	today: "Hoy",
@@ -132,8 +97,8 @@ function ChartSkeleton() {
 			</CardHeader>
 			<CardContent>
 				<div className="space-y-3">
-						{SKELETON_WIDTHS.map((width) => (
-							<div key={`skeleton-${width}`} className="space-y-1">
+					{SKELETON_WIDTHS.map((width) => (
+						<div key={`skeleton-${width}`} className="space-y-1">
 							<div className="flex justify-between">
 								<div className="h-3 w-12 bg-surface-muted rounded animate-pulse" />
 								<div className="h-3 w-16 bg-surface-muted rounded animate-pulse" />
@@ -179,19 +144,27 @@ export default function EstadisticasPage() {
 
 			try {
 				setIsLoading(true);
+				const params = new URLSearchParams({ period });
+				if (forceFresh) {
+					params.set("recompute", "true");
+				}
 				const result = await adminGet<StatsData>(
-					`/api/admin/stats/detailed?period=${period}`,
+					`/api/admin/stats/detailed?${params.toString()}`,
 				);
 
 				// Guardar en caché
 				statsCache.set(period, { data: result, timestamp: Date.now() });
 
 				setData(result);
-				setLastUpdate(new Date());
+				setLastUpdate(
+					result.freshness?.computedAt
+						? new Date(result.freshness.computedAt)
+						: new Date(),
+				);
 			} catch (error) {
 				// Ignorar errores de abort
 				if (error instanceof Error && error.name === "AbortError") return;
-				console.error("Error fetching stats:", error);
+				logger.error("Error fetching stats", error);
 			} finally {
 				setIsLoading(false);
 			}
@@ -243,6 +216,7 @@ export default function EstadisticasPage() {
 						size="sm"
 						onClick={() => fetchStats(true)}
 						disabled={isLoading}
+						aria-label="Actualizar estadísticas"
 					>
 						<RefreshCw className={cn("w-4 h-4", isLoading && "animate-spin")} />
 					</Button>
@@ -258,6 +232,7 @@ export default function EstadisticasPage() {
 						size="sm"
 						onClick={() => setPeriod(p)}
 						disabled={isLoading}
+						aria-pressed={period === p}
 					>
 						{periodLabels[p]}
 					</Button>
@@ -316,7 +291,10 @@ export default function EstadisticasPage() {
 								<CardContent>
 									<div className="space-y-4">
 										{["x", "y", "z"].map((id) => (
-											<div key={`skel-totals-${id}`} className="flex justify-between">
+											<div
+												key={`skel-totals-${id}`}
+												className="flex justify-between"
+											>
 												<div className="h-4 w-24 bg-surface-muted rounded animate-pulse" />
 												<div className="h-5 w-12 bg-surface-muted rounded animate-pulse" />
 											</div>
@@ -419,14 +397,14 @@ export default function EstadisticasPage() {
 							</CardContent>
 						</Card>
 
-{/* Participantes */}
-							<Card className="relative overflow-hidden">
-								<div className="absolute top-0 right-0 w-16 h-16 sm:w-24 sm:h-24 bg-amber-500/5 rounded-full -mr-6 -mt-6 sm:-mr-8 sm:-mt-8" />
-								<CardContent className="pt-4 sm:pt-6">
-									<div className="flex items-start justify-between gap-2">
-										<div className="min-w-0 flex-1">
-											<p className="text-xs sm:text-sm text-foreground/60 font-medium">
-												Participantes
+						{/* Participantes */}
+						<Card className="relative overflow-hidden">
+							<div className="absolute top-0 right-0 w-16 h-16 sm:w-24 sm:h-24 bg-amber-500/5 rounded-full -mr-6 -mt-6 sm:-mr-8 sm:-mt-8" />
+							<CardContent className="pt-4 sm:pt-6">
+								<div className="flex items-start justify-between gap-2">
+									<div className="min-w-0 flex-1">
+										<p className="text-xs sm:text-sm text-foreground/60 font-medium">
+											Participantes
 										</p>
 										<p className="text-2xl sm:text-3xl font-bold text-foreground mt-1">
 											{data.kpis.minors.value.toLocaleString()}
@@ -472,7 +450,9 @@ export default function EstadisticasPage() {
 								<p className="text-lg sm:text-2xl font-bold text-foreground">
 									{data.kpis.activeConsents.value}
 								</p>
-								<p className="text-[10px] sm:text-xs text-foreground/60">Vigentes</p>
+								<p className="text-[10px] sm:text-xs text-foreground/60">
+									Vigentes
+								</p>
 							</CardContent>
 						</Card>
 						<Card>
@@ -481,7 +461,9 @@ export default function EstadisticasPage() {
 								<p className="text-lg sm:text-2xl font-bold text-foreground">
 									{data.kpis.expiredConsents.value}
 								</p>
-								<p className="text-[10px] sm:text-xs text-foreground/60">Vencidos</p>
+								<p className="text-[10px] sm:text-xs text-foreground/60">
+									Vencidos
+								</p>
 							</CardContent>
 						</Card>
 						<Card>
@@ -490,7 +472,9 @@ export default function EstadisticasPage() {
 								<p className="text-lg sm:text-2xl font-bold text-foreground">
 									{data.averages.consentsPerDay}
 								</p>
-								<p className="text-[10px] sm:text-xs text-foreground/60">Prom/día</p>
+								<p className="text-[10px] sm:text-xs text-foreground/60">
+									Prom/día
+								</p>
 							</CardContent>
 						</Card>
 						<Card>
@@ -499,7 +483,9 @@ export default function EstadisticasPage() {
 								<p className="text-lg sm:text-2xl font-bold text-foreground">
 									{data.averages.minorsPerConsent}
 								</p>
-								<p className="text-[10px] sm:text-xs text-foreground/60">Ac./cons.</p>
+								<p className="text-[10px] sm:text-xs text-foreground/60">
+									Ac./cons.
+								</p>
 							</CardContent>
 						</Card>
 					</div>
@@ -521,7 +507,9 @@ export default function EstadisticasPage() {
 										<div className="flex items-center gap-1">
 											<div className="w-2 h-2 sm:w-3 sm:h-3 rounded bg-primary" />
 											<span className="text-foreground/60">
-												<span className="hidden sm:inline">Consentimientos</span>
+												<span className="hidden sm:inline">
+													Consentimientos
+												</span>
 												<span className="sm:hidden">Cons.</span>
 											</span>
 										</div>

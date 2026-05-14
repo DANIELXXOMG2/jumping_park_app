@@ -1,23 +1,6 @@
 import { z } from "zod";
 import { getTranslation, type Language } from "@/lib/i18n/dictionary";
-
-// ============================================================================
-// REGEX PARA VALIDACIONES INTERNACIONALES
-// ============================================================================
-
-/**
- * Regex para validar nombres con soporte UTF-8 completo.
- * Permite: letras (incluyendo tildes, ñ, ü, caracteres internacionales), espacios, apóstrofes y guiones.
- * Ejemplos válidos: "María José", "O'Brien", "Jean-Pierre", "Müller", "José Ñoño"
- */
-const UTF8_NAME_REGEX = /^[\p{L}\p{M}'\-\s]+$/u;
-
-/**
- * Regex para validar documentos alfanuméricos (soporta pasaportes).
- * Permite: letras mayúsculas/minúsculas y números.
- * Ejemplos válidos: "AB123456", "12345678", "PA1234567"
- */
-const ALPHANUMERIC_DOC_REGEX = /^[a-zA-Z0-9]+$/;
+import { ALPHANUMERIC_DOC_REGEX, UTF8_NAME_REGEX } from "./shared.regex";
 
 // ============================================================================
 // VALIDACIÓN DE FECHA DE NACIMIENTO
@@ -59,9 +42,14 @@ export const birthDateSchema = z
 	)
 	.refine(
 		(dateStr) => {
-			// Validar que la fecha sea válida (ej. no 2024-02-30)
+			// Rechaza fechas normalizadas por JS (ej. 2024-02-30 → 2024-03-01)
 			const date = new Date(dateStr);
-			return !Number.isNaN(date.getTime());
+			const [year, month, day] = dateStr.split("-").map(Number);
+			return (
+				date.getUTCFullYear() === year &&
+				date.getUTCMonth() + 1 === month &&
+				date.getUTCDate() === day
+			);
 		},
 		{ message: "La fecha ingresada no es válida" },
 	);
@@ -75,9 +63,7 @@ export const birthDateSchema = z
  * Acepta cualquier string (ej: "Sura", "Sanitas", "No tengo", etc.)
  * Compatible con datos legacy en Firebase que usan strings simples.
  */
-export const epsSchema = z
-	.string()
-	.min(3, "Ingresa el nombre de tu EPS");
+export const epsSchema = z.string().min(3, "Ingresa el nombre de tu EPS");
 
 // ============================================================================
 // SCHEMA DE MENOR
@@ -127,7 +113,9 @@ export function getConsentSchema(language: Language = "es") {
 			message: getTranslation("validation.consent.acceptRequired", language),
 		}),
 		minors: z.array(minorSchema),
-		signature: z.string().min(1, getTranslation("validation.consent.signatureRequired", language)),
+		signature: z
+			.string()
+			.min(1, getTranslation("validation.consent.signatureRequired", language)),
 	});
 }
 
@@ -136,11 +124,28 @@ export const consentSchema = getConsentSchema("es");
 
 export const consentSubmissionSchema = consentSchema.extend({
 	responsibleAdult: z.object({
-		fullName: z.string(),
-		documentId: z.string(), // This corresponds to uid in UserProfile
+		fullName: z
+			.string()
+			.min(3, "El nombre debe tener al menos 3 caracteres")
+			.regex(
+				UTF8_NAME_REGEX,
+				"Solo letras (incluyendo tildes y ñ), espacios, apóstrofes y guiones",
+			),
+		documentId: z
+			.string()
+			.min(5, "El documento debe tener al menos 5 caracteres")
+			.max(20, "Máximo 20 caracteres")
+			.regex(ALPHANUMERIC_DOC_REGEX, "Solo letras y números"),
 		email: z.string().email(),
 		phone: z.string(),
 	}),
+	offlineSync: z
+		.object({
+			dedupeKey: z.string().min(1),
+			policyVersion: z.string().min(1),
+			signedAtLocal: z.string().datetime(),
+		})
+		.optional(),
 });
 
 export type Minor = z.infer<typeof minorSchema>;
