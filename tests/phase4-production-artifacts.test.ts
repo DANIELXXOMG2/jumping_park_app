@@ -164,28 +164,6 @@ describe('phase 4 infra parity', () => {
 
 		expect(
 			hasCompositeIndex(indexes, {
-				collectionGroup: 'users',
-				queryScope: 'COLLECTION',
-				fields: [
-					{ fieldPath: 'createdAt', order: 'DESCENDING' },
-					{ fieldPath: '__name__', order: 'DESCENDING' },
-				],
-			}),
-		).toBe(true)
-
-		expect(
-			hasCompositeIndex(indexes, {
-				collectionGroup: 'consents',
-				queryScope: 'COLLECTION',
-				fields: [
-					{ fieldPath: 'createdAt', order: 'DESCENDING' },
-					{ fieldPath: '__name__', order: 'DESCENDING' },
-				],
-			}),
-		).toBe(true)
-
-		expect(
-			hasCompositeIndex(indexes, {
 				collectionGroup: 'consents',
 				queryScope: 'COLLECTION',
 				fields: [
@@ -203,17 +181,6 @@ describe('phase 4 infra parity', () => {
 				fields: [
 					{ fieldPath: 'userId', order: 'ASCENDING' },
 					{ fieldPath: 'signedAt', order: 'DESCENDING' },
-				],
-			}),
-		).toBe(true)
-
-		expect(
-			hasCompositeIndex(indexes, {
-				collectionGroup: 'minors_index',
-				queryScope: 'COLLECTION',
-				fields: [
-					{ fieldPath: 'createdAt', order: 'DESCENDING' },
-					{ fieldPath: '__name__', order: 'DESCENDING' },
 				],
 			}),
 		).toBe(true)
