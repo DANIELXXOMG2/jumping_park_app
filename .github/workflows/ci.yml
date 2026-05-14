@@ -59,9 +59,7 @@ jobs:
           echo "FIREBASE_PROJECT_ID=ci-placeholder" >> "$GITHUB_ENV"
           echo "FIREBASE_CLIENT_EMAIL=ci@example.com" >> "$GITHUB_ENV"
           echo "FIREBASE_STORAGE_BUCKET=ci-placeholder.appspot.com" >> "$GITHUB_ENV"
-          echo "FIREBASE_PRIVATE_KEY<<EOF" >> "$GITHUB_ENV"
-          openssl genrsa 2048 >> "$GITHUB_ENV"
-          echo "EOF" >> "$GITHUB_ENV"
+          node -e "const { generateKeyPairSync } = require('node:crypto'); const { privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 }); const fs = require('node:fs'); fs.appendFileSync(process.env.GITHUB_ENV, 'FIREBASE_PRIVATE_KEY<<EOF\n' + privateKey.export({ type: 'pkcs8', format: 'pem' }) + '\nEOF\n');"
 
       - name: Run static quality checks
         run: bun run check
@@ -158,9 +156,7 @@ jobs:
           echo "FIREBASE_PROJECT_ID=ci-placeholder" >> "$GITHUB_ENV"
           echo "FIREBASE_CLIENT_EMAIL=ci@example.com" >> "$GITHUB_ENV"
           echo "FIREBASE_STORAGE_BUCKET=ci-placeholder.appspot.com" >> "$GITHUB_ENV"
-          echo "FIREBASE_PRIVATE_KEY<<EOF" >> "$GITHUB_ENV"
-          openssl genrsa 2048 >> "$GITHUB_ENV"
-          echo "EOF" >> "$GITHUB_ENV"
+          node -e "const { generateKeyPairSync } = require('node:crypto'); const { privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 }); const fs = require('node:fs'); fs.appendFileSync(process.env.GITHUB_ENV, 'FIREBASE_PRIVATE_KEY<<EOF\n' + privateKey.export({ type: 'pkcs8', format: 'pem' }) + '\nEOF\n');"
 
       - name: Verify production build
         run: bun run build
