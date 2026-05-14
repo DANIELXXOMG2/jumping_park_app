@@ -31,6 +31,7 @@ jobs:
       OFFLINE_QUEUE_ENABLED: "false"
       NEXT_PUBLIC_OFFLINE_QUEUE_ENABLED: "false"
       CSP_REPORT_ONLY_ENABLED: "false"
+      ALLOW_ADMIN_SETUP: "false"
       NEXT_PUBLIC_FIREBASE_API_KEY: ci-placeholder
       NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ci-placeholder.firebaseapp.com
       NEXT_PUBLIC_FIREBASE_PROJECT_ID: ci-placeholder
@@ -56,16 +57,9 @@ jobs:
           echo "ADMIN_JWT_SECRET=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
           echo "ADMIN_SECRET_KEY=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
           echo "RESEND_API_KEY=re_ci_placeholder" >> "$GITHUB_ENV"
-          echo "FIREBASE_PROJECT_ID=ci-placeholder" >> "$GITHUB_ENV"
-          echo "FIREBASE_CLIENT_EMAIL=ci@example.com" >> "$GITHUB_ENV"
-          echo "FIREBASE_STORAGE_BUCKET=ci-placeholder.appspot.com" >> "$GITHUB_ENV"
-          node -e "const { generateKeyPairSync } = require('node:crypto'); const { privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 }); const fs = require('node:fs'); fs.appendFileSync(process.env.GITHUB_ENV, 'FIREBASE_PRIVATE_KEY<<EOF\n' + privateKey.export({ type: 'pkcs8', format: 'pem' }) + '\nEOF\n');"
 
       - name: Run static quality checks
         run: bun run check
-
-      - name: Run production-readiness artifact parity proof
-        run: bun test tests/phase4-production-artifacts.test.ts
 
       - name: Run tests
         run: bun test
@@ -128,6 +122,8 @@ jobs:
       ADMIN_IDLE_TIMEOUT_MINUTES: "30"
       OTP_LOCKOUT_MINUTES: "15"
       ALLOW_ADMIN_SETUP: "false"
+      OTP_HARDENING_ENABLED: "true"
+      EXPORT_BOUNDS_ENFORCED: "true"
       PUBLIC_SEO_ENABLED: "true"
       CURSOR_PAGINATION_ENABLED: "false"
       ADMIN_AGGREGATES_ENABLED: "false"
@@ -156,7 +152,7 @@ jobs:
           echo "FIREBASE_PROJECT_ID=ci-placeholder" >> "$GITHUB_ENV"
           echo "FIREBASE_CLIENT_EMAIL=ci@example.com" >> "$GITHUB_ENV"
           echo "FIREBASE_STORAGE_BUCKET=ci-placeholder.appspot.com" >> "$GITHUB_ENV"
-          node -e "const { generateKeyPairSync } = require('node:crypto'); const { privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 }); const fs = require('node:fs'); fs.appendFileSync(process.env.GITHUB_ENV, 'FIREBASE_PRIVATE_KEY<<EOF\n' + privateKey.export({ type: 'pkcs8', format: 'pem' }) + '\nEOF\n');"
+          bun -e "const { generateKeyPairSync } = require('node:crypto'); const { privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 }); const fs = require('node:fs'); fs.appendFileSync(process.env.GITHUB_ENV, 'FIREBASE_PRIVATE_KEY<<EOF\n' + privateKey.export({ type: 'pkcs8', format: 'pem' }) + '\nEOF\n');"
 
       - name: Verify production build
         run: bun run build
