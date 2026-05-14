@@ -13,6 +13,13 @@ function timestampLike(value: string) {
 	}
 }
 
+function isoDaysAgo(daysAgo: number, hour = 12) {
+	const date = new Date()
+	date.setUTCHours(hour, 0, 0, 0)
+	date.setUTCDate(date.getUTCDate() - daysAgo)
+	return date.toISOString()
+}
+
 function createQuerySnapshot(
 	docs: Array<{
 		id: string
@@ -37,13 +44,17 @@ function createQuerySnapshot(
 }
 
 function createAdminMetricsDbFixture() {
+	const validUserCreatedAt = isoDaysAgo(3)
+	const validConsentCreatedAt = isoDaysAgo(2)
+	const validConsentExpiresAt = isoDaysAgo(-30)
+
 	const sets: Array<{ collection: string; id: string; data: Record<string, unknown> }> = []
 	const deletes: Array<{ collection: string; id: string }> = []
 	const collectionState = new Map<string, Array<{ id: string; data?: Record<string, unknown> }>>([
 		[
 			'users',
 			[
-				{ id: 'user-valid', data: { createdAt: timestampLike('2026-04-25T12:00:00.000Z') } },
+				{ id: 'user-valid', data: { createdAt: timestampLike(validUserCreatedAt) } },
 				{ id: 'user-missing', data: {} },
 				{ id: 'user-null', data: { createdAt: null } },
 			],
@@ -54,10 +65,10 @@ function createAdminMetricsDbFixture() {
 				{
 					id: 'consent-valid-fallback',
 					data: {
-						createdAt: timestampLike('2026-04-26T12:00:00.000Z'),
+						createdAt: timestampLike(validConsentCreatedAt),
 						signedAt: null,
 						minorsSnapshot: [{ idNumber: 'minor-1' }],
-						validUntil: timestampLike('2099-04-26T12:00:00.000Z'),
+						validUntil: timestampLike(validConsentExpiresAt),
 						adultSnapshot: { fullName: 'Ada' },
 						consecutivo: 1,
 					},
