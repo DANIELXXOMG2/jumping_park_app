@@ -1,0 +1,77 @@
+name: Lighthouse CI
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lighthouse-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lighthouse:
+    name: Lighthouse CI audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_PUBLIC_FIREBASE_API_KEY: ci-placeholder
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ci-placeholder.firebaseapp.com
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: ci-placeholder
+      NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ci-placeholder.appspot.com
+      NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "000000000000"
+      NEXT_PUBLIC_FIREBASE_APP_ID: "1:000000000000:web:ci"
+      ADMIN_SESSION_MODE: dual
+      ADMIN_IDLE_TIMEOUT_MINUTES: "30"
+      OTP_LOCKOUT_MINUTES: "15"
+      ALLOW_ADMIN_SETUP: "false"
+      OTP_HARDENING_ENABLED: "true"
+      EXPORT_BOUNDS_ENFORCED: "true"
+      PUBLIC_SEO_ENABLED: "true"
+      CURSOR_PAGINATION_ENABLED: "false"
+      ADMIN_AGGREGATES_ENABLED: "false"
+      OFFLINE_QUEUE_ENABLED: "false"
+      NEXT_PUBLIC_OFFLINE_QUEUE_ENABLED: "false"
+      CSP_REPORT_ONLY_ENABLED: "false"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Prepare Lighthouse CI secrets and Firebase placeholders
+        shell: bash
+        run: |
+          echo "ADMIN_JWT_SECRET=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "ADMIN_SECRET_KEY=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "RESEND_API_KEY=re_ci_placeholder" >> "$GITHUB_ENV"
+          echo "FIREBASE_PROJECT_ID=ci-placeholder" >> "$GITHUB_ENV"
+          echo "FIREBASE_CLIENT_EMAIL=ci@example.com" >> "$GITHUB_ENV"
+          echo "FIREBASE_STORAGE_BUCKET=ci-placeholder.appspot.com" >> "$GITHUB_ENV"
+          bun -e "const { generateKeyPairSync } = require('node:crypto'); const { privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 }); const { appendFileSync } = require('node:fs'); appendFileSync(process.env.GITHUB_ENV, 'FIREBASE_PRIVATE_KEY<<EOF\n' + privateKey.export({ type: 'pkcs8', format: 'pem' }) + '\nEOF\n');"
+
+      - name: Build app for Lighthouse
+        run: bun run build
+
+      - name: Run Lighthouse CI
+        run: bun x lhci autorun --config=./lighthouserc.json
+
+      - name: Upload Lighthouse reports artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-reports
+          path: .lighthouseci
+          if-no-files-found: ignore
