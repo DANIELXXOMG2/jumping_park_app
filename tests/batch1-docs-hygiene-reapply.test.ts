@@ -9,7 +9,6 @@ const hasSourceRoot = existsSync(sourceRoot)
 
 const exactMatchFiles = [
 	'.gitignore',
-	'ENV_AUDIT_AND_RECOMMENDATIONS.md',
 	'docs/portfolio/README.md',
 	'docs/portfolio/artifact-manifest.template.md',
 	'docs/portfolio/branding/logo-usage.md',
