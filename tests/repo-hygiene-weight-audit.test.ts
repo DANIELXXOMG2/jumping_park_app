@@ -60,7 +60,7 @@ describe('repo hygiene and weight audit slice', () => {
 		).toBe(true)
 		expect(
 			existsSync(
-				join(repoRoot, 'diagramas', 'Diagrama-de-Entidad-Relacion.svg'),
+				join(repoRoot, 'diagramas', 'Diagrama-Secuencia.mmd'),
 			),
 		).toBe(true)
 		expect(
@@ -69,6 +69,16 @@ describe('repo hygiene and weight audit slice', () => {
 			),
 		).toBe(true)
 
+		expect(
+			existsSync(
+				join(repoRoot, 'diagramas', 'Diagrama-de-Entidad-Relacion.svg'),
+			),
+		).toBe(false)
+		expect(
+			existsSync(
+				join(repoRoot, 'diagramas', 'Diagrama-Secuencia.svg'),
+			),
+		).toBe(false)
 		expect(
 			existsSync(
 				join(repoRoot, 'diagramas', 'Diagrama-de-Entidad-Relación.mmd'),

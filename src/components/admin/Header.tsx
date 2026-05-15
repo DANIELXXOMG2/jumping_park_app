@@ -41,7 +41,7 @@ export function Header() {
 				{/* Logo (visible en mobile, en desktop se muestra en el Sidebar) */}
 				<div className="lg:hidden">
 					<Image
-						src="/assets/jumping-park-logo.png"
+						src="/assets/jumping-park-logo-optimized.png"
 						alt="Jumping Park"
 						width={100}
 						height={30}

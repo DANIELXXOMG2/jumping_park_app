@@ -64,7 +64,7 @@ export default function AdminLoginPage() {
 				<div className="text-center mb-8">
 					<div className="flex justify-center mb-4">
 						<Image
-							src="/assets/jumping-park-logo.png"
+							src="/assets/jumping-park-logo-optimized.png"
 							alt="Jumping Park"
 							width={280}
 							height={80}

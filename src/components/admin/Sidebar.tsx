@@ -92,7 +92,7 @@ export function Sidebar() {
 				<div className="flex items-center h-16 px-3 border-b border-border">
 					<div className="flex-1 flex justify-center">
 						<Image
-							src="/assets/jumping-park-logo.png"
+							src="/assets/jumping-park-logo-optimized.png"
 							alt="Jumping Park"
 							width={collapsed ? 40 : 160}
 							height={collapsed ? 40 : 45}

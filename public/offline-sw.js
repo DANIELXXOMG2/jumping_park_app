@@ -6,7 +6,7 @@ const STATIC_ASSETS = [
 	'/icon-192.png',
 	'/icon-512.png',
 	'/assets/jumping-park-logo.webp',
-	'/assets/jumping-park-logo.png',
+	'/assets/jumping-park-logo-optimized.png',
 ]
 
 self.addEventListener('install', (event) => {
