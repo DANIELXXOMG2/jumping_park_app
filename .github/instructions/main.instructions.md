@@ -21,7 +21,7 @@
 
 ## Directory Relevance / Ignore Rules
 - Source-of-truth app code lives in `src/`, `public/`, `tests/`, and root runtime config files such as `package.json`, `next.config.ts`, `firebase.json`, and `tsconfig.json`.
-- Infra and tooling folders such as `.github/`, `.claude/`, `.atl/`, `openspec/`, and root editor/tool configs should not be modified unless the task explicitly changes workflow, automation, planning artifacts, or agent guidance.
+- Infra and tooling folders such as `.github/`, `.claude/`, `.atl/`, and root editor/tool configs should not be modified unless the task explicitly changes workflow, automation, planning artifacts, or agent guidance.
 - `diagramas/` is reference material for architecture and flow documentation; update it only when the underlying system design or operational flow materially changes.
 - `postman/` is contract/support material for API operations; update it when request/response contracts, auth flows, or operational collections change in a way operators need to replay.
 - Ignore generated or local-only folders such as `.next/`, `node_modules/`, `.playwright-mcp/`, and similar workspace artifacts unless the task is specifically about local tooling.

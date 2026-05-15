@@ -39,8 +39,8 @@ bun run audit:circ
 
 ## SDD expectations
 
-- Proposal/spec/design/tasks live under `openspec/changes/<change-name>/`.
-- `sdd-apply` work must update the relevant artifact progress file, for example `apply-progress.md`.
+- Proposal/spec/design/tasks should be persisted in Engram under `sdd/<change-name>/...` unless a task explicitly says to use repo-backed artifacts.
+- `sdd-apply` work must update the relevant Engram progress artifact, for example `sdd/<change-name>/apply-progress`.
 - Preserve task history: mark new completion state or append notes, do not rewrite prior evidence.
 - If rollout flags, security posture, or ops behavior change, update `README.md` and the affected runbook in `docs/runbooks/`.
 
@@ -50,4 +50,4 @@ bun run audit:circ
 - Flags/defaults are documented.
 - Verification evidence is included.
 - Rollback path is still obvious.
-- OpenSpec artifacts reflect the current state.
+- SDD artifacts and verification evidence reflect the current state.

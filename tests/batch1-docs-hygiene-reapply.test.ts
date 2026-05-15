@@ -31,12 +31,11 @@ const requiredCompanionFiles = [
 	'docs/runbooks/seo-ai-seo-validation-checklist.md',
 ] as const
 
-const docsThatMustAvoidRoadmapArchiveRefs = [
+const docsThatMustAvoidOpenSpecRefs = [
 	'docs/portfolio/diagrams/README.md',
 ] as const
 
-const roadmapArchiveBase =
-	'openspec/changes/archive/2026-04-07-comprehensive-product-audit-and-roadmap/'
+const staleOpenSpecReference = 'openspec/'
 
 const rootReadmeRequiredFileClaims = [
 	{
@@ -163,20 +162,17 @@ function readPackageScripts(): Record<string, string> {
 		expect(diagramGuide.includes('## Suggested source of truth')).toBe(true)
 	})
 
-	it('keeps archive references truthful for the integrated clean clone', () => {
+	it('removes stale openspec references from the integrated clean clone docs', () => {
 		const rootReadme = readFileSync(join(cleanRoot, 'README.md'), 'utf8')
-		const docsWithArchiveReferences = docsThatMustAvoidRoadmapArchiveRefs.filter(
+		const docsWithOpenSpecReferences = docsThatMustAvoidOpenSpecRefs.filter(
 			(relativePath) =>
 				readFileSync(join(cleanRoot, relativePath), 'utf8').includes(
-					roadmapArchiveBase,
+					staleOpenSpecReference,
 				),
 		)
 
-		expect(rootReadme.includes(roadmapArchiveBase)).toBe(true)
-		expect(existsSync(join(cleanRoot, `${roadmapArchiveBase}proposal.md`))).toBe(true)
-		expect(existsSync(join(cleanRoot, `${roadmapArchiveBase}design.md`))).toBe(true)
-		expect(existsSync(join(cleanRoot, `${roadmapArchiveBase}tasks.md`))).toBe(true)
-		expect(docsWithArchiveReferences).toEqual([])
+		expect(rootReadme.includes(staleOpenSpecReference)).toBe(false)
+		expect(docsWithOpenSpecReferences).toEqual([])
 	})
 
 	it('proves the current README contract against reapplied batch 2-4 artifacts', () => {

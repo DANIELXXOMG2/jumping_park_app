@@ -132,11 +132,7 @@ Phase 5 focused checks:
 - `diagramas/README.md` - current editable architecture diagrams and usage notes.
 - `docs/MANUAL_USUARIO.md`, `docs/MANUAL_INSTALACION.md`, `docs/INFORME_TECNICO_SPRINT_3.md`, `docs/ESTRUCTURA_PROYECTO.md` - historical snapshots kept for context only; use the current docs above as source of truth.
 
-Archived decision records and roadmap artifacts:
-
-- `openspec/changes/archive/2026-04-07-comprehensive-product-audit-and-roadmap/proposal.md`
-- `openspec/changes/archive/2026-04-07-comprehensive-product-audit-and-roadmap/design.md`
-- `openspec/changes/archive/2026-04-07-comprehensive-product-audit-and-roadmap/tasks.md`
+Historical SDD decision records are now Engram-backed instead of living in a repo-tracked planning tree. For this repository, use the `sdd/<change-name>/{proposal,spec,design,tasks,apply-progress,verify-report}` topics as the traceability path when a change needs historical planning evidence.
 
 ## Demo And Portfolio
 

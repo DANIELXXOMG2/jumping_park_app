@@ -200,10 +200,8 @@ Las notas manuales de a11y siguen vivas en runbooks porque la cobertura actual e
 
 Artefactos fuente de verdad para este cambio:
 
-- propuesta: `openspec/changes/archive/2026-04-07-comprehensive-product-audit-and-roadmap/proposal.md`
-- diseno tecnico: `openspec/changes/archive/2026-04-07-comprehensive-product-audit-and-roadmap/design.md`
-- plan de ejecucion: `openspec/changes/archive/2026-04-07-comprehensive-product-audit-and-roadmap/tasks.md`
-- progreso apply: `openspec/changes/archive/2026-04-07-comprehensive-product-audit-and-roadmap/apply-progress.md`
+- trazabilidad SDD en Engram bajo `sdd/repo-hygiene-and-weight-audit/{proposal,spec,tasks,apply-progress,verify-report}`
+- evidencia operativa complementaria en `README.md` y `docs/runbooks/*`
 
 ADR candidates activos dentro de ese cambio:
 
