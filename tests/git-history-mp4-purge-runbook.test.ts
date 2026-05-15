@@ -33,7 +33,7 @@ describe('git history MP4 purge runbook', () => {
 	it('documents the required dry-run, execution, verification, rollback, and coordination flow', () => {
 		const runbook = readProjectFile('docs/runbooks/git-history-mp4-purge.md')
 
-		expect(runbook).toContain('# Git history MP4 purge runbook')
+		expect(runbook).toContain('# Git history targeted purge runbook')
 		expect(runbook).toContain('## Quick path')
 		expect(runbook).toContain('## Dry-run / precheck')
 		expect(runbook).toContain('## Execution')
@@ -42,6 +42,9 @@ describe('git history MP4 purge runbook', () => {
 		expect(runbook).toContain('## Team coordination')
 		expect(runbook).toContain('public/assets/hero-video.mp4')
 		expect(runbook).toContain('public/assets/hero-opt.mp4')
+		expect(runbook).toContain('package-lock.json')
+		expect(runbook).toContain('diagramas/Diagrama-Secuencia.svg')
+		expect(runbook).toContain('diagramas/Diagrama-de-Entidad-Relacion.svg')
 		expect(runbook).toContain('git filter-repo')
 		expect(runbook).toContain('git count-objects -vH')
 		expect(runbook).toContain('fresh clone')
@@ -54,8 +57,13 @@ describe('git history MP4 purge precheck script', () => {
 		const result = runPrecheck()
 
 		expect(result.status).toBe(0)
+		expect(result.stdout).toContain('Git history targeted purge precheck')
+		expect(result.stdout).toContain('Configured purge candidate paths: 5')
 		expect(result.stdout).toContain('public/assets/hero-video.mp4')
 		expect(result.stdout).toContain('public/assets/hero-opt.mp4')
+		expect(result.stdout).toContain('package-lock.json')
+		expect(result.stdout).toContain('diagramas/Diagrama-Secuencia.svg')
+		expect(result.stdout).toContain('diagramas/Diagrama-de-Entidad-Relacion.svg')
 		expect(result.stdout).toContain('size-pack:')
 		expect(result.stdout).toContain('No history rewrite was executed.')
 		expect(result.stdout).toContain('docs/runbooks/git-history-mp4-purge.md')

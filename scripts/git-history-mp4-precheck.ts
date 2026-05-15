@@ -1,14 +1,17 @@
 import { execFileSync } from 'node:child_process'
 
-type HistoricalBlob = {
+type HistoricalCandidateObject = {
 	objectId: string
 	path: string
 	sizeBytes: number
 }
 
-const targetPaths = [
+const purgeCandidatePaths = [
 	'public/assets/hero-video.mp4',
 	'public/assets/hero-opt.mp4',
+	'package-lock.json',
+	'diagramas/Diagrama-Secuencia.svg',
+	'diagramas/Diagrama-de-Entidad-Relacion.svg',
 ] as const
 
 function runGit(args: string[]): string {
@@ -22,12 +25,12 @@ function formatMiB(sizeBytes: number): string {
 	return `${(sizeBytes / (1024 * 1024)).toFixed(2)} MiB`
 }
 
-function readHistoricalBlobs(): HistoricalBlob[] {
+function readHistoricalObjects(): HistoricalCandidateObject[] {
 	const lines = runGit(['rev-list', '--objects', '--all'])
 		.split(/\r?\n/)
 		.filter(Boolean)
 
-	const blobs: HistoricalBlob[] = []
+	const objects: HistoricalCandidateObject[] = []
 
 	for (const line of lines) {
 		const separatorIndex = line.indexOf(' ')
@@ -39,39 +42,52 @@ function readHistoricalBlobs(): HistoricalBlob[] {
 		const objectId = line.slice(0, separatorIndex)
 		const objectPath = line.slice(separatorIndex + 1)
 
-		if (!targetPaths.includes(objectPath as (typeof targetPaths)[number])) {
+		if (
+			!purgeCandidatePaths.includes(
+				objectPath as (typeof purgeCandidatePaths)[number],
+			)
+		) {
 			continue
 		}
 
 		const sizeBytes = Number(runGit(['cat-file', '-s', objectId]))
 
-		blobs.push({
+		objects.push({
 			objectId,
 			path: objectPath,
 			sizeBytes,
 		})
 	}
 
-	return blobs.sort((left, right) => right.sizeBytes - left.sizeBytes)
+	return objects.sort((left, right) => right.sizeBytes - left.sizeBytes)
 }
 
 function main() {
-	const blobs = readHistoricalBlobs()
+	const objects = readHistoricalObjects()
 	const packStats = runGit(['count-objects', '-vH'])
 
-	console.log('Git history MP4 purge precheck')
+	console.log('Git history targeted purge precheck')
 	console.log('================================')
 	console.log(`Repository: ${process.cwd()}`)
-	console.log(`Targets found: ${blobs.length}`)
+	console.log(`Configured purge candidate paths: ${purgeCandidatePaths.length}`)
+	console.log('Configured paths:')
 
-	for (const blob of blobs) {
+	for (const candidatePath of purgeCandidatePaths) {
+		console.log(`- ${candidatePath}`)
+	}
+
+	console.log(`Historical objects found: ${objects.length}`)
+
+	for (const object of objects) {
 		console.log(
-			`- ${blob.path} | ${blob.objectId} | ${blob.sizeBytes} bytes (${formatMiB(blob.sizeBytes)})`,
+			`- ${object.path} | ${object.objectId} | ${object.sizeBytes} bytes (${formatMiB(object.sizeBytes)})`,
 		)
 	}
 
-	if (blobs.length === 0) {
-		console.log('- No tracked historical MP4 blobs matched the configured target paths.')
+	if (objects.length === 0) {
+		console.log(
+			'- No tracked historical objects matched the configured purge candidate paths.',
+		)
 	}
 
 	console.log('')
