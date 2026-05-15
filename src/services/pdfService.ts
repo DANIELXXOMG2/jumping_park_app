@@ -265,7 +265,7 @@ export async function generateConsentPdf(
 			process.cwd(),
 			"public",
 			"assets",
-			"jumping-park-logo.png",
+			"jumping-park-logo-optimized.png",
 		);
 		const logoBytes = await fs.readFile(logoPath);
 		const logoImage = await pdfDoc.embedPng(logoBytes);

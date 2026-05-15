@@ -9,6 +9,10 @@ interface PackageJsonShape {
 const repoRoot = process.cwd()
 const minimumSafeProtobuf = '7.5.6'
 
+function readRepoFile(...pathSegments: string[]): string {
+	return readFileSync(join(repoRoot, ...pathSegments), 'utf8')
+}
+
 function readPackageJson(): PackageJsonShape {
 	return JSON.parse(
 		readFileSync(join(repoRoot, 'package.json'), 'utf8'),
@@ -101,6 +105,34 @@ describe('repo hygiene and weight audit slice', () => {
 		expect(
 			existsSync(join(repoRoot, 'ENV_AUDIT_AND_RECOMMENDATIONS.md')),
 		).toBe(false)
+	})
+
+	it('routes pdf and email logo usage through the optimized png while keeping the source asset', () => {
+		const pdfService = readRepoFile('src', 'services', 'pdfService.ts')
+		const emailStyles = readRepoFile(
+			'src',
+			'components',
+			'emails',
+			'emailStyles.ts',
+		)
+		const optimizeAssetsScript = readRepoFile(
+			'scripts',
+			'optimize-assets.ts',
+		)
+
+		expect(pdfService).toContain('"jumping-park-logo-optimized.png"')
+		expect(emailStyles).toContain('jumping-park-logo-optimized.png')
+		expect(pdfService).not.toContain('"jumping-park-logo.png"')
+		expect(emailStyles).not.toContain('jumping-park-logo.png')
+		expect(optimizeAssetsScript).toContain('jumping-park-logo.png')
+		expect(
+			existsSync(join(repoRoot, 'public', 'assets', 'jumping-park-logo.png')),
+		).toBe(true)
+		expect(
+			existsSync(
+				join(repoRoot, 'public', 'assets', 'jumping-park-logo-optimized.png'),
+			),
+		).toBe(true)
 	})
 
 	it('pins and resolves protobufjs to the safe minimum', () => {

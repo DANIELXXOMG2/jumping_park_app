@@ -43,7 +43,7 @@ export const EMAIL_COLORS = {
 } as const;
 
 export const EMAIL_CONFIG = {
-	logoUrl: "https://www.jumpingpark.lat/assets/jumping-park-logo.png",
+	logoUrl: "https://www.jumpingpark.lat/assets/jumping-park-logo-optimized.png",
 	logoWidth: 140,
 	companyName: "Jumping Park",
 	address: "C.C. Primavera Urbana, Piso 3, Local 314 - Villavicencio, Meta",
