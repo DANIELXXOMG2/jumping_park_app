@@ -1,57 +1,57 @@
 # SEO and AI-SEO validation checklist
 
-Este checklist mezcla tres cosas que TIENEN que convivir: indexabilidad real, claridad para agentes, y una validacion manual minima de accesibilidad de la superficie publica.
+This checklist combines three things that MUST coexist: real indexability, agent clarity, and a minimum manual accessibility validation for the public surface.
 
 ## Preconditions
 
 - `PUBLIC_SEO_ENABLED=true`
-- deploy fresco del ambiente a validar
-- URL real del ambiente disponible
+- Fresh deployment of the environment to validate.
+- Real environment URL available.
 
 ## Search engine checks
 
-- `robots.txt` responde `200` y no expone admin ni rutas privadas del kiosk.
-- `sitemap.xml` lista solo URLs publicas canonicas.
-- `/consentimiento-digital` expone `title`, `description`, canonical y Open Graph coherentes.
-- la pagina publica incluye JSON-LD valido.
-- cuando el flag esta apagado, `robots.txt` vuelve a `Disallow: /` y la ruta publica queda `noindex`.
+- `robots.txt` responds with `200` and does not expose admin or private kiosk routes.
+- `sitemap.xml` lists canonical public URLs only.
+- `/consentimiento-digital` exposes coherent `title`, `description`, canonical, and Open Graph metadata.
+- The public page includes valid JSON-LD.
+- When the flag is disabled, `robots.txt` falls back to `Disallow: /` and the public route becomes `noindex`.
 
 ## AI-SEO checks
 
-- `/llms.txt` responde `text/plain`.
-- el archivo describe el producto, lista URLs publicas y deja claro que admin/kiosk/API son privados.
-- la URL canonica preferida coincide con la del sitemap.
-- la narrativa publica es corta, citable y sin claims inventados.
-- no se publican rutas privadas como si fueran surface marketing.
+- `/llms.txt` responds with `text/plain`.
+- The file describes the product, lists public URLs, and makes it clear that admin/kiosk/API surfaces are private.
+- The preferred canonical URL matches the sitemap.
+- The public narrative is short, citable, and free of invented claims.
+- Private routes are not published as if they were marketing surfaces.
 
 ## Public-page a11y smoke notes
 
-La superficie publica es chica, asi que la verificacion manual tambien debe ser precisa:
+The public surface is small, so the manual verification should be precise too:
 
-- navegar con teclado desde el inicio hasta el CTA principal;
-- verificar un solo `h1` y jerarquia logica de headings;
-- probar zoom/browser text resize al 200% sin clipping horizontal critico;
-- validar contraste visible en CTA y texto principal;
-- confirmar que enlaces tienen destino entendible fuera de contexto.
+- navigate with the keyboard from the entry point to the main CTA;
+- verify a single `h1` and a logical heading hierarchy;
+- test 200% zoom/browser text resize without critical horizontal clipping;
+- validate visible contrast on the CTA and main text;
+- confirm links have destinations that remain understandable out of context.
 
-## Cobertura automatizada disponible vs gap real
+## Available automated coverage vs real gap
 
-- Cobertura de regression de primitives: `tests/block-b-a11y-and-logging.test.tsx` valida semantica modal, teclado en filas interactivas y el wrap de foco esperado para dialogos.
-- Cobertura browser reproducible en repo: `bun run test:a11y:e2e` (Playwright + Axe) sobre `/consentimiento-digital` y un surface kiosk critico.
-- Gap explicito actual: esta cobertura es smoke E2E, no reemplaza una matriz completa de navegacion asistiva para todo admin/kiosk.
-- Siguiente paso cuando entre en alcance: ampliar `playwright/accessibility.a11y.ts` con rutas admin clave y escenarios de foco/zoom extendidos.
+- Primitive-regression coverage: `tests/block-b-a11y-and-logging.test.tsx` validates modal semantics, keyboard support for interactive rows, and the expected focus wrap for dialogs.
+- Reproducible browser coverage in the repo: `bun run test:a11y:e2e` (Playwright + Axe) over `/consentimiento-digital` and one critical kiosk surface.
+- Current explicit gap: this coverage is E2E smoke, not a replacement for a full assistive-navigation matrix across the entire admin/kiosk surface.
+- Next step when it enters scope: extend `playwright/accessibility.a11y.ts` with key admin routes and broader focus/zoom scenarios.
 
 ## Evidence pack
 
-- captura de `robots.txt`
-- captura de `sitemap.xml`
-- view-source o evidencia del JSON-LD
-- captura o nota de `llms.txt`
-- nota corta de a11y smoke: teclado + zoom + headings
+- capture of `robots.txt`
+- capture of `sitemap.xml`
+- view-source or other evidence of the JSON-LD
+- capture or note for `llms.txt`
+- short a11y smoke note: keyboard + zoom + headings
 
 ## Recommended external validators
 
 - Google Rich Results Test
 - Schema.org Validator
-- PageSpeed Insights o Lighthouse SEO
-- chequeo manual en al menos un agente con web access para confirmar que la URL canonica es facil de citar
+- PageSpeed Insights or Lighthouse SEO
+- manual check in at least one agent with web access to confirm the canonical URL is easy to cite

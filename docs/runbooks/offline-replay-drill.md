@@ -1,55 +1,55 @@
 # Offline replay drill
 
-Este drill prueba la promesa mas delicada del kiosk: aceptar un consentimiento sin red y reintentar sin duplicar el consecutivo ni crear dos consentimientos.
+This drill tests the kiosk's most delicate promise: accept a consent without network access, then replay it without duplicating the sequence or creating two consents.
 
 ## Preconditions
 
 - `OFFLINE_QUEUE_ENABLED=true`
 - `NEXT_PUBLIC_OFFLINE_QUEUE_ENABLED=true`
-- app reiniciada o redeploy aplicado
-- ambiente con acceso a Firestore para revisar `consents` y `offline_sync`
+- App restarted or redeployed.
+- Environment with Firestore access so you can inspect `consents` and `offline_sync`.
 
-No correr este drill en produccion con los flags por defecto apagados; primero habilitarlo de forma controlada en preview o staging.
+Do not run this drill in production with the default flags disabled; enable it in a controlled preview or staging environment first.
 
-## Flujo de prueba
+## Test flow
 
-1. Abrir el kiosk y completar el flujo hasta la pantalla de consentimiento.
-2. Cortar conectividad del navegador o del dispositivo.
-3. Firmar y enviar el consentimiento.
-4. Confirmar que la UI informa exito diferido y no se cae.
-5. Restaurar conectividad.
-6. Esperar replay automatico o disparar retry manual si el operador lo necesita.
+1. Open the kiosk and complete the flow until the consent screen.
+2. Cut browser or device connectivity.
+3. Sign and submit the consent.
+4. Confirm the UI reports deferred success and does not crash.
+5. Restore connectivity.
+6. Wait for the automatic replay, or trigger a manual retry if the operator needs it.
 
-## Verificaciones esperadas
+## Expected verification
 
-- existe un solo consentimiento final en `consents`;
-- existe `offline_sync/{dedupeKey}` para esa operacion;
-- reintentar el mismo payload no crea un segundo consentimiento;
-- el consecutivo reservado coincide con el ack final;
-- el item de cola sale de `pending/failed` hacia estado resuelto.
+- Exactly one final consent exists in `consents`.
+- `offline_sync/{dedupeKey}` exists for that operation.
+- Retrying the same payload does not create a second consent.
+- The reserved sequence matches the final acknowledgment.
+- The queue item moves from `pending/failed` to a resolved state.
 
-## Datos a capturar
+## Data to capture
 
 - `dedupeKey`
-- timestamp local de firma (`signedAtLocal`)
-- ID del consentimiento final
-- consecutivo final
-- mensaje visible al operador
+- Local signing timestamp (`signedAtLocal`)
+- Final consent ID.
+- Final sequence.
+- Operator-visible message.
 
-## Fallas comunes
+## Common failures
 
-| Sintoma | Lectura tecnica | Accion |
+| Symptom | Technical reading | Action |
 | --- | --- | --- |
-| el item queda en `failed` | error de red o payload invalido | revisar `lastError`, reintentar con red estable |
-| aparecen dos consentimientos | fallo de idempotencia | desactivar `OFFLINE_QUEUE_ENABLED` y `NEXT_PUBLIC_OFFLINE_QUEUE_ENABLED`, luego abrir incidente |
-| no existe `offline_sync` | el replay no llego al ledger | revisar API `/api/consentimientos` y `consentService` |
+| the item stays in `failed` | network error or invalid payload | inspect `lastError`, then retry with stable connectivity |
+| two consents appear | idempotency failure | disable `OFFLINE_QUEUE_ENABLED` and `NEXT_PUBLIC_OFFLINE_QUEUE_ENABLED`, then open an incident |
+| `offline_sync` does not exist | the replay never reached the ledger | inspect `/api/consentimientos` and `consentService` |
 
-## Salida del drill
+## Drill output
 
-Registrar resultado como `PASS` o `FAIL` junto con:
+Record the result as `PASS` or `FAIL` together with:
 
-- ambiente
-- operador
+- environment
+- operator
 - dedupeKey
-- evidencia de `consents`
-- evidencia de `offline_sync`
+- `consents` evidence
+- `offline_sync` evidence

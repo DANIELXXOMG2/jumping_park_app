@@ -1,56 +1,56 @@
-# Arquitectura del sistema
+# System architecture
 
-Este documento refleja la arquitectura vigente despues del hardening incremental del cambio `comprehensive-product-audit-and-roadmap`. El foco actual no es reescribir el producto, sino operar mejor: menos costo, mas accesibilidad, mejor resiliencia y una superficie publica documentada para SEO y AI-SEO.
+This document reflects the current architecture after the incremental hardening of the `comprehensive-product-audit-and-roadmap` change. The current focus is not to rewrite the product, but to operate it better: lower cost, better accessibility, stronger resilience, and a documented public surface for SEO and AI-SEO.
 
-Mapa documental actual: `docs/README.md`.
+Current docs map: `docs/README.md`.
 
-## 1. Resumen ejecutivo
+## 1. Executive summary
 
-- Stack: Next.js 16 App Router, React 19, Bun, Firebase Admin, Firestore, Storage, Resend, Zod, Zustand y SWR.
-- Patrón dominante: App Router + service layer + wrappers de validacion/autorizacion.
-- Principio de rollout: todo es aditivo y controlado por flags; no hay migraciones destructivas.
-- Objetivo operativo: mantener el producto dentro de presupuestos de free tier sin degradar UX ni accesibilidad.
+- Stack: Next.js 16 App Router, React 19, Bun, Firebase Admin, Firestore, Storage, Resend, Zod, Zustand, and SWR.
+- Dominant pattern: App Router + service layer + validation/authorization wrappers.
+- Rollout principle: everything is additive and flag-controlled; there are no destructive migrations.
+- Operational goal: keep the product within free-tier budgets without degrading UX or accessibility.
 
-## 2. Planos del sistema
+## 2. System planes
 
 ### 2.1 Kiosk plane
 
-- `src/app/(kiosk)` concentra el flujo presencial: ingreso, OTP, registro, consentimiento y exito.
-- `src/store/kioskStore.ts` persiste estado clave del visitante para continuidad local.
-- `src/lib/offline/*` implementa el staged rollout offline:
+- `src/app/(kiosk)` contains the on-site flow: entry, OTP, registration, consent, and success.
+- `src/store/kioskStore.ts` persists key visitor state for local continuity.
+- `src/lib/offline/*` implements the staged offline rollout:
   - Stage 1: shell/assets/session cache.
-  - Stage 2: cola local de consentimientos.
-  - Stage 3: replay idempotente contra `offline_sync`.
+  - Stage 2: local consent queue.
+  - Stage 3: idempotent replay against `offline_sync`.
 
 ### 2.2 Admin data plane
 
-- `src/app/api/admin/*` delega negocio a servicios y aplica auth/permissions.
-- `src/services/userService.ts`, `src/services/minorIndexService.ts` y `src/app/api/admin/consents/route.ts` exponen contratos cursor-first para listas administrativas.
-- La paginacion usa cursores opacos (`src/lib/adminCursor.ts`, `src/lib/firestoreService.ts`) para evitar costos por `offset` sobre Firestore.
-- Los endpoints siguen permitiendo fallback legacy cuando `CURSOR_PAGINATION_ENABLED=false`.
+- `src/app/api/admin/*` delegates business logic to services and applies auth/permissions.
+- `src/services/userService.ts`, `src/services/minorIndexService.ts`, and `src/app/api/admin/consents/route.ts` expose cursor-first contracts for administrative lists.
+- Pagination uses opaque cursors (`src/lib/adminCursor.ts`, `src/lib/firestoreService.ts`) to avoid Firestore `offset` cost.
+- Endpoints still allow the legacy fallback when `CURSOR_PAGINATION_ENABLED=false`.
 
 ### 2.3 Aggregate plane
 
-- `src/services/adminMetricsService.ts` mantiene el modelo `admin_metrics/*`.
-- Documentos principales:
+- `src/services/adminMetricsService.ts` maintains the `admin_metrics/*` model.
+- Primary documents:
   - `admin_metrics/overview`
   - `admin_metrics/daily:yyyy-mm-dd`
-- El dashboard y los stats detallados pueden leer 1-5 documentos agregados en lugar de recomputar scans completos cuando `ADMIN_AGGREGATES_ENABLED=true`.
-- Cada respuesta expone `freshness` para mostrar si el dato viene del plano agregado o del fallback live.
+- The dashboard and detailed stats can read 1-5 aggregate documents instead of recomputing full scans when `ADMIN_AGGREGATES_ENABLED=true`.
+- Every response exposes `freshness` so the UI can show whether data came from the aggregate plane or the live fallback.
 
 ### 2.4 Public discovery plane
 
-- `src/app/(public)/consentimiento-digital/page.tsx` es la URL canonica publica.
-- `src/app/robots.ts`, `src/app/sitemap.ts` y `src/app/llms.txt/route.ts` controlan indexabilidad tradicional y contexto para agentes.
-- `src/lib/seo.ts` centraliza rutas publicas, robots, canonical URLs y JSON-LD.
+- `src/app/(public)/consentimiento-digital/page.tsx` is the canonical public URL.
+- `src/app/robots.ts`, `src/app/sitemap.ts`, and `src/app/llms.txt/route.ts` control traditional indexability and agent context.
+- `src/lib/seo.ts` centralizes public routes, robots, canonical URLs, and JSON-LD.
 
 ### 2.5 Perimeter and security plane
 
-- `src/proxy.ts` aplica headers de seguridad y control de indexacion para superficies privadas.
-- El perimeter mantiene un baseline CSP enforced y usa `CSP_REPORT_ONLY_ENABLED` solo para el canary/report-only mas estricto.
-- El perimeter tambien sostiene `X-Robots-Tag: noindex, nofollow` para rutas privadas del kiosk/admin.
+- `src/proxy.ts` applies security headers and indexing controls for private surfaces.
+- The perimeter keeps an enforced baseline CSP and uses `CSP_REPORT_ONLY_ENABLED` only for the stricter canary/report-only layer.
+- The perimeter also maintains `X-Robots-Tag: noindex, nofollow` for private kiosk/admin routes.
 
-## 3. Flujo de datos
+## 3. Data flow
 
 ```mermaid
 flowchart LR
@@ -72,87 +72,87 @@ flowchart LR
     Edge --> Kiosk
 ```
 
-## 4. Colecciones y contratos operativos
+## 4. Collections and operational contracts
 
-| Recurso | Uso actual | Contrato clave |
+| Resource | Current use | Key contract |
 | --- | --- | --- |
-| `otp_challenges` | Challenge OTP pendiente | throttle, lockout y expiracion |
-| `otp_access_sessions` | Sesion validada del kiosk | vigencia corta y recovery local |
-| `consents` | Consentimientos firmados | snapshots denormalizados, consecutivo atomico |
-| `minors_index` | Busqueda eficiente de menores | proyeccion denormalizada |
-| `admin_metrics` | Read model administrativo | overview + diarios + freshness |
-| `offline_sync` | Ledger de idempotencia | mismo `dedupeKey` => mismo ack |
-| `admin_audit_logs` | Traza inmutable admin | actor, accion, timestamp |
+| `otp_challenges` | Pending OTP challenge | throttling, lockout, and expiration |
+| `otp_access_sessions` | Validated kiosk session | short-lived validity and local recovery |
+| `consents` | Signed consents | denormalized snapshots, atomic sequence |
+| `minors_index` | Efficient minor search | denormalized projection |
+| `admin_metrics` | Administrative read model | overview + daily documents + freshness |
+| `offline_sync` | Idempotency ledger | same `dedupeKey` => same ack |
+| `admin_audit_logs` | Immutable admin trace | actor, action, timestamp |
 
 ## 5. Cursor data plane
 
-El costo mas peligroso en Firestore no era escribir: era saltar documentos. Por eso el admin migra a cursores opacos.
+The most dangerous Firestore cost was not writing: it was skipping documents. That is why the admin surface is moving to opaque cursors.
 
 - `CursorPageRequest`: `limit`, `cursor`, `search`.
 - `CursorPageResponse`: `items`, `pageInfo`, `meta`.
-- `pageInfo.nextCursor` es opaco, versionado y ligado a coleccion/campo/orden.
-- `meta.source` diferencia lectura cursor vs busqueda.
-- Las listas administrativas nunca devuelven signed URLs en listados; solo `signatureStatus`.
+- `pageInfo.nextCursor` is opaque, versioned, and bound to collection/field/order.
+- `meta.source` distinguishes cursor reads from search reads.
+- Administrative lists never return signed URLs in list views; they expose only `signatureStatus`.
 
-Impacto:
+Impact:
 
-- lecturas acotadas a 20-50 registros por pagina;
-- latencia mas estable;
-- rollback inmediato via flag si aparece drift operativo.
+- reads stay bounded to 20-50 records per page;
+- latency is more stable;
+- rollback is immediate through a flag if operational drift appears.
 
-## 6. Aggregates y recompute
+## 6. Aggregates and recompute
 
-El dashboard no deberia pagar scans completos cada vez que alguien abre el admin.
+The dashboard should not pay for full scans every time someone opens the admin.
 
-- `adminMetricsService.getOverview()` lee/agenera `admin_metrics/overview`.
-- `adminMetricsService.getDetailed()` arma KPIs con overview + documentos diarios.
-- `freshness.computedAt` permite validar si el agregado esta dentro de la ventana esperada.
-- Si falta un agregado o queda stale, existe recompute controlado; el fallback live sigue disponible detras del flag.
+- `adminMetricsService.getOverview()` reads/generates `admin_metrics/overview`.
+- `adminMetricsService.getDetailed()` assembles KPIs with the overview plus daily documents.
+- `freshness.computedAt` lets operators validate whether the aggregate is still inside the expected window.
+- If an aggregate is missing or stale, controlled recompute exists; the live fallback remains available behind the flag.
 
-Runbook operativo: `docs/runbooks/admin-cost-smoke-checklist.md`.
+Operational runbook: `docs/runbooks/admin-cost-smoke-checklist.md`.
 
 ## 7. Offline resilience
 
-La estrategia offline es deliberadamente escalonada.
+The offline strategy is deliberately staged.
 
 ### Stage 1
 
-- cache de shell, assets y sesion reciente del kiosk;
-- navegacion sobre pantallas visitadas sin caidas abruptas.
+- cache the shell, assets, and most recent kiosk session;
+- keep navigation working on already-visited screens without abrupt failures.
 
 ### Stage 2
 
-- cola local de `consent.create`;
-- feedback al operador aunque no haya red;
-- retry automatico al volver `online` y al iniciar la app.
+- local queue for `consent.create`;
+- operator feedback even when the network is down;
+- automatic retry when the app comes back `online` and when the app starts.
 
 ### Stage 3
 
 - `dedupeKey = sha256(userId + policyVersion + signedAtLocal)`;
-- `offline_sync/{dedupeKey}` evita duplicados y drift del consecutivo;
-- si el servidor ya proceso la carga, devuelve el mismo ack.
+- `offline_sync/{dedupeKey}` prevents duplicates and sequence drift;
+- if the server already processed the payload, it returns the same ack.
 
-Runbook operativo: `docs/runbooks/offline-replay-drill.md`.
+Operational runbook: `docs/runbooks/offline-replay-drill.md`.
 
-## 8. SEO, AI-SEO y artefactos publicos
+## 8. SEO, AI-SEO, and public artifacts
 
-La superficie publica es pequena a proposito: una pagina canonica, metadata consistente y archivos faciles de consumir por buscadores y agentes.
+The public surface is intentionally small: one canonical page, consistent metadata, and files that search engines and agents can consume easily.
 
-- `robots.txt` solo permite la superficie publica aprobada.
-- `sitemap.xml` publica URLs canonicas y excluye admin/kiosk.
-- `llms.txt` describe producto, rutas publicas y limites de citacion.
-- JSON-LD expone `WebPage`, `WebSite` y `AmusementPark` para extraccion semantica.
+- `robots.txt` allows only the approved public surface.
+- `sitemap.xml` publishes canonical URLs and excludes admin/kiosk.
+- `llms.txt` describes the product, public routes, and citation boundaries.
+- JSON-LD exposes `WebPage`, `WebSite`, and `AmusementPark` for semantic extraction.
 
-Criterios usados:
+Criteria in use:
 
-- Google Search Central para indexabilidad/canonicals/sitemap.
-- buenas practicas de AI-SEO para contenido citable, `llms.txt`, y fronteras claras entre publico y privado.
+- Google Search Central guidance for indexability, canonicals, and sitemaps.
+- AI-SEO best practices for citable content, `llms.txt`, and clear boundaries between public and private surfaces.
 
-Runbook operativo: `docs/runbooks/seo-ai-seo-validation-checklist.md`.
+Operational runbook: `docs/runbooks/seo-ai-seo-validation-checklist.md`.
 
-## 9. Seguridad y rollout
+## 9. Security and rollout
 
-Flags actuales en `src/lib/hardeningPolicy.ts`:
+Current flags in `src/lib/hardeningPolicy.ts`:
 
 - `OTP_HARDENING_ENABLED`
 - `EXPORT_BOUNDS_ENFORCED`
@@ -163,21 +163,21 @@ Flags actuales en `src/lib/hardeningPolicy.ts`:
 - `NEXT_PUBLIC_OFFLINE_QUEUE_ENABLED`
 - `CSP_REPORT_ONLY_ENABLED`
 
-Principios:
+Principles:
 
-- defaults seguros para hardening existente;
-- defaults oscuros para capacidades nuevas con riesgo operativo;
-- rollback por desactivar flag y redeploy, no por revertir datos.
+- secure defaults for existing hardening;
+- dark defaults for new capabilities with operational risk;
+- rollback by disabling a flag and redeploying, not by reverting data.
 
-Runbook operativo: `docs/runbooks/rollback-flags.md`.
+Operational runbook: `docs/runbooks/rollback-flags.md`.
 
-## 10. Verificacion y evidencia
+## 10. Verification and evidence
 
 IaC rollout boundary: deploy Firebase indexes/rules first, then prewarm aggregates, then enable flags.
 
 Exact composite-index parity is still a best-effort proof until emulator/query logs or deploy feedback confirm every live query shape.
 
-Gates automatizados relevantes:
+Relevant automated gates:
 
 - `bun test`
 - `bun run check:format`
@@ -185,26 +185,26 @@ Gates automatizados relevantes:
 - `bun run check:types`
 - `bun run check:phase5`
 
-Cobertura Phase 5 y cierre incremental Block D/E2:
+Phase 5 coverage and incremental Block D/E2 closure:
 
-- SEO routes y `llms.txt`: `tests/seo-public.test.ts`, `tests/phase5-verification-hardening.test.ts`
+- SEO routes and `llms.txt`: `tests/seo-public.test.ts`, `tests/phase5-verification-hardening.test.ts`
 - offline idempotency: `tests/offline-resilience.test.ts`
 - cursor/admin aggregates: `tests/foundation-rollout-scaffolding.test.ts`, `tests/phase5-verification-hardening.test.ts`
 - perimeter headers/CSP: `tests/proxy.security.test.ts`
-- a11y pragmatica de primitives: `tests/block-b-a11y-and-logging.test.tsx`
-- a11y browser smoke reproducible: `playwright/accessibility.a11y.ts` ejecutado con `bun run test:a11y:e2e`
+- pragmatic accessibility coverage for primitives: `tests/block-b-a11y-and-logging.test.tsx`
+- reproducible browser a11y smoke: `playwright/accessibility.a11y.ts` executed with `bun run test:a11y:e2e`
 
-Las notas manuales de a11y siguen vivas en runbooks porque la cobertura actual es smoke, no matriz completa. El estado real ahora es: SI hay browser automation con Axe/Playwright para superficies criticas, pero TODAVIA falta ampliar esa cobertura para todos los flujos admin/kiosk end-to-end.
+Manual accessibility notes still matter in the runbooks because current coverage is smoke coverage, not a full matrix. The real status now is: browser automation DOES exist with Axe/Playwright for critical surfaces, but coverage STILL needs to expand across the full admin/kiosk end-to-end flows.
 
-## 11. Trazabilidad y decision records
+## 11. Traceability and decision records
 
-Artefactos fuente de verdad para este cambio:
+Source-of-truth artifacts for this change:
 
-- trazabilidad SDD en Engram bajo `sdd/repo-hygiene-and-weight-audit/{proposal,spec,tasks,apply-progress,verify-report}`
-- evidencia operativa complementaria en `README.md` y `docs/runbooks/*`
+- SDD traceability in Engram under `sdd/repo-hygiene-and-weight-audit/{proposal,spec,tasks,apply-progress,verify-report}`
+- complementary operational evidence in `README.md` and `docs/runbooks/*`
 
-ADR candidates activos dentro de ese cambio:
+Active ADR candidates inside that change:
 
-- cursor vs offset en Firebase;
-- plano agregado `admin_metrics`;
-- arquitectura offline-first del kiosk.
+- cursor vs. offset in Firebase;
+- the `admin_metrics` aggregate plane;
+- the kiosk offline-first architecture.

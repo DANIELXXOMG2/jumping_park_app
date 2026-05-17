@@ -6,7 +6,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Jumping Park is a Next.js 16+ application for managing digital consent forms at a trampoline park. It features a kiosk-based visitor registration flow with OTP authentication, digital signature capture, and an admin panel for managing consents and users.
 
-## Development Commands
+## Documentation map
+
+- `docs/guides/getting-started.md` - contributor setup, required services, and the first-run walkthrough.
+- `docs/guides/testing.md` - verification layers, CI parity, and command-level testing guidance.
+- `docs/guides/deployment.md` - release flow, environment variables, rollout boundaries, and post-deploy checks.
+- `CONTRIBUTING.md` - review expectations, SDD discipline, and the pull request checklist.
+
+## Command quick reference
+
+Use the guides above for step-by-step contributor workflows; this section stays as a fast command lookup for repository agents.
 
 All commands use `bun` (not npm/pnpm):
 
@@ -152,6 +161,8 @@ Zod schemas are in `src/lib/schemas/`:
 
 Required in `.env.local`:
 
+For setup and deployment procedures, prefer `docs/guides/getting-started.md` and `docs/guides/deployment.md`.
+
 ```
 # Firebase Admin (server)
 FIREBASE_PROJECT_ID=
@@ -239,6 +250,7 @@ PDFs are generated on-demand via `/api/admin/consents/[id]/pdf`:
 
 ## Testing & Quality
 
+- For contributor-facing workflow and CI parity, prefer `docs/guides/testing.md`.
 - **Knip**: Detects unused exports and dependencies
 - **jscpd**: Detects code duplication (threshold: 5%)
 - **dependency-cruiser**: Detects circular dependencies
@@ -249,6 +261,8 @@ Run `bun run check` before committing.
 
 ## Deployment
 
+The full release procedure lives in `docs/guides/deployment.md`.
+
 Configured for Vercel:
 - Build command: `bun run build`
 - Install command: `bun install`
@@ -256,5 +270,6 @@ Configured for Vercel:
 
 Firebase rules deploy separately:
 ```bash
-firebase deploy --only firestore:rules,storage:rules
+bunx firebase-tools deploy --only firestore:rules
+bunx firebase-tools deploy --only storage
 ```

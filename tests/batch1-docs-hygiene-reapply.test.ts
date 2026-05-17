@@ -67,22 +67,29 @@ const rootReadmeRequiredCollections = [
 	'admin_audit_logs',
 ] as const
 
-const docsReadmeCurrentDocs = [
-	'docs/ARQUITECTURA.md',
-	'docs/runbooks/production-hardening.md',
-	'docs/runbooks/dependency-risk-note.md',
-	'docs/runbooks/rollback-flags.md',
-	'docs/runbooks/offline-replay-drill.md',
-	'docs/runbooks/admin-cost-smoke-checklist.md',
-	'docs/runbooks/seo-ai-seo-validation-checklist.md',
-	'docs/portfolio/README.md',
+const docsReadmeQuickLinks = [
+	'`README.md`',
+	'`docs/ARQUITECTURA.md`',
+	'`docs/runbooks/production-hardening.md`',
+	'`docs/portfolio/README.md`',
+	'`docs/archive/archive-README.md`',
 ] as const
 
-const docsReadmeHistoricalDocs = [
+const archivedDocs = [
+	'docs/archive/README.md',
+	'docs/archive/exploration-report.md',
+	'docs/archive/MANUAL_USUARIO.md',
+	'docs/archive/MANUAL_INSTALACION.md',
+	'docs/archive/INFORME_TECNICO_SPRINT_3.md',
+	'docs/archive/ESTRUCTURA_PROYECTO.md',
+] as const
+
+const originalHistoricalDocs = [
 	'docs/MANUAL_USUARIO.md',
 	'docs/MANUAL_INSTALACION.md',
 	'docs/INFORME_TECNICO_SPRINT_3.md',
 	'docs/ESTRUCTURA_PROYECTO.md',
+	'docs/exploration-report.md',
 ] as const
 
 interface PackageJsonShape {
@@ -147,9 +154,13 @@ function readPackageScripts(): Record<string, string> {
 		).toEqual([])
 	})
 
-	it('keeps the integrated readmes truthful after batches 1-4', () => {
+	it('keeps the documentation entrypoints truthful after the IA index lands', () => {
 		const rootReadme = readFileSync(join(cleanRoot, 'README.md'), 'utf8')
 		const docsReadme = readFileSync(join(cleanRoot, 'docs/README.md'), 'utf8')
+		const archiveReadme = readFileSync(
+			join(cleanRoot, 'docs/archive/archive-README.md'),
+			'utf8',
+		)
 		const diagramGuide = readFileSync(
 			join(cleanRoot, 'docs/portfolio/diagrams/README.md'),
 			'utf8',
@@ -157,8 +168,9 @@ function readPackageScripts(): Record<string, string> {
 
 		expect(rootReadme.includes('## Runtime Surfaces')).toBe(true)
 		expect(rootReadme.includes('## Not yet reapplied in this workflow')).toBe(false)
-		expect(docsReadme.includes('despues de Batch 1 solamente')).toBe(false)
-		expect(docsReadme.includes('## Planned / later batches')).toBe(false)
+		expect(docsReadme.includes('# Documentation index')).toBe(true)
+		expect(docsReadme.includes('## Active surfaces')).toBe(true)
+		expect(archiveReadme.includes('# Historical documentation archive')).toBe(true)
 		expect(diagramGuide.includes('## Suggested source of truth')).toBe(true)
 	})
 
@@ -189,20 +201,39 @@ function readPackageScripts(): Record<string, string> {
 		expect(scripts['check:phase5']).toBeDefined()
 	})
 
-	it('keeps docs README aligned with the integrated current-vs-historical contract', () => {
+	it('keeps docs README stable while historical files move into docs/archive', () => {
 		const docsReadme = readFileSync(join(cleanRoot, 'docs/README.md'), 'utf8')
+		const archiveReadme = readFileSync(
+			join(cleanRoot, 'docs/archive/archive-README.md'),
+			'utf8',
+		)
 
-		expect(docsReadme.includes('## Current / usable hoy')).toBe(true)
+		expect(docsReadmeQuickLinks.filter((claim) => !docsReadme.includes(claim))).toEqual(
+			[],
+		)
+		expect(archivedDocs.filter((relativePath) => !existsSync(join(cleanRoot, relativePath)))).toEqual(
+			[],
+		)
 		expect(
-			docsReadmeCurrentDocs.filter(
-				(relativePath) => !docsReadme.includes(`| \`${relativePath}\` | Current |`),
+			originalHistoricalDocs.filter((relativePath) =>
+				existsSync(join(cleanRoot, relativePath)),
 			),
 		).toEqual([])
 		expect(
-			docsReadmeHistoricalDocs.filter(
-				(relativePath) =>
-					!docsReadme.includes(`| \`${relativePath}\` | Historical |`),
+			archivedDocs.filter(
+				(relativePath) => !archiveReadme.includes(`\`${relativePath}\``),
 			),
+		).toEqual([])
+	})
+
+	it('updates the root README historical references to the archive paths', () => {
+		const rootReadme = readFileSync(join(cleanRoot, 'README.md'), 'utf8')
+
+		expect(archivedDocs.filter((relativePath) => !rootReadme.includes(relativePath))).toEqual(
+			[],
+		)
+		expect(
+			originalHistoricalDocs.filter((relativePath) => rootReadme.includes(relativePath)),
 		).toEqual([])
 	})
 })

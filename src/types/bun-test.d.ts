@@ -11,6 +11,7 @@ declare module "bun:test" {
 		not: {
 			toBe(expected: unknown): void;
 			toContain(expected: string): void;
+			toHaveProperty(key: string, value?: unknown): void;
 		};
 	}
 

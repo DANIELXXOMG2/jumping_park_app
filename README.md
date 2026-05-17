@@ -119,7 +119,7 @@ Phase 5 focused checks:
 
 ## Docs IA
 
-- `docs/README.md` - current documentation map with status markers for current vs historical artifacts.
+- `docs/README.md` - English documentation index for the current docs surface, planned next slices, and archive boundary.
 - `docs/ARQUITECTURA.md` - current architecture, data plane, rollout model, and SEO surface.
 - `docs/runbooks/production-hardening.md` - operational entry point for smoke drills.
 - `docs/runbooks/dependency-risk-note.md` - current dependency audit status, accepted residual risk, and follow-up policy.
@@ -130,7 +130,7 @@ Phase 5 focused checks:
 - `CONTRIBUTING.md` - contribution workflow, quality gates, and SDD expectations.
 - `docs/portfolio/README.md` - portfolio capture conventions and asset plan.
 - `diagramas/README.md` - current editable architecture diagrams and usage notes.
-- `docs/MANUAL_USUARIO.md`, `docs/MANUAL_INSTALACION.md`, `docs/INFORME_TECNICO_SPRINT_3.md`, `docs/ESTRUCTURA_PROYECTO.md` - historical snapshots kept for context only; use the current docs above as source of truth.
+- `docs/archive/README.md`, `docs/archive/exploration-report.md`, `docs/archive/MANUAL_USUARIO.md`, `docs/archive/MANUAL_INSTALACION.md`, `docs/archive/INFORME_TECNICO_SPRINT_3.md`, `docs/archive/ESTRUCTURA_PROYECTO.md` - archived historical material kept for context only; use the active docs above as source of truth.
 
 Historical SDD decision records are now Engram-backed instead of living in a repo-tracked planning tree. For this repository, use the `sdd/<change-name>/{proposal,spec,design,tasks,apply-progress,verify-report}` topics as the traceability path when a change needs historical planning evidence.
 

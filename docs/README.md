@@ -1,51 +1,43 @@
-# Documentacion actual del repo
+# Documentation index
 
-Este indice refleja el estado integrado del clean clone **despues de los Batches 1-4** del workflow `git-corrupted-reapply-workflow`.
+This index is the canonical map of the active documentation surface for Jumping Park. Start here when you need to understand what is current, what is planned next, and what is archived for historical traceability.
 
-La regla editorial sigue igual de estricta: cada documento se marca segun su uso real hoy. Si un archivo conserva contexto viejo, roadmap o material historico, se dice explicitamente en vez de venderlo como verdad operativa.
+## Quick path
 
-## Current / usable hoy
+1. Start at `README.md` for the repo overview, runtime surfaces, and quality gates.
+2. Read `docs/ARQUITECTURA.md` for the current system narrative and rollout model.
+3. Use `docs/runbooks/production-hardening.md` as the operational hub for validation and rollback.
+4. Open `docs/guides/` when you need contributor setup, testing, or deployment workflows.
+5. Open `docs/adr/README.md` when you need the repo-backed architecture rationale behind the current system shape.
+6. Open `docs/portfolio/README.md` for the portfolio capture workspace and asset-planning references.
+7. Open `docs/archive/archive-README.md` only when you need historical material.
 
-| Documento | Estado | Uso real hoy |
+## Active surfaces
+
+| Path | Role | Status |
 | --- | --- | --- |
-| `docs/README.md` | Current | Mapa de verdad para separar documentacion actual vs historica |
-| `CONTRIBUTING.md` | Current | Flujo de contribucion, calidad y SDD del repo |
-| `CLAUDE.md` | Current | Convenciones operativas, comandos Bun y arquitectura vigente |
-| `diagramas/README.md` | Current | Guia de diagramas editables presentes en el repo |
-| `diagramas/Diagrama-Secuencia.mmd` | Current | Mermaid editable del flujo de alto nivel |
-| `diagramas/Diagrama-de-Entidad-Relacion.mmd` | Current | Mermaid editable del mapa de datos actual/referencial |
-| `docs/ARQUITECTURA.md` | Current | Narrativa tecnica vigente para kiosk, admin, SEO y rollout flags |
-| `docs/runbooks/production-hardening.md` | Current | Hub operativo para smoke checks, flags y release hardening |
-| `docs/runbooks/dependency-risk-note.md` | Current | Estado actual del riesgo de dependencias y politica de seguimiento |
-| `docs/runbooks/rollback-flags.md` | Current | Matriz de rollback de flags y condiciones de reversa |
-| `docs/runbooks/offline-replay-drill.md` | Current | Drill del replay offline para el rollout controlado |
-| `docs/runbooks/admin-cost-smoke-checklist.md` | Current | Checklist de costo admin para cursor/aggregates |
-| `docs/runbooks/seo-ai-seo-validation-checklist.md` | Current | Checklist de SEO, AI-SEO y smoke de accesibilidad |
-| `docs/portfolio/README.md` | Current | Plan curado de captura y storytelling, vigente aunque no todos los assets existan todavia |
+| `docs/ARQUITECTURA.md` | Current architecture narrative, data flow, rollout evidence, and decision traceability. | Active |
+| `docs/guides/` | Getting started, testing, and deployment walkthroughs for day-to-day contributors. | Active |
+| `docs/api/` | Service and schema reference for the API surface and shared Zod contracts. | Active |
+| `docs/adr/` | Architecture decision records that turn Engram-backed history into repo-readable context. | Active |
+| `docs/runbooks/` | Operational procedures for rollout, rollback, offline replay, admin cost validation, dependency risk, and SEO/AI-SEO checks. | Active |
+| `docs/portfolio/` | Portfolio capture planning, screenshot checklists, diagram storytelling notes, and branding guidance. | Active planning surface |
+| `diagramas/` | Editable Mermaid source files that support the architecture narrative from outside the `docs/` tree. | Active companion |
 
-## Reference / leer con contexto
+## Planned next slices
 
-| Documento | Estado | Nota |
-| --- | --- | --- |
-| `docs/portfolio/diagrams/README.md` | Reference | Guia de curacion para diagramas de portfolio; apoya al material actual pero no reemplaza `docs/ARQUITECTURA.md` |
-| `docs/portfolio/screenshots/README.md` | Reference | Checklist de capturas reales para portfolio/demo |
-| `docs/portfolio/motion/demo-script.md` | Reference | Guion de motion/GIF para storytelling, no contrato runtime |
-| `docs/portfolio/branding/logo-usage.md` | Reference | Recomendaciones visuales para presentacion externa |
-| `docs/portfolio/artifact-manifest.template.md` | Reference | Plantilla de inventario para assets reales |
+| Planned path | Purpose |
+| --- | --- |
+| `docs/assets/` | Curated rendered diagrams and portfolio-ready screenshots once the tooling slice lands. |
 
-## Historical / referencia solamente
+## Historical material
 
-| Documento | Estado | Nota |
-| --- | --- | --- |
-| `docs/MANUAL_USUARIO.md` | Historical | Snapshot funcional previo |
-| `docs/MANUAL_INSTALACION.md` | Historical | Manual de despliegue anterior |
-| `docs/INFORME_TECNICO_SPRINT_3.md` | Historical | Informe puntual, no guia vigente |
-| `docs/ESTRUCTURA_PROYECTO.md` | Historical | Mapa legacy; validar contra el repo real |
+- `docs/archive/` stores frozen legacy documents and research artifacts.
+- `docs/archive/README.md` is the archived Spanish docs index, kept for traceability only.
+- Do not use archived files as the primary source of truth for current operations.
 
-## Regla editorial
+## Documentation rules
 
-- Si cambia el estado real del repo, actualiza primero `README.md` y este indice.
-- `Current` significa usable hoy como verdad operativa o guia activa, aunque el documento describa un plan honesto (por ejemplo portfolio capture).
-- `Reference` significa apoyo util o curado, pero no la fuente primaria de verdad tecnica/operativa.
-- `Historical` significa contexto viejo que no debe competir con la documentacion vigente.
-- Si un archivo apunta a roadmap archivado, runbooks o assets, la referencia tiene que existir realmente en el repo.
+- Keep new documentation in English.
+- Keep claims tied to files, runbooks, or verified repository behavior.
+- Prefer the active surfaces above before consulting historical material.
