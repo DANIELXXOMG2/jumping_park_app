@@ -576,14 +576,14 @@ class ConsentService {
 			createdAt: now,
 			searchTokens,
 			adultNameLower: userProfile.fullName.toLowerCase(),
-			offlineSync: offlineSync
-				? {
-						dedupeKey: offlineSync.dedupeKey,
-						source: OFFLINE_IDEMPOTENCY_SOURCE.SERVER,
-						recordId: offlineSync.dedupeKey,
-						acknowledgedAt: now.toISOString(),
-					}
-				: undefined,
+			...(offlineSync && {
+				offlineSync: {
+					dedupeKey: offlineSync.dedupeKey,
+					source: OFFLINE_IDEMPOTENCY_SOURCE.SERVER,
+					recordId: offlineSync.dedupeKey,
+					acknowledgedAt: now.toISOString(),
+				},
+			}),
 		};
 	}
 
