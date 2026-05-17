@@ -8,8 +8,118 @@ import {
 	useRef,
 	useState,
 } from "react";
-import SignatureCanvas from "react-signature-canvas";
+import SignatureCanvas, {
+	type SignatureCanvasProps,
+} from "react-signature-canvas";
 import { useUISound } from "@/hooks";
+
+const getAlpha = (
+	imageData: Uint8ClampedArray,
+	imageWidth: number,
+	x: number,
+	y: number,
+): number => imageData[(imageWidth * y + x) * 4 + 3];
+
+const scanY = (
+	fromTop: boolean,
+	imageWidth: number,
+	imageHeight: number,
+	imageData: Uint8ClampedArray,
+): number | null => {
+	const offset = fromTop ? 1 : -1;
+	const firstRow = fromTop ? 0 : imageHeight - 1;
+
+	for (let y = firstRow; fromTop ? y < imageHeight : y > -1; y += offset) {
+		for (let x = 0; x < imageWidth; x += 1) {
+			if (getAlpha(imageData, imageWidth, x, y) > 0) {
+				return y;
+			}
+		}
+	}
+
+	return null;
+};
+
+const scanX = (
+	fromLeft: boolean,
+	imageWidth: number,
+	imageHeight: number,
+	imageData: Uint8ClampedArray,
+): number | null => {
+	const offset = fromLeft ? 1 : -1;
+	const firstColumn = fromLeft ? 0 : imageWidth - 1;
+
+	for (let x = firstColumn; fromLeft ? x < imageWidth : x > -1; x += offset) {
+		for (let y = 0; y < imageHeight; y += 1) {
+			if (getAlpha(imageData, imageWidth, x, y) > 0) {
+				return x;
+			}
+		}
+	}
+
+	return null;
+};
+
+const trimCanvasForSignature = (
+	sourceCanvas: HTMLCanvasElement,
+): HTMLCanvasElement => {
+	const copy = document.createElement("canvas");
+	copy.width = sourceCanvas.width;
+	copy.height = sourceCanvas.height;
+
+	const seededContext = copy.getContext("2d", { willReadFrequently: true });
+	if (!seededContext) {
+		return copy;
+	}
+
+	seededContext.drawImage(sourceCanvas, 0, 0);
+
+	const imageData = seededContext.getImageData(0, 0, copy.width, copy.height).data;
+	const top = scanY(true, copy.width, copy.height, imageData);
+	const bottom = scanY(false, copy.width, copy.height, imageData);
+	const left = scanX(true, copy.width, copy.height, imageData);
+	const right = scanX(false, copy.width, copy.height, imageData);
+
+	if (
+		top === null ||
+		bottom === null ||
+		left === null ||
+		right === null
+	) {
+		return copy;
+	}
+
+	const trimmedWidth = right - left + 1;
+	const trimmedHeight = bottom - top + 1;
+	const trimmedData = seededContext.getImageData(
+		left,
+		top,
+		trimmedWidth,
+		trimmedHeight,
+	);
+
+	copy.width = trimmedWidth;
+	copy.height = trimmedHeight;
+
+	copy
+		.getContext("2d", { willReadFrequently: true })
+		?.putImageData(trimmedData, 0, 0);
+
+	return copy;
+};
+
+class SignatureCanvasFixed extends SignatureCanvas {
+	constructor(props: SignatureCanvasProps) {
+		super(props);
+
+		const originalComponentDidMount = this.componentDidMount;
+
+		this.componentDidMount = () => {
+			this.getCanvas().getContext("2d", { willReadFrequently: true });
+			originalComponentDidMount?.();
+		};
+	}
+}
 
 /**
  * Calcula la altura óptima del canvas basándose en el ancho.
@@ -40,14 +150,21 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
 		const containerRef = useRef<HTMLDivElement>(null);
 		const [canvasSize, setCanvasSize] = useState({ width: 500, height: 200 });
 
+		const getTrimmedSignatureCanvas = (): HTMLCanvasElement => {
+			if (!sigCanvas.current) {
+				return document.createElement("canvas");
+			}
+
+			return trimCanvasForSignature(sigCanvas.current.getCanvas());
+		};
+
 		// Hook de sonidos para feedback auditivo
 		const { playClick } = useUISound();
 
 		// Expose methods to parent
 		useImperativeHandle(ref, () => ({
 			isEmpty: () => sigCanvas.current?.isEmpty() ?? true,
-			getTrimmedCanvas: () =>
-				sigCanvas.current?.getTrimmedCanvas() as HTMLCanvasElement,
+			getTrimmedCanvas: getTrimmedSignatureCanvas,
 			/**
 			 * Retorna la firma como base64 PNG optimizado.
 			 * Usa getTrimmedCanvas() para eliminar espacios vacíos y reducir tamaño.
@@ -56,7 +173,7 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
 			toDataURL: () => {
 				if (!sigCanvas.current) return "";
 				// Usar canvas recortado para eliminar espacios en blanco
-				const trimmedCanvas = sigCanvas.current.getTrimmedCanvas();
+				const trimmedCanvas = getTrimmedSignatureCanvas();
 				// PNG con calidad por defecto (PNG no soporta quality param pero el trim reduce significativamente el peso)
 				return trimmedCanvas.toDataURL("image/png");
 			},
@@ -137,7 +254,7 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
 					focus-within:ring-4 focus-within:ring-blue-500/15"
 				ref={containerRef}
 			>
-				<SignatureCanvas
+				<SignatureCanvasFixed
 					ref={sigCanvas}
 					penColor="#1e3a5f"
 					canvasProps={{
