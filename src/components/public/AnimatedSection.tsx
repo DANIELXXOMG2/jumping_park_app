@@ -60,7 +60,7 @@ export function AnimatedSection({
 	);
 
 	return (
-		<motion.div data-animated-section={sectionId} {...motionProps} {...props}>
+		<motion.div data-animated-section={sectionId} {...props} {...motionProps}>
 			{children}
 		</motion.div>
 	);

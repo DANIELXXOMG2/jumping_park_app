@@ -3,21 +3,16 @@ import Image from "next/image";
 import Link from "next/link";
 import Script from "next/script";
 import { AnimatedSection } from "@/components/public/AnimatedSection";
+import cosmicStyles from "@/components/public/cosmic-bg.module.css";
+import { buildConsentimientoDigitalMetadata } from "@/lib/consentimientoDigitalSeo";
 import {
-	APP_NAME,
 	CONSENTIMIENTO_DIGITAL_FAQ_ENTRIES,
+	CONSENTIMIENTO_DIGITAL_PAGE_DESCRIPTION,
+	CONSENTIMIENTO_DIGITAL_PAGE_PATH,
+	CONSENTIMIENTO_DIGITAL_PAGE_TITLE,
 	buildFaqPageSchema,
-	buildPageFreshnessMetadata,
 	buildPublicPageStructuredData,
-	createCanonicalUrl,
 } from "@/lib/seo";
-import "@/components/public/cosmic-bg.css";
-
-const PAGE_PATH = "/consentimiento-digital";
-const OPEN_GRAPH_IMAGE_URL = createCanonicalUrl("/opengraph-image");
-const PAGE_TITLE = "Consentimiento digital para visitantes";
-const PAGE_DESCRIPTION =
-	"Conoce como funciona el consentimiento digital de Jumping Park antes de llegar al parque: registro agil, validacion por OTP y firma segura para adultos y menores.";
 
 const FLOW_STEPS = [
 	{
@@ -78,47 +73,22 @@ const TRUST_PILLARS = [
 ] as const;
 
 const structuredData = buildPublicPageStructuredData({
-	pathname: PAGE_PATH,
-	title: PAGE_TITLE,
-	description: PAGE_DESCRIPTION,
+	pathname: CONSENTIMIENTO_DIGITAL_PAGE_PATH,
+	title: CONSENTIMIENTO_DIGITAL_PAGE_TITLE,
+	description: CONSENTIMIENTO_DIGITAL_PAGE_DESCRIPTION,
 });
 
 const faqPageStructuredData = buildFaqPageSchema(
 	CONSENTIMIENTO_DIGITAL_FAQ_ENTRIES,
 );
 
-export const metadata: Metadata = {
-	title: PAGE_TITLE,
-	description: PAGE_DESCRIPTION,
-	alternates: {
-		canonical: PAGE_PATH,
-	},
-	openGraph: {
-		title: `${PAGE_TITLE} | ${APP_NAME}`,
-		description: PAGE_DESCRIPTION,
-		url: createCanonicalUrl(PAGE_PATH),
-		type: "article",
-		...buildPageFreshnessMetadata(),
-		images: [
-			{
-				url: OPEN_GRAPH_IMAGE_URL,
-				width: 1200,
-				height: 630,
-				alt: `${APP_NAME} | Consentimiento digital premium`,
-			},
-		],
-	},
-	twitter: {
-		card: "summary_large_image",
-		title: `${PAGE_TITLE} | ${APP_NAME}`,
-		description: PAGE_DESCRIPTION,
-		images: [OPEN_GRAPH_IMAGE_URL],
-	},
-};
+export const metadata: Metadata = buildConsentimientoDigitalMetadata();
 
 export default function ConsentimientoDigitalPage() {
 	return (
-		<main className="cosmic-bg min-h-screen px-6 py-16 text-zinc-50 sm:px-10 lg:px-16">
+		<main
+			className={`${cosmicStyles.background} min-h-screen px-6 py-16 text-zinc-50 sm:px-10 lg:px-16`}
+		>
 			<Script
 				id="consentimiento-digital-jsonld"
 				type="application/ld+json"
