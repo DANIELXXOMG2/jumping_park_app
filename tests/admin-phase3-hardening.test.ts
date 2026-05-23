@@ -225,5 +225,6 @@ describe('phase 3 admin contract hardening', () => {
 		expect(headers['X-Export-Source']).toBe('live')
 		expect(setCalls.length).toBe(1)
 		expect(setCalls[0]?.data.action).toBe('consent.delete')
+		expect(setCalls[0]?.data).not.toHaveProperty('details')
 	})
 })
