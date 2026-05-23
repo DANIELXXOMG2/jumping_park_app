@@ -224,7 +224,12 @@ describe('phase 3 admin contract hardening', () => {
 		expect(headers['X-Export-Generated-At']).toBe('2026-04-29T00:00:00.000Z')
 		expect(headers['X-Export-Source']).toBe('live')
 		expect(setCalls.length).toBe(1)
-		expect(setCalls[0]?.data.action).toBe('consent.delete')
-		expect(setCalls[0]?.data).not.toHaveProperty('details')
+		const firstAuditWrite = setCalls[0]
+		if (!firstAuditWrite) {
+			throw new Error('Expected admin audit batch write')
+		}
+
+		expect(firstAuditWrite.data.action).toBe('consent.delete')
+		expect(Object.hasOwn(firstAuditWrite.data, 'details')).toBe(false)
 	})
 })
