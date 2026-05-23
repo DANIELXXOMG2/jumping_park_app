@@ -21,6 +21,43 @@ const {
 	buildConsentimientoDigitalMetadata,
 } = await import('@/lib/consentimientoDigitalSeo')
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === 'object' && value !== null
+}
+
+function getStringProperty(value: unknown, key: string): string | undefined {
+	if (!isRecord(value)) {
+		return undefined
+	}
+
+	const property = value[key]
+
+	return typeof property === 'string' ? property : undefined
+}
+
+function getOpenGraphImages(value: unknown): readonly unknown[] {
+	if (!isRecord(value)) {
+		return []
+	}
+
+	const images = value.images
+
+	if (Array.isArray(images)) {
+		return images
+	}
+
+	return images === undefined ? [] : [images]
+}
+
+function getFirstOpenGraphImageProperty(
+	value: unknown,
+	key: string,
+): string | undefined {
+	const [firstImage] = getOpenGraphImages(value)
+
+	return getStringProperty(firstImage, key)
+}
+
 async function withEnv<T>(
 	key: string,
 	value: string | undefined,
@@ -52,9 +89,9 @@ describe('public seo preservation slice', () => {
 
 		expect(metadata.robots).toBe(undefined)
 		expect(metadata.alternates?.canonical).toBe('/consentimiento-digital')
-		expect(openGraph?.type).toBe('article')
-		expect(openGraph?.modifiedTime).toBe(FRESHNESS_DATE)
-		expect(openGraph?.images?.[0]?.url).toBe(
+		expect(getStringProperty(openGraph, 'type')).toBe('article')
+		expect(getStringProperty(openGraph, 'modifiedTime')).toBe(FRESHNESS_DATE)
+		expect(getFirstOpenGraphImageProperty(openGraph, 'url')).toBe(
 			CONSENTIMIENTO_DIGITAL_OPEN_GRAPH_IMAGE_URL,
 		)
 		expect(metadata.twitter?.images).toEqual([
@@ -82,7 +119,7 @@ describe('public seo preservation slice', () => {
 		const llmsText = buildLlmsText()
 
 		expect(faqSchema['@type']).toBe('FAQPage')
-		expect(faqSchema.mainEntity).toHaveLength(
+		expect(faqSchema.mainEntity.length).toBe(
 			CONSENTIMIENTO_DIGITAL_FAQ_ENTRIES.length,
 		)
 		expect(llmsText).toContain('## FAQ')
@@ -110,7 +147,9 @@ describe('public seo preservation slice', () => {
 			height: 630,
 			width: 1200,
 		})
-		expect(metadata.openGraph?.images?.[0]?.alt).toBe(consentOpenGraphAlt)
+		expect(getFirstOpenGraphImageProperty(metadata.openGraph, 'alt')).toBe(
+			consentOpenGraphAlt,
+		)
 		expect(response.headers.get('content-type')).toContain('image/png')
 	})
 })
