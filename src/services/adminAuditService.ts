@@ -17,13 +17,18 @@ export interface AdminAuditWriteInput {
 export function buildAdminAuditEntry(
 	input: AdminAuditWriteInput,
 ): Omit<AdminAuditLog, "createdAt"> {
-	return {
+	const entry: Omit<AdminAuditLog, "createdAt"> = {
 		action: input.action,
 		actor: input.actor,
 		target: input.target,
 		request: input.request,
-		details: input.details,
 	};
+
+	if (typeof input.details !== "undefined") {
+		entry.details = input.details;
+	}
+
+	return entry;
 }
 
 export function buildAdminAuditActor(session: {
