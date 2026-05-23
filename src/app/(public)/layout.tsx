@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import { buildPublicRobotsMetadata } from "@/lib/seo";
+import { buildPublicRobotsMetadata, buildSiteVerification } from "@/lib/seo";
 
 export function generateMetadata(): Metadata {
 	return {
 		robots: buildPublicRobotsMetadata(),
+		verification: buildSiteVerification(),
 	};
 }
 

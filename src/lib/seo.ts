@@ -52,6 +52,36 @@ export const INDEXABLE_ROBOTS: NonNullable<Metadata["robots"]> = {
 	},
 };
 
+export const FRESHNESS_DATE = "2026-05-17T00:00:00.000Z";
+
+export interface FaqItem {
+	answer: string;
+	question: string;
+}
+
+export const CONSENTIMIENTO_DIGITAL_FAQ_ENTRIES = [
+	{
+		answer:
+			"Documento del visitante, correo del responsable y unos minutos para validar el OTP y firmar.",
+		question: "Que necesito tener listo antes de llegar?",
+	},
+	{
+		answer:
+			"El flujo solicita al adulto responsable, relaciona al menor y deja el consentimiento claro para el equipo.",
+		question: "Que pasa si quien va a ingresar es menor de edad?",
+	},
+	{
+		answer:
+			"Si. El consentimiento queda capturado digitalmente y disponible para soporte operativo y consulta administrativa.",
+		question: "La firma digital reemplaza el formato fisico?",
+	},
+	{
+		answer:
+			"Reduce filas, evita repetir datos en recepcion y permite llegar al parque con el proceso mucho mas claro.",
+		question: "En que mejora esto mi ingreso al parque?",
+	},
+] as const satisfies readonly FaqItem[];
+
 export function createCanonicalUrl(pathname = "/"): string {
 	return new URL(pathname, APP_URL).toString();
 }
@@ -64,6 +94,39 @@ export function buildPublicRobotsMetadata(): NonNullable<Metadata["robots"]> {
 	});
 
 	return policy.enabled ? INDEXABLE_ROBOTS : NON_INDEXABLE_ROBOTS;
+}
+
+export function buildSiteVerification(): NonNullable<Metadata["verification"]> {
+	const policy = evaluateHardeningFlag({
+		featureName: HARDENING_FLAG.PUBLIC_SEO,
+		source: "public-metadata",
+		route: "/(public)",
+		details: {
+			metadata: "verification",
+		},
+	});
+
+	if (!policy.enabled) {
+		return {};
+	}
+
+	const googleCode = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION?.trim();
+
+	if (!googleCode) {
+		return {};
+	}
+
+	return {
+		google: googleCode,
+	};
+}
+
+export function buildPageFreshnessMetadata(lastModified?: string): {
+	modifiedTime: string;
+} {
+	return {
+		modifiedTime: lastModified ?? FRESHNESS_DATE,
+	};
 }
 
 export function buildPublicRobotsManifest(): MetadataRoute.Robots {
@@ -84,11 +147,29 @@ export function buildPublicRobotsManifest(): MetadataRoute.Robots {
 	}
 
 	return {
-		rules: {
-			userAgent: "*",
-			allow: [...PUBLIC_PATHS],
-			disallow: [...PRIVATE_PATH_PREFIXES],
-		},
+		rules: [
+			{
+				userAgent: "*",
+				allow: [...PUBLIC_PATHS],
+				disallow: [...PRIVATE_PATH_PREFIXES],
+			},
+			{
+				userAgent: "GPTBot",
+				disallow: [...PRIVATE_PATH_PREFIXES],
+			},
+			{
+				userAgent: "ClaudeBot",
+				disallow: [...PRIVATE_PATH_PREFIXES],
+			},
+			{
+				userAgent: "PerplexityBot",
+				disallow: [...PRIVATE_PATH_PREFIXES],
+			},
+			{
+				userAgent: "Google-Extended",
+				disallow: [...PRIVATE_PATH_PREFIXES],
+			},
+		],
 		sitemap: `${APP_URL}/sitemap.xml`,
 		host: APP_URL,
 	};
@@ -115,9 +196,27 @@ export function buildPublicSitemap(): MetadataRoute.Sitemap {
 	}));
 }
 
+export function buildFaqPageSchema(faqs: readonly FaqItem[]) {
+	return {
+		"@context": "https://schema.org",
+		"@type": "FAQPage",
+		mainEntity: faqs.map((faq) => ({
+			"@type": "Question",
+			name: faq.question,
+			acceptedAnswer: {
+				"@type": "Answer",
+				text: faq.answer,
+			},
+		})),
+	};
+}
+
 export function buildLlmsText(): string {
 	const publicRouteLines = PUBLIC_ROUTES.map(
 		(route) => `- ${createCanonicalUrl(route.pathname)}: ${route.description}`,
+	).join("\n");
+	const faqLines = CONSENTIMIENTO_DIGITAL_FAQ_ENTRIES.map(
+		(entry) => `- ${entry.question}: ${entry.answer}`,
 	).join("\n");
 
 	return [
@@ -140,6 +239,9 @@ export function buildLlmsText(): string {
 		`- URL canonica preferida: ${createCanonicalUrl("/consentimiento-digital")}`,
 		"- Describir el producto como un sistema de consentimiento digital con validacion OTP, firma digital y soporte para menores.",
 		"- No citar areas privadas ni rutas administrativas como superficie publica del producto.",
+		"",
+		"## FAQ",
+		faqLines,
 	].join("\n");
 }
 
