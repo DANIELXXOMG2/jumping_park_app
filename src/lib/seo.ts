@@ -1,17 +1,26 @@
 import type { Metadata, MetadataRoute } from "next";
-import { evaluateHardeningFlag, HARDENING_FLAG } from "@/lib/hardeningPolicy";
+import {
+	evaluateHardeningFlag,
+	type HardeningFlagResolution,
+	HARDENING_FLAG,
+	resolveHardeningFlag,
+} from "@/lib/hardeningPolicy";
 
 export const APP_NAME = "Jumping Park";
 export const APP_DESCRIPTION =
 	"Sistema de registro y consentimiento informado para visitantes de Jumping Park. Firma digital segura y gestion de menores.";
 export const APP_URL = "https://www.jumpingpark.lat";
+export const CONSENTIMIENTO_DIGITAL_PAGE_PATH = "/consentimiento-digital";
+export const CONSENTIMIENTO_DIGITAL_PAGE_TITLE =
+	"Consentimiento digital para visitantes";
+export const CONSENTIMIENTO_DIGITAL_PAGE_DESCRIPTION =
+	"Conoce como funciona el consentimiento digital de Jumping Park antes de llegar al parque: registro agil, validacion por OTP y firma segura para adultos y menores.";
 
 export const PUBLIC_ROUTES = [
 	{
-		pathname: "/consentimiento-digital",
-		title: "Consentimiento digital para visitantes",
-		description:
-			"Explica el flujo publico de registro, validacion OTP y firma digital para visitantes y responsables en Jumping Park.",
+		pathname: CONSENTIMIENTO_DIGITAL_PAGE_PATH,
+		title: CONSENTIMIENTO_DIGITAL_PAGE_TITLE,
+		description: CONSENTIMIENTO_DIGITAL_PAGE_DESCRIPTION,
 		changeFrequency: "monthly" as const,
 		priority: 0.7,
 	},
@@ -86,6 +95,16 @@ export function createCanonicalUrl(pathname = "/"): string {
 	return new URL(pathname, APP_URL).toString();
 }
 
+export function buildPublicSeoPolicy(): HardeningFlagResolution {
+	return resolveHardeningFlag(HARDENING_FLAG.PUBLIC_SEO);
+}
+
+export function buildRobotsMetadataFromPolicy(
+	policy: Pick<HardeningFlagResolution, "enabled">,
+): NonNullable<Metadata["robots"]> {
+	return policy.enabled ? INDEXABLE_ROBOTS : NON_INDEXABLE_ROBOTS;
+}
+
 export function buildPublicRobotsMetadata(): NonNullable<Metadata["robots"]> {
 	const policy = evaluateHardeningFlag({
 		featureName: HARDENING_FLAG.PUBLIC_SEO,
@@ -93,19 +112,12 @@ export function buildPublicRobotsMetadata(): NonNullable<Metadata["robots"]> {
 		route: "/(public)",
 	});
 
-	return policy.enabled ? INDEXABLE_ROBOTS : NON_INDEXABLE_ROBOTS;
+	return buildRobotsMetadataFromPolicy(policy);
 }
 
-export function buildSiteVerification(): NonNullable<Metadata["verification"]> {
-	const policy = evaluateHardeningFlag({
-		featureName: HARDENING_FLAG.PUBLIC_SEO,
-		source: "public-metadata",
-		route: "/(public)",
-		details: {
-			metadata: "verification",
-		},
-	});
-
+export function buildSiteVerification(
+	policy: Pick<HardeningFlagResolution, "enabled"> = buildPublicSeoPolicy(),
+): NonNullable<Metadata["verification"]> {
 	if (!policy.enabled) {
 		return {};
 	}
@@ -236,7 +248,7 @@ export function buildLlmsText(): string {
 		"- /api/*: endpoints operativos, no pensados para indexacion.",
 		"",
 		"## Citation Guidance",
-		`- URL canonica preferida: ${createCanonicalUrl("/consentimiento-digital")}`,
+		`- URL canonica preferida: ${createCanonicalUrl(CONSENTIMIENTO_DIGITAL_PAGE_PATH)}`,
 		"- Describir el producto como un sistema de consentimiento digital con validacion OTP, firma digital y soporte para menores.",
 		"- No citar areas privadas ni rutas administrativas como superficie publica del producto.",
 		"",

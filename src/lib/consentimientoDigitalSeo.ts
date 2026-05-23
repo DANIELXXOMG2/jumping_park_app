@@ -2,14 +2,12 @@ import type { Metadata } from "next";
 import {
 	APP_NAME,
 	buildPageFreshnessMetadata,
+	CONSENTIMIENTO_DIGITAL_PAGE_DESCRIPTION,
+	CONSENTIMIENTO_DIGITAL_PAGE_PATH,
+	CONSENTIMIENTO_DIGITAL_PAGE_TITLE,
 	createCanonicalUrl,
 } from "@/lib/seo";
 
-export const CONSENTIMIENTO_DIGITAL_PAGE_PATH = "/consentimiento-digital";
-export const CONSENTIMIENTO_DIGITAL_PAGE_TITLE =
-	"Consentimiento digital para visitantes";
-export const CONSENTIMIENTO_DIGITAL_PAGE_DESCRIPTION =
-	"Conoce como funciona el consentimiento digital de Jumping Park antes de llegar al parque: registro agil, validacion por OTP y firma segura para adultos y menores.";
 export const CONSENTIMIENTO_DIGITAL_OPEN_GRAPH_IMAGE_PATH = "/opengraph-image";
 export const CONSENTIMIENTO_DIGITAL_OPEN_GRAPH_IMAGE_URL = createCanonicalUrl(
 	CONSENTIMIENTO_DIGITAL_OPEN_GRAPH_IMAGE_PATH,

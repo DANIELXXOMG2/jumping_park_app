@@ -1,11 +1,12 @@
 import { ImageResponse } from "next/og";
+import { CONSENTIMIENTO_DIGITAL_OPEN_GRAPH_ALT } from "@/lib/consentimientoDigitalSeo";
 import {
-	CONSENTIMIENTO_DIGITAL_OPEN_GRAPH_ALT,
+	APP_NAME,
 	CONSENTIMIENTO_DIGITAL_PAGE_PATH,
-} from "@/lib/consentimientoDigitalSeo";
-import { APP_NAME } from "@/lib/seo";
+	createCanonicalUrl,
+} from "@/lib/seo";
 
-const PAGE_URL = `https://www.jumpingpark.lat${CONSENTIMIENTO_DIGITAL_PAGE_PATH}`;
+const PAGE_URL = createCanonicalUrl(CONSENTIMIENTO_DIGITAL_PAGE_PATH);
 
 export const alt = CONSENTIMIENTO_DIGITAL_OPEN_GRAPH_ALT;
 export const size = {
