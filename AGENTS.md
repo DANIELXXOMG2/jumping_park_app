@@ -73,7 +73,7 @@
 ## Biome
 - Defer to `biome.json` — no duplicate lint config in `.eslintrc` or inline.
 - Key rules: `noUnusedImports: error`, `noUnusedVariables: warn`, `useExhaustiveDependencies: warn`.
-- Run `bun biome check` pre-commit — blocked on `error` severity.
+- Run `bun run check` pre-commit — blocked on `error` severity.
 
 ## Commit Conventions
 - Conventional Commits: `type(scope): description` (e.g., `feat(kiosk): add session restore`).
