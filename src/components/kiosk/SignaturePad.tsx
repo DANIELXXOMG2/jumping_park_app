@@ -74,18 +74,18 @@ const trimCanvasForSignature = (
 
 	seededContext.drawImage(sourceCanvas, 0, 0);
 
-	const imageData = seededContext.getImageData(0, 0, copy.width, copy.height).data;
+	const imageData = seededContext.getImageData(
+		0,
+		0,
+		copy.width,
+		copy.height,
+	).data;
 	const top = scanY(true, copy.width, copy.height, imageData);
 	const bottom = scanY(false, copy.width, copy.height, imageData);
 	const left = scanX(true, copy.width, copy.height, imageData);
 	const right = scanX(false, copy.width, copy.height, imageData);
 
-	if (
-		top === null ||
-		bottom === null ||
-		left === null ||
-		right === null
-	) {
+	if (top === null || bottom === null || left === null || right === null) {
 		return copy;
 	}
 

@@ -15,7 +15,7 @@ firebase-debug.log*
 firestore-debug.log*
 seo-network.log
 .playwright-mcp/
-.gga
+# .gga
 playwright-report/
 test-results/
 
