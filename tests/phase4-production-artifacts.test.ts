@@ -251,11 +251,12 @@ describe('phase 4 docs and ci parity', () => {
 		expect(adminCostChecklist).toContain('Si algun query exige un indice nuevo o distinto, no habilitar el flag: primero actualizar IaC y volver a validar contra emulator/query logs.')
 	})
 
-	it('keeps CI focused on reproducible static gates plus artifact parity proof before build verification', () => {
+	it('keeps CI focused on reproducible static gates and tests before build verification', () => {
 		const workflow = readProjectFile('.github/workflows/ci.yml')
 
 		expect(workflow).toContain('run: bun run check')
-		expect(workflow).toContain('name: Run production-readiness artifact parity proof')
-		expect(workflow).toContain('run: bun test tests/phase4-production-artifacts.test.ts')
+		expect(workflow).toContain('name: Run tests')
+		expect(workflow).toContain('run: bun test')
+		expect(workflow).toContain('needs:\n      - quality')
 	})
 })

@@ -5,7 +5,7 @@
       "startServerCommand": "bun run start -- --hostname 127.0.0.1 --port 3000",
       "startServerReadyPattern": "Ready in",
       "url": [
-        "http://127.0.0.1:3000/"
+        "http://127.0.0.1:3000/consentimiento-digital"
       ]
     },
     "assert": {
