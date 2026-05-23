@@ -1,9 +1,16 @@
 import type { Metadata } from "next";
-import { buildPublicRobotsMetadata } from "@/lib/seo";
+import {
+	buildPublicSeoPolicy,
+	buildRobotsMetadataFromPolicy,
+	buildSiteVerification,
+} from "@/lib/seo";
 
 export function generateMetadata(): Metadata {
+	const publicSeoPolicy = buildPublicSeoPolicy();
+
 	return {
-		robots: buildPublicRobotsMetadata(),
+		robots: buildRobotsMetadataFromPolicy(publicSeoPolicy),
+		verification: buildSiteVerification(publicSeoPolicy),
 	};
 }
 
