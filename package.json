@@ -27,6 +27,7 @@
     "migrate:consent-minor-tokens": "bun run scripts/migrate-consent-minor-tokens.ts",
     "migrate:minor-search-tokens": "bun run scripts/migrate-minor-search-tokens.ts",
     "migrate:tildes": "bun run scripts/migrate-search-tokens-tildes.ts",
+    "optimize:images": "bun run scripts/optimize-images.ts",
     "backup": "bun run scripts/backup.ts"
   },
   "dependencies": {

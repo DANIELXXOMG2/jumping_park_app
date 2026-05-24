@@ -9,6 +9,7 @@ import { StartActionButton } from "@/components/kiosk/StartActionButton";
 import { SecretAdminTrigger } from "@/components/ui/SecretAdminTrigger";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { PAGE_IMAGE_VARIANTS } from "@/lib/imageOptimization";
 
 /**
  * Página principal del Kiosko - Landing de Alto Impacto
@@ -67,10 +68,11 @@ export default function HomePage() {
 							<div className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-28 h-6 xs:w-32 xs:h-7 sm:w-40 sm:h-8 md:w-48 md:h-10 lg:w-64 lg:h-12 bg-black/30 rounded-full blur-xl animate-float-shadow" />
 							{/* Astronauta */}
 							<Image
-								src="/assets/astronauta.png"
+								src={PAGE_IMAGE_VARIANTS.kioskAstronaut.src}
 								alt="Astronauta flotando"
 								width={500}
 								height={625}
+								sizes={PAGE_IMAGE_VARIANTS.kioskAstronaut.sizes}
 								className="animate-float drop-shadow-[0_0_60px_rgba(139,92,246,0.5)] w-40 h-auto opacity-50 xs:w-48 xs:opacity-60 sm:w-56 sm:opacity-70 md:w-64 md:opacity-80 lg:w-80 lg:opacity-100 xl:w-96 2xl:w-[480px]"
 							/>
 						</div>
@@ -110,11 +112,12 @@ export default function HomePage() {
 					<div className="mb-8 animate-fade-in">
 						<SecretAdminTrigger redirectTo="/admin/login">
 							<Image
-								src="/assets/jumping-park-logo.webp"
+								src={PAGE_IMAGE_VARIANTS.kioskLogo.src}
 								alt="Jumping Park - Logo"
 								width={280}
 								height={100}
 								priority
+								sizes={PAGE_IMAGE_VARIANTS.kioskLogo.sizes}
 								className="h-auto w-48 drop-shadow-[0_0_30px_rgba(255,255,255,0.3)] sm:w-56 md:w-64 lg:w-72"
 							/>
 						</SecretAdminTrigger>

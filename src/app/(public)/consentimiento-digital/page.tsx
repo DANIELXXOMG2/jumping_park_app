@@ -4,6 +4,7 @@ import Link from "next/link";
 import Script from "next/script";
 import { AnimatedSection } from "@/components/public/AnimatedSection";
 import cosmicStyles from "@/components/public/cosmic-bg.module.css";
+import { PAGE_IMAGE_VARIANTS } from "@/lib/imageOptimization";
 import { buildConsentimientoDigitalMetadata } from "@/lib/consentimientoDigitalSeo";
 import {
 	CONSENTIMIENTO_DIGITAL_FAQ_ENTRIES,
@@ -160,11 +161,12 @@ export default function ConsentimientoDigitalPage() {
 								</div>
 								<div className="rounded-[1.35rem] border border-white/10 bg-white/5 p-3">
 									<Image
-										src="/assets/jumping-park-logo-optimized.png"
+										src={PAGE_IMAGE_VARIANTS.publicConsentLogo.src}
 										alt="Jumping Park"
 										width={160}
 										height={46}
 										priority
+										sizes={PAGE_IMAGE_VARIANTS.publicConsentLogo.sizes}
 										className="h-auto w-32 object-contain sm:w-36"
 									/>
 								</div>
