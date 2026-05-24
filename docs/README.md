@@ -34,6 +34,7 @@ No current tutorial is published yet. This hub keeps the IA ready for future tut
 
 | Path | Status | Role |
 | --- | --- | --- |
+| `docs/adr/README.md` | current | ADR index for architecture decisions extracted from the reviewed source branch. |
 | `docs/ARQUITECTURA.md` | current | Current architecture narrative, rollout model, and cross-surface system map. |
 | `docs/runbooks/otp-operational-policy.md` | current | OTP runtime values, lockouts, and source-linked operational contract. |
 | `docs/runbooks/dependency-risk-note.md` | current | Current dependency risk position and accepted residual tooling debt. |

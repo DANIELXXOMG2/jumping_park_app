@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "diagram:render": "bun build ./scripts/render-diagrams.ts --outfile=./scripts/render-diagrams.mjs --target=node --external '*' && node ./scripts/render-diagrams.mjs",
     "playwright:install": "playwright install chromium",
     "test": "bun test",
     "test:a11y:e2e": "playwright test --config=playwright.config.ts",
@@ -72,7 +73,9 @@
     "eslint-config-next": "16.2.6",
     "jscpd": "4.0.8",
     "knip": "5.88.1",
+    "mermaid": "^11.15.0",
     "sharp": "^0.34.5",
+    "svgo": "^4.0.1",
     "tailwindcss": "^4.1.17",
     "typescript": "^5.9.3"
   },
