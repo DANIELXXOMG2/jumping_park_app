@@ -17,7 +17,13 @@ interface LighthouseCiConfig {
 		assert?: {
 			assertions?: Record<
 				string,
-				[string, { minScore?: number }] | string
+				[
+					string,
+					{
+						minScore?: number
+						maxNumericValue?: number
+					},
+				] | string
 			>
 		}
 		upload?: {
@@ -43,6 +49,13 @@ function readLighthouseConfig(): LighthouseCiConfig {
 function readWorkflowFile(): string {
 	return readFileSync(
 		join(repoRoot, '.github', 'workflows', 'lighthouse.yml'),
+		'utf8',
+	)
+}
+
+function readBudgetRationale(): string {
+	return readFileSync(
+		join(repoRoot, 'docs', 'runbooks', 'lighthouse-budget-rationale.md'),
 		'utf8',
 	)
 }
@@ -93,6 +106,42 @@ describe('lighthouse ci integration slice', () => {
 		])
 	})
 
+	it('enforces the agreed ci core web vitals budgets for the public page', () => {
+		const assertions = readLighthouseConfig().ci?.assert?.assertions
+
+		expect(assertions?.['largest-contentful-paint']).toEqual([
+			'error',
+			{ maxNumericValue: 3600 },
+		])
+		expect(assertions?.['total-blocking-time']).toEqual([
+			'error',
+			{ maxNumericValue: 200 },
+		])
+		expect(assertions?.['cumulative-layout-shift']).toEqual([
+			'error',
+			{ maxNumericValue: 0.1 },
+		])
+	})
+
+	it('documents why ci budgets are looser than production expectations', () => {
+		expect(
+			existsSync(
+				join(repoRoot, 'docs', 'runbooks', 'lighthouse-budget-rationale.md'),
+			),
+		).toBe(true)
+
+		const rationale = readBudgetRationale()
+
+		expect(rationale.includes('GitHub Actions')).toBe(true)
+		expect(rationale.includes('no CDN')).toBe(true)
+		expect(rationale.includes('cold cache')).toBe(true)
+		expect(rationale.includes('production')).toBe(true)
+		expect(rationale.includes('LCP <= 3600ms')).toBe(true)
+		expect(rationale.includes('Production target: LCP <= 2500ms')).toBe(true)
+		expect(rationale.includes('TBT <= 200ms')).toBe(true)
+		expect(rationale.includes('CLS <= 0.1')).toBe(true)
+	})
+
 	it('adds a pull-request workflow that builds the app and runs lhci autorun', () => {
 		expect(
 			existsSync(join(repoRoot, '.github', 'workflows', 'lighthouse.yml')),
@@ -116,6 +165,7 @@ describe('lighthouse ci integration slice', () => {
 		const workflow = readWorkflowFile()
 
 		expect(workflow.includes('timeout-minutes: 20')).toBe(true)
+		expect(workflow.includes('::add-mask::')).toBe(true)
 		expect(
 			workflow.includes('name: Upload Lighthouse reports artifact'),
 		).toBe(true)
