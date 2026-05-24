@@ -67,23 +67,25 @@ const rootReadmeRequiredCollections = [
 	'admin_audit_logs',
 ] as const
 
-const docsReadmeCurrentDocs = [
-	'docs/ARQUITECTURA.md',
-	'docs/runbooks/production-hardening.md',
-	'docs/runbooks/dependency-risk-note.md',
-	'docs/runbooks/rollback-flags.md',
-	'docs/runbooks/offline-replay-drill.md',
-	'docs/runbooks/admin-cost-smoke-checklist.md',
-	'docs/runbooks/seo-ai-seo-validation-checklist.md',
-	'docs/portfolio/README.md',
+const docsReadmeQuadrantHeadings = [
+	'## Tutorials',
+	'## How-to guides',
+	'## Reference',
+	'## Explanation',
 ] as const
 
-const docsReadmeHistoricalDocs = [
-	'docs/MANUAL_USUARIO.md',
-	'docs/MANUAL_INSTALACION.md',
-	'docs/INFORME_TECNICO_SPRINT_3.md',
-	'docs/ESTRUCTURA_PROYECTO.md',
+const docsReadmeRequiredStatusRows = [
+	'| `docs/MANUAL_USUARIO.md` | historical |',
+	'| `docs/runbooks/production-hardening.md` | current |',
+	'| `docs/runbooks/rollback-flags.md` | current |',
+	'| `docs/ARQUITECTURA.md` | current |',
+	'| `docs/runbooks/otp-operational-policy.md` | current |',
+	'| `docs/portfolio/README.md` | current |',
+	'| `docs/INFORME_TECNICO_SPRINT_3.md` | historical |',
 ] as const
+
+const allowedDocsReadmeStatuses = new Set(['current', 'reference', 'historical'])
+const docsPathPattern = /`(docs\/[^`]+\.md)`/g
 
 interface PackageJsonShape {
 	scripts?: Record<string, string>
@@ -118,6 +120,26 @@ function readPackageScripts(): Record<string, string> {
 	) as PackageJsonShape
 
 	return packageJson.scripts ?? {}
+}
+
+function extractDocsMarkdownPaths(markdown: string): string[] {
+	return Array.from(markdown.matchAll(docsPathPattern), ([, path]) => path).filter(
+		(path) => !path.includes('{'),
+	)
+}
+
+function docsReadmePathIsHubLevel(path: string): boolean {
+	const segments = path.split('/')
+
+	return segments.length === 2 || segments.length === 3
+}
+
+function extractDocsReadmeTableStatuses(markdown: string): string[] {
+	return markdown
+		.split('\n')
+		.map((line) => line.trim())
+		.filter((line) => line.startsWith('| `docs/') && line.endsWith(' |'))
+		.map((line) => line.split('|').map((cell) => cell.trim())[2])
 }
 
 	describe('batch 1 docs and hygiene reapply', () => {
@@ -157,7 +179,7 @@ function readPackageScripts(): Record<string, string> {
 
 		expect(rootReadme.includes('## Runtime Surfaces')).toBe(true)
 		expect(rootReadme.includes('## Not yet reapplied in this workflow')).toBe(false)
-		expect(docsReadme.includes('despues de Batch 1 solamente')).toBe(false)
+		expect(docsReadme.includes('## Current / usable hoy')).toBe(false)
 		expect(docsReadme.includes('## Planned / later batches')).toBe(false)
 		expect(diagramGuide.includes('## Suggested source of truth')).toBe(true)
 	})
@@ -191,18 +213,16 @@ function readPackageScripts(): Record<string, string> {
 
 	it('keeps docs README aligned with the integrated current-vs-historical contract', () => {
 		const docsReadme = readFileSync(join(cleanRoot, 'docs/README.md'), 'utf8')
+		const referencedDocsPaths = extractDocsMarkdownPaths(docsReadme)
+		const statusMarkers = extractDocsReadmeTableStatuses(docsReadme)
 
-		expect(docsReadme.includes('## Current / usable hoy')).toBe(true)
+		expect(docsReadmeQuadrantHeadings.filter((heading) => !docsReadme.includes(heading))).toEqual([])
+		expect(docsReadmeRequiredStatusRows.filter((row) => !docsReadme.includes(row))).toEqual([])
+		expect(docsReadme).toContain('`docs/{doc}.md` or `docs/{category}/{doc}.md`')
+		expect(referencedDocsPaths.filter((path) => !docsReadmePathIsHubLevel(path))).toEqual([])
 		expect(
-			docsReadmeCurrentDocs.filter(
-				(relativePath) => !docsReadme.includes(`| \`${relativePath}\` | Current |`),
-			),
+			referencedDocsPaths.filter((path) => !existsSync(join(cleanRoot, path))),
 		).toEqual([])
-		expect(
-			docsReadmeHistoricalDocs.filter(
-				(relativePath) =>
-					!docsReadme.includes(`| \`${relativePath}\` | Historical |`),
-			),
-		).toEqual([])
+		expect(statusMarkers.filter((status) => !allowedDocsReadmeStatuses.has(status))).toEqual([])
 	})
 })
