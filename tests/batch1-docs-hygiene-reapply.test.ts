@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
-import { existsSync, readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
 import { describe, expect, it } from 'bun:test'
 
 const sourceRoot = process.env.BATCH1_SOURCE_ROOT ?? ''
@@ -78,10 +78,21 @@ const docsReadmeRequiredStatusRows = [
 	'| `docs/MANUAL_USUARIO.md` | historical |',
 	'| `docs/runbooks/production-hardening.md` | current |',
 	'| `docs/runbooks/rollback-flags.md` | current |',
+	'| `docs/adr/README.md` | current |',
 	'| `docs/ARQUITECTURA.md` | current |',
 	'| `docs/runbooks/otp-operational-policy.md` | current |',
 	'| `docs/portfolio/README.md` | current |',
 	'| `docs/INFORME_TECNICO_SPRINT_3.md` | historical |',
+] as const
+
+const adrExtractionFiles = [
+	'docs/adr/0001-app-router-service-layer.md',
+	'docs/adr/0002-rollout-flags-hardening-policy.md',
+	'docs/adr/0003-admin-session-and-otp-split.md',
+	'docs/adr/0004-cursor-pagination-and-admin-aggregates.md',
+	'docs/adr/0005-offline-consent-queue-and-sync-ledger.md',
+	'docs/adr/README.md',
+	'scripts/render-diagrams.ts',
 ] as const
 
 const allowedDocsReadmeStatuses = new Set(['current', 'reference', 'historical'])
@@ -224,5 +235,44 @@ function extractDocsReadmeTableStatuses(markdown: string): string[] {
 			referencedDocsPaths.filter((path) => !existsSync(join(cleanRoot, path))),
 		).toEqual([])
 		expect(statusMarkers.filter((status) => !allowedDocsReadmeStatuses.has(status))).toEqual([])
+	})
+
+	it('keeps ADR extraction and diagram tooling truthful', async () => {
+		const extractionSources = readFileSync(join(cleanRoot, 'docs/.extraction-sources.md'), 'utf8')
+		const scripts = readPackageScripts()
+
+		expect(adrExtractionFiles.filter((relativePath) => !existsSync(join(cleanRoot, relativePath)))).toEqual([])
+		expect(extractionSources).toContain('| Target file | Source branch | Source commit | Source blob | Extracted date |')
+		expect(extractionSources).toContain('| `docs/adr/README.md` | `docs/english-ia-overhaul` | `6e5a3de` |')
+		expect(extractionSources).toContain('| `scripts/render-diagrams.ts` | `docs/english-ia-overhaul` | `6e5a3de` |')
+		expect(scripts['diagram:render']).toContain('bun build')
+		expect(scripts['diagram:render']).toContain('render-diagrams.ts')
+		expect(scripts['diagram:render']).toContain('--target=node')
+		expect(scripts['diagram:render']).toContain('node ./scripts/render-diagrams.mjs')
+
+		const { resolveDiagramJobs, renderDiagramJobs } = (await import(
+			join(cleanRoot, 'scripts', 'render-diagrams.ts')
+		)) as typeof import('../scripts/render-diagrams')
+		const tempRoot = join(cleanRoot, '.tmp-diagram-test')
+		const outputDir = join(tempRoot, 'docs', 'assets', 'diagrams')
+		const jobs = resolveDiagramJobs(['b-sequence.mmd', 'a-er.mmd'], outputDir)
+
+		expect(jobs.map(({ outputPath, diagramId }) => [outputPath.split(/[\\/]/).at(-1), diagramId])).toEqual([
+			['a-er.svg', 'diagram-01-a-er'],
+			['b-sequence.svg', 'diagram-02-b-sequence'],
+		])
+
+		await renderDiagramJobs(jobs, {
+			readDiagram: (inputPath) => inputPath,
+			renderSvg: async ({ diagramId, source }) => `<svg data-id="${diagramId}">${source}</svg>`,
+			optimizeSvg: async (svg) => svg.replace('<svg', '<svg data-optimized="true"'),
+			writeSvg: async (outputPath, svg) => {
+				mkdirSync(dirname(outputPath), { recursive: true })
+				writeFileSync(outputPath, svg)
+			},
+		})
+
+		expect(readFileSync(join(outputDir, 'a-er.svg'), 'utf8')).toContain('data-optimized="true"')
+		rmSync(tempRoot, { recursive: true, force: true })
 	})
 })
