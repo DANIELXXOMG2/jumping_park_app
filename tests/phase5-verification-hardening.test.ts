@@ -11,6 +11,21 @@ import {
 	buildPublicPageStructuredData,
 	createCanonicalUrl,
 } from '@/lib/seo'
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === 'object' && value !== null
+}
+
+function findGraphNodeByType<T extends string>(
+	graph: readonly unknown[],
+	type: T,
+): Record<string, unknown> | undefined {
+	const foundNode = graph.find(
+		(node) => isRecord(node) && node['@type'] === type,
+	)
+
+	return isRecord(foundNode) ? foundNode : undefined
+}
 import {
 	ADMIN_METRIC_KIND,
 	ADMIN_METRIC_FRESHNESS_SOURCE,
@@ -170,12 +185,42 @@ describe('phase 5 verification hardening', () => {
 			description: 'Flujo publico para registro, OTP y firma digital.',
 		})
 		const graph = data['@graph']
+		const webpageNode = findGraphNodeByType(graph, 'WebPage')
+		const websiteNode = findGraphNodeByType(graph, 'WebSite')
+		const localBusinessNode = findGraphNodeByType(graph, 'LocalBusiness')
+		const breadcrumbNode = findGraphNodeByType(graph, 'BreadcrumbList')
 
-		expect(graph.length).toBe(3)
-		expect(graph[0]?.['@type']).toBe('WebPage')
-		expect(graph[0]?.url).toBe(createCanonicalUrl('/consentimiento-digital'))
-		expect(graph[1]?.['@type']).toBe('WebSite')
-		expect(graph[2]?.['@type']).toBe('AmusementPark')
+		expect(graph.length).toBe(4)
+		expect(webpageNode?.['@type']).toBe('WebPage')
+
+		if (!webpageNode || !('url' in webpageNode)) {
+			throw new Error('Expected WebPage node with url')
+		}
+
+		expect(webpageNode.url).toBe(createCanonicalUrl('/consentimiento-digital'))
+		expect(websiteNode?.['@type']).toBe('WebSite')
+
+		if (!websiteNode || !('url' in websiteNode)) {
+			throw new Error('Expected WebSite node with url')
+		}
+
+		expect(websiteNode.url).toBe(createCanonicalUrl('/'))
+		expect(localBusinessNode?.['@type']).toBe('LocalBusiness')
+
+		if (!localBusinessNode || !('telephone' in localBusinessNode)) {
+			throw new Error('Expected LocalBusiness node with telephone')
+		}
+
+		expect(localBusinessNode.telephone).toBe('(608) 677 9985')
+		expect(isRecord(localBusinessNode.address)).toBe(true)
+
+		if (!isRecord(localBusinessNode.address)) {
+			throw new Error('Expected LocalBusiness address object')
+		}
+
+		expect(localBusinessNode.address['@type']).toBe('PostalAddress')
+		expect(Object.hasOwn(localBusinessNode, 'geo')).toBe(false)
+		expect(breadcrumbNode?.['@type']).toBe('BreadcrumbList')
 		expect(buildLlmsText()).toContain('## Citation Guidance')
 	})
 })

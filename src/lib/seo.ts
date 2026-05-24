@@ -10,6 +10,7 @@ export const APP_NAME = "Jumping Park";
 export const APP_DESCRIPTION =
 	"Sistema de registro y consentimiento informado para visitantes de Jumping Park. Firma digital segura y gestion de menores.";
 export const APP_URL = "https://www.jumpingpark.lat";
+export const APP_CANONICAL_ROOT_URL = new URL("/", APP_URL).toString();
 export const CONSENTIMIENTO_DIGITAL_PAGE_PATH = "/consentimiento-digital";
 export const CONSENTIMIENTO_DIGITAL_PAGE_TITLE =
 	"Consentimiento digital para visitantes";
@@ -62,11 +63,80 @@ export const INDEXABLE_ROBOTS: NonNullable<Metadata["robots"]> = {
 };
 
 export const FRESHNESS_DATE = "2026-05-17T00:00:00.000Z";
+export const BUSINESS_PHONE = "(608) 677 9985";
+export const BUSINESS_OPENING_HOURS = [
+	"Mo-Fr 14:00-20:00",
+	"Sa-Su 11:00-20:00",
+] as const;
+export const BUSINESS_STREET_ADDRESS =
+	"Centro Comercial Primavera Urbana, Calle 15 # 40-01, Locales 313-314-315-316-317";
 
 export interface FaqItem {
 	answer: string;
 	question: string;
 }
+
+interface LocalBusinessAddress {
+	"@type": "PostalAddress";
+	addressCountry: string;
+	addressLocality: string;
+	addressRegion: string;
+	streetAddress: string;
+}
+
+interface WebPageNode {
+	"@type": "WebPage";
+	"@id": string;
+	about: {
+		"@id": string;
+	};
+	description: string;
+	isPartOf: {
+		"@id": string;
+	};
+	name: string;
+	url: string;
+}
+
+interface WebSiteNode {
+	"@type": "WebSite";
+	"@id": string;
+	description: string;
+	inLanguage: string;
+	name: string;
+	url: string;
+}
+
+interface LocalBusinessNode {
+	"@type": "LocalBusiness";
+	"@id": string;
+	address: LocalBusinessAddress;
+	description: string;
+	image: string;
+	inLanguage: string;
+	name: string;
+	openingHours: string[];
+	telephone: string;
+	url: string;
+}
+
+interface BreadcrumbListItem {
+	"@type": "ListItem";
+	item: string;
+	name: string;
+	position: number;
+}
+
+interface BreadcrumbListNode {
+	"@type": "BreadcrumbList";
+	itemListElement: BreadcrumbListItem[];
+}
+
+type StructuredDataGraphNode =
+	| WebPageNode
+	| WebSiteNode
+	| LocalBusinessNode
+	| BreadcrumbListNode;
 
 export const CONSENTIMIENTO_DIGITAL_FAQ_ENTRIES = [
 	{
@@ -257,46 +327,95 @@ export function buildLlmsText(): string {
 	].join("\n");
 }
 
+function buildLocalBusinessAddress(): LocalBusinessAddress {
+	return {
+		"@type": "PostalAddress",
+		streetAddress: BUSINESS_STREET_ADDRESS,
+		addressLocality: "Villavicencio",
+		addressRegion: "Meta",
+		addressCountry: "CO",
+	};
+}
+
+function buildBreadcrumbListItems(options: {
+	pathname: string;
+	title: string;
+}): BreadcrumbListItem[] | undefined {
+	if (options.pathname === "/") {
+		return undefined;
+	}
+
+	return [
+		{
+			"@type": "ListItem",
+			position: 1,
+			name: APP_NAME,
+			item: createCanonicalUrl("/"),
+		},
+		{
+			"@type": "ListItem",
+			position: 2,
+			name: options.title,
+			item: createCanonicalUrl(options.pathname),
+		},
+	];
+}
+
 export function buildPublicPageStructuredData(options: {
 	pathname: string;
 	title: string;
 	description: string;
 }) {
 	const canonicalUrl = createCanonicalUrl(options.pathname);
+	const breadcrumbListItems = buildBreadcrumbListItems({
+		pathname: options.pathname,
+		title: options.title,
+	});
+	const graph: StructuredDataGraphNode[] = [
+		{
+			"@type": "WebPage",
+			"@id": `${canonicalUrl}#webpage`,
+			url: canonicalUrl,
+			name: options.title,
+			description: options.description,
+			isPartOf: {
+				"@id": `${APP_URL}/#website`,
+			},
+			about: {
+				"@id": `${APP_URL}/#organization`,
+			},
+		},
+		{
+			"@type": "WebSite",
+			"@id": `${APP_URL}/#website`,
+			url: APP_CANONICAL_ROOT_URL,
+			name: APP_NAME,
+			description: APP_DESCRIPTION,
+			inLanguage: "es-CO",
+		},
+		{
+			"@type": "LocalBusiness",
+			"@id": `${APP_URL}/#organization`,
+			name: APP_NAME,
+			url: APP_CANONICAL_ROOT_URL,
+			description: APP_DESCRIPTION,
+			image: `${APP_URL}/og-image.png`,
+			inLanguage: "es-CO",
+			telephone: BUSINESS_PHONE,
+			address: buildLocalBusinessAddress(),
+			openingHours: [...BUSINESS_OPENING_HOURS],
+		},
+	];
+
+	if (breadcrumbListItems) {
+		graph.push({
+			"@type": "BreadcrumbList",
+			itemListElement: breadcrumbListItems,
+		});
+	}
 
 	return {
 		"@context": "https://schema.org",
-		"@graph": [
-			{
-				"@type": "WebPage",
-				"@id": `${canonicalUrl}#webpage`,
-				url: canonicalUrl,
-				name: options.title,
-				description: options.description,
-				isPartOf: {
-					"@id": `${APP_URL}/#website`,
-				},
-				about: {
-					"@id": `${APP_URL}/#organization`,
-				},
-			},
-			{
-				"@type": "WebSite",
-				"@id": `${APP_URL}/#website`,
-				url: APP_URL,
-				name: APP_NAME,
-				description: APP_DESCRIPTION,
-				inLanguage: "es-CO",
-			},
-			{
-				"@type": "AmusementPark",
-				"@id": `${APP_URL}/#organization`,
-				name: APP_NAME,
-				url: APP_URL,
-				description: APP_DESCRIPTION,
-				image: `${APP_URL}/og-image.png`,
-				inLanguage: "es-CO",
-			},
-		],
+		"@graph": graph,
 	};
 }

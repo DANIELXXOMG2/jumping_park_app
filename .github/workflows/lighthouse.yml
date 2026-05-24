@@ -66,6 +66,11 @@ jobs:
           echo "::add-mask::$admin_secret_key"
           echo "::add-mask::$resend_api_key"
           echo "::add-mask::$firebase_private_key"
+          while IFS= read -r private_key_line; do
+            if [ -n "$private_key_line" ]; then
+              echo "::add-mask::$private_key_line"
+            fi
+          done <<< "$firebase_private_key"
 
           echo "ADMIN_JWT_SECRET=$admin_jwt_secret" >> "$GITHUB_ENV"
           echo "ADMIN_SECRET_KEY=$admin_secret_key" >> "$GITHUB_ENV"
