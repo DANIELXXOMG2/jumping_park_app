@@ -55,7 +55,7 @@ const REPORT_ONLY_CONTENT_SECURITY_POLICY = [
 
 export const config = {
 	matcher: [
-		"/((?!_next/static|_next/image|favicon.ico|assets|manifest.json).*)",
+		"/((?!_next/static|_next/image|favicon.ico|favicon.png|favicon-16x16.png|favicon-48x48.png|apple-touch-icon.png|icon-192.png|icon-512.png|og-image.png|assets|manifest.json).*)",
 	],
 };
 

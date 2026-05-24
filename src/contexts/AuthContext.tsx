@@ -169,7 +169,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 	const refreshSessionStatus = useCallback(
 		async (options?: RefreshSessionStatusOptions): Promise<boolean> => {
-			if (!user) {
+			const activeUser = auth.currentUser;
+			if (!activeUser) {
 				clearSessionState();
 				return false;
 			}
@@ -207,8 +208,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 					if (!response.ok || !data?.session) {
 						if (response.status === 401) {
-							await performClientSignOut({ preserveExpiration: true });
-							return false;
+							// Si el usuario Firebase sigue activo, intentamos re-establecer
+							// la cookie de sesion admin (caso tipico: refresh y cookie ausente).
+							try {
+								const nextSession = await exchangeAdminSession(activeUser);
+								lastSessionStatusCheckAtRef.current = Date.now();
+								sessionRef.current = nextSession;
+								setSession(nextSession);
+								setIsSessionExpired(false);
+								return true;
+							} catch {
+								await performClientSignOut({ preserveExpiration: true });
+								return false;
+							}
 						}
 
 						return sessionRef.current !== null;
