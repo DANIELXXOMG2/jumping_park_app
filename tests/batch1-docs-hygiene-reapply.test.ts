@@ -80,6 +80,7 @@ const docsReadmeRequiredStatusRows = [
 	'| `docs/runbooks/rollback-flags.md` | current |',
 	'| `docs/adr/README.md` | current |',
 	'| `docs/ARQUITECTURA.md` | current |',
+	'| `docs/reference/architecture.md` | current |',
 	'| `docs/runbooks/otp-operational-policy.md` | current |',
 	'| `docs/portfolio/README.md` | current |',
 	'| `docs/INFORME_TECNICO_SPRINT_3.md` | historical |',
@@ -274,5 +275,117 @@ function extractDocsReadmeTableStatuses(markdown: string): string[] {
 
 		expect(readFileSync(join(outputDir, 'a-er.svg'), 'utf8')).toContain('data-optimized="true"')
 		rmSync(tempRoot, { recursive: true, force: true })
+	})
+
+	// --- Architecture reference doc (slice 3) assertions ---
+
+	const architectureDocPath = 'docs/reference/architecture.md'
+
+	const architectureRequiredSections = [
+		'## 1. Executive summary',
+		'## 2. System planes',
+		'## 3. Data Flow',
+		'## 4. Collections and operational contracts',
+		'## 5. Cursor data plane',
+		'## 6. Aggregates and recompute',
+		'## 7. Offline resilience',
+		'## 8. SEO, AI-SEO, and public artifacts',
+		'## 9. Security and rollout',
+		'## 10. Verification and evidence',
+		'## 11. Traceability',
+	]
+
+	const architectureRequiredSourceLinks = [
+		{ file: 'src/proxy.ts', label: 'src/proxy.ts' },
+		{ file: 'src/lib/adminCursor.ts', label: 'src/lib/adminCursor.ts' },
+		{ file: 'src/lib/firestoreService.ts', label: 'src/lib/firestoreService.ts' },
+		{ file: 'src/services/adminMetricsService.ts', label: 'src/services/adminMetricsService.ts' },
+		{ file: 'src/lib/hardeningPolicy.ts', label: 'src/lib/hardeningPolicy.ts' },
+		{ file: 'src/store/kioskStore.ts', label: 'src/store/kioskStore.ts' },
+		{ file: 'src/lib/seo.ts', label: 'src/lib/seo.ts' },
+	]
+
+	const architectureRequiredCollections = [
+		'otp_challenges',
+		'otp_access_sessions',
+		'consents',
+		'minors_index',
+		'admin_metrics',
+		'offline_sync',
+		'admin_audit_logs',
+	]
+
+	it('keeps the architecture reference doc present and truthful', () => {
+		const architectureDoc = readFileSync(join(cleanRoot, architectureDocPath), 'utf8')
+
+		expect(architectureDoc.startsWith('# System Architecture\n')).toBe(true)
+		expect(architectureDoc).toContain('> **Status**: current')
+		expect(architectureDoc).toContain('> **Diátaxis**: Reference')
+
+		for (const section of architectureRequiredSections) {
+			expect(architectureDoc).toContain(section)
+		}
+
+		for (const { file, label } of architectureRequiredSourceLinks) {
+			expect(existsSync(join(cleanRoot, file))).toBe(true)
+			expect(architectureDoc).toContain(label)
+		}
+
+		for (const collection of architectureRequiredCollections) {
+			expect(architectureDoc).toContain(collection)
+		}
+
+		// Verify all internal doc links resolve
+		const docLinkPattern = /\((\.\.\/|docs\/)[^)]+\.md\)/g
+		const architectureDocDirectory = join(cleanRoot, 'docs', 'reference')
+		for (const [link] of architectureDoc.matchAll(docLinkPattern)) {
+			const path = link.slice(1, -1) // strip parens
+			const resolvedPath = path.startsWith('../')
+				? join(architectureDocDirectory, path)
+				: join(cleanRoot, path)
+			expect(existsSync(resolvedPath)).toBe(true)
+		}
+	})
+
+	it('keeps architecture doc linked from hub as current reference', () => {
+		const docsReadme = readFileSync(join(cleanRoot, 'docs/README.md'), 'utf8')
+
+		expect(docsReadme).toContain('| `docs/reference/architecture.md` | current |')
+		expect(docsReadme).toContain('English reference architecture')
+	})
+
+	// --- Triangulation: verify architecture doc claims resolve to real files ---
+
+	const architectureSourceFileClaims = [
+		{ claim: 'src/app/(public)/consentimiento-digital/page.tsx', file: 'src/app/(public)/consentimiento-digital/page.tsx' },
+		{ claim: 'src/app/robots.ts', file: 'src/app/robots.ts' },
+		{ claim: 'src/app/sitemap.ts', file: 'src/app/sitemap.ts' },
+		{ claim: 'src/app/llms.txt/route.ts', file: 'src/app/llms.txt/route.ts' },
+		{ claim: 'src/services/userService.ts', file: 'src/services/userService.ts' },
+		{ claim: 'src/services/minorIndexService.ts', file: 'src/services/minorIndexService.ts' },
+		{ claim: 'src/app/api/admin/consents/route.ts', file: 'src/app/api/admin/consents/route.ts' },
+	]
+
+	it('verifies every source-file claim in the architecture doc resolves', () => {
+		const architectureDoc = readFileSync(join(cleanRoot, architectureDocPath), 'utf8')
+
+		const missing = architectureSourceFileClaims.filter(({ claim, file }) => {
+			if (!architectureDoc.includes(claim)) return true
+			if (!existsSync(join(cleanRoot, file))) return true
+			return false
+		})
+
+		expect(missing).toEqual([])
+	})
+
+	it('verifies architecture doc describes the current stack versions', () => {
+		const architectureDoc = readFileSync(join(cleanRoot, architectureDocPath), 'utf8')
+
+		expect(architectureDoc).toContain('Next.js 16')
+		expect(architectureDoc).toContain('React 19')
+		expect(architectureDoc).toContain('Bun')
+		expect(architectureDoc).toContain('Firestore')
+		expect(architectureDoc).toContain('Zustand')
+		expect(architectureDoc).toContain('SWR')
 	})
 })
