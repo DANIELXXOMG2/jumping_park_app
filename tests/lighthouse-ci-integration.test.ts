@@ -33,6 +33,11 @@ interface LighthouseCiConfig {
 }
 
 const repoRoot = process.cwd()
+const lighthousePublicAuditName = 'Lighthouse public audit (SEO min 0.9)'
+
+function countOccurrences(value: string, needle: string): number {
+	return value.split(needle).length - 1
+}
 
 function readPackageJson(): PackageJsonShape {
 	return JSON.parse(
@@ -143,14 +148,16 @@ describe('lighthouse ci integration slice', () => {
 		expect(rationale.includes('CLS <= 0.1')).toBe(true)
 	})
 
-	it('adds a pull-request workflow that builds the app and runs lhci autorun', () => {
+	it('adds a pull-request workflow with a descriptive lighthouse check name', () => {
 		expect(
 			existsSync(join(repoRoot, '.github', 'workflows', 'lighthouse.yml')),
 		).toBe(true)
 
 		const workflow = readWorkflowFile()
 
-		expect(workflow.includes('name: Lighthouse CI')).toBe(true)
+		expect(workflow.includes(`name: ${lighthousePublicAuditName}`)).toBe(true)
+		expect(workflow.includes(`    name: ${lighthousePublicAuditName}`)).toBe(true)
+		expect(countOccurrences(workflow, lighthousePublicAuditName)).toBe(2)
 		expect(workflow.includes('pull_request:')).toBe(true)
 		expect(workflow.includes('uses: oven-sh/setup-bun@v2')).toBe(true)
 		expect(workflow.includes('run: bun install --frozen-lockfile')).toBe(true)

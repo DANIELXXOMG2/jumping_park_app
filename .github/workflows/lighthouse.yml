@@ -1,4 +1,4 @@
-name: Lighthouse CI
+name: Lighthouse public audit (SEO min 0.9)
 
 on:
   pull_request:
@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   lighthouse:
-    name: Lighthouse CI audit
+    name: Lighthouse public audit (SEO min 0.9)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
