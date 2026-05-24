@@ -115,7 +115,7 @@ describe('lighthouse ci integration slice', () => {
 		])
 		expect(assertions?.['total-blocking-time']).toEqual([
 			'error',
-			{ maxNumericValue: 200 },
+			{ maxNumericValue: 300 },
 		])
 		expect(assertions?.['cumulative-layout-shift']).toEqual([
 			'error',
@@ -137,8 +137,9 @@ describe('lighthouse ci integration slice', () => {
 		expect(rationale.includes('cold cache')).toBe(true)
 		expect(rationale.includes('production')).toBe(true)
 		expect(rationale.includes('LCP <= 3600ms')).toBe(true)
+		expect(rationale.includes('CI TBT <= 300ms')).toBe(true)
 		expect(rationale.includes('Production target: LCP <= 2500ms')).toBe(true)
-		expect(rationale.includes('TBT <= 200ms')).toBe(true)
+		expect(rationale.includes('Production target: TBT <= 200ms')).toBe(true)
 		expect(rationale.includes('CLS <= 0.1')).toBe(true)
 	})
 
@@ -166,6 +167,7 @@ describe('lighthouse ci integration slice', () => {
 
 		expect(workflow.includes('timeout-minutes: 20')).toBe(true)
 		expect(workflow.includes('::add-mask::')).toBe(true)
+		expect(workflow.includes('while IFS= read -r private_key_line')).toBe(true)
 		expect(
 			workflow.includes('name: Upload Lighthouse reports artifact'),
 		).toBe(true)
