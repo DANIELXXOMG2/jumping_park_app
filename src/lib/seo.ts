@@ -12,6 +12,7 @@ export const APP_DESCRIPTION =
 export const APP_URL = "https://www.jumpingpark.lat";
 export const APP_CANONICAL_ROOT_URL = new URL("/", APP_URL).toString();
 export const CONSENTIMIENTO_DIGITAL_PAGE_PATH = "/consentimiento-digital";
+export const PRICING_PAGE_PATH = "/pricing.md";
 export const CONSENTIMIENTO_DIGITAL_PAGE_TITLE =
 	"Consentimiento digital para visitantes";
 export const CONSENTIMIENTO_DIGITAL_PAGE_DESCRIPTION =
@@ -237,18 +238,22 @@ export function buildPublicRobotsManifest(): MetadataRoute.Robots {
 			},
 			{
 				userAgent: "GPTBot",
+				allow: [...PUBLIC_PATHS],
 				disallow: [...PRIVATE_PATH_PREFIXES],
 			},
 			{
 				userAgent: "ClaudeBot",
+				allow: [...PUBLIC_PATHS],
 				disallow: [...PRIVATE_PATH_PREFIXES],
 			},
 			{
 				userAgent: "PerplexityBot",
+				allow: [...PUBLIC_PATHS],
 				disallow: [...PRIVATE_PATH_PREFIXES],
 			},
 			{
 				userAgent: "Google-Extended",
+				allow: [...PUBLIC_PATHS],
 				disallow: [...PRIVATE_PATH_PREFIXES],
 			},
 		],
@@ -311,6 +316,7 @@ export function buildLlmsText(): string {
 		"",
 		"## Public URLs",
 		publicRouteLines,
+		`- ${createCanonicalUrl(PRICING_PAGE_PATH)}: pricing reference for ticketing, admission context, and machine-readable buying notes.`,
 		"",
 		"## Private Or Non-Indexable Areas",
 		"- /admin/*: panel administrativo y operaciones internas.",
@@ -319,6 +325,7 @@ export function buildLlmsText(): string {
 		"",
 		"## Citation Guidance",
 		`- URL canonica preferida: ${createCanonicalUrl(CONSENTIMIENTO_DIGITAL_PAGE_PATH)}`,
+		`- Archivo de pricing para agentes: ${createCanonicalUrl(PRICING_PAGE_PATH)}`,
 		"- Describir el producto como un sistema de consentimiento digital con validacion OTP, firma digital y soporte para menores.",
 		"- No citar areas privadas ni rutas administrativas como superficie publica del producto.",
 		"",
