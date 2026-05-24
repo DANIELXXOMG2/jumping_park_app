@@ -54,13 +54,30 @@ jobs:
       - name: Prepare Lighthouse CI secrets and Firebase placeholders
         shell: bash
         run: |
-          echo "ADMIN_JWT_SECRET=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
-          echo "ADMIN_SECRET_KEY=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
-          echo "RESEND_API_KEY=re_ci_placeholder" >> "$GITHUB_ENV"
-          echo "FIREBASE_PROJECT_ID=ci-placeholder" >> "$GITHUB_ENV"
-          echo "FIREBASE_CLIENT_EMAIL=ci@example.com" >> "$GITHUB_ENV"
-          echo "FIREBASE_STORAGE_BUCKET=ci-placeholder.appspot.com" >> "$GITHUB_ENV"
-          bun -e "const { generateKeyPairSync } = require('node:crypto'); const { privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 }); const { appendFileSync } = require('node:fs'); appendFileSync(process.env.GITHUB_ENV, 'FIREBASE_PRIVATE_KEY<<EOF\n' + privateKey.export({ type: 'pkcs8', format: 'pem' }) + '\nEOF\n');"
+          admin_jwt_secret="$(openssl rand -hex 32)"
+          admin_secret_key="$(openssl rand -hex 32)"
+          resend_api_key="re_ci_placeholder"
+          firebase_project_id="ci-placeholder"
+          firebase_client_email="ci@example.com"
+          firebase_storage_bucket="ci-placeholder.appspot.com"
+          firebase_private_key="$(bun -e "const { generateKeyPairSync } = require('node:crypto'); const { privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 }); process.stdout.write(privateKey.export({ type: 'pkcs8', format: 'pem' }));")"
+
+          echo "::add-mask::$admin_jwt_secret"
+          echo "::add-mask::$admin_secret_key"
+          echo "::add-mask::$resend_api_key"
+          echo "::add-mask::$firebase_private_key"
+
+          echo "ADMIN_JWT_SECRET=$admin_jwt_secret" >> "$GITHUB_ENV"
+          echo "ADMIN_SECRET_KEY=$admin_secret_key" >> "$GITHUB_ENV"
+          echo "RESEND_API_KEY=$resend_api_key" >> "$GITHUB_ENV"
+          echo "FIREBASE_PROJECT_ID=$firebase_project_id" >> "$GITHUB_ENV"
+          echo "FIREBASE_CLIENT_EMAIL=$firebase_client_email" >> "$GITHUB_ENV"
+          echo "FIREBASE_STORAGE_BUCKET=$firebase_storage_bucket" >> "$GITHUB_ENV"
+          {
+            echo 'FIREBASE_PRIVATE_KEY<<EOF'
+            printf '%s\n' "$firebase_private_key"
+            echo 'EOF'
+          } >> "$GITHUB_ENV"
 
       - name: Build app for Lighthouse
         run: bun run build
