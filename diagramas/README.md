@@ -11,7 +11,10 @@ Este directorio contiene los diagramas editables de referencia rapida del proyec
 
 ## Fuente vigente
 
+- `Diagrama-Secuencia.mmd` - flujo completo kiosk/OTP/consent/offline
+- `auth-sequence.mmd` - ciclo de vida OTP (challenge → validate → session → consent guard) + admin auth
 - `docs/ARQUITECTURA.md` - narrativa arquitectonica actual
+- `docs/reference/firebase.md` - referencia Firebase (colecciones, reglas, indices, auth)
 - `docs/README.md` - mapa de documentacion vigente vs historica
 - `docs/portfolio/diagrams/README.md` - guia para transformar estos diagramas en assets curados de storytelling
 

@@ -1,0 +1,109 @@
+sequenceDiagram
+    participant Visitor as Visitor (Kiosk)
+    participant UI as Kiosk UI (Next.js)
+    participant OtpAPI as POST /api/otp
+    participant ValidateAPI as POST /api/otp/validate
+    participant ConsentAPI as POST /api/consentimientos
+    participant AdminSDK as Admin SDK (server)
+    participant AuthSvc as authService
+    participant RateLimit as rateLimitService
+    participant FS as Firestore
+    participant Resend as Resend Email
+
+    Note over Visitor,FS: === PHASE 1: OTP Challenge Request ===
+
+    Visitor->>UI: Enter email or document ID
+    UI->>OtpAPI: POST { cedula, email }
+    OtpAPI->>AuthSvc: requestOtpChallenge({ cedula, email, clientIp })
+    AuthSvc->>AuthSvc: Use email directly or resolve cedula → email
+    AuthSvc->>FS: getActiveOtp(email) → check existing challenge
+
+    alt Existing challenge active
+        AuthSvc-->>OtpAPI: 429 — OTP already sent or locked
+    else No active challenge
+        AuthSvc->>RateLimit: checkRateLimit(identifier, 3/5min)
+        AuthSvc->>RateLimit: checkRateLimit(ip, 9/5min)
+
+        alt Rate limit exceeded
+            AuthSvc-->>OtpAPI: 429 — Too many requests
+        else Within budget
+            AuthSvc->>FS: saveOtp(email, code) → otp_challenges
+            AuthSvc->>Resend: sendOtpEmail(email, code)
+            Resend-->>Visitor: OTP code via email
+            AuthSvc-->>OtpAPI: 200 — OTP sent
+        end
+    end
+
+    OtpAPI-->>UI: Response (200 / 429)
+
+    Note over Visitor,FS: === PHASE 2: OTP Validation ===
+
+    Visitor->>UI: Enter OTP code
+    UI->>ValidateAPI: POST { cedula, code }
+    ValidateAPI->>AuthSvc: validateOtpChallengeRequest({ cedula, code })
+    AuthSvc->>AuthSvc: resolveOtpValidationContext(cedula) → email
+
+    alt Lockout active
+        AuthSvc-->>ValidateAPI: 429 — OTP_LOCKED, retryAfter
+    else
+        AuthSvc->>RateLimit: checkRateLimit(identifier, 5/5min)
+
+        alt Rate limit exceeded
+            AuthSvc-->>ValidateAPI: 429 — Too many validation attempts
+        else Within budget
+            AuthSvc->>FS: Transaction: validateOtp(email, code)
+
+            alt Code expired
+                FS-->>AuthSvc: Delete challenge
+                AuthSvc-->>ValidateAPI: 404 — OTP_EXPIRED
+            else Code incorrect
+                FS-->>AuthSvc: Increment attempts
+                alt Attempts ≥ 5
+                    FS-->>AuthSvc: Lock for OTP_LOCKOUT_MINUTES (15 min)
+                    AuthSvc-->>ValidateAPI: 429 — OTP_LOCKED
+                else Attempts < 5
+                    AuthSvc-->>ValidateAPI: 404 — OTP_INVALID
+                end
+            else Code correct
+                FS-->>AuthSvc: Clear attempts + lockout
+                AuthSvc->>FS: createOtpSession(userId) → otp_access_sessions
+                AuthSvc-->>ValidateAPI: 200 — Session created (120 min)
+            end
+        end
+    end
+
+    ValidateAPI-->>UI: Response (200 / 404 / 429)
+
+    Note over Visitor,FS: === PHASE 3: Consent Creation (Session Guard) ===
+
+    Visitor->>UI: Sign consent form
+    UI->>ConsentAPI: POST { responsibleAdult, minors, signature }
+    ConsentAPI->>AuthSvc: verifyOtpSession(userId)
+
+    alt Session valid (split model)
+        AuthSvc->>FS: Read otp_access_sessions → valid + not expired
+        AuthSvc-->>ConsentAPI: valid = true, source = "split"
+    else Session valid (legacy fallback)
+        AuthSvc->>FS: Read otp_sessions → valid + not expired
+        AuthSvc-->>ConsentAPI: valid = true, source = "legacy"
+    else Session invalid/expired
+        AuthSvc->>FS: Delete expired session
+        AuthSvc-->>ConsentAPI: valid = false
+        ConsentAPI-->>UI: 401 — Session invalid
+    end
+
+    alt Session valid
+        ConsentAPI->>AdminSDK: createConsent(payload)
+        AdminSDK->>FS: Write consent + update user + minors_index
+        AdminSDK->>FS: Store signature blob
+        AdminSDK-->>ConsentAPI: 201 — consentId
+        ConsentAPI-->>UI: 201 — Consent recorded
+    end
+
+    Note over Visitor,FS: === ADMIN AUTH (separate flow) ===
+
+    Note over AdminSDK: Admin login: Firebase Auth
+    Note over AdminSDK: Custom Claims → role in JWT
+    Note over AdminSDK: Session cookie: jp_admin_session (30 min)
+    Note over AdminSDK: Permission check via hasPermission()
+    Note over AdminSDK: Route guard via verifyAdminToken()
