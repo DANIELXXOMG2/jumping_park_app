@@ -388,4 +388,248 @@ function extractDocsReadmeTableStatuses(markdown: string): string[] {
 		expect(architectureDoc).toContain('Zustand')
 		expect(architectureDoc).toContain('SWR')
 	})
+
+	// --- Firebase reference doc (slice 4) assertions ---
+
+	const firebaseDocPath = 'docs/reference/firebase.md'
+
+	const firebaseRequiredSections = [
+		'## 1. Overview',
+		'## 2. Firestore Collections',
+		'## 3. Security Rules (firestore.rules)',
+		'## 4. Composite Indexes',
+		'## 5. Auth & OTP Flow',
+		'## 6. Storage Rules',
+		'## 7. Operational Notes',
+		'## 8. Traceability',
+	]
+
+	const firebaseRequiredCollections = [
+		'admin_users',
+		'users',
+		'otp_challenges',
+		'otp_access_sessions',
+		'otp_sessions',
+		'offline_sync',
+		'minors_index',
+		'admin_metrics',
+		'admin_audit_logs',
+		'consents',
+		'accesses',
+	]
+
+	const firebaseRequiredSourceLinks = [
+		{ file: 'firebase/firestore.rules', label: 'firebase/firestore.rules' },
+		{ file: 'firebase/firestore.indexes.json', label: 'firebase/firestore.indexes.json' },
+		{ file: 'firebase/storage.rules', label: 'firebase/storage.rules' },
+		{ file: 'src/services/authService.ts', label: 'src/services/authService.ts' },
+		{ file: 'src/lib/adminAuth.ts', label: 'src/lib/adminAuth.ts' },
+		{ file: 'src/types/auth.ts', label: 'src/types/auth.ts' },
+		{ file: 'src/lib/utils/otpConfig.ts', label: 'src/lib/utils/otpConfig.ts' },
+		{ file: '.env.example', label: '.env.example' },
+	]
+
+	const firebaseRequiredIndexClaims = [
+		'consents',
+		'userId',
+		'createdAt',
+		'signedAt',
+		'validUntil',
+		'admin_users',
+		'role',
+		'minors_index',
+		'parentId',
+		'updatedAt',
+	]
+
+	it('keeps the firebase reference doc present and truthful', () => {
+		const firebaseDoc = readFileSync(join(cleanRoot, firebaseDocPath), 'utf8')
+
+		expect(firebaseDoc.startsWith('# Firebase Configuration & Operations\n')).toBe(true)
+		expect(firebaseDoc).toContain('> **Status**: current')
+		expect(firebaseDoc).toContain('> **Diátaxis**: Reference')
+
+		for (const section of firebaseRequiredSections) {
+			expect(firebaseDoc).toContain(section)
+		}
+
+		for (const collection of firebaseRequiredCollections) {
+			expect(firebaseDoc).toContain(`\`${collection}\``)
+		}
+
+		for (const { file, label } of firebaseRequiredSourceLinks) {
+			expect(existsSync(join(cleanRoot, file))).toBe(true)
+			expect(firebaseDoc).toContain(label)
+		}
+
+		// Verify auth diagram is linked
+		expect(firebaseDoc).toContain('diagramas/auth-sequence.mmd')
+		expect(firebaseDoc).toContain('Auth & OTP Flow')
+
+		// Verify index claims are present
+		for (const claim of firebaseRequiredIndexClaims) {
+			expect(firebaseDoc).toContain(claim)
+		}
+
+		// Verify all internal doc links resolve
+		const docLinkPattern = /\((\.\.\/|docs\/)[^)]+\.md\)/g
+		for (const [link] of firebaseDoc.matchAll(docLinkPattern)) {
+			const path = link.slice(1, -1)
+			const firebaseDocDir = join(cleanRoot, 'docs', 'reference')
+			const resolvedPath = path.startsWith('../')
+				? join(firebaseDocDir, path)
+				: join(cleanRoot, path)
+			expect(existsSync(resolvedPath)).toBe(true)
+		}
+	})
+
+	it('keeps firebase doc linked from hub as current reference', () => {
+		const docsReadme = readFileSync(join(cleanRoot, 'docs/README.md'), 'utf8')
+
+		expect(docsReadme).toContain('| `docs/reference/firebase.md` | current |')
+		expect(docsReadme).toContain('Firebase configuration')
+	})
+
+	// --- Triangulation: verify firebase doc claims against real config files ---
+
+	it('verifies firebase doc collection list matches firestore.rules', () => {
+		const firebaseDoc = readFileSync(join(cleanRoot, firebaseDocPath), 'utf8')
+		const rulesContent = readFileSync(join(cleanRoot, 'firebase/firestore.rules'), 'utf8')
+
+		// Every match /{collection}/ in rules should be mentioned in the doc
+		const collectionPattern = /match \/([a-z_]+)\/\{/g
+		const rulesCollections = new Set<string>()
+		for (const [, name] of rulesContent.matchAll(collectionPattern)) {
+			if (name !== 'databases' && name !== 'document') {
+				rulesCollections.add(name)
+			}
+		}
+
+		const missingFromDoc: string[] = []
+		for (const col of rulesCollections) {
+			if (!firebaseDoc.includes(`\`${col}\``)) {
+				missingFromDoc.push(col)
+			}
+		}
+
+		expect(missingFromDoc).toEqual([])
+	})
+
+	it('verifies firebase doc index claims match firestore.indexes.json', () => {
+		const firebaseDoc = readFileSync(join(cleanRoot, firebaseDocPath), 'utf8')
+		const indexesContent = JSON.parse(
+			readFileSync(join(cleanRoot, 'firebase/firestore.indexes.json'), 'utf8'),
+		) as { indexes: Array<{ collectionGroup: string; fields: Array<{ fieldPath: string }> }> }
+
+		for (const index of indexesContent.indexes) {
+			expect(firebaseDoc).toContain(index.collectionGroup)
+			for (const field of index.fields) {
+				if (field.fieldPath !== '__name__') {
+					expect(firebaseDoc).toContain(field.fieldPath)
+				}
+			}
+		}
+	})
+
+	it('verifies firebase doc references real env vars from .env.example', () => {
+		const firebaseDoc = readFileSync(join(cleanRoot, firebaseDocPath), 'utf8')
+		const envExample = readFileSync(join(cleanRoot, '.env.example'), 'utf8')
+
+		const otpEnvVars = ['OTP_EXPIRATION_MINUTES', 'OTP_SESSION_DURATION_MINUTES', 'OTP_LOCKOUT_MINUTES']
+		for (const envVar of otpEnvVars) {
+			expect(firebaseDoc).toContain(envVar)
+			expect(envExample).toContain(envVar)
+		}
+	})
+
+	// --- Auth sequence diagram (slice 4) assertions ---
+
+	const authDiagramPath = 'diagramas/auth-sequence.mmd'
+
+	it('keeps the auth sequence diagram present and valid', () => {
+		expect(existsSync(join(cleanRoot, authDiagramPath))).toBe(true)
+
+		const diagramContent = readFileSync(join(cleanRoot, authDiagramPath), 'utf8')
+		expect(diagramContent.startsWith('sequenceDiagram')).toBe(true)
+
+		// Must cover OTP lifecycle
+		expect(diagramContent).toContain('OTP')
+		expect(diagramContent).toContain('challenge')
+		expect(diagramContent).toContain('validate')
+		expect(diagramContent).toContain('session')
+		expect(diagramContent).toContain('lockout')
+		expect(diagramContent).toContain('Firestore')
+		expect(diagramContent).toContain('Resend')
+		expect(diagramContent).toContain('Admin SDK')
+	})
+
+	it('keeps the diagramas README listing the auth diagram', () => {
+		const diagramReadme = readFileSync(join(cleanRoot, 'diagramas/README.md'), 'utf8')
+		expect(diagramReadme).toContain('auth-sequence.mmd')
+	})
+
+	// --- Triangulation: verify firebase doc content truthfulness ---
+
+	it('verifies firebase doc mentions specific storage paths from storage.rules', () => {
+		const firebaseDoc = readFileSync(join(cleanRoot, firebaseDocPath), 'utf8')
+		const storageRules = readFileSync(join(cleanRoot, 'firebase/storage.rules'), 'utf8')
+
+		// Storage rules define specific paths
+		expect(storageRules).toContain('match /signatures/{userId}/{assetPath=**}')
+		expect(storageRules).toContain('match /generated-pdfs/{documentPath=**}')
+		expect(storageRules).toContain('function isAdmin()')
+		expect(firebaseDoc).toContain('signatures')
+		expect(firebaseDoc).toContain('generated-pdfs')
+		expect(firebaseDoc).toContain('isAdmin()')
+
+		// Must reference signed URLs pattern
+		expect(firebaseDoc).toContain('signed URL')
+	})
+
+	it('verifies firebase doc cross-references architecture doc', () => {
+		const firebaseDoc = readFileSync(join(cleanRoot, firebaseDocPath), 'utf8')
+		const architectureDoc = readFileSync(join(cleanRoot, 'docs/reference/architecture.md'), 'utf8')
+
+		// Firebase doc links to architecture doc
+		expect(firebaseDoc).toContain('docs/reference/architecture.md')
+
+		// Architecture doc mentions firebase collections that are documented
+		const sharedCollections = ['consents', 'otp_challenges', 'offline_sync', 'admin_metrics']
+		for (const col of sharedCollections) {
+			expect(architectureDoc).toContain(col)
+		}
+	})
+
+	it('verifies auth diagram contains sequenceDiagram participants and alt blocks', () => {
+		const diagramContent = readFileSync(join(cleanRoot, authDiagramPath), 'utf8')
+
+		// Must be valid Mermaid sequence diagram
+		expect(diagramContent).toContain('participant ')
+		expect(diagramContent).toContain('->>')
+		expect(diagramContent).toContain('alt ')
+		expect(diagramContent).toContain('else ')
+		expect(diagramContent).toContain('end')
+		expect(diagramContent).toContain('Note over')
+
+		// Must reference actual API routes
+		expect(diagramContent).toContain('/api/otp')
+		expect(diagramContent).toContain('/api/consentimientos')
+
+		// Must reference actual env vars for OTP timing
+		expect(diagramContent).toContain('OTP_LOCKOUT_MINUTES')
+		expect(diagramContent).toContain('otp_challenges')
+		expect(diagramContent).toContain('otp_access_sessions')
+	})
+
+	it('verifies firebase doc default-deny posture is documented for both firestore and storage', () => {
+		const firebaseDoc = readFileSync(join(cleanRoot, firebaseDocPath), 'utf8')
+
+		// Default deny should be mentioned for both services
+		expect(firebaseDoc).toContain('default-deny')
+		expect(firebaseDoc).toContain('{document=**}')
+
+		// Storage default deny as well
+		const defaultDenyCount = (firebaseDoc.match(/default-deny/g) ?? []).length
+		expect(defaultDenyCount).toBe(2)
+	})
 })
