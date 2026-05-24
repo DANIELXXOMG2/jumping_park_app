@@ -5,7 +5,7 @@ This is the entry point for the current documentation information architecture (
 ## Quick path
 
 1. Start at `README.md` for the repo overview and quality gates.
-2. Read `docs/ARQUITECTURA.md` for the current system narrative.
+2. Read `docs/ARQUITECTURA.md` or `docs/reference/architecture.md` for the current system narrative (English reference).
 3. Use `docs/runbooks/production-hardening.md` as the operational hub.
 4. Open `docs/portfolio/README.md` when you need the portfolio/storytelling workspace.
 5. Use historical docs only when you need traceability for older project states.
@@ -35,6 +35,7 @@ No current tutorial is published yet. This hub keeps the IA ready for future tut
 | Path | Status | Role |
 | --- | --- | --- |
 | `docs/adr/README.md` | current | ADR index for architecture decisions extracted from the reviewed source branch. |
+| `docs/reference/architecture.md` | current | English reference architecture — system planes, data flow, collection contracts, and operational gates. |
 | `docs/ARQUITECTURA.md` | current | Current architecture narrative, rollout model, and cross-surface system map. |
 | `docs/runbooks/otp-operational-policy.md` | current | OTP runtime values, lockouts, and source-linked operational contract. |
 | `docs/runbooks/dependency-risk-note.md` | current | Current dependency risk position and accepted residual tooling debt. |
