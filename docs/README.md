@@ -12,10 +12,9 @@ This is the entry point for the current documentation information architecture (
 
 ## Tutorials
 
-No current tutorial is published yet. This hub keeps the IA ready for future tutorials without inventing content that does not exist in the repo today.
-
 | Path | Status | Role |
 | --- | --- | --- |
+| `docs/guides/getting-started.md` | current | Contributor-first walkthrough: clone → install → boot → verify. |
 | `docs/MANUAL_USUARIO.md` | historical | Legacy end-user walkthrough kept only for traceability. |
 
 ## How-to guides
