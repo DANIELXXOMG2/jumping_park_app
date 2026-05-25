@@ -632,4 +632,189 @@ function extractDocsReadmeTableStatuses(markdown: string): string[] {
 		const defaultDenyCount = (firebaseDoc.match(/default-deny/g) ?? []).length
 		expect(defaultDenyCount).toBe(2)
 	})
+
+	// --- Deploy & CI reference doc (slice 5) assertions ---
+
+	const deployCiDocPath = 'docs/reference/deploy-and-ci.md'
+
+	const deployCiRequiredSections = [
+		'## 1. Overview',
+		'## 2. Vercel Deployment Model',
+		'## 3. Firebase Deploy Surface',
+		'## 4. CI Pipeline',
+		'## 5. Lighthouse Gates',
+		'## 6. Operational Notes',
+		'## 7. Traceability',
+	]
+
+	const deployCiRequiredSourceLinks = [
+		{ file: '.github/workflows/ci.yml', label: '.github/workflows/ci.yml' },
+		{ file: '.github/workflows/lighthouse.yml', label: '.github/workflows/lighthouse.yml' },
+		{ file: 'lighthouserc.json', label: 'lighthouserc.json' },
+		{ file: 'firebase.json', label: 'firebase.json' },
+		{ file: '.env.example', label: '.env.example' },
+		{ file: 'package.json', label: 'package.json' },
+		{ file: 'next.config.ts', label: 'next.config.ts' },
+	]
+
+	const deployCiRequiredCiJobs = [
+		'quality',
+		'dependency-audit',
+		'build-verification',
+	]
+
+	const deployCiRequiredChecks = [
+		'check:format',
+		'check:lint',
+		'check:types',
+		'check:phase5',
+		'audit',
+	]
+
+	it('keeps the deploy & CI reference doc present and truthful', () => {
+		const deployCiDoc = readFileSync(join(cleanRoot, deployCiDocPath), 'utf8')
+
+		expect(deployCiDoc.startsWith('# Deploy & CI Reference\n')).toBe(true)
+		expect(deployCiDoc).toContain('> **Status**: current')
+		expect(deployCiDoc).toContain('> **Diátaxis**: Reference')
+		expect(deployCiDoc).toContain('> **Audit date**:')
+
+		for (const section of deployCiRequiredSections) {
+			expect(deployCiDoc).toContain(section)
+		}
+
+		for (const { file, label } of deployCiRequiredSourceLinks) {
+			expect(existsSync(join(cleanRoot, file))).toBe(true)
+			expect(deployCiDoc).toContain(label)
+		}
+
+		// Verify CI job names are referenced
+		for (const job of deployCiRequiredCiJobs) {
+			expect(deployCiDoc).toContain(job)
+		}
+
+		// Verify all CI check commands are referenced
+		for (const check of deployCiRequiredChecks) {
+			expect(deployCiDoc).toContain(check)
+		}
+
+		// Verify all internal doc links resolve
+		const docLinkPattern = /\((\.\.\/|docs\/)[^)]+\.md\)/g
+		for (const [link] of deployCiDoc.matchAll(docLinkPattern)) {
+			const path = link.slice(1, -1)
+			const deployCiDocDir = join(cleanRoot, 'docs', 'reference')
+			const resolvedPath = path.startsWith('../')
+				? join(deployCiDocDir, path)
+				: join(cleanRoot, path)
+			expect(existsSync(resolvedPath)).toBe(true)
+		}
+	})
+
+	it('keeps deploy & CI doc linked from hub as current reference', () => {
+		const docsReadme = readFileSync(join(cleanRoot, 'docs/README.md'), 'utf8')
+
+		expect(docsReadme).toContain('| `docs/reference/deploy-and-ci.md` | current |')
+		expect(docsReadme).toContain('Deploy & CI')
+	})
+
+	// --- Triangulation: verify deploy & CI doc claims against real config files ---
+
+	it('verifies deploy & CI doc CI job structure matches ci.yml', () => {
+		const deployCiDoc = readFileSync(join(cleanRoot, deployCiDocPath), 'utf8')
+		const ciYml = readFileSync(join(cleanRoot, '.github/workflows/ci.yml'), 'utf8')
+
+		// CI workflow must define the documented jobs
+		expect(ciYml).toContain('quality:')
+		expect(ciYml).toContain('dependency-audit:')
+		expect(ciYml).toContain('build-verification:')
+
+		// Doc must mention concurrency and timeout
+		expect(deployCiDoc).toContain('concurrency')
+		expect(deployCiDoc).toContain('cancel-in-progress')
+		expect(deployCiDoc).toContain('timeout-minutes')
+	})
+
+	it('verifies deploy & CI doc Lighthouse thresholds match lighthouserc.json', () => {
+		const deployCiDoc = readFileSync(join(cleanRoot, deployCiDocPath), 'utf8')
+		const lighthouseConfig = JSON.parse(
+			readFileSync(join(cleanRoot, 'lighthouserc.json'), 'utf8'),
+		) as {
+			ci: { assert: { assertions: Record<string, [string, { minScore?: number; maxNumericValue?: number }]> } }
+		}
+
+		const assertions = lighthouseConfig.ci.assert.assertions
+		const performanceMinScore = assertions['categories:performance'][1].minScore
+		const accessibilityMinScore = assertions['categories:accessibility'][1].minScore
+		const bestPracticesMinScore = assertions['categories:best-practices'][1].minScore
+		const seoMinScore = assertions['categories:seo'][1].minScore
+		const lcpThreshold = assertions['largest-contentful-paint'][1].maxNumericValue
+		const tbtThreshold = assertions['total-blocking-time'][1].maxNumericValue
+		const clsThreshold = assertions['cumulative-layout-shift'][1].maxNumericValue
+
+		// Thresholds must match the parsed config values
+		expect(deployCiDoc).toContain(String(performanceMinScore))
+		expect(deployCiDoc).toContain('performance')
+		expect(deployCiDoc).toContain(String(accessibilityMinScore))
+		expect(deployCiDoc).toContain(String(bestPracticesMinScore))
+		expect(deployCiDoc).toContain(String(seoMinScore))
+		expect(deployCiDoc).toContain('seo')
+		expect(deployCiDoc).toContain('accessibility')
+		expect(deployCiDoc).toContain('best-practices')
+		expect(deployCiDoc).toContain(String(lcpThreshold))
+		expect(deployCiDoc).toContain(String(tbtThreshold))
+		expect(deployCiDoc).toContain(String(clsThreshold))
+
+		// Check the config still matches
+		expect(performanceMinScore).toBe(0.8)
+		expect(seoMinScore).toBe(0.9)
+		expect(accessibilityMinScore).toBe(0.9)
+		expect(bestPracticesMinScore).toBe(0.9)
+		expect(lcpThreshold).toBe(3600)
+		expect(tbtThreshold).toBe(300)
+		expect(clsThreshold).toBe(0.1)
+	})
+
+	it('verifies deploy & CI doc env var references exist in .env.example', () => {
+		const deployCiDoc = readFileSync(join(cleanRoot, deployCiDocPath), 'utf8')
+		const envExample = readFileSync(join(cleanRoot, '.env.example'), 'utf8')
+
+		// Doc mentions deployment-relevant env vars
+		const deployEnvVars = ['ADMIN_JWT_SECRET', 'OTP_HARDENING_ENABLED', 'PUBLIC_SEO_ENABLED']
+		for (const envVar of deployEnvVars) {
+			expect(deployCiDoc).toContain(envVar)
+			expect(envExample).toContain(envVar)
+		}
+
+		// Doc must mention the concrete secret/env contract we actually use
+		expect(deployCiDoc).toContain('ADMIN_JWT_SECRET')
+		expect(deployCiDoc).toContain('RESEND_API_KEY')
+	})
+
+	it('verifies deploy & CI doc cross-references firebase doc', () => {
+		const deployCiDoc = readFileSync(join(cleanRoot, deployCiDocPath), 'utf8')
+
+		// Must link to firebase reference for Firebase deploy details
+		expect(deployCiDoc).toContain('docs/reference/firebase.md')
+	})
+
+	it('verifies deploy & CI doc mentions Vercel deployment model', () => {
+		const deployCiDoc = readFileSync(join(cleanRoot, deployCiDocPath), 'utf8')
+
+		// Vercel deployment references
+		expect(deployCiDoc).toContain('Vercel')
+		expect(deployCiDoc).toContain('preview')
+		expect(deployCiDoc).toContain('production')
+		expect(deployCiDoc).toContain('Next.js')
+	})
+
+	it('verifies deploy & CI doc Lighthouse audit mentions the public route and runs count', () => {
+		const deployCiDoc = readFileSync(join(cleanRoot, deployCiDocPath), 'utf8')
+		const lighthouseConfig = readFileSync(join(cleanRoot, 'lighthouserc.json'), 'utf8')
+
+		// numberOfRuns is 3 in lighthouserc.json
+		expect(deployCiDoc).toContain('`consentimiento-digital`')
+
+		// Verify actual config matches — consent route is in lighthouserc.json, not lighthouse.yml
+		expect(lighthouseConfig).toContain('consentimiento-digital')
+	})
 })
