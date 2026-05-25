@@ -132,3 +132,6 @@ public/worker-*.js.map
 # Local verification screenshots (not product assets)
 block-e-consentimiento-digital.png
 block-e-kiosk-consent-dialog.png
+
+# SDD deferred work slices
+_deferred/
