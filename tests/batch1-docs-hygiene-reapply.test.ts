@@ -817,4 +817,221 @@ function extractDocsReadmeTableStatuses(markdown: string): string[] {
 		// Verify actual config matches — consent route is in lighthouserc.json, not lighthouse.yml
 		expect(lighthouseConfig).toContain('consentimiento-digital')
 	})
+
+	// --- Slice 6: API reference ---
+
+	const apiDocPath = 'docs/reference/api.md'
+
+	const apiRequiredSections = [
+		'## 1. Quick path',
+		'## 2. Service layer',
+		'## 3. Route surface',
+		'## 4. Validation surface',
+		'## 5. Auth model',
+	]
+
+	const apiRequiredServiceFiles = [
+		'src/services/authService.ts',
+		'src/services/rateLimitService.ts',
+		'src/services/emailService.ts',
+		'src/services/consentService.ts',
+		'src/services/pdfService.ts',
+		'src/services/minorIndexService.ts',
+		'src/services/userService.ts',
+		'src/services/adminSessionService.ts',
+		'src/services/adminMetricsService.ts',
+		'src/services/adminConsentListService.ts',
+		'src/services/adminExportService.ts',
+		'src/services/exportRangeService.ts',
+		'src/services/adminAuditService.ts',
+	]
+
+	const apiRequiredRoutePaths = [
+		'/api/otp',
+		'/api/otp/validate',
+		'/api/consentimientos',
+		'/api/settings/consent',
+		'/api/usuarios',
+		'/api/usuarios/check',
+		'/api/usuarios/[uid]/menores',
+		'/api/menores',
+		'/api/accesos',
+		'/api/admin/session',
+		'/api/admin/verificar-consentimiento',
+		'/api/admin/users',
+		'/api/admin/users/recent',
+		'/api/admin/users/[id]',
+		'/api/admin/users/[id]/permissions',
+		'/api/admin/staff',
+		'/api/admin/staff/[id]',
+		'/api/admin/minors',
+		'/api/admin/minors/[id]',
+		'/api/admin/migrate/minors',
+		'/api/admin/consents',
+		'/api/admin/consents/[id]',
+		'/api/admin/consents/[id]/pdf',
+		'/api/admin/consents/[id]/resend',
+		'/api/admin/export/users',
+		'/api/admin/export/consents',
+		'/api/admin/stats',
+		'/api/admin/stats/detailed',
+		'/api/admin/activity',
+		'/api/admin/settings/consent',
+		'/api/admin/roles',
+		'/api/admin/set-admin',
+	]
+
+	const apiRequiredSchemaFiles = [
+		{ file: 'src/lib/schemas/auth.schema.ts', schema: 'sendOtpSchema' },
+		{ file: 'src/lib/schemas/auth.schema.ts', schema: 'validateOtpSchema' },
+		{ file: 'src/lib/schemas/crud.schema.ts', schema: 'usuarioCreateSchema' },
+		{ file: 'src/lib/schemas/crud.schema.ts', schema: 'menorCreateSchema' },
+		{ file: 'src/lib/schemas/crud.schema.ts', schema: 'accesoCreateSchema' },
+		{ file: 'src/lib/schemas/consent.schema.ts', schema: 'consentSubmissionSchema' },
+		{ file: 'src/lib/schemas/consent.schema.ts', schema: 'minorSchema' },
+		{ file: 'src/lib/schemas/consent.schema.ts', schema: 'birthDateSchema' },
+		{ file: 'src/lib/schemas/legalContent.schema.ts', schema: 'localizedConsentSchema' },
+		{ file: 'src/lib/schemas/visitor.schema.ts', schema: 'visitorSchema' },
+		{ file: 'src/lib/schemas/shared.regex.ts', schema: 'ALPHANUMERIC_DOC_REGEX' },
+		{ file: 'src/lib/schemas/shared.regex.ts', schema: 'UTF8_NAME_REGEX' },
+	]
+
+	it('keeps the API reference doc present and truthful', () => {
+		const apiDoc = readFileSync(join(cleanRoot, apiDocPath), 'utf8')
+
+		expect(apiDoc.startsWith('# API Reference\n')).toBe(true)
+		expect(apiDoc).toContain('> **Status**: current')
+		expect(apiDoc).toContain('> **Diátaxis**: Reference')
+		expect(apiDoc).toContain('> **Audit date**:')
+
+		for (const section of apiRequiredSections) {
+			expect(apiDoc).toContain(section)
+		}
+
+		// Every claimed service file must exist on disk
+		for (const serviceFile of apiRequiredServiceFiles) {
+			expect(existsSync(join(cleanRoot, serviceFile))).toBe(true)
+		}
+
+		// Every claimed route must appear in the doc
+		for (const routePath of apiRequiredRoutePaths) {
+			expect(apiDoc).toContain(routePath)
+		}
+
+		// Every claimed schema file must exist and the schema name must appear in the doc
+		for (const { file, schema } of apiRequiredSchemaFiles) {
+			expect(existsSync(join(cleanRoot, file))).toBe(true)
+			expect(apiDoc).toContain(schema)
+		}
+
+		// Auth model section must describe both auth layers
+		expect(apiDoc).toContain('Public OTP')
+		expect(apiDoc).toContain('Admin session')
+		expect(apiDoc).toContain('Custom claims')
+		expect(apiDoc).toContain('Rate limiting')
+	})
+
+	it('keeps API reference doc linked from hub as current reference', () => {
+		const docsReadme = readFileSync(join(cleanRoot, 'docs/README.md'), 'utf8')
+
+		expect(docsReadme).toContain('| `docs/reference/api.md` | current |')
+		expect(docsReadme).toContain('API reference')
+	})
+
+	it('verifies API doc cross-references architecture and firebase docs', () => {
+		const apiDoc = readFileSync(join(cleanRoot, apiDocPath), 'utf8')
+
+		// Must link to architecture reference for broader context
+		expect(apiDoc).toContain('](../reference/architecture.md)')
+
+		// Must link to firebase reference for collection/auth details
+		expect(apiDoc).toContain('](../reference/firebase.md)')
+	})
+
+	it('verifies API doc internal links resolve to existing files', () => {
+		const apiDoc = readFileSync(join(cleanRoot, apiDocPath), 'utf8')
+
+		const docLinkPattern = /\((\.\.\/|docs\/)[^)]+\.md\)/g
+		for (const [link] of apiDoc.matchAll(docLinkPattern)) {
+			const path = link.slice(1, -1)
+			const apiDocDir = join(cleanRoot, 'docs', 'reference')
+			const resolvedPath = path.startsWith('../')
+				? join(apiDocDir, path)
+				: join(cleanRoot, path)
+			expect(existsSync(resolvedPath)).toBe(true)
+		}
+	})
+
+	// --- Triangulation: verify API doc route claims match real route files ---
+
+	const publicRouteDirs = [
+		'api/otp',
+		'api/otp/validate',
+		'api/consentimientos',
+		'api/settings/consent',
+		'api/usuarios',
+		'api/usuarios/check',
+		'api/usuarios/[uid]/menores',
+		'api/menores',
+		'api/accesos',
+	] as const
+
+	const adminRouteDirs = [
+		'api/admin/session',
+		'api/admin/verificar-consentimiento',
+		'api/admin/users',
+		'api/admin/users/recent',
+		'api/admin/users/[id]',
+		'api/admin/users/[id]/permissions',
+		'api/admin/staff',
+		'api/admin/staff/[id]',
+		'api/admin/minors',
+		'api/admin/minors/[id]',
+		'api/admin/migrate/minors',
+		'api/admin/consents',
+		'api/admin/consents/[id]',
+		'api/admin/consents/[id]/pdf',
+		'api/admin/consents/[id]/resend',
+		'api/admin/export/users',
+		'api/admin/export/consents',
+		'api/admin/stats',
+		'api/admin/stats/detailed',
+		'api/admin/activity',
+		'api/admin/settings/consent',
+		'api/admin/roles',
+		'api/admin/set-admin',
+	] as const
+
+	it('verifies every public route file exists on disk', () => {
+		for (const routeDir of publicRouteDirs) {
+			const routeFile = join(cleanRoot, 'src', 'app', routeDir, 'route.ts')
+			expect(existsSync(routeFile)).toBe(true)
+		}
+	})
+
+	it('verifies every admin route directory has a route.ts file', () => {
+		for (const dir of adminRouteDirs) {
+			const routeFile = join(cleanRoot, 'src', 'app', dir, 'route.ts')
+			expect(existsSync(routeFile)).toBe(true)
+		}
+	})
+
+	it('verifies API doc auth model references match actual source files', () => {
+		const apiDoc = readFileSync(join(cleanRoot, apiDocPath), 'utf8')
+
+		// Auth source files must exist and be mentioned
+		const authFiles = [
+			'src/app/api/otp/route.ts',
+			'src/services/authService.ts',
+			'src/app/api/admin/session/route.ts',
+			'src/services/adminSessionService.ts',
+			'src/lib/adminAuth.ts',
+			'src/types/auth.ts',
+			'src/services/rateLimitService.ts',
+		]
+		for (const file of authFiles) {
+			expect(existsSync(join(cleanRoot, file))).toBe(true)
+			expect(apiDoc).toContain(file)
+		}
+	})
 })
