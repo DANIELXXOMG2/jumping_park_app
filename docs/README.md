@@ -21,6 +21,7 @@ This is the entry point for the current documentation information architecture (
 
 | Path | Status | Role |
 | --- | --- | --- |
+| `docs/guides/deployment.md` | current | Truthful deploy path: Firebase prep → Vercel config → post-deploy smoke. |
 | `docs/runbooks/production-hardening.md` | current | Main operator path for release validation, rollout, and rollback checks. |
 | `docs/runbooks/rollback-flags.md` | current | Flag-by-flag rollback procedure for staged releases. |
 | `docs/runbooks/offline-replay-drill.md` | current | Step-by-step offline replay validation drill. |
