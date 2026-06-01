@@ -33,6 +33,7 @@
     "migrate:consent-minor-tokens": "bun run scripts/migrate-consent-minor-tokens.ts",
     "migrate:minor-search-tokens": "bun run scripts/migrate-minor-search-tokens.ts",
     "migrate:tildes": "bun run scripts/migrate-search-tokens-tildes.ts",
+    "screenshot:capture": "bun run scripts/capture-screenshots.ts",
     "optimize:images": "bun run scripts/optimize-images.ts",
     "optimize:screenshots": "bun run scripts/optimize-screenshots.ts",
     "backup": "bun run scripts/backup.ts"
