@@ -135,3 +135,5 @@ block-e-kiosk-consent-dialog.png
 
 # SDD deferred work slices
 _deferred/
+
+.sdd-slices/
