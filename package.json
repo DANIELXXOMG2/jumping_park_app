@@ -34,6 +34,7 @@
     "migrate:minor-search-tokens": "bun run scripts/migrate-minor-search-tokens.ts",
     "migrate:tildes": "bun run scripts/migrate-search-tokens-tildes.ts",
     "optimize:images": "bun run scripts/optimize-images.ts",
+    "optimize:screenshots": "bun run scripts/optimize-screenshots.ts",
     "backup": "bun run scripts/backup.ts"
   },
   "dependencies": {
