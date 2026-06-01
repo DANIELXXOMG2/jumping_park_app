@@ -36,7 +36,7 @@ La superficie publica es chica, asi que la verificacion manual tambien debe ser 
 
 ## Cobertura automatizada disponible vs gap real
 
-- Cobertura de regression de primitives: `tests/block-b-a11y-and-logging.test.tsx` valida semantica modal, teclado en filas interactivas y el wrap de foco esperado para dialogos.
+- Cobertura de regression de primitives: `tests/block-e-a11y-smoke.test.tsx` valida semantica modal, landmarks y el baseline de foco esperado para dialogos.
 - Cobertura browser reproducible en repo: `bun run test:a11y:e2e` (Playwright + Axe) sobre `/consentimiento-digital` y un surface kiosk critico.
 - Gap explicito actual: esta cobertura es smoke E2E, no reemplaza una matriz completa de navegacion asistiva para todo admin/kiosk.
 - Siguiente paso cuando entre en alcance: ampliar `playwright/accessibility.a11y.ts` con rutas admin clave y escenarios de foco/zoom extendidos.

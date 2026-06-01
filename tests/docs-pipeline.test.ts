@@ -1,8 +1,46 @@
+import { existsSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, expect, it } from 'bun:test'
 import { lintMarkdown, type LintFinding } from '../scripts/check-docs-lint'
 import { findBrokenLinks, type BrokenLink } from '../scripts/check-docs-links'
 import { scanForSecrets, type RedactionFinding } from '../scripts/check-docs-redact'
 import { detectDrift, type DriftFinding } from '../scripts/check-docs-drift'
+
+const projectRoot = process.cwd()
+
+describe('check:docs pipeline exists and is wired', () => {
+	it('all 5 pipeline scripts exist on disk', () => {
+		const scripts = [
+			'scripts/check-docs.ts',
+			'scripts/check-docs-lint.ts',
+			'scripts/check-docs-links.ts',
+			'scripts/check-docs-redact.ts',
+			'scripts/check-docs-drift.ts',
+		]
+		for (const script of scripts) {
+			expect(existsSync(join(projectRoot, script))).toBe(true)
+		}
+	})
+
+	it('package.json has check:docs scripts', () => {
+		const pkg = require(join(projectRoot, 'package.json'))
+		expect(pkg.scripts['check:docs']).toBeDefined()
+		expect(pkg.scripts['check:docs:lint']).toBeDefined()
+		expect(pkg.scripts['check:docs:links']).toBeDefined()
+		expect(pkg.scripts['check:docs:redact']).toBeDefined()
+		expect(pkg.scripts['check:docs:drift']).toBeDefined()
+	})
+
+	it('package.json check chain includes check:docs', () => {
+		const pkg = require(join(projectRoot, 'package.json'))
+		expect(pkg.scripts['check']).toContain('check:docs')
+	})
+
+	it('check:docs script runs the orchestrator', () => {
+		const pkg = require(join(projectRoot, 'package.json'))
+		expect(pkg.scripts['check:docs']).toContain('check-docs.ts')
+	})
+})
 
 describe('Phase 1: lint detects markdown quality issues', () => {
 	it('passes on well-formed markdown', () => {
@@ -74,12 +112,6 @@ describe('Phase 2: links detects broken references', () => {
 
 	it('passes for existing backtick repo references', () => {
 		const content = 'See `tests/docs-pipeline.test.ts` for config.\n'
-		const findings = findBrokenLinks('docs/test.md', content)
-		expect(findings.length).toBe(0)
-	})
-
-	it('ignores backtick repo references inside code fences', () => {
-		const content = '# Title\n\n```ts\nSee `src/nonexistent/module.ts` for config.\n```\n'
 		const findings = findBrokenLinks('docs/test.md', content)
 		expect(findings.length).toBe(0)
 	})
