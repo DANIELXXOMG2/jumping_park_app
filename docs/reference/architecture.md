@@ -202,7 +202,7 @@ Phase 5 coverage and incremental Block D/E2 closure:
 - Offline idempotency: `tests/offline-resilience.test.ts`
 - Cursor/admin aggregates: `tests/foundation-rollout-scaffolding.test.ts`, `tests/phase5-verification-hardening.test.ts`
 - Perimeter headers/CSP: `tests/proxy.security.test.ts`
-- Pragmatic a11y primitives: `tests/block-b-a11y-and-logging.test.tsx`
+- Pragmatic a11y primitives: `tests/block-e-a11y-smoke.test.tsx`
 - Reproducible a11y browser smoke: `playwright/accessibility.a11y.ts` run with `bun run test:a11y:e2e`
 
 Manual a11y notes remain in runbooks because current coverage is smoke-level, not a full matrix. The actual state now: there IS browser automation with Axe/Playwright for critical surfaces, but coverage STILL needs expansion for all admin/kiosk flows end-to-end.
