@@ -19,7 +19,7 @@ This guide explains which verification layers exist in Jumping Park today, when 
 | --- | --- | --- | --- |
 | Foundation — unit and contract tests | Most automated coverage lives in `tests/*.test.ts*`, including service logic, route handlers, configuration helpers, rollout policy checks, and documentation contracts such as `tests/batch1-docs-hygiene-reapply.test.ts` and `tests/docs-getting-started-guide.test.ts`. | `bun test` or `bun test tests/<file>.test.ts` | Default for almost every slice. Start here first because it is fast and already matches the repo's main test runner. |
 | Middle — route and service behavior with injected dependencies | The repo exercises many multi-step behaviors inside the same Bun layer by creating `NextRequest` objects, injecting fake dependencies, and asserting real outputs (for example `tests/consent-route.test.ts` and `tests/admin-session-service.test.ts`). There is no separate `test:integration` script in this repository today. | `bun test tests/<file>.test.ts` | Use this when the behavior crosses parsing, validation, service calls, or response mapping but does not need a browser. |
-| Top — browser accessibility smoke | Playwright + Axe smoke coverage lives in `playwright/accessibility.a11y.ts` and currently verifies `/consentimiento-digital`, `/ingreso`, and the kiosk consent dialog flow. | `bun run test:a11y:e2e` | Use this when you touch rendering, keyboard flow, hydration stability, or accessibility-sensitive UI. |
+| Top — browser accessibility smoke | Playwright + Axe smoke coverage lives in `playwright/accessibility.a11y.ts` and currently verifies `/consentimiento-digital`, `/ingreso`, the kiosk home, `/offline`, `/admin/login`, the kiosk consent dialog flow, and the `/registro` form when it renders. | `bun run test:a11y:e2e` | Use this when you touch rendering, keyboard flow, hydration stability, or accessibility-sensitive UI. |
 
 The pyramid is intentionally bottom-heavy today: Bun tests carry most regression coverage, and browser automation is still a focused smoke layer rather than a full end-to-end matrix.
 
@@ -75,3 +75,4 @@ That workflow complements testing, but it is not a substitute for `bun test` or 
 
 - Read `docs/guides/getting-started.md` if you still need the local bootstrapping path.
 - Read `docs/runbooks/production-hardening.md` when you are validating release readiness instead of day-to-day contributor checks.
+- Read `docs/reference/accessibility.md` for the full automated-vs-manual accessibility coverage matrix, the WCAG 2.1 AA status table, and the next honest coverage targets.
