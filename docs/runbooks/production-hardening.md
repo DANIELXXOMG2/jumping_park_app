@@ -1,23 +1,26 @@
 # Production hardening hub
 
-Este documento es la puerta de entrada operativa. Si vas a validar, habilitar o revertir una capacidad del roadmap, arrancas aca y despues seguis el runbook especializado.
+This document is the operational entry point. If you need to validate, enable, or roll back a roadmap capability, start here and then move to the specialized runbook.
 
-Companeros actuales de este hub:
+Current companions of this hub:
 
-- `docs/README.md` para distinguir docs vigentes vs historicas.
-- `docs/runbooks/dependency-risk-note.md` para el estado actual de `bun audit` y el riesgo residual aceptado (hoy: solo transitivo/tooling, no dependencias runtime directas reportadas).
+- `docs/README.md` to distinguish active docs from historical ones.
+- `docs/runbooks/dependency-risk-note.md` for the current `bun audit` status and the accepted residual risk (today: transitive/tooling only, no reported direct runtime dependencies).
+- `docs/runbooks/git-history-mp4-purge.md` for the procedure to scrub `.mp4` binaries from git history when they leak into a release branch.
+- `docs/runbooks/lighthouse-budget-rationale.md` for the rationale behind the current Lighthouse performance budget and the documented exceptions.
+- `docs/runbooks/otp-operational-policy.md` for the operational policy covering admin OTP issuance, rotation, and incident response.
 
-## Orden recomendado
+## Recommended order
 
-1. Confirmar flags y entorno con `docs/runbooks/rollback-flags.md`.
-2. Validar admin cost plane con `docs/runbooks/admin-cost-smoke-checklist.md`.
-3. Ejecutar drill offline con `docs/runbooks/offline-replay-drill.md` si `OFFLINE_QUEUE_ENABLED=true` y `NEXT_PUBLIC_OFFLINE_QUEUE_ENABLED=true`.
-4. Validar SEO/AI-SEO + notas a11y con `docs/runbooks/seo-ai-seo-validation-checklist.md` antes de abrir indexacion.
-5. Revisar `docs/runbooks/dependency-risk-note.md` antes de endurecer el gate de dependencias o aceptar upgrades grandes.
+1. Confirm flags and environment with `docs/runbooks/rollback-flags.md`.
+2. Validate the admin cost plane with `docs/runbooks/admin-cost-smoke-checklist.md`.
+3. Run the offline drill with `docs/runbooks/offline-replay-drill.md` if `OFFLINE_QUEUE_ENABLED=true` and `NEXT_PUBLIC_OFFLINE_QUEUE_ENABLED=true`.
+4. Validate SEO/AI-SEO and a11y notes with `docs/runbooks/seo-ai-seo-validation-checklist.md` before opening indexing.
+5. Review `docs/runbooks/dependency-risk-note.md` before tightening the dependency gate or accepting large upgrades.
 
 Firebase IaC parity: review `firebase/firestore.indexes.json`, `firebase/firestore.rules`, and `firebase/storage.rules` before any flag enablement.
 
-## Smoke pack minimo por release
+## Minimum release smoke pack
 
 - `bun test`
 - `bun test tests/phase4-production-artifacts.test.ts`
@@ -25,29 +28,29 @@ Firebase IaC parity: review `firebase/firestore.indexes.json`, `firebase/firesto
 - `bun run check:types`
 - `bun run check:phase5`
 
-## Nota importante sobre CI
+## Important CI note
 
-- `bun run check:format` y `bun run check:lint` ya no escriben archivos.
-- Si necesitás corregir localmente, usá `bun run fix:format` y `bun run fix:lint`.
-- No uses un gate que muta el workspace: eso rompe reproducibilidad y te ensucia la evidencia.
+- `bun run check:format` and `bun run check:lint` no longer write files.
+- If you need local fixes, use `bun run fix:format` and `bun run fix:lint`.
+- Do not use a gate that mutates the workspace: that breaks reproducibility and contaminates the evidence.
 
-## Criterio de aprobacion
+## Approval criteria
 
-No habilitar flags nuevos en produccion si falta alguno de estos puntos:
+Do not enable new flags in production if any of these points are missing:
 
-- rollback documentado y probado;
-- smoke de costo admin estable;
-- replay offline sin duplicados cuando aplica;
-- SEO/AI-SEO validado sobre el deploy real;
-- notas manuales de a11y registradas.
+- Documented and tested rollback.
+- Stable admin cost smoke.
+- Offline replay without duplicates when it applies.
+- SEO/AI-SEO validated against the real deployment.
+- Manual a11y notes recorded.
 
-## Limitaciones vigentes que NO hay que maquillar
+## Current limitations we must NOT hide
 
-- Dependencias: `bun audit` sigue mostrando riesgo residual transitivo/tooling. El gate actual bloquea hallazgos directos nuevos, pero no inventa que la deuda upstream ya desaparecio.
-- Accesibilidad: ya existe smoke browser reproducible con Axe/Playwright (`bun run test:a11y:e2e`), pero todavia no cubre una matriz E2E completa de todas las rutas admin/kiosk.
+- Dependencies: `bun audit` still shows residual transitive/tooling risk. The current gate blocks new direct findings, but it does not pretend the upstream debt has already disappeared.
+- Accessibility: a reproducible browser smoke already exists with Axe/Playwright (`bun run test:a11y:e2e`), but it still does not cover a full E2E matrix for every admin/kiosk route.
 
 ## CSP staged tightening
 
-- Baseline enforced: `src/proxy.ts` siempre emite un CSP activo con `frame-src 'none'`, `object-src 'none'`, `worker-src 'self' blob:`, `manifest-src 'self'` y sin origenes remotos amplios para scripts.
-- Canary opcional: `CSP_REPORT_ONLY_ENABLED=true` agrega un header `Content-Security-Policy-Report-Only` mas estricto para observar compatibilidad antes de endurecer enforcement.
-- Limitacion conocida: `unsafe-inline` sigue presente por compatibilidad con el runtime actual y el JSON-LD inline del surface publico; NO lo saques en produccion sin primero cubrir nonces/hashes y smoke browser real.
+- Baseline enforced: `src/proxy.ts` always emits an active CSP with `frame-src 'none'`, `object-src 'none'`, `worker-src 'self' blob:`, `manifest-src 'self'`, and no broad remote script origins.
+- Optional canary: `CSP_REPORT_ONLY_ENABLED=true` adds a stricter `Content-Security-Policy-Report-Only` header so compatibility can be observed before tightening enforcement.
+- Known limitation: `unsafe-inline` is still present for compatibility with the current runtime and the inline JSON-LD on the public surface; do NOT remove it in production until nonces/hashes and a real browser smoke are covered first.

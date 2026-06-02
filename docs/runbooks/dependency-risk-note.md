@@ -1,36 +1,36 @@
 # Dependency risk note
 
-## Estado actual
+## Current status
 
-Fecha de referencia: `2026-04-06`
+Reference date: `2026-04-06`
 
-- `next` se actualizo de `16.0.7` a `16.2.2` para sacar del gate las vulnerabilidades directas reportadas por `bun audit`.
-- `firebase` se actualizo de `12.6.0` a `12.11.0` y `firebase-admin` de `13.6.0` a `13.7.0` como upgrade directo de bajo riesgo.
-- Resultado actual: `bun audit` ya no reporta vulnerabilidades en dependencias runtime directas, pero SI mantiene riesgo residual transitive/tooling. Ese es el estado vigente que tienen que repetir `docs/README.md` y `docs/runbooks/production-hardening.md`, sin reinterpretarlo.
+- `next` was updated from `16.0.7` to `16.2.6` to remove the direct vulnerabilities reported by `bun audit` from the gate.
+- `firebase` was updated from `12.6.0` to `12.11.0`, and `firebase-admin` from `13.6.0` to `13.7.0`, as low-risk direct upgrades.
+- Current result: `bun audit` no longer reports vulnerabilities in direct runtime dependencies, but it DOES keep residual transitive/tooling risk. That is the current state that `docs/README.md` and `docs/runbooks/production-hardening.md` must repeat without reinterpretation.
 
-## Riesgo residual aceptado por ahora
+## Residual risk accepted for now
 
-### Runtime transitivo
+### Transitive runtime
 
-- `node-forge`, `jws` y `@tootallnate/once` siguen entrando por el arbol de `firebase-admin` / `@google-cloud/storage`.
-- No se aplico override manual sobre esos paquetes en esta fase para evitar forzar combinaciones no validadas en la cadena Firebase/Admin SDK.
+- `node-forge`, `jws`, and `@tootallnate/once` still enter through the `firebase-admin` / `@google-cloud/storage` tree.
+- No manual override was applied to those packages in this phase because we do not want to force unvalidated combinations into the Firebase/Admin SDK chain.
 
-### Tooling / CI transitivo
+### Transitive tooling / CI
 
 - `smol-toml` via `knip`
 - `ajv`, `brace-expansion`, `minimatch`, `flatted` via `eslint`
-- `picomatch` via `dependency-cruiser`, `knip`, `eslint-config-next` y `jscpd`
+- `picomatch` via `dependency-cruiser`, `knip`, `eslint-config-next`, and `jscpd`
 
-Estos hallazgos afectan principalmente tooling de desarrollo/CI, no el runtime productivo servido a usuarios.
+These findings primarily affect development/CI tooling, not the production runtime served to users.
 
-## Mitigaciones activas
+## Active mitigations
 
-- CI ahora bloquea si `bun audit` vuelve a reportar una vulnerabilidad en una dependencia directa (`(direct dependency)`).
-- El job de audit sigue mostrando el reporte completo para no ocultar deuda transitive/tooling.
-- Los upgrades pendientes deben intentarse primero via releases oficiales upstream; evita overrides agresivos salvo reproduccion controlada y verificacion dedicada.
+- CI now blocks if `bun audit` reports a vulnerability again in a direct dependency (`(direct dependency)`).
+- The audit job still shows the full report so transitive/tooling debt does not get hidden.
+- Pending upgrades should be attempted through official upstream releases first; avoid aggressive overrides unless you have a controlled reproduction and dedicated verification.
 
-## Proximo paso recomendado
+## Recommended next step
 
-1. Revisar releases de `firebase-admin` / `@google-cloud/storage` y retirar este riesgo residual apenas upstream publique rangos parchados.
-2. Re-evaluar si conviene separar tooling vulnerable en jobs no bloqueantes o moverlos a versiones mayores en una fase dedicada de mantenimiento.
-3. Mantener `bun audit` registrado en verify/apply mientras exista este runbook.
+1. Review `firebase-admin` / `@google-cloud/storage` releases and remove this residual risk as soon as upstream publishes patched ranges.
+2. Re-evaluate whether vulnerable tooling should move to non-blocking jobs or to newer major versions in a dedicated maintenance phase.
+3. Keep `bun audit` recorded in verify/apply while this runbook still exists.
