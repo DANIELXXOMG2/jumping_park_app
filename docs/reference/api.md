@@ -3,7 +3,7 @@
 > **Status**: current
 > **Audit date**: 2026-05-24
 > **Diátaxis**: Reference
-> **Linked sources**: `src/app/api/*/route.ts` (32 route handlers), `src/services/` (13 service files), `src/lib/schemas/` (6 schema files)
+> **Linked sources**: `src/app/api/*/route.ts` (32 route handlers), `src/services/` (13 service files), `src/lib/schemas/` (7 schema/helper files)
 
 Manual source map of the Jumping Park API surface. Use this reference to find the shortest truthful path from a route handler to its service, validation contract, or schema helper.
 
@@ -12,7 +12,7 @@ Manual source map of the Jumping Park API surface. Use this reference to find th
 1. Start in **Route surface** (§3) to find the public, kiosk, or admin endpoint.
 2. Jump to **Service layer** (§2) to see which file owns the behavior.
 3. Check **Validation surface** (§4) when the request body or stored content is shaped by Zod.
-4. For local development verification, run `bun test` (the project's Bun test runner with 158+ test assertions).
+4. For local development verification, run `bun test` (the project's Bun test runner, with [UNVERIFIED] ~158+ test assertions — exact count drifts as suites are added/removed, so re-run `bun test` for a current number).
 
 ## 2. Service layer
 

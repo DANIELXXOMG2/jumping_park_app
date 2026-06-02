@@ -102,7 +102,7 @@ Implementation: [`src/lib/adminCursor.ts`](../../src/lib/adminCursor.ts), [`src/
 Impact:
 
 - Reads bounded to 20–50 records per page.
-- More stable latency.
+- [UNVERIFIED] More stable latency (anecdotal — no controlled benchmark in this slice).
 - Immediate rollback via flag if operational drift appears.
 
 ## 6. Aggregates and recompute
@@ -163,16 +163,16 @@ Operational runbook: [`docs/runbooks/seo-ai-seo-validation-checklist.md`](../run
 
 ## 9. Security and rollout
 
-Current flags in [`src/lib/hardeningPolicy.ts`](../../src/lib/hardeningPolicy.ts):
+Current flags in [`src/lib/hardeningPolicy.ts`](../../src/lib/hardeningPolicy.ts) (flag constants at lines 1-9, env-key mapping at lines 11-19, default-enabled map at lines 21-29):
 
-- `OTP_HARDENING_ENABLED`
-- `EXPORT_BOUNDS_ENFORCED`
-- `PUBLIC_SEO_ENABLED`
-- `CURSOR_PAGINATION_ENABLED`
-- `ADMIN_AGGREGATES_ENABLED`
-- `OFFLINE_QUEUE_ENABLED`
-- `NEXT_PUBLIC_OFFLINE_QUEUE_ENABLED`
-- `CSP_REPORT_ONLY_ENABLED`
+- `OTP_HARDENING_ENABLED` (line 12)
+- `EXPORT_BOUNDS_ENFORCED` (line 13)
+- `PUBLIC_SEO_ENABLED` (line 14)
+- `CURSOR_PAGINATION_ENABLED` (line 15)
+- `ADMIN_AGGREGATES_ENABLED` (line 16)
+- `OFFLINE_QUEUE_ENABLED` (line 17)
+- `NEXT_PUBLIC_OFFLINE_QUEUE_ENABLED` (line 18; client-readable override path)
+- `CSP_REPORT_ONLY_ENABLED` (line 19)
 
 Principles:
 
