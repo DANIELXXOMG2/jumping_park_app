@@ -53,10 +53,10 @@ real captures.**
 - It does **not** run end-to-end Playwright captures in CI. The write
   path requires a live `bun dev` server with demo data; that is a
   manual step described in the runbook below.
-- It does **not** land the integration regression that exercises the
-  orchestrator's `runCaptureScreenshots` and CLI surface. That test
-  is the next slice (5.2-C, currently in
-  `_deferred/slice-5.2-orchestrator/`).
+- It does **not** land end-to-end Playwright captures in CI. The
+  orchestrator + CLI integration regression lives in
+  `tests/screenshot-capture-foundation.test.ts` and validates the
+  foundation without launching a real browser.
 - It does **not** touch HyperFrames, demo script, or any of the other
   Phase 5 media work. Those are separate slices.
 
@@ -101,8 +101,9 @@ minimal:
 - The dry-run command is the truthful evidence the foundation is wired.
 - The schema test (`tests/screenshot-capture-schema.test.ts`) is the
   truthful evidence the schema accepts the default plan.
-- The orchestrator + CLI integration test lands in slice 5.2-C; until
-  then, dry-run output is the truthful runtime evidence.
+- The orchestrator + CLI integration test
+  (`tests/screenshot-capture-foundation.test.ts`) validates the
+  foundation without a live server.
 - Document the blocker in the PR description and link the runbook step
   that will run once the environment recovers.
 
@@ -113,7 +114,7 @@ minimal:
 | `scripts/capture-screenshots.ts` | Playwright orchestrator + dry-run + CLI |
 | `src/lib/schemas/screenshotCapture.schema.ts` | Zod config schema + default plan |
 | `tests/screenshot-capture-schema.test.ts` | Schema regression (current slice) |
-| `_deferred/slice-5.2-orchestrator/screenshot-capture-foundation.test.ts.deferred` | Orchestrator + CLI integration test (slice 5.2-C) |
+| `tests/screenshot-capture-foundation.test.ts` | Orchestrator + CLI integration test |
 | `scripts/optimize-screenshots.ts` | PNG → WebP optimizer (consumes capture output) |
 | `docs/portfolio/screenshots/README.md` | Portfolio checklist (preserved) |
 | `docs/portfolio/screenshots/capture-config.md` | Schema reference (slice 5.2-A) |

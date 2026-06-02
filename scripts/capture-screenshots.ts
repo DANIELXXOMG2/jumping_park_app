@@ -46,6 +46,10 @@ import {
 
 const projectRoot = resolve(import.meta.dir, "..");
 
+function escapeRegExp(s: string): string {
+	return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 export type CaptureMode = "dry-run" | "write";
 
 export type CaptureRunSummary = {
@@ -107,7 +111,7 @@ export async function runCaptureJob(
 			if (job.headingMatcher) {
 				const heading = page
 					.getByRole("heading")
-					.filter({ hasText: new RegExp(job.headingMatcher, "i") })
+					.filter({ hasText: new RegExp(escapeRegExp(job.headingMatcher), "i") })
 					.first();
 				await heading.waitFor({ state: "visible", timeout: config.timeoutMs });
 			}

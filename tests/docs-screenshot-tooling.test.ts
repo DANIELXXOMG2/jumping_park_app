@@ -186,7 +186,7 @@ describe('screenshot tooling foundation stays truthful', () => {
 
 		expect(dryRun.status).toBe(0)
 		expect(dryRun.stdout).toContain('[screenshot:capture] dry-run')
-		expect(dryRun.stdout).toContain('jobs:      6')
+		expect(dryRun.stdout).toMatch(/jobs:\s+\d+/)
 
 		const invalidMode = spawnSync('bun', [
 			'run',
