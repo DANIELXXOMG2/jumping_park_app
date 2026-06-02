@@ -1,0 +1,8 @@
+{
+  "id": "jumping-park-product-tour",
+  "name": "Jumping Park - Product tour (slice 1)",
+  "description": "First 4-scene slice using real kiosk, admin and public screenshots. No narration, no render — validates composition + lint.",
+  "width": 1920,
+  "height": 1080,
+  "fps": 30
+}
