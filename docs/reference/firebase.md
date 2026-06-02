@@ -179,7 +179,7 @@ The auth system combines Firebase Custom Claims (admin/trabajador) with email-ba
 
 ### 5.1 Admin Authentication
 
-Admin/trabajador users authenticate through Firebase Auth with Custom Claims (role in JWT token). Implementation: `src/lib/adminAuth.ts`.
+Admin/trabajador users authenticate through Firebase Auth with Custom Claims (role in JWT token). Implementation: `src/lib/adminAuth.ts` (session mode + idle timeout at lines 15-22; `verifyAdminToken` at lines 282-298; `verifyFullAdminToken` at lines 300-304; `verifyAdminTokenWithPermission` at lines 306-323). Role definitions and the `ROUTE_ACCESS` map live in `src/types/auth.ts` (roles at line 27, `ROUTE_ACCESS` at lines 173-180).
 
 - **Session mode**: `ADMIN_SESSION_MODE` env var — `cookie` or `dual` (cookie + bearer)
 - **Session cookie**: `jp_admin_session` — HMAC-SHA256 signed, httpOnly, 30-min idle timeout
@@ -190,7 +190,7 @@ Routes are guarded via `src/lib/adminAuth.ts` middleware pattern. Route-level ac
 
 ### 5.2 Visitor OTP Flow
 
-OTP lifecycle is implemented in `src/services/authService.ts`. See also `docs/runbooks/otp-operational-policy.md` for operational runbook.
+OTP lifecycle is implemented in `src/services/authService.ts` (collection constants at lines 22-24, `OTP_MAX_FAILED_ATTEMPTS` at line 29, challenge persistence at lines 213-235, transactional validation at lines 244-366, session creation at lines 368-395, `requestOtpChallenge` at lines 654-835, `validateOtpChallengeRequest` at lines 837-995). See also `docs/runbooks/otp-operational-policy.md` for operational runbook.
 
 **Phase 1 — Challenge Request** (`POST /api/otp`):
 1. Use the provided email directly when present; otherwise resolve the visitor by cedula and fetch email from `users`
