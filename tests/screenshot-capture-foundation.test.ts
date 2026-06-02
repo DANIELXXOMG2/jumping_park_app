@@ -24,7 +24,7 @@ import {
 	DEFAULT_CAPTURE_PLAN,
 	captureJobSchema,
 	screenshotCaptureConfigSchema,
-	type CaptureJob,
+	type CaptureRedaction,
 } from "@/lib/schemas/screenshotCapture.schema";
 
 // `buildAdminSessionCookieForCapture` calls into `createAdminSessionPayload`
@@ -262,5 +262,100 @@ describe("screenshot capture foundation stays truthful", () => {
 		);
 		expect(allowed.status).toBe(0);
 		expect(allowed.stdout).toContain("[screenshot:capture] dry-run");
+	});
+
+	it("parses capture jobs with redactions and rejects malformed ones", () => {
+		const parsed = captureJobSchema.parse({
+			id: "admin-dashboard",
+			surface: CAPTURE_SURFACE.ADMIN,
+			route: "/admin",
+			viewport: { width: 1440, height: 900 },
+			fileName: "admin-dashboard",
+			redactions: [
+				{ selector: "[data-pii='admin-header-email']", action: "hide" },
+				{
+					selector: "[data-pii='admin-consent-adult-email']",
+					action: "replace-text",
+					replacement: "[REDACTED]",
+				},
+			],
+		});
+		expect(parsed.redactions).toHaveLength(2);
+		expect(parsed.redactions?.[0]?.action).toBe("hide");
+		expect(parsed.redactions?.[1]?.action).toBe("replace-text");
+
+		expectThrows(
+			() =>
+				captureJobSchema.parse({
+					id: "x",
+					surface: CAPTURE_SURFACE.ADMIN,
+					route: "/admin",
+					viewport: { width: 1440, height: 900 },
+					fileName: "admin-dashboard",
+					redactions: [{ selector: "[data-pii]", action: "blur" }],
+				}),
+			"action",
+		);
+	});
+
+	it("ships redactions on the admin jobs in the default plan", () => {
+		const adminJobs = DEFAULT_CAPTURE_PLAN.filter(
+			(job) => job.surface === CAPTURE_SURFACE.ADMIN,
+		);
+		expect(adminJobs).toHaveLength(2);
+		for (const job of adminJobs) {
+			expect(job.redactions && job.redactions.length).toBeGreaterThan(0);
+			const targets = (job.redactions ?? []).map((r) => r.selector);
+			expect(targets).toContain("[data-pii='admin-header-email']");
+		}
+		const consentJob = adminJobs.find((j) => j.id === "admin-consents-list");
+		expect(consentJob?.redactions?.some((r) => r.action === "replace-text")).toBe(
+			true,
+		);
+	});
+
+	it("does NOT add redactions to kiosk or public jobs in the default plan", () => {
+		for (const job of DEFAULT_CAPTURE_PLAN) {
+			if (job.surface === CAPTURE_SURFACE.ADMIN) continue;
+			expect(job.redactions).toBeUndefined();
+		}
+	});
+
+	it("applyRedactions forwards the configured redactions to the page", async () => {
+		const captureModule = await import("../scripts/capture-screenshots");
+		const calls: unknown[] = [];
+		const fakePage = {
+			evaluate: async (fn: unknown, arg: unknown): Promise<unknown> => {
+				calls.push(arg);
+				return undefined;
+			},
+		} as unknown as Parameters<typeof captureModule.applyRedactions>[0];
+		const redactions: CaptureRedaction[] = [
+			{ selector: "[data-pii='admin-header-email']", action: "hide" },
+			{
+				selector: "[data-pii='admin-consent-adult-email']",
+				action: "replace-text",
+				replacement: "[REDACTED]",
+			},
+		];
+
+		await captureModule.applyRedactions(fakePage, redactions);
+
+		expect(calls).toHaveLength(1);
+		const payload = calls[0] as { redactions: CaptureRedaction[] };
+		expect(payload.redactions).toEqual(redactions);
+
+		// Empty / undefined redactions are a no-op: no page.evaluate call.
+		const noopCalls: unknown[] = [];
+		const noopPage = {
+			evaluate: async (_fn: unknown, arg: unknown): Promise<unknown> => {
+				noopCalls.push(arg);
+				return undefined;
+			},
+		} as unknown as Parameters<typeof captureModule.applyRedactions>[0];
+		await captureModule.applyRedactions(noopPage, []);
+		expect(noopCalls).toHaveLength(0);
+		await captureModule.applyRedactions(noopPage, undefined);
+		expect(noopCalls).toHaveLength(0);
 	});
 });

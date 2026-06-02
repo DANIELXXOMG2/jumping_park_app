@@ -186,6 +186,7 @@ export default function AdminDashboard() {
 					className="w-full max-w-xl animate-in fade-in slide-in-from-bottom-4 duration-300"
 					aria-live="polite"
 					role="status"
+					data-pii="admin-search-result"
 				>
 					{searchResult.found &&
 					searchResult.consent &&

@@ -71,8 +71,15 @@ export function ConsentTable({
 			header: "Responsable",
 			render: (consent: Consent) => (
 				<div>
-					<p className="font-medium">{consent.adultName}</p>
-					<p className="text-xs text-foreground/50">{consent.userId}</p>
+					<p className="font-medium" data-pii="admin-consent-adult-name">
+						{consent.adultName}
+					</p>
+					<p
+						className="text-xs text-foreground/50"
+						data-pii="admin-consent-adult-userid"
+					>
+						{consent.userId}
+					</p>
 				</div>
 			),
 		},
@@ -83,8 +90,12 @@ export function ConsentTable({
 		header: "Contacto",
 		render: (consent: Consent) => (
 			<div className="text-xs">
-				<p className="text-foreground/70">{consent.adultEmail}</p>
-				<p className="text-foreground/50">{consent.adultPhone}</p>
+				<p className="text-foreground/70" data-pii="admin-consent-adult-email">
+					{consent.adultEmail}
+				</p>
+				<p className="text-foreground/50" data-pii="admin-consent-adult-phone">
+					{consent.adultPhone}
+				</p>
 			</div>
 		),
 	};

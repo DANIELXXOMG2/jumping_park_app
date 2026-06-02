@@ -72,3 +72,32 @@ Antes de commitear cualquier captura:
 - mantener el commit atomico: `feat(screenshots): refresh <jobId>` y
   enlazarlo al PR de portfolio
 
+## DOM-level redaction (admin)
+
+Las capturas admin aplican redaccion a nivel DOM **antes** de tomar el
+screenshot. Cada job puede declarar una lista de `redactions` con la
+forma:
+
+```
+{ selector: string, action: "hide" | "replace-text", replacement?: string }
+```
+
+- `hide` aplica `style.visibility = "hidden"` (preserva el layout).
+- `replace-text` reemplaza el `textContent` del nodo (o usa `[REDACTED]`
+  cuando no se pasa `replacement`).
+
+Los selectores apuntan a atributos `data-pii` que los componentes admin
+renderizan para mantener la lista corta y revisable. La configuracion
+inicial cubre el email del header admin, la card de resultado de busqueda
+del dashboard, y las celdas obvias de PII (nombre, id, email, telefono)
+en la tabla de consentimientos.
+
+**Importante:** esto es redaccion visual del lado cliente, **no** una
+mutacion de datos. No reemplaza la revision manual: el revisor debe
+abrir el PNG antes de commitear y confirmar que no hay PII visible.
+
+**Alcance actual:** solo rutas `/admin` y `/admin/consentimientos`. La
+redaccion para `kiosk-consentimiento` queda diferida hasta una iteracion
+futura; capturar esa ruta sigue requiriendo un revisor manual con
+atencion al PII del firmante.
+

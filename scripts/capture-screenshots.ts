@@ -36,7 +36,7 @@
 
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
-import { chromium, type Browser } from "@playwright/test";
+import { chromium, type Browser, type Page } from "@playwright/test";
 import {
 	buildAdminSessionCookieValue,
 	createAdminSessionPayload,
@@ -46,6 +46,7 @@ import {
 	DEFAULT_CAPTURE_CONFIG,
 	screenshotCaptureConfigSchema,
 	type CaptureJob,
+	type CaptureRedaction,
 	type ScreenshotCaptureConfig,
 } from "@/lib/schemas/screenshotCapture.schema";
 import { ADMIN_SESSION_COOKIE_NAME } from "@/types/auth";
@@ -74,6 +75,43 @@ export type CaptureExecutor = {
 	launch: () => Promise<Browser>;
 	writeCapture: (outputPath: string, body: Buffer) => Promise<void>;
 };
+
+/**
+ * Minimal page seam needed by `applyRedactions`. Tests pass a fake object
+ * cast to `Page` to drive the seam without booting a browser; the real
+ * `runCaptureJob` calls the same function with the actual Playwright
+ * `Page`. The payload is serialized as plain JSON so the redaction list
+ * survives the Playwright boundary.
+ */
+export type ApplyRedactionsPage = Pick<Page, "evaluate">;
+
+/**
+ * Apply DOM-level redactions before a screenshot is taken. The action is
+ * limited to the two ops captured in the schema: `hide` (visibility: hidden)
+ * and `replace-text` (textContent = replacement ?? "[REDACTED]"). Empty or
+ * undefined redaction lists are a no-op.
+ */
+export async function applyRedactions(
+	page: ApplyRedactionsPage,
+	redactions: readonly CaptureRedaction[] | undefined,
+): Promise<void> {
+	if (!redactions || redactions.length === 0) return;
+	await page.evaluate(
+		({ redactions: items }: { redactions: readonly CaptureRedaction[] }) => {
+			for (const redaction of items) {
+				const nodes = document.querySelectorAll(redaction.selector);
+				nodes.forEach((node) => {
+					if (redaction.action === "hide") {
+						(node as HTMLElement).style.visibility = "hidden";
+					} else {
+						node.textContent = redaction.replacement ?? "[REDACTED]";
+					}
+				});
+			}
+		},
+		{ redactions },
+	);
+}
 
 export const defaultCaptureExecutor: CaptureExecutor = {
 	async launch() {
@@ -239,6 +277,9 @@ export async function runCaptureJob(
 					.first();
 				await heading.waitFor({ state: "visible", timeout: config.timeoutMs });
 			}
+			// Redact visible PII (admin jobs only for now) before the still is
+			// captured. No-op when `job.redactions` is missing or empty.
+			await applyRedactions(page, job.redactions);
 			const buffer = await page.screenshot({ fullPage: false });
 			await executor.writeCapture(outputPath, Buffer.from(buffer));
 		} finally {
