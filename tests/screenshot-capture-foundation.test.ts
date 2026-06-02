@@ -6,19 +6,31 @@
  * the optimize-screenshots input directory. Does NOT validate end-to-end
  * captures — that requires a live `bun dev` server and is intentionally out
  * of scope for this slice.
+ *
+ * The auth-capture slice (task 5.3) adds three more concerns on top of the
+ * foundation: (1) admin jobs get a signed session cookie via the resolver
+ * seam, (2) non-admin jobs are unaffected, and (3) the production guard
+ * aborts dry-run and write modes unless `--allow-production` is set.
  */
 
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import { describe, expect, it } from "bun:test";
+import type { Browser } from "@playwright/test";
 import {
 	CAPTURE_SURFACE,
 	DEFAULT_CAPTURE_CONFIG,
 	DEFAULT_CAPTURE_PLAN,
 	captureJobSchema,
 	screenshotCaptureConfigSchema,
+	type CaptureJob,
 } from "@/lib/schemas/screenshotCapture.schema";
+
+// `buildAdminSessionCookieForCapture` calls into `createAdminSessionPayload`
+// which asserts `ADMIN_JWT_SECRET` is set. Seed it for the whole file so
+// the cookie builder and the seam-driven tests can sign cookies.
+process.env.ADMIN_JWT_SECRET ??= "test-admin-session-secret";
 
 const projectRoot = process.cwd();
 
@@ -49,7 +61,11 @@ function expectThrows(fn: () => unknown, pattern: string): void {
 		caught = error;
 	}
 	expect(caught !== null && caught !== undefined).toBe(true);
-	expect(JSON.stringify(caught).includes(pattern)).toBe(true);
+	const rendered =
+		caught instanceof Error
+			? `${caught.name}: ${caught.message}`
+			: String(caught);
+	expect(rendered.includes(pattern)).toBe(true);
 }
 
 describe("screenshot capture foundation stays truthful", () => {
@@ -152,6 +168,53 @@ describe("screenshot capture foundation stays truthful", () => {
 		}
 	});
 
+	it("builds an admin session cookie descriptor for admin captures", async () => {
+		const captureModule = await import("../scripts/capture-screenshots");
+		const previousSecret = process.env.ADMIN_JWT_SECRET;
+		process.env.ADMIN_JWT_SECRET = "test-admin-secret";
+
+		try {
+			const cookie = captureModule.buildAdminSessionCookieForCapture({
+				baseUrl: "https://www.jumpingpark.lat",
+				uid: "admin-uid",
+				email: "jumpingadmin@gmail.com",
+			});
+
+			expect(cookie.name).toBe("jp_admin_session");
+			expect(cookie.domain).toBe("www.jumpingpark.lat");
+			expect(cookie.path).toBe("/");
+			expect(cookie.httpOnly).toBe(true);
+			expect(cookie.secure).toBe(true);
+			expect(cookie.sameSite).toBe("Lax");
+			expect(cookie.value.includes(".")).toBe(true);
+		} finally {
+			if (previousSecret === undefined) {
+				delete process.env.ADMIN_JWT_SECRET;
+			} else {
+				process.env.ADMIN_JWT_SECRET = previousSecret;
+			}
+		}
+	});
+
+	it("guards production baseUrl unless --allow-production is present", async () => {
+		const captureModule = await import("../scripts/capture-screenshots");
+
+		captureModule.assertCaptureBaseUrlAllowed("http://127.0.0.1:3000", false);
+		captureModule.assertCaptureBaseUrlAllowed(
+			"https://www.jumpingpark.lat",
+			true,
+		);
+
+		expectThrows(
+			() =>
+				captureModule.assertCaptureBaseUrlAllowed(
+					"https://www.jumpingpark.lat",
+					false,
+				),
+			"Refusing to capture from production baseUrl",
+		);
+	});
+
 	it("CLI handles both supported and unsupported --mode values", () => {
 		const okResult = spawnSync(
 			"bun",
@@ -170,5 +233,34 @@ describe("screenshot capture foundation stays truthful", () => {
 		);
 		expect(badResult.status).toBe(1);
 		expect(badResult.stderr).toContain("unsupported --mode value: explode");
+	});
+
+	it("CLI rejects production dry-run unless --allow-production is passed", () => {
+		const blocked = spawnSync(
+			"bun",
+			[
+				"run",
+				"scripts/capture-screenshots.ts",
+				"--base-url",
+				"https://www.jumpingpark.lat",
+			],
+			{ cwd: projectRoot, encoding: "utf8" },
+		);
+		expect(blocked.status).toBe(1);
+		expect(blocked.stderr).toContain("Refusing to capture from production baseUrl");
+
+		const allowed = spawnSync(
+			"bun",
+			[
+				"run",
+				"scripts/capture-screenshots.ts",
+				"--base-url",
+				"https://www.jumpingpark.lat",
+				"--allow-production",
+			],
+			{ cwd: projectRoot, encoding: "utf8" },
+		);
+		expect(allowed.status).toBe(0);
+		expect(allowed.stdout).toContain("[screenshot:capture] dry-run");
 	});
 });

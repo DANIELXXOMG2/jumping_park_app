@@ -38,11 +38,17 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { chromium, type Browser } from "@playwright/test";
 import {
+	buildAdminSessionCookieValue,
+	createAdminSessionPayload,
+} from "@/lib/adminAuth";
+import {
+	CAPTURE_SURFACE,
 	DEFAULT_CAPTURE_CONFIG,
 	screenshotCaptureConfigSchema,
 	type CaptureJob,
 	type ScreenshotCaptureConfig,
 } from "@/lib/schemas/screenshotCapture.schema";
+import { ADMIN_SESSION_COOKIE_NAME } from "@/types/auth";
 
 const projectRoot = resolve(import.meta.dir, "..");
 
@@ -79,6 +85,116 @@ export const defaultCaptureExecutor: CaptureExecutor = {
 	},
 };
 
+/**
+ * Playwright-shaped cookie descriptor. Mirrors the subset of
+ * `BrowserContext.addCookies()` arguments the script needs.
+ */
+export type AdminSessionCookieDescriptor = {
+	name: string;
+	value: string;
+	domain: string;
+	path: string;
+	httpOnly: boolean;
+	secure: boolean;
+	sameSite: "Strict" | "Lax" | "None";
+};
+
+/**
+ * Resolver seam: returns the cookies to inject into the Playwright context
+ * for a given job. The default implementation signs an admin session cookie
+ * from `ADMIN_JWT_SECRET` + `ADMIN_CAPTURE_UID` + `ADMIN_CAPTURE_EMAIL` for
+ * `surface === "admin"` jobs, and returns an empty array otherwise. Tests
+ * can inject a custom resolver to exercise the seam without env mutation.
+ */
+export type ResolveCookiesForJob = (
+	job: CaptureJob,
+	baseUrl: string,
+) => AdminSessionCookieDescriptor[];
+
+/**
+ * Build a signed admin session cookie descriptor for a capture. Pure
+ * function: no I/O, no env reads. Reuses the project's own HMAC-signed
+ * cookie helpers so the captured admin routes see the same session shape
+ * the proxy validates.
+ */
+export function buildAdminSessionCookieForCapture(params: {
+	baseUrl: string;
+	uid: string;
+	email: string;
+}): AdminSessionCookieDescriptor {
+	const payload = createAdminSessionPayload({
+		uid: params.uid,
+		email: params.email,
+		role: "admin",
+	});
+	const value = buildAdminSessionCookieValue(payload);
+	const url = new URL(params.baseUrl);
+	return {
+		name: ADMIN_SESSION_COOKIE_NAME,
+		value,
+		domain: url.hostname,
+		path: "/",
+		httpOnly: true,
+		secure: url.protocol === "https:",
+		sameSite: "Lax",
+	};
+}
+
+/**
+ * Production capture guard. Refuses to run when the baseUrl resolves to
+ * `jumpingpark.lat` (or any subdomain) unless the caller passes
+ * `--allow-production`. Applied in both dry-run and write modes so a
+ * reviewer can never accidentally preview a production plan.
+ */
+export function isProductionCaptureBaseUrl(baseUrl: string): boolean {
+	try {
+		const host = new URL(baseUrl).hostname.toLowerCase();
+		return host === "jumpingpark.lat" || host.endsWith(".jumpingpark.lat");
+	} catch {
+		return false;
+	}
+}
+
+export function assertCaptureBaseUrlAllowed(
+	baseUrl: string,
+	allowProduction: boolean,
+): void {
+	if (allowProduction) return;
+	if (!isProductionCaptureBaseUrl(baseUrl)) return;
+	throw new Error(
+		`Refusing to capture from production baseUrl '${baseUrl}'. Pass --allow-production to override explicitly.`,
+	);
+}
+
+/**
+ * Default cookie resolver. Reads the env on every call so the CLI can
+ * override the values via `--admin-uid` / `--admin-email` by mutating
+ * `process.env` before invoking `runCaptureScreenshots`.
+ */
+export function defaultResolveCookiesForJob(
+	job: CaptureJob,
+	baseUrl: string,
+): AdminSessionCookieDescriptor[] {
+	if (job.surface !== CAPTURE_SURFACE.ADMIN) {
+		return [];
+	}
+	const secret = process.env.ADMIN_JWT_SECRET;
+	const uid = process.env.ADMIN_CAPTURE_UID;
+	const email = process.env.ADMIN_CAPTURE_EMAIL;
+	if (!secret || !uid || !email) {
+		throw new Error(
+			"admin captures require ADMIN_JWT_SECRET, ADMIN_CAPTURE_UID (or --admin-uid), and ADMIN_CAPTURE_EMAIL (or --admin-email).",
+		);
+	}
+	return [
+		buildAdminSessionCookieForCapture({
+			baseUrl,
+			uid,
+			email,
+		}),
+	];
+}
+
 export function resolveOutputPath(
 	config: ScreenshotCaptureConfig,
 	job: CaptureJob,
@@ -90,11 +206,16 @@ export function resolveOutputPath(
  * Drive a single capture job. Opens a new context per job so each capture
  * gets its own viewport and isolated cookies; closes everything in a
  * finally block so a failed job does not leak the browser process.
+ *
+ * `options.cookies` is the seam for auth injection: when present, the
+ * descriptors are added to the context BEFORE navigation, so the first
+ * request already carries the session cookie.
  */
 export async function runCaptureJob(
 	job: CaptureJob,
 	config: ScreenshotCaptureConfig,
 	executor: CaptureExecutor,
+	options?: { cookies?: AdminSessionCookieDescriptor[] },
 ): Promise<{ jobId: string; outputPath: string }> {
 	const outputPath = resolveOutputPath(config, job);
 	const browser = await executor.launch();
@@ -102,6 +223,9 @@ export async function runCaptureJob(
 		const context = await browser.newContext({
 			viewport: job.viewport,
 		});
+		if (options?.cookies && options.cookies.length > 0) {
+			await context.addCookies(options.cookies);
+		}
 		const page = await context.newPage();
 		try {
 			await page.goto(new URL(job.route, config.baseUrl).toString(), {
@@ -132,17 +256,26 @@ export async function runCaptureJob(
  * touching Playwright or the filesystem. In `write` mode it iterates the
  * jobs sequentially — captures share a single browser launch per job to
  * keep resource use predictable.
+ *
+ * The production guard runs in BOTH modes: dry-run is the default
+ * entrypoint, and we want reviewers to fail fast if they accidentally
+ * preview a production plan. Pass `allowProduction: true` (or the
+ * `--allow-production` CLI flag) to opt in explicitly.
  */
 export async function runCaptureScreenshots(options?: {
 	config?: Partial<ScreenshotCaptureConfig>;
 	mode?: CaptureMode;
 	executor?: CaptureExecutor;
+	resolveCookiesForJob?: ResolveCookiesForJob;
+	allowProduction?: boolean;
 }): Promise<CaptureRunSummary> {
 	const config = screenshotCaptureConfigSchema.parse({
 		...DEFAULT_CAPTURE_CONFIG,
 		...(options?.config ?? {}),
 	});
 	const mode: CaptureMode = options?.mode ?? "dry-run";
+	const allowProduction = options?.allowProduction ?? false;
+	assertCaptureBaseUrlAllowed(config.baseUrl, allowProduction);
 
 	if (mode === "dry-run") {
 		return {
@@ -154,9 +287,11 @@ export async function runCaptureScreenshots(options?: {
 	}
 
 	const executor = options?.executor ?? defaultCaptureExecutor;
+	const resolveCookies = options?.resolveCookiesForJob ?? defaultResolveCookiesForJob;
 	const written: string[] = [];
 	for (const job of config.jobs) {
-		const { outputPath } = await runCaptureJob(job, config, executor);
+		const cookies = resolveCookies(job, config.baseUrl);
+		const { outputPath } = await runCaptureJob(job, config, executor, { cookies });
 		written.push(outputPath);
 	}
 	return {
@@ -188,7 +323,12 @@ export function formatDryRunReport(summary: CaptureRunSummary): string {
 }
 
 function readCliOption(
-	optionName: "--mode" | "--output-dir" | "--base-url",
+	optionName:
+		| "--mode"
+		| "--output-dir"
+		| "--base-url"
+		| "--admin-uid"
+		| "--admin-email",
 ): string | undefined {
 	const inlineArg = process.argv.find((argument) =>
 		argument.startsWith(`${optionName}=`),
@@ -222,11 +362,22 @@ if (import.meta.main) {
 	}
 	const outputDir = readCliOption("--output-dir");
 	const baseUrl = readCliOption("--base-url");
+	const allowProduction = process.argv.includes("--allow-production");
+	const adminUidOverride = readCliOption("--admin-uid");
+	const adminEmailOverride = readCliOption("--admin-email");
+	// CLI overrides are wired through env so the existing default
+	// resolver picks them up without changing its signature.
+	if (adminUidOverride) process.env.ADMIN_CAPTURE_UID = adminUidOverride;
+	if (adminEmailOverride) process.env.ADMIN_CAPTURE_EMAIL = adminEmailOverride;
 	const configOverride: Partial<ScreenshotCaptureConfig> = {};
 	if (outputDir) configOverride.outputDir = outputDir;
 	if (baseUrl) configOverride.baseUrl = baseUrl;
 
-	runCaptureScreenshots({ mode: modeRaw, config: configOverride })
+	runCaptureScreenshots({
+		mode: modeRaw,
+		config: configOverride,
+		allowProduction,
+	})
 		.then((summary) => {
 			if (summary.skipped.length > 0) {
 				console.log(formatDryRunReport(summary));
