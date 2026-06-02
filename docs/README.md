@@ -40,6 +40,7 @@ This is the entry point for the current documentation information architecture (
 | `docs/reference/firebase.md` | current | Firebase configuration, Firestore collections, security rules, indexes, auth/OTP flow, and storage rules. |
 | `docs/reference/deploy-and-ci.md` | current | Deploy & CI reference — Vercel model, CI jobs, Lighthouse gates, and operational notes. |
 | `docs/reference/api.md` | current | API reference — every route, method, auth requirement, validation schema, and service path. |
+| `docs/reference/accessibility.md` | current | Accessibility coverage — automated Playwright + Axe matrix, static and unit checks, Lighthouse CI scope, manual gaps, and the WCAG 2.1 AA status table. |
 | `docs/ARQUITECTURA.md` | current | Current architecture narrative, rollout model, and cross-surface system map. |
 | `docs/runbooks/otp-operational-policy.md` | current | OTP runtime values, lockouts, and source-linked operational contract. |
 | `docs/runbooks/dependency-risk-note.md` | current | Current dependency risk position and accepted residual tooling debt. |
