@@ -73,7 +73,10 @@ export function Header() {
 
 					{/* Email del usuario */}
 					<div className="hidden sm:flex items-center">
-						<span className="text-sm text-text-secondary max-w-[180px] truncate">
+						<span
+							className="text-sm text-text-secondary max-w-[180px] truncate"
+							data-pii="admin-header-email"
+						>
 							{user?.email}
 						</span>
 					</div>

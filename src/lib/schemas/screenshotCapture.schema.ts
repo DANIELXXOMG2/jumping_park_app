@@ -30,11 +30,40 @@ const SURFACE_VALUES = [
 
 const FILE_NAME_REGEX = /^[a-z0-9][a-z0-9-]*[a-z0-9]$/;
 
+export const REDACTION_ACTION = {
+	HIDE: "hide",
+	REPLACE_TEXT: "replace-text",
+} as const;
+
+export type RedactionAction =
+	(typeof REDACTION_ACTION)[keyof typeof REDACTION_ACTION];
+
+const REDACTION_ACTION_VALUES = [
+	REDACTION_ACTION.HIDE,
+	REDACTION_ACTION.REPLACE_TEXT,
+] as const;
+
+/**
+ * DOM-level redaction instruction applied after the heading wait and before
+ * the screenshot is taken. This is CLIENT-SIDE visual redaction only; it
+ * does not mutate any backing data. Keep selectors narrow and reviewable;
+ * they should match real PII cells, not whole pages.
+ */
+export const captureRedactionSchema = z.object({
+	selector: z.string().min(1).max(512),
+	action: z.enum(REDACTION_ACTION_VALUES),
+	replacement: z.string().min(1).max(256).optional(),
+});
+
+export type CaptureRedaction = z.infer<typeof captureRedactionSchema>;
+
 /**
  * A single capture job. The `route` is the in-app path the Playwright harness
  * will open; `viewport` is a literal pixel size so captures stay deterministic
  * across runs; `fileName` is the PNG stem the optimizer will reuse for the
  * WebP asset (e.g. `kiosk-ingreso` -> `kiosk-ingreso.png` -> `kiosk-ingreso.webp`).
+ * `redactions` (admin-only for now) hide or replace visible PII before the
+ * screenshot is taken.
  */
 export const captureJobSchema = z.object({
 	id: z.string().min(1).max(64),
@@ -49,6 +78,7 @@ export const captureJobSchema = z.object({
 		message:
 			"fileName must be lowercase, dash-separated, and start/end with alphanumeric",
 	}),
+	redactions: z.array(captureRedactionSchema).max(32).optional(),
 });
 
 export type CaptureJob = z.infer<typeof captureJobSchema>;
@@ -133,6 +163,17 @@ export const DEFAULT_CAPTURE_PLAN: CaptureJob[] = [
 		headingMatcher: "dashboard",
 		viewport: { width: 1440, height: 900 },
 		fileName: "admin-dashboard",
+		// DOM-level redactions applied before screenshot. Selectors point at
+		// `data-pii` hooks the admin components render; the list is reviewable
+		// and limited to the admin header email + the transient search-result
+		// card. Kiosk consentimiento redaction is intentionally deferred.
+		redactions: [
+			{ selector: "[data-pii='admin-header-email']", action: "hide" },
+			{
+				selector: "[data-pii='admin-search-result']",
+				action: "hide",
+			},
+		],
 	},
 	{
 		id: "admin-consents-list",
@@ -141,6 +182,33 @@ export const DEFAULT_CAPTURE_PLAN: CaptureJob[] = [
 		headingMatcher: "consentimientos",
 		viewport: { width: 1440, height: 900 },
 		fileName: "admin-consents-list",
+		// DOM-level redactions for the consents list: hide the admin header
+		// email and replace the obvious PII cell text (adult name, user id,
+		// adult email, adult phone) with [REDACTED] so reviewers can still
+		// see the table structure.
+		redactions: [
+			{ selector: "[data-pii='admin-header-email']", action: "hide" },
+			{
+				selector: "[data-pii='admin-consent-adult-name']",
+				action: "replace-text",
+				replacement: "[REDACTED]",
+			},
+			{
+				selector: "[data-pii='admin-consent-adult-userid']",
+				action: "replace-text",
+				replacement: "[REDACTED]",
+			},
+			{
+				selector: "[data-pii='admin-consent-adult-email']",
+				action: "replace-text",
+				replacement: "[REDACTED]",
+			},
+			{
+				selector: "[data-pii='admin-consent-adult-phone']",
+				action: "replace-text",
+				replacement: "[REDACTED]",
+			},
+		],
 	},
 	{
 		id: "public-consentimiento-digital",
