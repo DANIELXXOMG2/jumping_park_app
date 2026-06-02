@@ -173,4 +173,31 @@ describe('screenshot tooling foundation stays truthful', () => {
 		expect(result.status).toBe(1)
 		expect(result.stderr).toContain('Missing value for --output-dir.')
 	})
+
+	it('supports screenshot capture dry-run and mode validation', () => {
+		const dryRun = spawnSync('bun', [
+			'run',
+			'scripts/capture-screenshots.ts',
+			'--mode=dry-run',
+		], {
+			cwd: projectRoot,
+			encoding: 'utf8',
+		})
+
+		expect(dryRun.status).toBe(0)
+		expect(dryRun.stdout).toContain('[screenshot:capture] dry-run')
+		expect(dryRun.stdout).toMatch(/jobs:\s+\d+/)
+
+		const invalidMode = spawnSync('bun', [
+			'run',
+			'scripts/capture-screenshots.ts',
+			'--mode=explode',
+		], {
+			cwd: projectRoot,
+			encoding: 'utf8',
+		})
+
+		expect(invalidMode.status).toBe(1)
+		expect(invalidMode.stderr).toContain('unsupported --mode value: explode')
+	})
 })
