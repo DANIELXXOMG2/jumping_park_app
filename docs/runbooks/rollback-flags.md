@@ -1,63 +1,63 @@
 # Rollback flags
 
-Este runbook define como revertir rapido las capacidades agregadas sin tocar datos productivos. Todos los cambios de este roadmap son additive-first: el rollback es por flag + redeploy.
+This runbook defines how to roll back the shipped capabilities quickly without touching production data. Every change in this roadmap is additive-first: the rollback path is flag + redeploy.
 
-## Matriz de rollback
+## Rollback matrix
 
-| Flag | Cuando desactivarlo | Efecto esperado | Riesgo residual |
+| Flag | When to disable it | Expected effect | Residual risk |
 | --- | --- | --- | --- |
-| `CURSOR_PAGINATION_ENABLED` | cursores invalidos, drift de paginacion, soporte incidente | vuelve a `offset` | mayor costo de lectura |
-| `ADMIN_AGGREGATES_ENABLED` | stale metrics o inconsistencia de agregados | vuelve a stats live | mas lecturas y mas latencia |
-| `OFFLINE_QUEUE_ENABLED` | cola corrupta, replay dudoso, incidente kiosk | desactiva replay backend | si el flag publico sigue activo queda un rollout parcial |
-| `NEXT_PUBLIC_OFFLINE_QUEUE_ENABLED` | UI offline inestable, storage local corrupto, incidente kiosk | desactiva queue UX/runtime en navegador | si el flag server sigue activo no se capturan nuevas colas |
-| `CSP_REPORT_ONLY_ENABLED` | ruido excesivo en reportes o incompatibilidad de terceros | elimina header report-only | menor visibilidad preventiva |
-| `PUBLIC_SEO_ENABLED` | noindex urgente, contenido publico no aprobado | `robots` bloquea todo y sitemap queda vacio | perdida temporal de discoverability |
+| `CURSOR_PAGINATION_ENABLED` | invalid cursors, pagination drift, cost-support incident | falls back to `offset` | higher read cost |
+| `ADMIN_AGGREGATES_ENABLED` | stale metrics or aggregate inconsistency | falls back to live stats | more reads and more latency |
+| `OFFLINE_QUEUE_ENABLED` | corrupted queue, replay doubt, kiosk incident | disables backend replay | if the public flag stays enabled, the rollout remains partial |
+| `NEXT_PUBLIC_OFFLINE_QUEUE_ENABLED` | unstable offline UI, corrupted local storage, kiosk incident | disables queue UX/runtime in the browser | if the server flag stays enabled, no new queues are captured |
+| `CSP_REPORT_ONLY_ENABLED` | excessive report noise or third-party incompatibility | removes the report-only header | lower preventive visibility |
+| `PUBLIC_SEO_ENABLED` | urgent noindex need, unapproved public content | `robots` blocks everything and the sitemap becomes empty | temporary discoverability loss |
 
-## Procedimiento
+## Procedure
 
-1. Confirmar el flag afectado y el sintoma.
-2. Cambiar la variable de entorno en el ambiente afectado.
-3. Redeploy obligatorio para preview/produccion.
-4. Validar el estado post-rollback con el runbook correspondiente.
-5. Registrar evidencia: hora, responsable, motivo, y ambiente.
+1. Confirm the affected flag and the symptom.
+2. Change the environment variable in the affected environment.
+3. Redeploy is mandatory for preview/production.
+4. Validate the post-rollback state with the corresponding runbook.
+5. Record evidence: time, owner, reason, and environment.
 
-Si hay drift de indices/reglas, redeploy de `firestore.indexes.json`, `firestore.rules` y `storage.rules` antes de reactivar flags.
+If index/rules drift exists, redeploy `firestore.indexes.json`, `firestore.rules`, and `storage.rules` before re-enabling flags.
 
-Nota: el rollout offline es dual. Normalmente se cambian `OFFLINE_QUEUE_ENABLED` y `NEXT_PUBLIC_OFFLINE_QUEUE_ENABLED` juntos para evitar estados mixtos.
+Note: the offline rollout is dual. Normally `OFFLINE_QUEUE_ENABLED` and `NEXT_PUBLIC_OFFLINE_QUEUE_ENABLED` are changed together to avoid mixed states.
 
-## Verificaciones por rollback
+## Rollback verification
 
 ### Cursor rollback
 
-- `GET /api/admin/users?offset=0&limit=20` responde correctamente.
-- `pageInfo.nextCursor` puede quedar `null`; eso es aceptable en fallback.
-- el incidente de costo queda contenido solo como medida temporal.
+- `GET /api/admin/users?offset=0&limit=20` responds correctly.
+- `pageInfo.nextCursor` may become `null`; that is acceptable in fallback mode.
+- The cost incident remains contained only as a temporary measure.
 
 ### Aggregates rollback
 
-- `/api/admin/stats` y `/api/admin/stats/detailed` responden desde live reads.
-- la UI sigue mostrando `freshness`, pero la fuente puede pasar a `live`.
+- `/api/admin/stats` and `/api/admin/stats/detailed` respond from live reads.
+- The UI still shows `freshness`, but the source may switch to `live`.
 
 ### Offline rollback
 
-- el kiosk deja de aceptar nuevas escrituras offline solo si tambien se desactiva `NEXT_PUBLIC_OFFLINE_QUEUE_ENABLED`.
-- las colas existentes no se borran automaticamente: conservar hasta decidir replay o limpieza manual.
+- The kiosk stops accepting new offline writes only if `NEXT_PUBLIC_OFFLINE_QUEUE_ENABLED` is also disabled.
+- Existing queues are not deleted automatically: keep them until replay or manual cleanup is decided.
 
 ### CSP rollback / canary rollback
 
-- `CSP_REPORT_ONLY_ENABLED=false` elimina solo el canary report-only; el baseline enforced sigue activo.
-- si el problema viene del baseline enforced, tratarlo como incidente de seguridad y corregir allowlists/directivas en `src/proxy.ts` antes del siguiente deploy.
+- `CSP_REPORT_ONLY_ENABLED=false` removes only the report-only canary; the enforced baseline remains active.
+- If the problem comes from the enforced baseline, treat it as a security incident and fix allowlists/directives in `src/proxy.ts` before the next deploy.
 
 ### SEO rollback
 
-- `robots.txt` muestra `Disallow: /`.
-- `sitemap.xml` no lista rutas publicas.
-- `/consentimiento-digital` vuelve a `noindex, nofollow`.
+- `robots.txt` shows `Disallow: /`.
+- `sitemap.xml` does not list public routes.
+- `/consentimiento-digital` falls back to `noindex, nofollow`.
 
-## Evidencia minima
+## Minimum evidence
 
-- ambiente afectado;
-- flag cambiado;
-- redeploy asociado;
-- smoke ejecutado;
-- decision de follow-up.
+- affected environment;
+- changed flag;
+- associated redeploy;
+- smoke executed;
+- follow-up decision.

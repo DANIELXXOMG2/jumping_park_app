@@ -246,9 +246,9 @@ describe('phase 4 docs and ci parity', () => {
 		expect(architecture).toContain('Exact composite-index parity is still a best-effort proof until emulator/query logs or deploy feedback confirm every live query shape.')
 
 		expect(productionHardening).toContain('Firebase IaC parity: review `firebase/firestore.indexes.json`, `firebase/firestore.rules`, and `firebase/storage.rules` before any flag enablement.')
-		expect(rollbackFlags).toContain('Si hay drift de indices/reglas, redeploy de `firestore.indexes.json`, `firestore.rules` y `storage.rules` antes de reactivar flags.')
-		expect(offlineReplayDrill).toContain('No correr este drill en produccion con los flags por defecto apagados; primero habilitarlo de forma controlada en preview o staging.')
-		expect(adminCostChecklist).toContain('Si algun query exige un indice nuevo o distinto, no habilitar el flag: primero actualizar IaC y volver a validar contra emulator/query logs.')
+		expect(rollbackFlags).toContain('If index/rules drift exists, redeploy `firestore.indexes.json`, `firestore.rules`, and `storage.rules` before re-enabling flags.')
+		expect(offlineReplayDrill).toContain('Do not run this drill in production with the default flags disabled; enable it in a controlled preview or staging environment first.')
+		expect(adminCostChecklist).toContain('If a query needs a new or different index, do not enable the flag yet: update the IaC first, then validate again against emulator/query logs.')
 	})
 
 	it('keeps CI focused on reproducible static gates and tests before build verification', () => {

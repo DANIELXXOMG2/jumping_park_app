@@ -1,50 +1,50 @@
 # Admin cost smoke checklist
 
-El objetivo de este checklist es verificar que el admin realmente esta operando sobre el plano barato: cursores y agregados, no scans crecientes.
+The goal of this checklist is to prove the admin really stays on the cheaper plane: cursors and aggregates, not growing scans.
 
 ## Preconditions
 
-- `CURSOR_PAGINATION_ENABLED=true` para smoke cursor-first
-- `ADMIN_AGGREGATES_ENABLED=true` para smoke aggregate-first
-- dataset suficiente para navegar mas de una pagina
+- `CURSOR_PAGINATION_ENABLED=true` for the cursor-first smoke.
+- `ADMIN_AGGREGATES_ENABLED=true` for the aggregate-first smoke.
+- A dataset large enough to navigate more than one page.
 
 ## Users / Consents / Minors
 
 ### Cursor contract
 
-- abrir la primera pagina con `limit=20` o `limit=50`;
-- confirmar `pageInfo.hasNextPage` y `pageInfo.nextCursor` cuando existan mas datos;
-- usar `nextCursor` para pedir la siguiente pagina;
-- confirmar que no aparecen signed URLs en listados de consentimientos, solo `signatureStatus`.
+- Open the first page with `limit=20` or `limit=50`.
+- Confirm `pageInfo.hasNextPage` and `pageInfo.nextCursor` when more data exists.
+- Use `nextCursor` to request the next page.
+- Confirm consent lists do not expose signed URLs; they should expose `signatureStatus` only.
 
 ### Search fallback
 
-- ejecutar una busqueda por texto o identificador;
-- confirmar `meta.source = search`;
-- confirmar que el fallback sigue funcional aunque cursor este activo.
+- Run a search by free text or identifier.
+- Confirm `meta.source = search`.
+- Confirm the fallback still works even when cursor pagination is enabled.
 
 ## Dashboard / stats
 
-- llamar `/api/admin/stats` y `/api/admin/stats/detailed?period=month`;
-- confirmar presencia de `freshness.computedAt`;
-- confirmar que la fuente es agregada cuando el flag esta activo;
-- si se usa `recompute=true`, validar que el refresh no rompe el contrato de respuesta.
+- Call `/api/admin/stats` and `/api/admin/stats/detailed?period=month`.
+- Confirm `freshness.computedAt` is present.
+- Confirm the source is aggregated when the flag is enabled.
+- If `recompute=true` is used, verify the refresh does not break the response contract.
 
-## Heuristica de costo
+## Cost heuristic
 
-No estamos midiendo billing real en CI, pero si podemos detectar las senales correctas:
+We are not measuring real billing in CI, but we can still detect the right signals:
 
-- pagina admin: 20-50 items por request, no mas;
-- dashboard: 1-5 documentos agregados, no scans completos;
-- no enrichment de signed URLs por fila;
-- busquedas acotadas por tokens/cursores, no listas completas salvo fallback controlado.
+- Admin page: 20-50 items per request, no more.
+- Dashboard: 1-5 aggregate documents, not full scans.
+- No per-row signed URL enrichment.
+- Searches remain bounded by tokens/cursors, not full list scans except for the controlled fallback.
 
-Si algun query exige un indice nuevo o distinto, no habilitar el flag: primero actualizar IaC y volver a validar contra emulator/query logs.
+If a query needs a new or different index, do not enable the flag yet: update the IaC first, then validate again against emulator/query logs.
 
-## Salida minima
+## Minimum output
 
-- endpoint validado
-- flags activos
-- cursor recibido y reutilizado
-- `freshness` observada
-- conclusion: `PASS`, `PASS WITH NOTES`, o `FAIL`
+- Validated endpoint.
+- Active flags.
+- Cursor received and reused.
+- `freshness` observed.
+- Conclusion: `PASS`, `PASS WITH NOTES`, or `FAIL`.
