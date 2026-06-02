@@ -130,6 +130,7 @@ The list below is ordered by cost and reviewer confidence. Each item adds a conc
 
 ## 8. Reference links
 
+- `docs/how-to/ux-audit.md` — current WIG (Vercel Web Interface Guidelines) audit gate, marked pass / fail / na per rule (spec R12).
 - `docs/runbooks/seo-ai-seo-validation-checklist.md` — release checklist that also captures a11y smoke notes.
 - `docs/guides/testing.md` — testing pyramid, tooling map, and CI integration for the same commands.
 - `tests/block-e-a11y-smoke.test.tsx` — static and dialog-helper unit tests.
