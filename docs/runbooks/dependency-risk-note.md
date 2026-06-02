@@ -4,7 +4,7 @@
 
 Reference date: `2026-04-06`
 
-- `next` was updated from `16.0.7` to `16.2.2` to remove the direct vulnerabilities reported by `bun audit` from the gate.
+- `next` was updated from `16.0.7` to `16.2.6` to remove the direct vulnerabilities reported by `bun audit` from the gate.
 - `firebase` was updated from `12.6.0` to `12.11.0`, and `firebase-admin` from `13.6.0` to `13.7.0`, as low-risk direct upgrades.
 - Current result: `bun audit` no longer reports vulnerabilities in direct runtime dependencies, but it DOES keep residual transitive/tooling risk. That is the current state that `docs/README.md` and `docs/runbooks/production-hardening.md` must repeat without reinterpretation.
 

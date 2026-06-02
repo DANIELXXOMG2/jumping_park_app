@@ -21,7 +21,7 @@ This runbook defines how to roll back the shipped capabilities quickly without t
 4. Validate the post-rollback state with the corresponding runbook.
 5. Record evidence: time, owner, reason, and environment.
 
-If index/rules drift exists, redeploy `firestore.indexes.json`, `firestore.rules`, and `storage.rules` before re-enabling flags.
+If index/rules drift exists, redeploy `firebase/firestore.indexes.json`, `firebase/firestore.rules`, and `firebase/storage.rules` before re-enabling flags.
 
 Note: the offline rollout is dual. Normally `OFFLINE_QUEUE_ENABLED` and `NEXT_PUBLIC_OFFLINE_QUEUE_ENABLED` are changed together to avoid mixed states.
 
