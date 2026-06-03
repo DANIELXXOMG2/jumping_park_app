@@ -57,6 +57,14 @@ export const captureRedactionSchema = z.object({
 
 export type CaptureRedaction = z.infer<typeof captureRedactionSchema>;
 
+export const captureSeedPayloadSchema = z.object({
+	uid: z.string().min(1),
+	email: z.string().min(1),
+	fullName: z.string().min(1),
+});
+
+export type CaptureSeedPayload = z.infer<typeof captureSeedPayloadSchema>;
+
 /**
  * A single capture job. The `route` is the in-app path the Playwright harness
  * will open; `viewport` is a literal pixel size so captures stay deterministic
@@ -143,7 +151,15 @@ export const DEFAULT_CAPTURE_PLAN: CaptureJob[] = [
 	{
 		id: "kiosk-otp",
 		surface: CAPTURE_SURFACE.KIOSK,
-		route: "/otp",
+		// `?captureSeed=...` is consumed by `KioskCaptureSeeder` (see
+		// `src/components/kiosk/KioskCaptureSeeder.tsx`). The base64 payload
+		// decodes to `{uid, email, fullName}` and hydrates `useKioskStore`
+		// before the OTP page renders, so the screenshot shows the
+		// truthful 6-digit input + masked email instead of the "no data"
+		// fallback. The seeder is a no-op when this param is absent, so
+		// the route remains safe to navigate in production traffic.
+		route:
+			"/otp?captureSeed=eyJ1aWQiOiJWLTEyMzQ1Njc4IiwiZW1haWwiOiJkZW1vQGV4YW1wbGUuY29tIiwiZnVsbE5hbWUiOiJEZW1vIFZpc2l0b3IifQ==",
 		headingMatcher: "otp",
 		viewport: { width: 1280, height: 900 },
 		fileName: "kiosk-otp",
@@ -151,10 +167,41 @@ export const DEFAULT_CAPTURE_PLAN: CaptureJob[] = [
 	{
 		id: "kiosk-consentimiento",
 		surface: CAPTURE_SURFACE.KIOSK,
-		route: "/consentimiento",
+		// Same `?captureSeed=...` contract as `kiosk-otp`: the seeder
+		// hydrates the store so the page renders the form (not the
+		// "redirect to /ingreso" branch) and the DOM redactions below
+		// can swap the signer name + UID for `[REDACTED]` before the
+		// screenshot.
+		route:
+			"/consentimiento?captureSeed=eyJ1aWQiOiJWLTEyMzQ1Njc4IiwiZW1haWwiOiJkZW1vQGV4YW1wbGUuY29tIiwiZnVsbE5hbWUiOiJEZW1vIFZpc2l0b3IifQ==",
 		headingMatcher: "consentimiento",
 		viewport: { width: 1280, height: 900 },
 		fileName: "kiosk-consentimiento",
+		// DOM-level redactions applied before screenshot. The kiosk page renders
+		// the signer's name and UID inside `data-pii` spans in the form header
+		// card; `replace-text` swaps the cell contents for `[REDACTED]` while
+		// keeping the surrounding layout intact. The signature pad and
+		// policy box stay visible for reviewer sanity.
+		redactions: [
+			{
+				selector: "[data-pii='kiosk-consent-name']",
+				action: "replace-text",
+				replacement: "[REDACTED]",
+			},
+			{
+				selector: "[data-pii='kiosk-consent-uid']",
+				action: "replace-text",
+				replacement: "[REDACTED]",
+			},
+		],
+	},
+	{
+		id: "kiosk-offline-success",
+		surface: CAPTURE_SURFACE.KIOSK,
+		route: "/exito?offline=1&nombre=Demo",
+		headingMatcher: "exito",
+		viewport: { width: 1280, height: 900 },
+		fileName: "kiosk-offline-success",
 	},
 	{
 		id: "admin-dashboard",
