@@ -23,6 +23,7 @@ const PORTFOLIO_SCREENSHOT_IDS = [
 	"kiosk-ingreso",
 	"kiosk-otp",
 	"kiosk-consentimiento",
+	"kiosk-offline-success",
 	"admin-dashboard",
 	"admin-consents-list",
 	"public-consentimiento-digital",

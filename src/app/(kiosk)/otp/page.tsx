@@ -8,8 +8,9 @@ import {
 	ShieldCheck,
 	Sparkles,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { decodeCaptureSeed } from "@/components/kiosk/KioskCaptureSeeder";
 import { SmartOtpInput } from "@/components/ui/SmartOtpInput";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useKioskStore } from "@/store/kioskStore";
@@ -18,6 +19,7 @@ import type { ApiErrorResponse, OtpValidateResponse } from "@/types/api";
 const OTP_LENGTH = 6;
 const CONSENT_ROUTE = "/consentimiento";
 const INGRESO_ROUTE = "/ingreso";
+const ALLOW_CAPTURE_SEED_FALLBACK = process.env.NODE_ENV !== "production";
 
 const maskEmail = (email: string) => {
 	if (email.includes("*")) return email; // Ya está ofuscado
@@ -30,8 +32,9 @@ const maskEmail = (email: string) => {
 	return `${safeLocal}@${safeDomain}${tld ? `.${tld}` : ""}`;
 };
 
-export default function OtpPage() {
+function OtpContent() {
 	const router = useRouter();
+	const searchParams = useSearchParams();
 	const visitorData = useKioskStore((state) => state.visitorData);
 	const updateVisitorData = useKioskStore((state) => state.updateVisitorData); // Necesitamos actualizar datos
 	const setAuthenticated = useKioskStore((state) => state.setAuthenticated);
@@ -39,9 +42,27 @@ export default function OtpPage() {
 
 	// Hook de traducciones
 	const { t } = useLanguage();
+	const captureSeed = useMemo(
+		() => decodeCaptureSeed(searchParams.get("captureSeed")),
+		[searchParams],
+	);
+	const effectiveVisitorData = useMemo(
+		() =>
+			!ALLOW_CAPTURE_SEED_FALLBACK || visitorData.uid || visitorData.email
+				? visitorData
+				: captureSeed
+					? {
+							...visitorData,
+							uid: captureSeed.uid,
+							email: captureSeed.email,
+							fullName: captureSeed.fullName,
+						}
+					: visitorData,
+		[captureSeed, visitorData],
+	);
 
-	const email = visitorData.email;
-	const cedula = visitorData.uid;
+	const email = effectiveVisitorData.email;
+	const cedula = effectiveVisitorData.uid;
 	// Permitimos que isReady sea true si tenemos cédula O email.
 	// En flujo ingreso tenemos cédula y email ofuscado.
 	// En flujo registro tenemos email real y cédula.
@@ -422,5 +443,13 @@ export default function OtpPage() {
 				</div>
 			</div>
 		</main>
+	);
+}
+
+export default function OtpPage() {
+	return (
+		<Suspense fallback={<div className="flex min-h-screen bg-background" />}>
+			<OtpContent />
+		</Suspense>
 	);
 }

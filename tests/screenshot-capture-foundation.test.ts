@@ -48,6 +48,7 @@ const PORTFOLIO_SCREENSHOT_IDS = [
 	"kiosk-ingreso",
 	"kiosk-otp",
 	"kiosk-consentimiento",
+	"kiosk-offline-success",
 	"admin-dashboard",
 	"admin-consents-list",
 	"public-consentimiento-digital",
@@ -314,10 +315,26 @@ describe("screenshot capture foundation stays truthful", () => {
 		);
 	});
 
-	it("does NOT add redactions to kiosk or public jobs in the default plan", () => {
+	it("keeps redactions off public jobs in the default plan", () => {
 		for (const job of DEFAULT_CAPTURE_PLAN) {
-			if (job.surface === CAPTURE_SURFACE.ADMIN) continue;
-			expect(job.redactions).toBeUndefined();
+			if (job.surface === CAPTURE_SURFACE.PUBLIC) {
+				expect(job.redactions).toBeUndefined();
+			}
+		}
+	});
+
+	it("redacts the kiosk-consentimiento signer header via data-pii spans", () => {
+		const job = DEFAULT_CAPTURE_PLAN.find(
+			(candidate) => candidate.id === "kiosk-consentimiento",
+		);
+		expect(job).toBeDefined();
+		const redactions = job?.redactions ?? [];
+		const selectors = redactions.map((redaction) => redaction.selector);
+		expect(selectors).toContain("[data-pii='kiosk-consent-name']");
+		expect(selectors).toContain("[data-pii='kiosk-consent-uid']");
+		for (const redaction of redactions) {
+			expect(redaction.action).toBe("replace-text");
+			expect(redaction.replacement).toBe("[REDACTED]");
 		}
 	});
 
