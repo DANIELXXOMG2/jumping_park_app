@@ -9,12 +9,13 @@ import {
 	Sparkles,
 	Users,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { ConsentContent } from "@/components/kiosk/ConsentContent";
 import { ConsentReadingModal } from "@/components/kiosk/ConsentReadingModal";
+import { decodeCaptureSeed } from "@/components/kiosk/KioskCaptureSeeder";
 import { MinorsSection } from "@/components/kiosk/MinorsSection";
 import SignaturePad, {
 	type SignaturePadRef,
@@ -44,11 +45,31 @@ import {
 import { useKioskStore } from "@/store/kioskStore";
 
 const logger = createLogger("ConsentPage");
+const ALLOW_CAPTURE_SEED_FALLBACK = process.env.NODE_ENV !== "production";
 
-export default function ConsentPage() {
+function ConsentPageContent() {
 	const router = useRouter();
+	const searchParams = useSearchParams();
 	const { visitorData, offline, setOfflineRuntime } = useKioskStore();
 	const { t, language } = useLanguage();
+	const captureSeed = useMemo(
+		() => decodeCaptureSeed(searchParams.get("captureSeed")),
+		[searchParams],
+	);
+	const effectiveVisitorData = useMemo(
+		() =>
+			!ALLOW_CAPTURE_SEED_FALLBACK || visitorData.uid
+				? visitorData
+				: captureSeed
+					? {
+							...visitorData,
+							uid: captureSeed.uid,
+							email: captureSeed.email,
+							fullName: captureSeed.fullName,
+						}
+					: visitorData,
+		[captureSeed, visitorData],
+	);
 	const offlineQueueEnabled = useHydrationSafeHardeningFlag(
 		HARDENING_FLAG.OFFLINE_QUEUE,
 	);
@@ -80,11 +101,11 @@ export default function ConsentPage() {
 	});
 
 	useEffect(() => {
-		if (!visitorData.uid) {
+		if (!effectiveVisitorData.uid) {
 			// If no user data, redirect to start
 			router.push("/ingreso");
 		}
-	}, [visitorData.uid, router]);
+	}, [effectiveVisitorData.uid, router]);
 
 	const queueConsentLocally = async (
 		payload: ReturnType<typeof buildConsentSubmissionPayload>,
@@ -121,10 +142,10 @@ export default function ConsentPage() {
 		setIsSubmitting(true);
 		const signedAtLocal = new Date().toISOString();
 		const offlineSync =
-			offlineQueueEnabled && visitorData.uid
+			offlineQueueEnabled && effectiveVisitorData.uid
 				? {
 						dedupeKey: createConsentDedupeKey({
-							userId: visitorData.uid,
+							userId: effectiveVisitorData.uid,
 							policyVersion: CONSENT_POLICY_VERSION,
 							signedAtLocal,
 						}),
@@ -134,7 +155,7 @@ export default function ConsentPage() {
 				: undefined;
 		const payload = buildConsentSubmissionPayload({
 			formData: data,
-			visitorData,
+			visitorData: effectiveVisitorData,
 			signatureBase64,
 			offlineSync,
 		});
@@ -156,7 +177,7 @@ export default function ConsentPage() {
 				});
 
 				const nombreEncoded = encodeURIComponent(
-					visitorData.fullName || t("consentPage.guest"),
+					effectiveVisitorData.fullName || t("consentPage.guest"),
 				);
 				router.push(`/exito?offline=1&nombre=${nombreEncoded}`);
 				return;
@@ -181,7 +202,7 @@ export default function ConsentPage() {
 
 			// Redirigir a la página de éxito con los parámetros
 			const nombreEncoded = encodeURIComponent(
-				visitorData.fullName || t("consentPage.guest"),
+				effectiveVisitorData.fullName || t("consentPage.guest"),
 			);
 			router.push(
 				`/exito?consecutivo=${result.consecutivo}&nombre=${nombreEncoded}`,
@@ -206,7 +227,7 @@ export default function ConsentPage() {
 							"No se perdio el registro. Lo sincronizaremos cuando vuelva la conexion.",
 					});
 					const nombreEncoded = encodeURIComponent(
-						visitorData.fullName || t("consentPage.guest"),
+						effectiveVisitorData.fullName || t("consentPage.guest"),
 					);
 					router.push(`/exito?offline=1&nombre=${nombreEncoded}`);
 					return;
@@ -279,9 +300,15 @@ export default function ConsentPage() {
 								{t("consentPage.responsible")}
 							</p>
 							<p className="text-lg sm:text-xl font-semibold text-foreground">
-								{visitorData.fullName || t("consentPage.guest")}
+								<span data-pii="kiosk-consent-name">
+									{effectiveVisitorData.fullName || t("consentPage.guest")}
+								</span>
 								<span className="text-foreground/50 text-sm ml-2">
-									({visitorData.uid})
+									(
+									<span data-pii="kiosk-consent-uid">
+										{effectiveVisitorData.uid}
+									</span>
+									)
 								</span>
 							</p>
 						</div>
@@ -451,7 +478,7 @@ export default function ConsentPage() {
 					update={update}
 					setValue={setValue}
 					getValues={getValues}
-					userId={visitorData.uid}
+					userId={effectiveVisitorData.uid}
 				/>
 
 				{/* ═══ SECCIÓN DE FIRMA PREMIUM ═══ */}
@@ -550,5 +577,13 @@ export default function ConsentPage() {
 				<ConsentContent variant="expanded" />
 			</ConsentReadingModal>
 		</main>
+	);
+}
+
+export default function ConsentPage() {
+	return (
+		<Suspense fallback={<div className="flex min-h-screen bg-background" />}>
+			<ConsentPageContent />
+		</Suspense>
 	);
 }

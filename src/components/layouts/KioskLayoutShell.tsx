@@ -5,6 +5,7 @@ import { Home, Sparkles } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
+import { KioskCaptureSeeder } from "@/components/kiosk/KioskCaptureSeeder";
 import { KioskOfflineRuntime } from "@/components/kiosk/KioskOfflineRuntime";
 import { KioskSessionRestorer } from "@/components/kiosk/KioskSessionRestorer";
 import { LanguageToggle } from "@/components/kiosk/LanguageToggle";
@@ -73,6 +74,7 @@ function KioskLayoutContent({ children }: { children: ReactNode }) {
 				Saltar al contenido principal
 			</a>
 
+			<KioskCaptureSeeder />
 			<KioskSessionRestorer />
 			<KioskOfflineRuntime />
 			<KioskRouteAnnouncer />

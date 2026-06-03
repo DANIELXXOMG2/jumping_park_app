@@ -96,8 +96,57 @@ en la tabla de consentimientos.
 mutacion de datos. No reemplaza la revision manual: el revisor debe
 abrir el PNG antes de commitear y confirmar que no hay PII visible.
 
-**Alcance actual:** solo rutas `/admin` y `/admin/consentimientos`. La
-redaccion para `kiosk-consentimiento` queda diferida hasta una iteracion
-futura; capturar esa ruta sigue requiriendo un revisor manual con
-atencion al PII del firmante.
+**Alcance actual:** rutas `/admin` y `/admin/consentimientos` (hide
+para header email + search card, replace-text para celdas de PII de la
+tabla) y `kiosk-consentimiento` (replace-text sobre
+`[data-pii='kiosk-consent-name']` y `[data-pii='kiosk-consent-uid']`).
+La firma y el recuadro del documento legal siguen visibles para
+sanity-check del revisor.
+
+## Capture seeder (`KioskCaptureSeeder`)
+
+`kiosk-otp` y `kiosk-consentimiento` necesitan un visitante valido en
+`useKioskStore` para renderizar la entrada real (no la pantalla de
+fallback "sin datos"). El seeder es un componente opt-in que vive en
+`src/components/kiosk/KioskCaptureSeeder.tsx`, montado dentro de
+`KioskLayoutShell` **antes** de `KioskSessionRestorer`.
+
+Como opera:
+
+1. La pipeline agrega `?captureSeed=<base64(JSON({uid, email, fullName}))>`
+   al `route` del job (`/otp?captureSeed=...`,
+   `/consentimiento?captureSeed=...`).
+2. El seeder lee el param, decodifica el JSON y empuja los datos al
+   store via `useKioskStore.getState().updateVisitorData(...)` +
+   `setAuthenticated(true)` en `useLayoutEffect`. Asi, cuando el
+   restorer evalua la ruta, ya ve el estado hidratado y no redirige a
+   `/`.
+3. En produccion el param nunca esta presente: el seeder es no-op y
+   no toca el store.
+
+Contratos importantes:
+
+- El seeder **debe** estar antes del restorer en el JSX. Cambiar el
+  orden rompe el `/consentimiento?captureSeed=...` porque el restorer
+  cae en su rama de "ruta protegida sin sesion" y redirige a `/`
+  antes de que el store se hidrate.
+- En `/otp` el seeder setea `isAuthenticated: true` para que la pagina
+  muestre el formulario en vez de la guia de fallback; el restorer no
+  intenta redirigir (no es una ruta publica cuando esta autenticado,
+  pero `/otp` SI esta en `PUBLIC_ROUTES`, asi que se setea
+  intencionalmente para que la captura muestre la entrada).
+
+## Offline-success capture labeling
+
+`kiosk-offline-success` se captura contra `/exito?offline=1&nombre=Demo`
+navegacion directa, no contra un `context.setOffline(true)` durante un
+flujo real. La pagina renderiza el estado diferido ("Pendiente" +
+"Guardado localmente") gateado solo por el query param, asi que el
+resultado visual es identico al flujo real de offline.
+
+El manifest marca la fila con la nota `[QUERY-PARAM-OFFLINE]` para que
+cualquier revisor entienda que la captura es simulada pero visualmente
+truthful. Si en algun momento se quiere capturar el flujo real con
+`setOffline`, agregar un nuevo job dedicado y no reemplazar este: el
+plan actual ya cubre lo que la UI muestra hoy.
 

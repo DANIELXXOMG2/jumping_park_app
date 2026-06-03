@@ -39,17 +39,17 @@ reuses for the WebP asset (e.g. `kiosk-ingreso` →
 ## Default plan
 
 `DEFAULT_CAPTURE_PLAN` mirrors every currently required still in
-[`README.md`](./README.md), excluding the optional `kiosk-offline-success`
-capture that only lands when that runtime exists:
+[`README.md`](./README.md):
 
-| id | surface | route |
-| --- | --- | --- |
-| `kiosk-ingreso` | kiosk | `/ingreso` |
-| `kiosk-otp` | kiosk | `/otp` |
-| `kiosk-consentimiento` | kiosk | `/consentimiento` |
-| `admin-dashboard` | admin | `/admin` |
-| `admin-consents-list` | admin | `/admin/consentimientos` |
-| `public-consentimiento-digital` | public | `/consentimiento-digital` |
+| id | surface | route | notes |
+| --- | --- | --- | --- |
+| `kiosk-ingreso` | kiosk | `/ingreso` | public kiosk landing |
+| `kiosk-otp` | kiosk | `/otp` | capture via `?captureSeed=...` (see README) |
+| `kiosk-consentimiento` | kiosk | `/consentimiento` | capture via `?captureSeed=...`; DOM redaction on signer name + UID |
+| `kiosk-offline-success` | kiosk | `/exito?offline=1&nombre=Demo` | query-param simulation; labeled `[QUERY-PARAM-OFFLINE]` |
+| `admin-dashboard` | admin | `/admin` | DOM redaction on header email + search card |
+| `admin-consents-list` | admin | `/admin/consentimientos` | DOM redaction on header email + signer PII cells |
+| `public-consentimiento-digital` | public | `/consentimiento-digital` | public hero with canonical narrative |
 
 `DEFAULT_CAPTURE_CONFIG` writes to `docs/portfolio/screenshots` and points
 at `http://127.0.0.1:3000`. Viewport defaults are `1280x900` for kiosk and
