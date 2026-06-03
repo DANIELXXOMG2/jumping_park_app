@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=1920, height=1080" />
-    <title>Jumping Park - Product tour (slice 1)</title>
+    <title>Jumping Park &middot; Product Tour</title>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -15,17 +15,12 @@
         color: #f4f6fb;
         font-family: sans-serif;
       }
-      .stage {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 96px 96px 128px;
-      }
       .stage-img {
-        max-width: 100%;
-        max-height: 100%;
+        position: absolute;
+        inset: 96px 96px 128px;
+        max-width: calc(100% - 192px);
+        max-height: calc(100% - 224px);
+        margin: auto;
         object-fit: contain;
         border-radius: 12px;
         box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
@@ -37,7 +32,6 @@
         left: 0;
         right: 0;
         padding: 36px 96px;
-        z-index: 5;
       }
       .title-pill {
         display: inline-flex;
@@ -71,7 +65,6 @@
         gap: 16px;
         text-align: center;
         padding: 0 160px;
-        z-index: 9;
       }
       .outro h2 {
         font-size: 44px;
@@ -100,13 +93,12 @@
   <body>
     <div
       id="root"
-      data-composition-id="jp-tour-slice-1"
+      data-composition-id="jp-tour"
       data-start="0"
-      data-duration="44.5"
+      data-duration="78"
       data-width="1920"
       data-height="1080"
     >
-      <!-- Scene 1: kiosk ingreso (0.0 - 10.5s) -->
       <img
         id="scene-kiosk"
         class="clip stage-img"
@@ -122,101 +114,170 @@
         class="clip title-strip"
         data-start="0.4"
         data-duration="9.6"
-        data-track-index="5"
+        data-track-index="8"
+        style="z-index: 8;"
       >
         <div class="title-pill">
-          <span class="title-eyebrow">Escena 1 / 4</span>
+          <span class="title-eyebrow">1/7</span>
           <span class="title-text">Kiosco &middot; Ingreso</span>
         </div>
       </div>
 
-      <!-- Scene 2: admin dashboard (10.0 - 20.5s) -->
       <img
-        id="scene-admin-dash"
+        id="scene-kiosk-otp"
         class="clip stage-img"
-        src="assets/admin-dashboard.png"
-        alt="Dashboard del panel de administracion"
-        data-start="10.0"
+        src="assets/kiosk-otp.png"
+        alt="Pantalla de verificacion OTP del kiosco"
+        data-start="10.5"
         data-duration="10.5"
         data-track-index="2"
         style="z-index: 2;"
       />
       <div
-        id="title-admin-dash"
+        id="title-kiosk-otp"
         class="clip title-strip"
-        data-start="10.4"
+        data-start="10.9"
         data-duration="9.6"
-        data-track-index="6"
+        data-track-index="9"
+        style="z-index: 9;"
       >
         <div class="title-pill">
-          <span class="title-eyebrow">Escena 2 / 4</span>
-          <span class="title-text">Admin &middot; Dashboard</span>
+          <span class="title-eyebrow">2/7</span>
+          <span class="title-text">OTP Verification</span>
         </div>
       </div>
 
-      <!-- Scene 3: admin consents list (20.0 - 30.5s) -->
       <img
-        id="scene-admin-consents"
+        id="scene-kiosk-consent"
         class="clip stage-img"
-        src="assets/admin-consents-list.png"
-        alt="Lista de consentimientos en el panel de administracion"
-        data-start="20.0"
+        src="assets/kiosk-consentimiento.png"
+        alt="Pantalla de consentimiento digital del kiosco"
+        data-start="21.0"
         data-duration="10.5"
         data-track-index="3"
         style="z-index: 3;"
       />
       <div
-        id="title-admin-consents"
+        id="title-kiosk-consent"
         class="clip title-strip"
-        data-start="20.4"
+        data-start="21.4"
         data-duration="9.6"
-        data-track-index="7"
+        data-track-index="10"
+        style="z-index: 10;"
       >
         <div class="title-pill">
-          <span class="title-eyebrow">Escena 3 / 4</span>
-          <span class="title-text">Admin &middot; Consentimientos</span>
+          <span class="title-eyebrow">3/7</span>
+          <span class="title-text">Digital Consent</span>
         </div>
       </div>
 
-      <!-- Scene 4: public consentimiento digital (30.0 - 42.0s) -->
+      <img
+        id="scene-kiosk-offline"
+        class="clip stage-img"
+        src="assets/kiosk-offline-success.png"
+        alt="Pantalla de exito offline del kiosco"
+        data-start="31.5"
+        data-duration="10.5"
+        data-track-index="4"
+        style="z-index: 4;"
+      />
+      <div
+        id="title-kiosk-offline"
+        class="clip title-strip"
+        data-start="31.9"
+        data-duration="9.6"
+        data-track-index="11"
+        style="z-index: 11;"
+      >
+        <div class="title-pill">
+          <span class="title-eyebrow">4/7</span>
+          <span class="title-text">Offline Success</span>
+        </div>
+      </div>
+
+      <img
+        id="scene-admin-dash"
+        class="clip stage-img"
+        src="assets/admin-dashboard.png"
+        alt="Dashboard del panel de administracion"
+        data-start="42.0"
+        data-duration="10.5"
+        data-track-index="5"
+        style="z-index: 5;"
+      />
+      <div
+        id="title-admin-dash"
+        class="clip title-strip"
+        data-start="42.4"
+        data-duration="9.6"
+        data-track-index="12"
+        style="z-index: 12;"
+      >
+        <div class="title-pill">
+          <span class="title-eyebrow">5/7</span>
+          <span class="title-text">Admin Dashboard</span>
+        </div>
+      </div>
+
+      <img
+        id="scene-admin-consents"
+        class="clip stage-img"
+        src="assets/admin-consents-list.png"
+        alt="Lista de consentimientos en el panel de administracion"
+        data-start="52.5"
+        data-duration="10.5"
+        data-track-index="6"
+        style="z-index: 6;"
+      />
+      <div
+        id="title-admin-consents"
+        class="clip title-strip"
+        data-start="52.9"
+        data-duration="9.6"
+        data-track-index="13"
+        style="z-index: 13;"
+      >
+        <div class="title-pill">
+          <span class="title-eyebrow">6/7</span>
+          <span class="title-text">Consent Records</span>
+        </div>
+      </div>
+
       <img
         id="scene-public"
         class="clip stage-img"
         src="assets/public-consentimiento-digital.png"
         alt="Pagina publica de consentimiento digital"
-        data-start="30.0"
-        data-duration="12.0"
-        data-track-index="4"
-        style="z-index: 4;"
+        data-start="63.0"
+        data-duration="10.5"
+        data-track-index="7"
+        style="z-index: 7;"
       />
       <div
         id="title-public"
         class="clip title-strip"
-        data-start="30.4"
+        data-start="63.4"
         data-duration="9.6"
-        data-track-index="8"
+        data-track-index="14"
+        style="z-index: 14;"
       >
         <div class="title-pill">
-          <span class="title-eyebrow">Escena 4 / 4</span>
-          <span class="title-text">Publico &middot; Consentimiento digital</span>
+          <span class="title-eyebrow">7/7</span>
+          <span class="title-text">Public Consent</span>
         </div>
       </div>
 
-      <!-- Final note (42.0 - 44.5s) -->
       <div
         id="outro-card"
         class="clip outro"
-        data-start="42.0"
-        data-duration="2.5"
-        data-track-index="9"
+        data-start="73.5"
+        data-duration="4.5"
+        data-track-index="15"
+        style="z-index: 15;"
       >
-        <h2>Jumping Park &middot; portfolio en construccion</h2>
-        <p>
-          Estas son capturas reales del producto. Las escenas de kiosco (OTP y firma),
-          la reproduccion offline y la superficie publica ampliada se suman en una
-          segunda iteracion de esta composicion.
-        </p>
-        <span class="badge">Slice 1 / N &middot; solo lint, validate y preview</span>
+        <h2>Jumping Park &middot; Product Tour</h2>
+        <p>7 scenes from real screenshots</p>
+        <span class="badge">Real product screenshots &middot; Not a render</span>
       </div>
     </div>
 
@@ -224,27 +285,31 @@
       window.__timelines = window.__timelines || {};
       const tl = gsap.timeline({ paused: true });
 
-      // Scene 1: kiosk - entrance only
       tl.from("#title-kiosk", { y: -16, opacity: 0, duration: 0.6, ease: "power2.out" }, 0.4);
 
-      // Scene 2: admin dashboard - entrance only
-      tl.from("#scene-admin-dash", { opacity: 0, duration: 0.6, ease: "power2.out" }, 10.0);
-      tl.from("#title-admin-dash", { y: -16, opacity: 0, duration: 0.6, ease: "power2.out" }, 10.4);
+      tl.from("#scene-kiosk-otp", { opacity: 0, duration: 0.6, ease: "power2.out" }, 10.5);
+      tl.from("#title-kiosk-otp", { y: -16, opacity: 0, duration: 0.6, ease: "power2.out" }, 10.9);
 
-      // Scene 3: admin consents - entrance only
-      tl.from("#scene-admin-consents", { opacity: 0, duration: 0.6, ease: "power2.out" }, 20.0);
-      tl.from("#title-admin-consents", { y: -16, opacity: 0, duration: 0.6, ease: "power2.out" }, 20.4);
+      tl.from("#scene-kiosk-consent", { opacity: 0, duration: 0.6, ease: "power2.out" }, 21.0);
+      tl.from("#title-kiosk-consent", { y: -16, opacity: 0, duration: 0.6, ease: "power2.out" }, 21.4);
 
-      // Scene 4: public - entrance only
-      tl.from("#scene-public", { opacity: 0, duration: 0.6, ease: "power2.out" }, 30.0);
-      tl.from("#title-public", { y: -16, opacity: 0, duration: 0.6, ease: "power2.out" }, 30.4);
+      tl.from("#scene-kiosk-offline", { opacity: 0, duration: 0.6, ease: "power2.out" }, 31.5);
+      tl.from("#title-kiosk-offline", { y: -16, opacity: 0, duration: 0.6, ease: "power2.out" }, 31.9);
 
-      // Final scene: fade the last image to black, fade the outro card in
-      tl.to("#scene-public", { opacity: 0, duration: 0.5, ease: "power2.in" }, 42.0);
-      tl.to("#title-public", { opacity: 0, duration: 0.4, ease: "power2.in" }, 42.0);
-      tl.from("#outro-card", { opacity: 0, y: 12, duration: 0.6, ease: "power2.out" }, 42.2);
+      tl.from("#scene-admin-dash", { opacity: 0, duration: 0.6, ease: "power2.out" }, 42.0);
+      tl.from("#title-admin-dash", { y: -16, opacity: 0, duration: 0.6, ease: "power2.out" }, 42.4);
 
-      window.__timelines["jp-tour-slice-1"] = tl;
+      tl.from("#scene-admin-consents", { opacity: 0, duration: 0.6, ease: "power2.out" }, 52.5);
+      tl.from("#title-admin-consents", { y: -16, opacity: 0, duration: 0.6, ease: "power2.out" }, 52.9);
+
+      tl.from("#scene-public", { opacity: 0, duration: 0.6, ease: "power2.out" }, 63.0);
+      tl.from("#title-public", { y: -16, opacity: 0, duration: 0.6, ease: "power2.out" }, 63.4);
+
+      tl.to("#scene-public", { opacity: 0, duration: 0.5, ease: "power2.in" }, 73.5);
+      tl.to("#title-public", { opacity: 0, duration: 0.5, ease: "power2.in" }, 73.5);
+      tl.from("#outro-card", { opacity: 0, y: 12, duration: 0.6, ease: "power2.out" }, 74.0);
+
+      window.__timelines["jp-tour"] = tl;
     </script>
   </body>
 </html>
