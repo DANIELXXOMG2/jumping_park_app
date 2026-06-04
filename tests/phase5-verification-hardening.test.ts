@@ -211,7 +211,7 @@ describe('phase 5 verification hardening', () => {
 			throw new Error('Expected LocalBusiness node with telephone')
 		}
 
-		expect(localBusinessNode.telephone).toBe('(608) 677 9985')
+		expect(localBusinessNode.telephone).toBe('+57 312 2594245')
 		expect(isRecord(localBusinessNode.address)).toBe(true)
 
 		if (!isRecord(localBusinessNode.address)) {

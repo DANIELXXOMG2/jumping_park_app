@@ -20,6 +20,14 @@ export const CONSENTIMIENTO_DIGITAL_PAGE_DESCRIPTION =
 
 export const PUBLIC_ROUTES = [
 	{
+		pathname: "/",
+		title: "Jumping Park - Parque de Trampolines en Villavicencio",
+		description:
+			"Jumping Park es el parque de trampolines más grande de Villavicencio. Diversión segura para todas las edades con más de 50 camas elásticas, piscina de espuma, muro de escalada y zona infantil.",
+		changeFrequency: "weekly" as const,
+		priority: 1.0,
+	},
+	{
 		pathname: CONSENTIMIENTO_DIGITAL_PAGE_PATH,
 		title: CONSENTIMIENTO_DIGITAL_PAGE_TITLE,
 		description: CONSENTIMIENTO_DIGITAL_PAGE_DESCRIPTION,
@@ -64,13 +72,17 @@ export const INDEXABLE_ROBOTS: NonNullable<Metadata["robots"]> = {
 };
 
 export const FRESHNESS_DATE = "2026-05-17T00:00:00.000Z";
-export const BUSINESS_PHONE = "(608) 677 9985";
+export const BUSINESS_PHONE = "+57 312 2594245";
 export const BUSINESS_OPENING_HOURS = [
-	"Mo-Fr 14:00-20:00",
+	"Mo-Fr 13:30-20:00",
 	"Sa-Su 11:00-20:00",
 ] as const;
 export const BUSINESS_STREET_ADDRESS =
 	"Centro Comercial Primavera Urbana, Calle 15 # 40-01, Locales 313-314-315-316-317";
+export const BUSINESS_SOCIAL_PROFILES = [
+	"https://instagram.com/jumpingparkvillavo",
+	"https://facebook.com/jumpingparkvillavo",
+] as const;
 
 export interface FaqItem {
 	answer: string;
@@ -117,6 +129,7 @@ interface LocalBusinessNode {
 	inLanguage: string;
 	name: string;
 	openingHours: string[];
+	sameAs?: readonly string[];
 	telephone: string;
 	url: string;
 }
@@ -411,6 +424,7 @@ export function buildPublicPageStructuredData(options: {
 			telephone: BUSINESS_PHONE,
 			address: buildLocalBusinessAddress(),
 			openingHours: [...BUSINESS_OPENING_HOURS],
+			sameAs: BUSINESS_SOCIAL_PROFILES,
 		},
 	];
 

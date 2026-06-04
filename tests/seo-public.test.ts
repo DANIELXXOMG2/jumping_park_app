@@ -56,12 +56,16 @@ describe('public seo boundary', () => {
 				follow?: boolean
 			}
 
+			expect(rules?.allow).toContain('/')
 			expect(rules?.allow).toContain('/consentimiento-digital')
 			expect(rules?.disallow).toContain('/admin/')
 			expect(rules?.disallow).toContain('/ingreso/')
 			expect(manifest.sitemap).toBe('https://www.jumpingpark.lat/sitemap.xml')
-			expect(entries.length).toBe(1)
+			expect(entries.length).toBe(2)
 			expect(entries[0]?.url).toBe(
+				'https://www.jumpingpark.lat/',
+			)
+			expect(entries[1]?.url).toBe(
 				'https://www.jumpingpark.lat/consentimiento-digital',
 			)
 			expect(robotsMetadata.index).toBe(true)
