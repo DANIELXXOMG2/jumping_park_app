@@ -124,6 +124,44 @@ export function HomepageExperience() {
 					</div>
 				</section>
 
+				{/* ATRACCIONES */}
+				<section className="px-6 py-12">
+					<div className="mx-auto max-w-4xl">
+						<h2 className="mb-8 text-center text-2xl font-bold text-white sm:text-3xl">
+							Atracciones
+						</h2>
+						<div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+							<div className="flex flex-col items-center gap-3 rounded-2xl bg-white/5 p-6 text-center backdrop-blur-sm">
+								<span className="text-4xl">🤸</span>
+								<h3 className="text-lg font-semibold text-white">
+									Trampolines
+								</h3>
+								<p className="text-sm text-white/70">
+									Camas elásticas para saltar y divertirte sin límites.
+								</p>
+							</div>
+							<div className="flex flex-col items-center gap-3 rounded-2xl bg-white/5 p-6 text-center backdrop-blur-sm">
+								<span className="text-4xl">🧸</span>
+								<h3 className="text-lg font-semibold text-white">
+									Juegos infantiles
+								</h3>
+								<p className="text-sm text-white/70">
+									Zona con juegos chiquitos para los más pequeños.
+								</p>
+							</div>
+							<div className="flex flex-col items-center gap-3 rounded-2xl bg-white/5 p-6 text-center backdrop-blur-sm">
+								<span className="text-4xl">🟡</span>
+								<h3 className="text-lg font-semibold text-white">
+									Piscina de pelotas
+								</h3>
+								<p className="text-sm text-white/70">
+									Piscina de pelotas para los niños.
+								</p>
+							</div>
+						</div>
+					</div>
+				</section>
+
 				{/* INFO DEL NEGOCIO */}
 				<section className="px-6 py-12">
 					<div className="mx-auto max-w-4xl grid grid-cols-1 gap-8 sm:grid-cols-3">
