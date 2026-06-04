@@ -36,7 +36,8 @@
     "screenshot:capture": "bun run scripts/capture-screenshots.ts",
     "optimize:images": "bun run scripts/optimize-images.ts",
     "optimize:screenshots": "bun run scripts/optimize-screenshots.ts",
-    "backup": "bun run scripts/backup.ts"
+    "backup": "bun run scripts/backup.ts",
+    "validate:evidence": "bun run scripts/validate-pagespeed.ts -- --url ${URL:-https://www.jumpingpark.lat} && bun run scripts/extract-jsonld.ts -- --url ${URL:-https://www.jumpingpark.lat} && bun run scripts/validate-public-crawl.ts -- --url ${URL:-https://www.jumpingpark.lat}"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
