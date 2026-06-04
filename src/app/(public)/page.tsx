@@ -7,6 +7,7 @@ import cosmicStyles from "@/components/public/cosmic-bg.module.css";
 import { SecretAdminTrigger } from "@/components/ui/SecretAdminTrigger";
 import { PAGE_IMAGE_VARIANTS } from "@/lib/imageOptimization";
 import { buildLandingMetadata } from "@/lib/landingSeo";
+import { cn } from "@/lib/utils";
 import {
 	BUSINESS_OPENING_HOURS,
 	BUSINESS_PHONE,
@@ -23,16 +24,25 @@ const structuredData = buildPublicPageStructuredData({
 });
 
 const ATTRACTIONS = [
-	{ label: "+50 camas elásticas", value: "Espacio amplio para saltar sin límites." },
-	{ label: "Piscina de espuma", value: "Zona de salto con aterrizaje seguro y divertido." },
-	{ label: "Muro de escalada", value: "Desafío vertical para todas las edades." },
+	{
+		label: "+50 camas elásticas",
+		value: "Espacio amplio para saltar sin límites.",
+	},
+	{
+		label: "Piscina de espuma",
+		value: "Zona de salto con aterrizaje seguro y divertido.",
+	},
+	{
+		label: "Muro de escalada",
+		value: "Desafío vertical para todas las edades.",
+	},
 	{ label: "Zona infantil", value: "Área dedicada para los más pequeños." },
 ] as const;
 
 export default function LandingPage() {
 	return (
 		<main
-			className={`${cosmicStyles.background} min-h-screen px-6 py-16 text-zinc-50 sm:px-10 lg:px-16`}
+			className={cn(cosmicStyles.background, "min-h-screen px-6 py-16 text-zinc-50 sm:px-10 lg:px-16")}
 		>
 			<Script
 				id="landing-jsonld"
@@ -88,7 +98,10 @@ export default function LandingPage() {
 									Horarios
 								</p>
 								{BUSINESS_OPENING_HOURS.map((entry) => (
-									<p key={entry} className="mt-1 text-sm leading-6 text-zinc-200">
+									<p
+										key={entry}
+										className="mt-1 text-sm leading-6 text-zinc-200"
+									>
 										{entry}
 									</p>
 								))}
