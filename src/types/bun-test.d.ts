@@ -6,11 +6,19 @@ declare module "bun:test" {
 		toEqual(expected: unknown): void;
 		toContain(expected: string): void;
 		toBeDefined(): void;
+		toBeNull(): void;
 		toBeGreaterThan(expected: number): void;
+		toBeGreaterThanOrEqual(expected: number): void;
+		toBeString(): void;
+		toBeWithin(min: number, max: number): void;
+		toMatch(expected: string | RegExp): void;
 		toHaveProperty(key: string, value?: unknown): void;
 		not: {
 			toBe(expected: unknown): void;
 			toContain(expected: string): void;
+			toBeNull(): void;
+			toBe(expected: unknown): void;
+			toMatch(expected: string | RegExp): void;
 		};
 	}
 
