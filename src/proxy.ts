@@ -8,7 +8,6 @@ import { evaluateHardeningFlag, HARDENING_FLAG } from "@/lib/hardeningPolicy";
 
 const PUBLIC_ADMIN_ROUTES = ["/admin/login", "/admin/unauthorized"];
 const NOINDEX_PREFIXES = [
-	"/",
 	"/admin",
 	"/ingreso",
 	"/otp",
