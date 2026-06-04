@@ -1,36 +1,47 @@
 # Rich Results / Schema.org validator evidence
 
-This file is the **template** for evidence from Google's Rich Results Test and the Schema.org Validator against the public JSON-LD. It stays empty until a real validation run is captured. Do not paste a "passing" badge that was not produced by the validator.
+This file captures evidence from Google's Rich Results Test and Schema.org Validator against the public JSON-LD. All data must come from **real validator runs** or be honestly marked "pending."
 
-## What real evidence looks like
+## Automated JSON-LD extraction
 
-- The **public URL** of the page that was tested (canonical, not a preview or staging URL).
-- The **raw output** from the Rich Results Test (detected structured data items, any warnings, any errors) and from the Schema.org Validator.
-- A **screenshot or copy/paste** of the validator result panel, attached to the same commit.
-- The **deploy commit SHA** that was live at the time of the run, so the result is reproducible.
+Run on 2026-06-04 against `https://www.jumpingpark.lat`:
 
-## What does NOT count as evidence
+```json
+{
+  "date": "2026-06-04T02:41:09.730Z",
+  "url": "https://www.jumpingpark.lat",
+  "types": [],
+  "blocks": []
+}
+```
 
-- A "no errors detected" claim without the underlying report. Schema.org and Rich Results can both show partial coverage with hidden warnings.
-- A run against a non-canonical URL (preview, staging, dev). Public discoverability is judged on the canonical URL only.
-- Re-running a stale local copy of the JSON-LD. Always re-validate the live page after a deploy.
+**Result**: No `<script type="application/ld+json">` blocks detected on the homepage. The homepage currently has **zero structured data markup**.
 
-## Report template
+> **Note**: The sitemap (2026-06-04) lists only one URL: `/consentimiento-digital`. Structured data may exist on that page but was not detected on the root. Re-run the extraction against the actual indexed page:
+
+```bash
+bun run scripts/extract-jsonld.ts -- --url=https://www.jumpingpark.lat/consentimiento-digital
+```
+
+## Manual Rich Results Test — pending
+
+This validation requires a **manual browser run** against the live page. The automated extraction above detected no JSON-LD, but a real validator may surface markup injected by client-side rendering.
+
+### Instructions
+
+1. Open **Google Rich Results Test**: https://search.google.com/test/rich-results
+2. Enter the canonical URL: `https://www.jumpingpark.lat/consentimiento-digital`
+3. Record every detected structured data type (e.g. `LocalBusiness`, `Organization`, `BreadcrumbList`).
+4. Record **all warnings and errors exactly as shown** — do not filter or paraphrase.
+5. Fill in the table below:
 
 | Date | URL tested | Validator | Detected types | Warnings | Errors | Notes |
-| --- | --- | --- | --- | --- | --- | --- |
-| YYYY-MM-DD | https://www.example.com/consentimiento-digital | Rich Results Test |  |  |  |  |
-| YYYY-MM-DD | https://www.example.com/consentimiento-digital | Schema.org Validator |  |  |  |  |
+|---|---|---|---|---|---|---|
+| YYYY-MM-DD | https://www.jumpingpark.lat/consentimiento-digital | Rich Results Test |  |  |  |  |
 
-## How to fill a row
-
-1. Open the validator with the canonical public URL.
-2. Record **every detected type** the validator surfaces (for example `LocalBusiness`, `BreadcrumbList`, `Organization`). Do not summarise — list them so a reviewer can confirm coverage.
-3. Record warnings and errors **as written by the validator**, even if the page still validates overall. A warning is a signal, not a decoration.
-4. In `Notes`, capture: deploy commit SHA, whether the run matched the public narrative, and any follow-up needed.
-5. Attach the raw validator output (HTML or JSON) to the same commit under a dated filename.
+6. Take a **screenshot** of the result panel and save as `YYYY-MM-DD-rich-results.png` in this folder.
 
 ## Cross-references
 
-- `docs/runbooks/seo-ai-seo-validation-checklist.md` — what the project commits to validating on the public surface.
-- `docs/portfolio/evidence/README.md` — anti-patterns for committed evidence (no invented pass/fail).
+- `docs/runbooks/seo-ai-seo-validation-checklist.md` — validation cadence and pass criteria.
+- `docs/portfolio/evidence/README.md` — anti-patterns for committed evidence.

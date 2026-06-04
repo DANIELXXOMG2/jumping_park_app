@@ -1,38 +1,66 @@
 # AI citation log evidence
 
-This file is the **template** for the monthly AI citation check on the public marketing surface. It mirrors the table shape in `docs/ai-visibility-monthly-checklist.md` so the two stay aligned. It stays empty until a real monthly run is logged. Do not invent citations.
+This file is the **monthly AI citation check** log for the public marketing surface. It mirrors the table shape in `docs/ai-visibility-monthly-checklist.md`. It stays empty until a real monthly run is logged. Do **not** invent citations.
 
-## What real evidence looks like
+## Status: pending manual monthly check
 
-- One row per **query** (not per run). A month with five target queries produces five rows, one per platform.
-- The **actual platform** that was tested (Google AI Overviews, ChatGPT, Perplexity) and the **URL the platform cited**, if any.
-- A **screenshot or quoted snippet** of the model's answer, attached to the same commit. This is what makes the row auditable later.
-- The **month** the check was run, in `YYYY-MM` form, to keep this log roll-up-friendly with the runbook.
+This validation is inherently **manual** — AI platforms do not expose citation APIs, and their answers change with model updates. A monthly cadence with clean-session queries is the honest approach.
 
-## What does NOT count as evidence
+## Monthly check instructions
 
-- A "Jumping Park is now cited everywhere" summary without per-query rows.
-- A cited URL that was not actually shown by the platform in that run. If a citation is in a "related links" sidebar, the row still says no citation for the **answer body** — be precise.
-- A row from a query that is not in the runbook's recommended mix. If a new query is added, the runbook should be updated first; the evidence follows.
+### Platforms to check
 
-## Report template
+| Platform | How to test | Notes |
+|---|---|---|
+| **Google AI Overviews** | Search each query in Google (US results, incognito/clean session). Look for the AI-generated summary box at the top. | Google may not surface AI Overviews for all queries or regions. Note if it did not appear at all. |
+| **ChatGPT** | Use ChatGPT (free tier web, clean session). Ask each query. If using Search mode, enable it. | Record whether ChatGPT **cited** Jumping Park in the answer body, not just in a sidebar. |
+| **Perplexity** | Use perplexity.ai (free tier, clean session, "Web" focus). Ask each query. | Perplexity always cites sources. Record whether Jumping Park appears among them and in what position. |
+
+### Recommended query mix
+
+Use these queries (from `docs/ai-visibility-monthly-checklist.md`). If you add a new query, update the runbook first.
+
+| # | Query (Spanish) | Query (English) | Target page |
+|---|---|---|---|
+| 1 | consentimiento digital para parques de trampolines | digital consent for trampoline parks | `/consentimiento-digital` |
+| 2 | software gestión parques infantiles Colombia | kids park management software Colombia | `/` |
+| 3 | cómo gestionar consentimientos informados saltarines | how to manage informed consent trampoline parks | `/consentimiento-digital` |
+| 4 | precio software parque de saltos | trampoline park software pricing | `/pricing.md` |
+| 5 | cumplimiento legal parques infantiles digital | legal compliance digital kids parks | `/consentimiento-digital` |
+
+### Per-check steps
+
+1. **Pick the month** — use `YYYY-MM` format.
+2. **Run each query on each platform** with a clean session (incognito/private window).
+3. **Record only answer-body citations** — sidebar or "related links" are separate observations, not body citations.
+4. **If cited**: record the exact URL the platform surfaced.
+5. **If a competitor is cited instead**: record their URL in the `Competitor or third-party cited` column.
+6. **Take a screenshot** of the answer and save as `YYYY-MM-platform-query-N.png`.
+
+### Fill in the table
 
 | Month | Query | Platform | Cited? | Cited URL | Competitor or third-party cited | Notes / follow-up |
-| --- | --- | --- | --- | --- | --- | --- |
-| YYYY-MM |  | Google AI Overviews | Yes / No |  |  |  |
-| YYYY-MM |  | ChatGPT | Yes / No |  |  |  |
-| YYYY-MM |  | Perplexity | Yes / No |  |  |  |
+|---|---|---|---|---|---|---|
+| YYYY-MM | consentimiento digital para parques de trampolines | Google AI Overviews | Yes / No |  |  |  |
+| YYYY-MM | consentimiento digital para parques de trampolines | ChatGPT | Yes / No |  |  |  |
+| YYYY-MM | consentimiento digital para parques de trampolines | Perplexity | Yes / No |  |  |  |
+| YYYY-MM | software gestión parques infantiles Colombia | Google AI Overviews | Yes / No |  |  |  |
+| … | … | … | … | … | … | … |
 
-## How to fill a row
+*Repeat for all 5 queries × 3 platforms = 15 rows per month.*
 
-1. Pick the query from the runbook's recommended mix, or add it to the runbook first if the query is new.
-2. Run the query on the target platform with a clean session.
-3. Record whether the **answer body** cites Jumping Park. Treat a sidebar or "related links" only as a separate observation, not as a body citation.
-4. If cited, record the **exact URL** the platform surfaced. If a competitor or third party is cited instead, record that URL too.
-5. In `Notes`, capture: any drift from `/llms.txt` or `/pricing.md`, the public page that should be improved, and the issue link if a follow-up was opened.
-6. Attach the screenshot or quoted snippet to the same commit under a dated filename.
+### After filling
+
+- Commit all screenshots with the evidence rows.
+- If a page is never cited after 3 months, open an issue to improve `llms.txt`, `pricing.md`, or the page content.
+
+## What does NOT count
+
+- "Jumping Park is cited everywhere" without per-query rows.
+- A cited URL that was not actually shown by the platform in that run.
+- A row from a query not in the runbook (update the runbook first).
 
 ## Cross-references
 
-- `docs/ai-visibility-monthly-checklist.md` — the runbook, the recommended query mix, and the escalation rule.
-- `docs/runbooks/seo-ai-seo-validation-checklist.md` — the AI-SEO checks this log rolls up into.
+- `docs/ai-visibility-monthly-checklist.md` — the runbook (query mix, escalation rule).
+- `docs/runbooks/seo-ai-seo-validation-checklist.md` — AI-SEO checks this log rolls up into.

@@ -1,36 +1,57 @@
 # Search Console evidence
 
-This file is the **template** for Google Search Console evidence that requires external account access. It stays empty until a real Search Console export is captured. Do not invent impressions, clicks, or indexing state.
+This file captures Google Search Console evidence that requires **external account access**. It stays empty until a real Search Console export is captured. Do **not** invent impressions, clicks, or indexing state.
 
-## What real evidence looks like
+## Status: pending manual export
 
-- A **date range** that matches a real Search Console query (default is the last 28 days, or the current month).
-- The **URL or property** the export came from, so the row can be matched to the canonical public surface.
-- The **raw numbers** as Search Console reports them — impressions, clicks, average position, and indexing status. Do not invert or round.
-- A **screenshot of the Search Console panel** or a CSV/Excel export, attached to the same commit. The export is what makes the row auditable later.
+**This validation cannot be automated** without OAuth2 integration for the Search Console API. The project currently uses manual exports, which is sufficient for portfolio purposes.
 
-## What does NOT count as evidence
+## Step-by-step export instructions
 
-- A summary like "everything is indexed" without the underlying report. Indexing exceptions are the most important signal in Search Console; they are easy to miss and easy to fake.
-- Numbers copied from a third-party SEO tool. The project commits to **Search Console as the source of truth** for indexing and click data.
-- A row from a property that is not the canonical public property (for example a staging or dev property).
+### Prerequisites
 
-## Report template
+- A Google account with **Owner** or **Full User** access to the Search Console property `https://www.jumpingpark.lat/`.
+- The property must be verified (DNS TXT record, HTML file, or Google Analytics).
+
+### Steps
+
+1. **Open Search Console**: https://search.google.com/search-console
+2. Select the property: `https://www.jumpingpark.lat/` (or `sc-domain:jumpingpark.lat` for domain-level).
+3. **Performance report**:
+   - Go to **Performance** → set date range to last 28 days.
+   - Record: Total clicks, Total impressions, Average CTR, Average position.
+   - Click **Export** → download as CSV.
+4. **Indexing report**:
+   - Go to **Pages** → see "Indexed" and "Not indexed" counts.
+   - Click on "Not indexed" to review exclusion reasons.
+   - Note any unexpected exclusions (e.g. `Excluded by 'noindex' tag`, `Crawled - currently not indexed`).
+5. **Sitemap status** (if submitted):
+   - Go to **Sitemaps** → check last read date and any errors.
+6. **Manual actions & Security issues**:
+   - Check both tabs under **Security & Manual Actions**. Should be empty.
+
+### Fill in the evidence table
 
 | Date range | Property | Impressions | Clicks | Avg. position | Indexed pages | Excluded pages | Notes |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| YYYY-MM-DD to YYYY-MM-DD | https://www.example.com/ |  |  |  |  |  |  |
+|---|---|---|---|---|---|---|---|
+| YYYY-MM-DD to YYYY-MM-DD | https://www.jumpingpark.lat/ |  |  |  |  |  |  |
 
-## How to fill a row
+### After filling
 
-1. Open Search Console for the canonical public property.
-2. Run the Performance report for the chosen date range. Use the default **Web** search type unless the runbook says otherwise.
-3. Run the **Pages > Indexing** report and record both indexed and excluded counts. Excluded pages are not a failure by themselves — note any unexpected exclusions in the `Notes` column.
-4. Record the raw totals as Search Console reports them. Do not normalise to per-day averages.
-5. In `Notes`, capture: any manual actions, any crawl anomalies, the deploy commit SHA the report window covers, and any follow-up issue opened.
-6. Attach the screenshot or CSV export to the same commit under a dated filename.
+- Save the CSV export as `YYYY-MM-DD-search-console-performance.csv` in this folder.
+- Take a screenshot of the **Pages → Indexing** panel and save as `YYYY-MM-DD-search-console-indexing.png`.
+- In `Notes`, record:
+  - The deploy commit SHA the report window covers.
+  - Any manual actions or crawl anomalies.
+  - Any follow-up issue opened for unexpected exclusions.
+
+## What does NOT count
+
+- Numbers from a third-party SEO tool (Ahrefs, SEMrush, etc.). Search Console is the source of truth.
+- A row from a staging or dev property.
+- A summary like "everything is indexed" without the underlying CSV or screenshot.
 
 ## Cross-references
 
-- `docs/runbooks/seo-ai-seo-validation-checklist.md` — the indexability checks this evidence rolls up into.
-- `docs/portfolio/evidence/README.md` — anti-patterns for committed evidence (no fake green checks).
+- `docs/runbooks/seo-ai-seo-validation-checklist.md` — indexability checks.
+- `docs/portfolio/evidence/README.md` — evidence anti-patterns.
