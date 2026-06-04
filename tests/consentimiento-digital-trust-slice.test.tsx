@@ -107,10 +107,14 @@ describe('consentimiento digital trust slice', () => {
 	it('renders the trust narrative, faq content, and CTA in SSR markup', () => {
 		const markup = renderToStaticMarkup(<ConsentimientoDigitalPage />)
 
-		expect(markup).toContain('Lo que cambia para tu visita y para la operacion.')
-		expect(markup).toContain('Preguntas frecuentes antes de tu visita')
-		expect(markup).toContain('Si queres llegar con el consentimiento resuelto, este es el momento.')
-		expect(markup).toContain('Resolver dudas primero')
+		expect(markup).toContain(
+			'Firma tu consentimiento',
+		)
+		expect(markup).toContain('Preguntas frecuentes')
+		expect(markup).toContain(
+			'Completar registro ahora',
+		)
+		expect(markup).toContain('No pierdas mas tiempo en filas')
 	})
 
 	it('keeps the FAQ entries visible in markup and faq json-ld output', () => {
@@ -120,13 +124,13 @@ describe('consentimiento digital trust slice', () => {
 		const lastEntry = CONSENTIMIENTO_DIGITAL_FAQ_ENTRIES.at(-1)
 		const elementIds = findElementIds(pageTree)
 		const faqScript = findJsonLdScripts(pageTree).find(
-			(script) => script.id === 'faqpage-jsonld',
+			(script) => script.id === 'faq-schema',
 		)
 		const faqJsonLd = faqScript ? JSON.parse(faqScript.children) : undefined
 
 		expect(firstEntry).toBeDefined()
 		expect(lastEntry).toBeDefined()
-		expect(elementIds).toContain('faqpage-jsonld')
+		expect(elementIds).toContain('faq-schema')
 		expect(isFaqPageSchema(faqJsonLd)).toBe(true)
 
 		if (!isFaqPageSchema(faqJsonLd)) {

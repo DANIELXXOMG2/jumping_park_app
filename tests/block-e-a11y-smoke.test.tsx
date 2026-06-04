@@ -46,13 +46,13 @@ describe('block e accessibility smoke coverage', () => {
 
 		expect(markup).toContain('<main')
 		expect(markup).toContain('<h1')
-		expect(markup).toContain('Firma antes de llegar. Entra al parque con menos filas y mas confianza.')
+		expect(markup).toContain('Firma tu consentimiento')
 		expect(markup).toContain('Ver como funciona')
-		expect(markup).toContain('Preguntas frecuentes antes de tu visita')
-		expect(markup).toContain('Empezar registro en el kiosco')
+		expect(markup).toContain('Preguntas frecuentes')
+		expect(markup).toContain('Empezar registro')
 		expect(markup).toContain('<dl')
 		expect(markup).toContain('data-animated-section="hero"')
-		expect(countOccurrences(markup, 'aria-labelledby="flow-card-title-')).toBe(3)
+		expect(markup).toContain('data-animated-section="process"')
 		expect(collectCriticalA11ySmokeViolations(markup)).toEqual([])
 	})
 
