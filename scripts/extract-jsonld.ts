@@ -1,12 +1,22 @@
 /**
- * extract-jsonld — Fetches a public URL and extracts JSON-LD structured data.
+ * extract-jsonld — Renders a public URL with Playwright and extracts JSON-LD structured data.
  *
  * Usage: bun run scripts/extract-jsonld.ts --url <URL>
+ *
+ * NOTE: Bun may timeout launching Playwright Chromium on Windows.
+ * If that happens, run with Node directly:
+ *   node --loader ts-node/esm scripts/extract-jsonld.ts --url <URL>
+ *
+ * Uses Playwright to render the page (handles client-side injected JSON-LD from
+ * Next.js `<Script strategy="afterInteractive">`) and extracts all
+ * `<script type="application/ld+json">` blocks from the live DOM.
+ *
+ * Also exports a pure `parseJsonLdFromHtml` function for testing without Playwright.
  *
  * Outputs detected schema types + raw JSON to stdout. Exits 1 on failure.
  */
 
-const JSON_LD_REGEX = /<script\s+[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi
+import { chromium } from '@playwright/test'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -26,33 +36,31 @@ export interface JsonLdExtraction {
   blocks: Record<string, unknown>[]
 }
 
-export async function extractJsonLd(url: string): Promise<JsonLdExtraction> {
-  const response = await fetch(url)
-  if (!response.ok) {
-    throw new Error(
-      `Fetch returned HTTP ${String(response.status)} for ${url}`,
-    )
-  }
-
-  const html = await response.text()
+/**
+ * Pure parser: extracts JSON-LD blocks from raw HTML string.
+ * Testable without Playwright.
+ */
+export function parseJsonLdFromHtml(
+  html: string,
+  url: string,
+): JsonLdExtraction {
+  const regex =
+    /<script\s+[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi
   const blocks: Record<string, unknown>[] = []
   const types: string[] = []
 
   let match: RegExpExecArray | null
-  JSON_LD_REGEX.lastIndex = 0
-  while ((match = JSON_LD_REGEX.exec(html)) !== null) {
+  regex.lastIndex = 0
+  while ((match = regex.exec(html)) !== null) {
     const raw = match[1].trim()
+    if (!raw) continue
     try {
       const parsed: unknown = JSON.parse(raw)
-      if (!isRecord(parsed)) {
-        throw new Error('JSON-LD block is not an object')
-      }
+      if (!isRecord(parsed)) continue
       blocks.push(parsed)
       types.push(...extractTypes(parsed))
     } catch {
-      throw new Error(
-        `Malformed JSON in JSON-LD block at position ${String(match.index)}`,
-      )
+      // skip malformed blocks
     }
   }
 
@@ -61,6 +69,22 @@ export async function extractJsonLd(url: string): Promise<JsonLdExtraction> {
     url,
     types,
     blocks,
+  }
+}
+
+/**
+ * Live URL extraction: renders with Playwright, then parses the live DOM.
+ */
+export async function extractJsonLd(url: string): Promise<JsonLdExtraction> {
+  const browser = await chromium.launch({ headless: true })
+  try {
+    const page = await browser.newPage()
+    await page.goto(url, { waitUntil: 'networkidle', timeout: 30_000 })
+
+    const html = await page.content()
+    return parseJsonLdFromHtml(html, url)
+  } finally {
+    await browser.close()
   }
 }
 

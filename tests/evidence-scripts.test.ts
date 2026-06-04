@@ -148,19 +148,19 @@ describe('validate-pagespeed', () => {
 // ---------------------------------------------------------------------------
 
 describe('extract-jsonld', () => {
-  let extractJsonLd: (url: string) => Promise<{
+  let parseJsonLdFromHtml: (html: string, url: string) => {
     date: string
     url: string
     types: string[]
-    blocks: unknown[]
-  }>
+    blocks: Record<string, unknown>[]
+  }
 
   beforeAll(async () => {
     const mod = await import('../scripts/extract-jsonld')
-    extractJsonLd = mod.extractJsonLd
+    parseJsonLdFromHtml = mod.parseJsonLdFromHtml
   })
 
-  it('extracts JSON-LD blocks from valid HTML', async () => {
+  it('extracts JSON-LD blocks from valid HTML', () => {
     const html = `
       <html>
       <head>
@@ -176,11 +176,7 @@ describe('extract-jsonld', () => {
       </html>
     `
 
-    mockFetch(async (_input: string | URL | Request, _init?: RequestInit) =>
-      makeHtmlResponse(html),
-    )
-
-    const result = await extractJsonLd('https://example.com')
+    const result = parseJsonLdFromHtml(html, 'https://example.com')
 
     expect(result.types).toContain('LocalBusiness')
     expect(result.types).toContain('BreadcrumbList')
@@ -190,7 +186,7 @@ describe('extract-jsonld', () => {
     expect(result.date).toBeTruthy()
   })
 
-  it('extracts JSON-LD with nested objects across lines', async () => {
+  it('extracts JSON-LD with nested objects across lines', () => {
     const html = `
       <html><head>
       <script type="application/ld+json">
@@ -207,50 +203,47 @@ describe('extract-jsonld', () => {
       </head></html>
     `
 
-    mockFetch(async (_input: string | URL | Request, _init?: RequestInit) =>
-      makeHtmlResponse(html),
-    )
-
-    const result = await extractJsonLd('https://example.com')
+    const result = parseJsonLdFromHtml(html, 'https://example.com')
 
     expect(result.types).toEqual(['Organization'])
     expect(result.blocks).toHaveLength(1)
     expect(result.blocks[0]).toHaveProperty('name', 'Jumping Park')
   })
 
-  it('returns empty types when no JSON-LD blocks found', async () => {
+  it('returns empty types when no JSON-LD blocks found', () => {
     const html = '<html><head></head><body><p>No structured data here</p></body></html>'
 
-    mockFetch(async (_input: string | URL | Request, _init?: RequestInit) =>
-      makeHtmlResponse(html),
-    )
-
-    const result = await extractJsonLd('https://example.com')
+    const result = parseJsonLdFromHtml(html, 'https://example.com')
 
     expect(result.types).toEqual([])
     expect(result.blocks).toEqual([])
   })
 
-  it('throws on malformed JSON inside a JSON-LD block', async () => {
+  it('skips malformed JSON inside a JSON-LD block', () => {
     const html = `
       <html><head>
       <script type="application/ld+json">this is not valid json {{{</script>
       </head></html>
     `
 
-    mockFetch(async (_input: string | URL | Request, _init?: RequestInit) =>
-      makeHtmlResponse(html),
-    )
+    const result = parseJsonLdFromHtml(html, 'https://example.com')
 
-    await expect(extractJsonLd('https://example.com')).rejects.toThrow()
+    expect(result.types).toEqual([])
+    expect(result.blocks).toEqual([])
   })
 
-  it('throws on network failure', async () => {
-    mockFetch(async (_input: string | URL | Request, _init?: RequestInit) => {
-      throw new Error('ENOTFOUND')
-    })
+  it('handles mixed valid and invalid blocks', () => {
+    const html = `
+      <html><head>
+      <script type="application/ld+json">not json</script>
+      <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Test"}</script>
+      </head></html>
+    `
 
-    await expect(extractJsonLd('https://example.com')).rejects.toThrow(/ENOTFOUND/)
+    const result = parseJsonLdFromHtml(html, 'https://example.com')
+
+    expect(result.types).toEqual(['WebSite'])
+    expect(result.blocks).toHaveLength(1)
   })
 })
 

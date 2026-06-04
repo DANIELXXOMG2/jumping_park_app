@@ -48,8 +48,14 @@ export async function runPagespeed(
   url: string,
   apiKey?: string,
 ): Promise<PSIResult> {
-  const params = new URLSearchParams({ url, strategy: 'mobile' })
+  const params = new URLSearchParams()
+  params.set('url', url)
+  params.set('strategy', 'mobile')
   if (apiKey) params.set('key', apiKey)
+  params.append('category', 'performance')
+  params.append('category', 'seo')
+  params.append('category', 'accessibility')
+  params.append('category', 'best-practices')
   const endpoint = `${PSI_BASE}?${params.toString()}`
 
   const response = await fetch(endpoint)

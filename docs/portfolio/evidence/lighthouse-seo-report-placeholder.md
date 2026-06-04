@@ -2,37 +2,35 @@
 
 This file captures real PageSpeed Insights (PSI) / Lighthouse runs for the canonical public URL. It stays populated with **real scores only** — never invented numbers.
 
-## Automated run attempts
+## Automated runs (PSI API with key)
 
 | Date (UTC) | URL tested | Method | Performance | LCP (ms) | TBT (ms) | CLS | SEO | Notes |
 |---|---|---|---|---|---|---|---|---|
-| 2026-06-04T02:41 | https://www.jumpingpark.lat | PSI API (anonymous) | — | — | — | — | — | **Rate-limited**: HTTP 429 `RESOURCE_EXHAUSTED`. Anonymous daily quota exhausted. See failure details below. |
+| 2026-06-04T03:41 | https://www.jumpingpark.lat/consentimiento-digital | PSI API (key) | 98 | 2362 | 90.5 | 0 | 100 | Primary public page. All budgets passed. |
+| 2026-06-04T03:40 | https://www.jumpingpark.lat | PSI API (key) | 83 | 4323 | 83.5 | 0.083 | 66 | Homepage. LCP over 2500ms budget. SEO 66 needs investigation. |
 
-### Attempt #1 — 2026-06-04 failure details
+## Analysis
 
-```
-HTTP 429 — Quota exceeded for quota metric 'Queries' and limit 'Queries per day'
-Service: pagespeedonline.googleapis.com
-Reason: RATE_LIMIT_EXCEEDED / RESOURCE_EXHAUSTED
-```
+### consentimiento-digital (primary indexed page)
+- **Performance 98/100**: Excellent. LCP 2362ms under 2500ms budget. TBT 90.5ms well under 300ms. CLS 0.
+- **SEO 100/100**: Perfect. All meta tags, structured data, crawlability checks pass.
 
-**Fix**: Set `PSI_API_KEY` environment variable with a valid Google Cloud API key, then rerun:
-
-```bash
-PSI_API_KEY=your_key_here bun run scripts/validate-pagespeed.ts -- --url=https://www.jumpingpark.lat
-```
+### Homepage (/)
+- **Performance 83/100**: Good but below 90 target. LCP 4323ms exceeds 2500ms budget — likely due to heavy initial render.
+- **SEO 66/100**: Needs investigation. May be missing meta description, viewport issues, or link text problems.
+- **CLS 0.083**: Under 0.1 budget but not zero — some layout shift present.
 
 ## Manual run template
 
-Until an automated run succeeds with an API key, fill rows manually from a browser-based Lighthouse audit (Chrome DevTools → Lighthouse tab, or https://pagespeed.web.dev/).
+For additional pages or environments, fill rows manually from a browser-based Lighthouse audit (Chrome DevTools → Lighthouse tab, or https://pagespeed.web.dev/).
 
 | Date | URL tested | Environment | Performance | LCP (ms) | TBT (ms) | CLS | SEO | Notes |
 |---|---|---|---|---|---|---|---|---|
-| YYYY-MM-DD | https://www.jumpingpark.lat/consentimiento-digital | production |  |  |  |  |  |  |
+| YYYY-MM-DD | URL | production |  |  |  |  |  |  |
 
 ## How to fill a row
 
-1. Run Lighthouse or PageSpeed Insights against the URL. For production, use `https://www.jumpingpark.lat/consentimiento-digital` (the only indexed page per sitemap as of 2026-06-04).
+1. Run Lighthouse or PageSpeed Insights against the URL.
 2. Record the **four category scores** (Performance, Accessibility, Best Practices, SEO) as decimal numbers exactly as reported.
 3. Record LCP, TBT, and CLS in the units shown by the report (ms and unitless).
 4. In `Notes`, capture: deploy commit SHA, any deviation from budget, and any warnings Lighthouse surfaced.
