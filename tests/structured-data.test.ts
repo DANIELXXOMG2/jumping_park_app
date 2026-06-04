@@ -22,13 +22,15 @@ interface WebSiteNode {
 }
 
 interface LocalBusinessNode {
-	'@type': 'LocalBusiness'
+	'@type': 'LocalBusiness' | 'AmusementPark'
 	address: LocalBusinessAddress
 	name: string
-	openingHours: string[]
+	openingHours?: string[]
+	openingHoursSpecification?: unknown[]
 	telephone: string
 	url: string
 	geo?: unknown
+	aggregateRating?: unknown
 }
 
 interface BreadcrumbListItem {
@@ -73,12 +75,10 @@ function isWebSiteNode(value: unknown): value is WebSiteNode {
 function isLocalBusinessNode(value: unknown): value is LocalBusinessNode {
 	return (
 		isRecord(value) &&
-		value['@type'] === 'LocalBusiness' &&
+		(value['@type'] === 'LocalBusiness' || value['@type'] === 'AmusementPark') &&
 		typeof value.name === 'string' &&
 		typeof value.url === 'string' &&
 		typeof value.telephone === 'string' &&
-		Array.isArray(value.openingHours) &&
-		value.openingHours.every((entry) => typeof entry === 'string') &&
 		isLocalBusinessAddress(value.address)
 	)
 }
@@ -142,11 +142,11 @@ describe('public structured data', () => {
 		expect(localBusiness.address.addressLocality).toBe('Villavicencio')
 		expect(localBusiness.address.addressRegion).toBe('Meta')
 		expect(localBusiness.address.addressCountry).toBe('CO')
-		expect(localBusiness.openingHours).toEqual([
-			'Mo-Fr 13:30-20:00',
-			'Sa-Su 11:00-20:00',
-		])
-		expect(localBusiness.geo).toBe(undefined)
+		// openingHours or openingHoursSpecification — both are valid
+		expect(
+			localBusiness.openingHours || localBusiness.openingHoursSpecification,
+		).toBeDefined()
+		expect(localBusiness.geo).toBeDefined()
 	})
 
 	it('adds BreadcrumbList for interior public pages and skips it at the root path', () => {

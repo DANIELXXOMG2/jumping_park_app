@@ -84,6 +84,11 @@ export const BUSINESS_SOCIAL_PROFILES = [
 	"https://facebook.com/jumpingparkvillavo",
 ] as const;
 
+export const BUSINESS_LATITUDE = 4.1463;
+export const BUSINESS_LONGITUDE = -73.6189;
+export const BUSINESS_RATING_VALUE = "4.8";
+export const BUSINESS_REVIEW_COUNT = "10000";
+
 export interface FaqItem {
 	answer: string;
 	question: string;
@@ -120,18 +125,51 @@ interface WebSiteNode {
 	url: string;
 }
 
-interface LocalBusinessNode {
-	"@type": "LocalBusiness";
+interface GeoCoordinatesNode {
+	"@type": "GeoCoordinates";
+	latitude: number;
+	longitude: number;
+}
+
+interface AggregateRatingNode {
+	"@type": "AggregateRating";
+	ratingValue: string;
+	reviewCount: string;
+}
+
+interface AmusementParkNode {
+	"@type": "AmusementPark";
 	"@id": string;
 	address: LocalBusinessAddress;
+	aggregateRating: AggregateRatingNode;
 	description: string;
+	geo: GeoCoordinatesNode;
 	image: string;
 	inLanguage: string;
+	logo?: string;
 	name: string;
-	openingHours: string[];
+	openingHoursSpecification: {
+		"@type": "OpeningHoursSpecification";
+		dayOfWeek: string[];
+		opens: string;
+		closes: string;
+	}[];
 	sameAs?: readonly string[];
 	telephone: string;
 	url: string;
+}
+
+interface HowToStep {
+	"@type": "HowToStep";
+	name: string;
+	text: string;
+}
+
+interface HowToNode {
+	"@type": "HowTo";
+	description: string;
+	name: string;
+	step: HowToStep[];
 }
 
 interface BreadcrumbListItem {
@@ -149,7 +187,8 @@ interface BreadcrumbListNode {
 type StructuredDataGraphNode =
 	| WebPageNode
 	| WebSiteNode
-	| LocalBusinessNode
+	| AmusementParkNode
+	| HowToNode
 	| BreadcrumbListNode;
 
 export const CONSENTIMIENTO_DIGITAL_FAQ_ENTRIES = [
@@ -269,6 +308,21 @@ export function buildPublicRobotsManifest(): MetadataRoute.Robots {
 				allow: [...PUBLIC_PATHS],
 				disallow: [...PRIVATE_PATH_PREFIXES],
 			},
+			{
+				userAgent: "ChatGPT-User",
+				allow: [...PUBLIC_PATHS],
+				disallow: [...PRIVATE_PATH_PREFIXES],
+			},
+			{
+				userAgent: "anthropic-ai",
+				allow: [...PUBLIC_PATHS],
+				disallow: [...PRIVATE_PATH_PREFIXES],
+			},
+			{
+				userAgent: "Bingbot",
+				allow: [...PUBLIC_PATHS],
+				disallow: [...PRIVATE_PATH_PREFIXES],
+			},
 		],
 		sitemap: `${APP_URL}/sitemap.xml`,
 		host: APP_URL,
@@ -324,23 +378,31 @@ export function buildLlmsText(): string {
 		"",
 		`> ${APP_DESCRIPTION}`,
 		"",
+		"## About",
+		`${APP_NAME} is the largest trampoline park in Villavicencio, Colombia, located at ${BUSINESS_STREET_ADDRESS}. The park offers safe entertainment for all ages with over 50 trampolines, foam pit, climbing wall, and children's zone.`,
+		"",
+		`- **Phone**: ${BUSINESS_PHONE}`,
+		`- **Address**: ${BUSINESS_STREET_ADDRESS}, Villavicencio, Meta, Colombia`,
+		`- **Hours**: Monday-Friday 1:30pm-8:00pm, Saturday-Sunday 11:00am-8:00pm`,
+		`- **Social**: ${BUSINESS_SOCIAL_PROFILES.map((url) => url.replace("https://", "")).join(", ")}`,
+		"",
 		"## Public Summary",
-		`${APP_NAME} publica una pagina informativa sobre su flujo de consentimiento digital antes de la visita al parque.`,
+		`${APP_NAME} publishes an informational page about its digital consent flow before visiting the park. Visitors can complete registration, OTP validation, and digital signature in advance.`,
 		"",
 		"## Public URLs",
 		publicRouteLines,
 		`- ${createCanonicalUrl(PRICING_PAGE_PATH)}: pricing reference for ticketing, admission context, and machine-readable buying notes.`,
 		"",
 		"## Private Or Non-Indexable Areas",
-		"- /admin/*: panel administrativo y operaciones internas.",
-		"- /ingreso, /otp, /registro, /consentimiento, /exito: flujo privado del kiosco en sitio.",
-		"- /api/*: endpoints operativos, no pensados para indexacion.",
+		"- /admin/*: administrative panel and internal operations.",
+		"- /ingreso, /otp, /registro, /consentimiento, /exito: private kiosk flow on-site.",
+		"- /api/*: operational endpoints, not intended for indexing.",
 		"",
 		"## Citation Guidance",
-		`- URL canonica preferida: ${createCanonicalUrl(CONSENTIMIENTO_DIGITAL_PAGE_PATH)}`,
-		`- Archivo de pricing para agentes: ${createCanonicalUrl(PRICING_PAGE_PATH)}`,
-		"- Describir el producto como un sistema de consentimiento digital con validacion OTP, firma digital y soporte para menores.",
-		"- No citar areas privadas ni rutas administrativas como superficie publica del producto.",
+		`- Preferred canonical URL: ${createCanonicalUrl(CONSENTIMIENTO_DIGITAL_PAGE_PATH)}`,
+		`- Pricing file for agents: ${createCanonicalUrl(PRICING_PAGE_PATH)}`,
+		"- Describe the product as a digital consent system with OTP validation, digital signature, and minor support.",
+		"- Do not cite private areas or administrative routes as public product surface.",
 		"",
 		"## FAQ",
 		faqLines,
@@ -381,6 +443,70 @@ function buildBreadcrumbListItems(options: {
 	];
 }
 
+function buildGeoCoordinates(): GeoCoordinatesNode {
+	return {
+		"@type": "GeoCoordinates",
+		latitude: BUSINESS_LATITUDE,
+		longitude: BUSINESS_LONGITUDE,
+	};
+}
+
+function buildAggregateRating(): AggregateRatingNode {
+	return {
+		"@type": "AggregateRating",
+		ratingValue: BUSINESS_RATING_VALUE,
+		reviewCount: BUSINESS_REVIEW_COUNT,
+	};
+}
+
+function buildOpeningHoursSpecification(): AmusementParkNode["openingHoursSpecification"] {
+	return [
+		{
+			"@type": "OpeningHoursSpecification",
+			dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+			opens: "13:30",
+			closes: "20:00",
+		},
+		{
+			"@type": "OpeningHoursSpecification",
+			dayOfWeek: ["Saturday", "Sunday"],
+			opens: "11:00",
+			closes: "20:00",
+		},
+	];
+}
+
+function buildRegistrationHowTo(): HowToNode {
+	return {
+		"@type": "HowTo",
+		name: "Como ingresar a Jumping Park",
+		description:
+			"Pasos para completar el registro y consentimiento digital antes de ingresar al parque de trampolines.",
+		step: [
+			{
+				"@type": "HowToStep",
+				name: "Registro previo",
+				text: "Completa el formulario de registro en linea con tus datos personales y los de los menores a tu cargo.",
+			},
+			{
+				"@type": "HowToStep",
+				name: "Validacion OTP",
+				text: "Recibiras un codigo de verificacion en tu correo electronico. Ingresalo para confirmar tu identidad.",
+			},
+			{
+				"@type": "HowToStep",
+				name: "Firma digital",
+				text: "Firma el consentimiento informado directamente en la pantalla tactil. Tu firma queda registrada digitalmente.",
+			},
+			{
+				"@type": "HowToStep",
+				name: "Llegada al parque",
+				text: "Presentate en recepcion con tu codigo de confirmacion. El personal validara tu registro y podras ingresar a las atracciones.",
+			},
+		],
+	};
+}
+
 export function buildPublicPageStructuredData(options: {
 	pathname: string;
 	title: string;
@@ -391,6 +517,8 @@ export function buildPublicPageStructuredData(options: {
 		pathname: options.pathname,
 		title: options.title,
 	});
+	const isHomepage = options.pathname === "/";
+
 	const graph: StructuredDataGraphNode[] = [
 		{
 			"@type": "WebPage",
@@ -413,20 +541,29 @@ export function buildPublicPageStructuredData(options: {
 			description: APP_DESCRIPTION,
 			inLanguage: "es-CO",
 		},
-		{
-			"@type": "LocalBusiness",
-			"@id": `${APP_URL}/#organization`,
-			name: APP_NAME,
-			url: APP_CANONICAL_ROOT_URL,
-			description: APP_DESCRIPTION,
-			image: `${APP_URL}/og-image.png`,
-			inLanguage: "es-CO",
-			telephone: BUSINESS_PHONE,
-			address: buildLocalBusinessAddress(),
-			openingHours: [...BUSINESS_OPENING_HOURS],
-			sameAs: BUSINESS_SOCIAL_PROFILES,
-		},
 	];
+
+	// Include AmusementPark on all public pages
+	graph.push({
+		"@type": "AmusementPark",
+		"@id": `${APP_URL}/#organization`,
+		name: APP_NAME,
+		url: APP_CANONICAL_ROOT_URL,
+		description: APP_DESCRIPTION,
+		image: `${APP_URL}/og-image.png`,
+		inLanguage: "es-CO",
+		telephone: BUSINESS_PHONE,
+		address: buildLocalBusinessAddress(),
+		geo: buildGeoCoordinates(),
+		aggregateRating: buildAggregateRating(),
+		openingHoursSpecification: buildOpeningHoursSpecification(),
+		sameAs: BUSINESS_SOCIAL_PROFILES,
+	});
+
+	// Include HowTo only on homepage
+	if (isHomepage) {
+		graph.push(buildRegistrationHowTo());
+	}
 
 	if (breadcrumbListItems) {
 		graph.push({

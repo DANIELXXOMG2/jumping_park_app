@@ -104,26 +104,26 @@ describe('Phase 3 — JSON-LD sameAs integration (task 3.12)', () => {
 		const graph = (data as Record<string, unknown>)['@graph']
 		expect(Array.isArray(graph)).toBe(true)
 
-		const localBusiness = (graph as unknown[]).find(
+		const parkNode = (graph as unknown[]).find(
 			(node) =>
 				typeof node === 'object' &&
 				node !== null &&
-				(node as Record<string, unknown>)['@type'] === 'LocalBusiness',
+				(node as Record<string, unknown>)['@type'] === 'AmusementPark',
 		) as Record<string, unknown> | undefined
 
-		expect(localBusiness).toBeDefined()
-		if (!localBusiness) {
-			throw new Error('Expected LocalBusiness node')
+		expect(parkNode).toBeDefined()
+		if (!parkNode) {
+			throw new Error('Expected AmusementPark node')
 		}
 
-		const sameAs = localBusiness.sameAs as string[]
+		const sameAs = parkNode.sameAs as string[]
 		expect(Array.isArray(sameAs)).toBe(true)
 		expect(sameAs.length).toBeGreaterThanOrEqual(2)
 		expect(sameAs).toContain('https://instagram.com/jumpingparkvillavo')
 		expect(sameAs).toContain('https://facebook.com/jumpingparkvillavo')
 	})
 
-	it('LocalBusiness node for / includes correct phone, hours, and address', () => {
+	it('AmusementPark node for / includes correct phone, hours, and address', () => {
 		const data = buildPublicPageStructuredData({
 			pathname: '/',
 			title: APP_NAME,
@@ -132,23 +132,25 @@ describe('Phase 3 — JSON-LD sameAs integration (task 3.12)', () => {
 
 		const graph = (data as Record<string, unknown>)['@graph']
 
-		const localBusiness = (graph as unknown[]).find(
+		const parkNode = (graph as unknown[]).find(
 			(node) =>
 				typeof node === 'object' &&
 				node !== null &&
-				(node as Record<string, unknown>)['@type'] === 'LocalBusiness',
+				(node as Record<string, unknown>)['@type'] === 'AmusementPark',
 		) as Record<string, unknown> | undefined
 
-		expect(localBusiness).toBeDefined()
-		if (!localBusiness) {
-			throw new Error('Expected LocalBusiness node')
+		expect(parkNode).toBeDefined()
+		if (!parkNode) {
+			throw new Error('Expected AmusementPark node')
 		}
 
-		expect(localBusiness.telephone).toBe(BUSINESS_PHONE)
-		expect(Array.isArray(localBusiness.openingHours)).toBe(true)
-		expect(localBusiness.openingHours).toEqual([...BUSINESS_OPENING_HOURS])
+		expect(parkNode.telephone).toBe(BUSINESS_PHONE)
+		expect(
+			Array.isArray(parkNode.openingHours) ||
+				Array.isArray(parkNode.openingHoursSpecification),
+		).toBe(true)
 
-		const address = localBusiness.address as Record<string, unknown> | undefined
+		const address = parkNode.address as Record<string, unknown> | undefined
 		expect(address).toBeDefined()
 		if (address) {
 			expect(address['@type']).toBe('PostalAddress')

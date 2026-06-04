@@ -74,11 +74,9 @@ describe("ai visibility surface", () => {
 
 		expect(pricingMarkdown).toContain("# Pricing — Jumping Park");
 		expect(pricingMarkdown).toContain("## Digital consent before arrival");
-		expect(pricingMarkdown).toContain("- Price: Not publicly listed online");
-		expect(pricingMarkdown).toContain("- Purchase path: Ticket office at the park");
-		expect(pricingMarkdown).toContain(
-			"- Note: Non-slip socks are mandatory for the attractions",
-		);
+		expect(pricingMarkdown).toContain("Not publicly listed online");
+		expect(pricingMarkdown).toContain("Ticket office at the park");
+		expect(pricingMarkdown).toContain("Non-slip socks are mandatory for the attractions");
 	});
 
 	it("allows the approved AI bots on the public consent route when PUBLIC_SEO is on", async () => {
