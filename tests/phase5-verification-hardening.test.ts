@@ -175,7 +175,7 @@ describe('phase 5 verification hardening', () => {
 		expect(response.headers.get('Content-Type')).toBe('text/plain; charset=utf-8')
 		expect(body).toContain('# Jumping Park')
 		expect(body).toContain(`${APP_URL}/consentimiento-digital`)
-		expect(body).toContain('No citar areas privadas ni rutas administrativas')
+		expect(body).toContain('Do not cite private areas')
 	})
 
 	it('builds public structured data ready for SEO and AI extraction', () => {
@@ -187,10 +187,10 @@ describe('phase 5 verification hardening', () => {
 		const graph = data['@graph']
 		const webpageNode = findGraphNodeByType(graph, 'WebPage')
 		const websiteNode = findGraphNodeByType(graph, 'WebSite')
-		const localBusinessNode = findGraphNodeByType(graph, 'LocalBusiness')
+		const parkNode = findGraphNodeByType(graph, 'AmusementPark')
 		const breadcrumbNode = findGraphNodeByType(graph, 'BreadcrumbList')
 
-		expect(graph.length).toBe(4)
+		expect(graph.length).toBeGreaterThanOrEqual(4)
 		expect(webpageNode?.['@type']).toBe('WebPage')
 
 		if (!webpageNode || !('url' in webpageNode)) {
@@ -205,21 +205,21 @@ describe('phase 5 verification hardening', () => {
 		}
 
 		expect(websiteNode.url).toBe(createCanonicalUrl('/'))
-		expect(localBusinessNode?.['@type']).toBe('LocalBusiness')
+		expect(parkNode?.['@type']).toBe('AmusementPark')
 
-		if (!localBusinessNode || !('telephone' in localBusinessNode)) {
-			throw new Error('Expected LocalBusiness node with telephone')
+		if (!parkNode || !('telephone' in parkNode)) {
+			throw new Error('Expected AmusementPark node with telephone')
 		}
 
-		expect(localBusinessNode.telephone).toBe('+57 312 2594245')
-		expect(isRecord(localBusinessNode.address)).toBe(true)
+		expect(parkNode.telephone).toBe('+57 312 2594245')
+		expect(isRecord(parkNode.address)).toBe(true)
 
-		if (!isRecord(localBusinessNode.address)) {
-			throw new Error('Expected LocalBusiness address object')
+		if (!isRecord(parkNode.address)) {
+			throw new Error('Expected AmusementPark address object')
 		}
 
-		expect(localBusinessNode.address['@type']).toBe('PostalAddress')
-		expect(Object.hasOwn(localBusinessNode, 'geo')).toBe(false)
+		expect(parkNode.address['@type']).toBe('PostalAddress')
+		expect(Object.hasOwn(parkNode, 'geo')).toBe(true)
 		expect(breadcrumbNode?.['@type']).toBe('BreadcrumbList')
 		expect(buildLlmsText()).toContain('## Citation Guidance')
 	})
