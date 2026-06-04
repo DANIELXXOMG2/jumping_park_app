@@ -1,18 +1,10 @@
 "use client";
 
 import { Clock, FileText, MapPin, Phone, Shield, Zap } from "lucide-react";
-import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { StartActionButton } from "@/components/kiosk/StartActionButton";
-
-const SpaceBackground = dynamic(
-	() => import("./SpaceBackground").then((mod) => mod.SpaceBackground),
-	{
-		ssr: false,
-		loading: () => <div className="absolute inset-0 z-0 bg-black" />,
-	},
-);
+import { SpaceBackground } from "@/components/kiosk/SpaceBackground";
 import { SecretAdminTrigger } from "@/components/ui/SecretAdminTrigger";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { PAGE_IMAGE_VARIANTS } from "@/lib/imageOptimization";
