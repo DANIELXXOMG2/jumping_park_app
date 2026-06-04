@@ -134,7 +134,7 @@ describe('public structured data', () => {
 		expect(localBusiness.name).toBe(APP_NAME)
 		expect(localBusiness.url).toBe(createCanonicalUrl('/'))
 		expect(webSite.url).toBe(createCanonicalUrl('/'))
-		expect(localBusiness.telephone).toBe('(608) 677 9985')
+		expect(localBusiness.telephone).toBe('+57 312 2594245')
 		expect(localBusiness.address['@type']).toBe('PostalAddress')
 		expect(localBusiness.address.streetAddress).toBe(
 			'Centro Comercial Primavera Urbana, Calle 15 # 40-01, Locales 313-314-315-316-317',
@@ -143,7 +143,7 @@ describe('public structured data', () => {
 		expect(localBusiness.address.addressRegion).toBe('Meta')
 		expect(localBusiness.address.addressCountry).toBe('CO')
 		expect(localBusiness.openingHours).toEqual([
-			'Mo-Fr 14:00-20:00',
+			'Mo-Fr 13:30-20:00',
 			'Sa-Su 11:00-20:00',
 		])
 		expect(localBusiness.geo).toBe(undefined)

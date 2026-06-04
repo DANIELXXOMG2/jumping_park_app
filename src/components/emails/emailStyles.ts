@@ -11,6 +11,8 @@
  * - Text Muted: #6b7280
  */
 
+import { BUSINESS_SOCIAL_PROFILES } from "@/lib/seo";
+
 export const EMAIL_COLORS = {
 	// Azul Corporativo
 	primary: "#1e3a8a",
@@ -49,8 +51,8 @@ export const EMAIL_CONFIG = {
 	address: "C.C. Primavera Urbana, Piso 3, Local 314 - Villavicencio, Meta",
 	whatsapp: "+57 312 259 4245",
 	whatsappLink: "https://wa.me/573122594245",
-	instagram: "https://instagram.com/jumpingparkvillavo",
-	facebook: "https://facebook.com/jumpingparkvillavo",
+	instagram: BUSINESS_SOCIAL_PROFILES[0],
+	facebook: BUSINESS_SOCIAL_PROFILES[1],
 	website: "https://www.jumpingpark.lat",
 } as const;
 
