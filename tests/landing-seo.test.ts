@@ -189,3 +189,27 @@ describe('buildLandingMetadata — Phase 2', () => {
 		expect((tw.description as string).length).toBeGreaterThan(0)
 	})
 })
+
+describe('buildLandingMetadata robots — Portfolio Homepage Optimization', () => {
+	it('[RED 1.2] exports robots index/follow for crawlers', () => {
+		const metadata = buildLandingMetadata()
+		expect(metadata.robots).toBeDefined()
+
+		const robots = metadata.robots as Record<string, unknown>
+		expect(robots.index).toBe(true)
+		expect(robots.follow).toBe(true)
+	})
+
+	it('[TRIANGULATE 1.2] googleBot inherits index/follow and sets image/snippet preview', () => {
+		const metadata = buildLandingMetadata()
+		expect(metadata.robots).toBeDefined()
+
+		const robots = metadata.robots as Record<string, unknown>
+		expect(robots.googleBot).toBeDefined()
+
+		const googleBot = robots.googleBot as Record<string, unknown>
+		expect(googleBot.index).toBe(true)
+		expect(googleBot.follow).toBe(true)
+		expect(googleBot['max-image-preview']).toBe('large')
+	})
+})

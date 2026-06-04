@@ -3,6 +3,7 @@ import {
 	APP_NAME,
 	buildPageFreshnessMetadata,
 	createCanonicalUrl,
+	INDEXABLE_ROBOTS,
 } from "@/lib/seo";
 
 export const LANDING_PAGE_TITLE =
@@ -17,6 +18,7 @@ export const LANDING_OPEN_GRAPH_ALT = `${APP_NAME} | Parque de Trampolines en Vi
 
 export function buildLandingMetadata(): Metadata {
 	return {
+		robots: INDEXABLE_ROBOTS,
 		title: LANDING_PAGE_TITLE,
 		description: LANDING_PAGE_DESCRIPTION,
 		alternates: {

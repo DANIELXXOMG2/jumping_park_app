@@ -412,6 +412,13 @@ button:not([class*="bg-"]):not([class*="btn-"]):not([class*="p-"]):active {
   z-index: 1;
 }
 
+.solar-system-mask {
+  mask-image: radial-gradient(ellipse 80% 80% at 70% 50%, black 20%, transparent 70%), linear-gradient(to right, transparent 0%, black 25%, black 100%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 80% at 70% 50%, black 20%, transparent 70%), linear-gradient(to right, transparent 0%, black 25%, black 100%);
+  mask-composite: intersect;
+  -webkit-mask-composite: source-in;
+}
+
 @keyframes kiosk-aurora {
   0% {
     transform: scale(1) translate(0, 0);

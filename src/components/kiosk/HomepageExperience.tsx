@@ -1,10 +1,18 @@
 "use client";
 
 import { Clock, FileText, MapPin, Phone, Shield, Zap } from "lucide-react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
-import { SpaceBackground } from "@/components/kiosk/SpaceBackground";
 import { StartActionButton } from "@/components/kiosk/StartActionButton";
+
+const SpaceBackground = dynamic(
+	() => import("./SpaceBackground").then((mod) => mod.SpaceBackground),
+	{
+		ssr: false,
+		loading: () => <div className="absolute inset-0 z-0 bg-black" />,
+	},
+);
 import { SecretAdminTrigger } from "@/components/ui/SecretAdminTrigger";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { PAGE_IMAGE_VARIANTS } from "@/lib/imageOptimization";
@@ -62,22 +70,14 @@ export function HomepageExperience() {
 					{/* Sistema Solar */}
 					<div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none translate-x-[35%] sm:translate-x-[38%] md:translate-x-[40%] lg:translate-x-[40%]">
 						<div className="relative">
-							<div
-								className="relative overflow-hidden"
-								style={{
-									maskImage:
-										"radial-gradient(ellipse 80% 80% at 70% 50%, black 20%, transparent 70%), linear-gradient(to right, transparent 0%, black 25%, black 100%)",
-									WebkitMaskImage:
-										"radial-gradient(ellipse 80% 80% at 70% 50%, black 20%, transparent 70%), linear-gradient(to right, transparent 0%, black 25%, black 100%)",
-									maskComposite: "intersect",
-									WebkitMaskComposite: "source-in",
-								}}
-							>
+							<div className="solar-system-mask relative overflow-hidden">
 								<Image
-									src="/assets/solar-system.png"
+									src="/assets/solar-system.webp"
 									alt="Sistema Solar"
 									width={2000}
 									height={1560}
+									priority
+									loading="eager"
 									className="h-auto min-w-[600px] opacity-60 mix-blend-screen md:opacity-50"
 								/>
 							</div>
