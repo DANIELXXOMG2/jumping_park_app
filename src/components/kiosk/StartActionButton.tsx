@@ -1,10 +1,11 @@
 "use client";
 
 import { Sparkles } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useCallback, useTransition } from "react";
+import Link from "next/link";
+import { useTransition } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useUISound } from "@/hooks";
+import { cn } from "@/lib/utils";
 import { useKioskStore } from "@/store/kioskStore";
 
 interface StartActionButtonProps {
@@ -20,7 +21,6 @@ interface StartActionButtonProps {
 export function StartActionButton({
 	href = "/ingreso",
 }: StartActionButtonProps) {
-	const router = useRouter();
 	const resetFlow = useKioskStore((state) => state.resetFlow);
 	const setStep = useKioskStore((state) => state.setStep);
 	const [isPending, startTransition] = useTransition();
@@ -29,85 +29,48 @@ export function StartActionButton({
 	// Hook de sonidos UI
 	const { playClick } = useUISound();
 
-	const handlePress = useCallback(() => {
+	const handlePress = () => {
 		// Reproducir sonido de click al presionar
 		playClick();
 
 		startTransition(() => {
 			resetFlow();
 			setStep(1);
-			router.push(href);
 		});
-	}, [href, resetFlow, router, setStep, playClick]);
+	};
 
 	return (
-		<button
-			type="button"
-			onClick={handlePress}
-			disabled={isPending}
+		<Link
+			href={href}
 			aria-label={t("common.tapToStartAria")}
-			className="
-				group
-				relative
-				overflow-hidden
-				
-				/* ═══ FORMA Y TAMAÑO ═══ */
-				w-full
-				rounded-2xl
-				px-8 py-6
-				sm:px-12 sm:py-8
-				
-				/* ═══ GRADIENTE DE FONDO ═══ */
-				bg-gradient-to-r from-primary via-emerald-400 to-primary
-				dark:from-primary dark:via-emerald-500 dark:to-primary
-				
-				/* ═══ TIPOGRAFÍA ═══ */
-				text-xl sm:text-2xl md:text-3xl
-				font-bold
-				uppercase
-				tracking-wider
-				text-zinc-900
-				
-				/* ═══ SOMBRA Y GLOW ═══ */
-				shadow-[0_0_40px_rgba(46,204,113,0.4),0_8px_32px_rgba(0,0,0,0.3)]
-				
-				/* ═══ BORDE BRILLANTE ═══ */
-				border-2 border-white/30
-				
-				/* ═══ TRANSICIONES ═══ */
-				transition-all
-				duration-300
-				ease-out
-				
-				/* ═══ ANIMACIÓN DE LATIDO ═══ */
-				animate-[heartbeat_2s_ease-in-out_infinite]
-				
-				/* ═══ ESTADOS HOVER ═══ */
-				hover:shadow-[0_0_60px_rgba(46,204,113,0.6),0_0_100px_rgba(46,204,113,0.3),0_12px_40px_rgba(0,0,0,0.4)]
-				hover:scale-[1.02]
-				hover:border-white/50
-				
-				/* ═══ ESTADOS ACTIVE ═══ */
-				active:scale-[0.98]
-				active:shadow-[0_0_20px_rgba(46,204,113,0.5),0_4px_16px_rgba(0,0,0,0.3)]
-				
-				/* ═══ DISABLED ═══ */
-				disabled:opacity-70
-				disabled:cursor-not-allowed
-				disabled:animate-none
-				disabled:hover:scale-100
-				
-				/* ═══ FOCUS ACCESIBLE ═══ */
-				focus-visible:outline-none
-				focus-visible:ring-4
-				focus-visible:ring-primary/40
-				focus-visible:ring-offset-4
-				focus-visible:ring-offset-black
-			"
+			onClick={handlePress}
+			className={cn(
+				"group",
+				"relative",
+				"block",
+				"overflow-hidden",
+				"w-full",
+				"rounded-2xl",
+				"px-8 py-6",
+				"sm:px-12 sm:py-8",
+				"bg-linear-to-r from-primary via-emerald-400 to-primary",
+				"dark:from-primary dark:via-emerald-500 dark:to-primary",
+				"text-xl sm:text-2xl md:text-3xl",
+				"font-bold uppercase tracking-wider text-zinc-900",
+				"shadow-[0_0_40px_rgba(46,204,113,0.4),0_8px_32px_rgba(0,0,0,0.3)]",
+				"border-2 border-white/30",
+				"transition-all duration-300 ease-out",
+				"animate-[heartbeat_2s_ease-in-out_infinite]",
+				"hover:shadow-[0_0_60px_rgba(46,204,113,0.6),0_0_100px_rgba(46,204,113,0.3),0_12px_40px_rgba(0,0,0,0.4)]",
+				"hover:scale-[1.02] hover:border-white/50",
+				"active:scale-[0.98] active:shadow-[0_0_20px_rgba(46,204,113,0.5),0_4px_16px_rgba(0,0,0,0.3)]",
+				"disabled:opacity-70 disabled:cursor-not-allowed disabled:animate-none disabled:hover:scale-100",
+				"focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/40 focus-visible:ring-offset-4 focus-visible:ring-offset-black",
+			)}
 		>
 			{/* ═══ EFECTO SHIMMER ═══ */}
 			<span
-				className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out bg-gradient-to-r from-transparent via-white/40 to-transparent"
+				className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out bg-linear-to-r from-transparent via-white/40 to-transparent"
 				aria-hidden="true"
 			/>
 
@@ -187,6 +150,6 @@ export function StartActionButton({
 				className="absolute inset-0 -z-10 animate-[ping_2.5s_cubic-bezier(0,0,0.2,1)_infinite] rounded-2xl border-2 border-primary/20"
 				aria-hidden="true"
 			/>
-		</button>
+		</Link>
 	);
 }
