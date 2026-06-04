@@ -35,7 +35,7 @@ jscpd-report.*
 .idea/
 .vscode/*
 !.vscode/extensions.json
-!.vscode/settings.json
+.github/instructions/
 
 # Dependencias
 /node_modules
@@ -133,7 +133,8 @@ public/worker-*.js.map
 block-e-consentimiento-digital.png
 block-e-kiosk-consent-dialog.png
 
-# SDD deferred work slices
+# Build artifacts
+scripts/render-diagrams.mjs
 _deferred/
 
 .sdd-slices/

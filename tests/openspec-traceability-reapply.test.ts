@@ -6,7 +6,6 @@ const docsThatMustDropOpenSpecRefs = [
 	'README.md',
 	'docs/ARQUITECTURA.md',
 	'CONTRIBUTING.md',
-	'.github/instructions/main.instructions.md',
 ] as const
 
 function projectPath(relativePath: string) {
