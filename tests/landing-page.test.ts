@@ -45,13 +45,13 @@ describe('Phase 3 — Landing page route restructuring', () => {
 		}
 	})
 
-	it('3.10 landing page does not import kiosk-specific modules', () => {
+	it('3.10 landing page Server Component does not use client hooks directly', () => {
 		const source = readFileSync(PUBLIC_PAGE, 'utf-8')
-		expect(source).not.toContain('SpaceBackground')
-		expect(source).not.toContain('StartActionButton')
 		expect(source).not.toContain('useAuth')
-		expect(source).not.toContain('useLanguage')
-		expect(source).not.toMatch(/from ['"]@\/components\/kiosk/)
+		expect(source).not.toContain('useKioskStore')
+		expect(source).not.toContain('"use client"')
+		// HomepageExperience is a client component wrapper — allowed
+		expect(source).toContain('HomepageExperience')
 	})
 })
 

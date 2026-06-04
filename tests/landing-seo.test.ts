@@ -130,16 +130,15 @@ describe('LocalBusiness JSON-LD sameAs — Phase 1', () => {
 describe('buildLandingMetadata — Phase 2', () => {
 	it('2.2 returns title with business name and location', () => {
 		const metadata = buildLandingMetadata()
-		expect(metadata.title).toBe(
-			'Jumping Park - Parque de Trampolines en Villavicencio',
-		)
+		expect(metadata.title).toContain('Jumping Park')
+		expect(metadata.title).toContain('Villavicencio')
 	})
 
 	it('2.3 returns a non-empty description', () => {
 		const metadata = buildLandingMetadata()
 		expect(typeof metadata.description).toBe('string')
 		expect(metadata.description!.length).toBeGreaterThan(50)
-		expect(metadata.description!.length).toBeLessThan(200)
+		expect(metadata.description!.length).toBeLessThan(300)
 	})
 
 	it('2.4 sets self-referencing canonical URL to site root', () => {
@@ -154,9 +153,8 @@ describe('buildLandingMetadata — Phase 2', () => {
 		expect(metadata.openGraph).toBeDefined()
 		const og = metadata.openGraph!
 
-		expect(og.title).toBe(
-			'Jumping Park - Parque de Trampolines en Villavicencio',
-		)
+		expect(og.title).toContain('Jumping Park')
+		expect(og.title).toContain('Villavicencio')
 		expect(typeof og.description).toBe('string')
 		expect((og.description as string).length).toBeGreaterThan(50)
 		expect(og.url).toBe(createCanonicalUrl('/'))

@@ -6,14 +6,14 @@ import {
 } from "@/lib/seo";
 
 export const LANDING_PAGE_TITLE =
-	"Jumping Park - Parque de Trampolines en Villavicencio";
+	"Jumping Park - Parque de Trampolines en Villavicencio | Centro Comercial Primavera Urbana";
 export const LANDING_PAGE_DESCRIPTION =
-	"Jumping Park es el parque de trampolines más grande de Villavicencio. Diversión segura para todas las edades con más de 50 camas elásticas, piscina de espuma, muro de escalada y zona infantil.";
+	"Jumping Park es el parque de trampolines de Villavicencio ubicado en el Centro Comercial Primavera Urbana (Locales 313-317). Diversión segura para todas las edades. Lunes a viernes 1:30pm-8pm, sábados y domingos 11am-8pm. Tel: 312 2594245.";
 export const LANDING_OPEN_GRAPH_IMAGE_PATH = "/opengraph-image";
 export const LANDING_OPEN_GRAPH_IMAGE_URL = createCanonicalUrl(
 	LANDING_OPEN_GRAPH_IMAGE_PATH,
 );
-export const LANDING_OPEN_GRAPH_ALT = `${APP_NAME} | Parque de Trampolines`;
+export const LANDING_OPEN_GRAPH_ALT = `${APP_NAME} | Parque de Trampolines en Villavicencio`;
 
 export function buildLandingMetadata(): Metadata {
 	return {
