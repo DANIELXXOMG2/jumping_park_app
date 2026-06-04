@@ -31,9 +31,9 @@ async function withEnv<T>(
 }
 
 describe('public seo boundary', () => {
-	it('applies noindex header to kiosk root without leaking to public pages', async () => {
+	it('applies noindex header to kiosk pages without leaking to public pages', async () => {
 		await withEnv('PUBLIC_SEO_ENABLED', 'true', async () => {
-			const kioskResponse = await proxy(new NextRequest('https://example.com/'))
+			const kioskResponse = await proxy(new NextRequest('https://example.com/ingreso'))
 			const publicResponse = await proxy(
 				new NextRequest('https://example.com/consentimiento-digital'),
 			)
