@@ -8,9 +8,10 @@ Hoy este directorio sigue siendo principalmente un **plan curado de captura**. P
 
 - `docs/portfolio/screenshots/` - capturas still del kiosk, admin y superficie publica.
 - `docs/portfolio/diagrams/` - guia para convertir los diagramas tecnicos actuales en assets curados de storytelling.
-- `docs/portfolio/motion/` - guion de GIF/video corto y checklist de toma. Una composicion HyperFrames de 4 escenas con capturas reales vive aca; ver `docs/portfolio/motion/README.md`.
+- `docs/portfolio/motion/` - guion de GIF/video corto y checklist de toma. Una composicion HyperFrames narration-ready con narracion TTS real y capturas reales vive aca; ver `docs/portfolio/motion/README.md`.
 - `docs/portfolio/branding/` - recomendaciones de logo, naming y consistencia visual.
 - `docs/portfolio/evidence/` - plantillas de evidencia externa (Lighthouse, Rich Results, AI citation log, Search Console). Vacias hasta tener un run real; no se inventan resultados.
+- `docs/portfolio/artifact-manifest.md` - manifiesto del render local real, audio usado y decision de audio bed.
 
 ## Alcance de esta carpeta
 
@@ -40,3 +41,4 @@ Hoy este directorio sigue siendo principalmente un **plan curado de captura**. P
 - copy corto listo para portfolio o case study
 - referencias cruzadas a `README.md`, `docs/ARQUITECTURA.md` y runbooks
 - aclaracion del estado cuando un asset siga pendiente, legacy o solo como referencia
+

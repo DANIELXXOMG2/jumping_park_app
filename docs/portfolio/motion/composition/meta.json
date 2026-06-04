@@ -1,8 +1,10 @@
 {
   "id": "jumping-park-product-tour",
   "name": "Jumping Park - Product Tour",
-  "description": "Seven-scene product tour built from real kiosk, admin, and public screenshots with an honest closing slate. No narration and no MP4 render.",
+  "description": "Seven-scene narration-ready product tour built from real kiosk, admin, and public screenshots with a real Spanish TTS narration track, optional audio bed scaffold kept unused, no music bed, and a truthful local render evidence workflow.",
   "width": 1920,
   "height": 1080,
   "fps": 30
 }
+
+

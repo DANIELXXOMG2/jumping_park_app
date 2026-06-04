@@ -15,6 +15,7 @@ const demoScriptPath = path.join(
   "docs/portfolio/motion/demo-script.md",
 );
 const readmePath = path.join(process.cwd(), "docs/portfolio/motion/README.md");
+const portfolioReadmePath = path.join(process.cwd(), "docs/portfolio/README.md");
 
 const composition = readFileSync(compositionPath, "utf8");
 const meta = JSON.parse(readFileSync(metaPath, "utf8")) as {
@@ -23,6 +24,7 @@ const meta = JSON.parse(readFileSync(metaPath, "utf8")) as {
 };
 const demoScript = readFileSync(demoScriptPath, "utf8");
 const readme = readFileSync(readmePath, "utf8");
+const portfolioReadme = readFileSync(portfolioReadmePath, "utf8");
 
 const SCENE_IDS = [
   "scene-kiosk",
@@ -113,12 +115,28 @@ describe("portfolio HyperFrames complete scenes", () => {
     expect(composition).toContain('data-duration="78"');
     expect(meta.name).toContain("Jumping Park");
     expect(meta.name).toContain("Product Tour");
-    expect(meta.description).toContain("Seven-scene product tour");
+    expect(meta.description).toContain("Seven-scene");
+    expect(meta.description).toContain("product tour");
     expect(demoScript).toContain("Total duration: 78.0s");
     expect(demoScript).toContain("scene-kiosk-offline");
     expect(readme).toContain("7 real product screenshots");
     expect(readme).toContain("One root composition (`jp-tour`)"
     );
+  });
+
+  test("documents narration, optional audio bed, and render evidence workflow truthfully", () => {
+    expect(meta.description).toContain("narration-ready");
+    expect(meta.description).toContain("optional audio bed scaffold");
+    expect(readme).toContain("Narration and render workflow");
+    expect(readme).toContain("voiceover.mp3");
+    expect(readme).toContain("music-bed.mp3");
+    expect(readme).toContain("bun x hyperframes render docs/portfolio/motion/composition");
+    expect(readme).toContain("artifact-manifest.md");
+    expect(readme).toContain("Do not commit generated MP4 or WAV artifacts");
+    expect(demoScript).toContain("Narration cues");
+    expect(demoScript).toContain("Audio bed cues");
+    expect(demoScript).toContain("Render evidence checklist");
+    expect(portfolioReadme).toContain("HyperFrames narration-ready");
   });
 });
 

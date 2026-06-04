@@ -1,0 +1,9 @@
+Bienvenidos al recorrido real de Jumping Park.
+La primera escena muestra el ingreso del kiosco, donde el operador inicia el alta del visitante desde la pantalla real del producto.
+En la segunda escena aparece la verificación por OTP, el paso que confirma identidad y autorización antes de continuar.
+La tercera escena enseña el consentimiento digital, con la captura de datos y firma dentro del flujo del kiosco.
+La cuarta escena muestra la confirmación offline exitosa, diseñada para sostener la operación incluso cuando la conectividad falla.
+La quinta escena cambia al panel administrativo, donde el equipo visualiza actividad reciente y métricas operativas.
+La sexta escena enfoca el listado de consentimientos, útil para búsqueda, seguimiento y auditoría del historial.
+La séptima escena cierra en la página pública de consentimiento digital, pensada para compartir el acceso fuera del kiosco.
+Este video usa siete escenas tomadas de capturas reales del producto, sin renders inventados ni interfaces ficticias.

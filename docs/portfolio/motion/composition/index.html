@@ -99,6 +99,15 @@
       data-width="1920"
       data-height="1080"
     >
+      <audio
+        id="narration"
+        data-start="0"
+        data-duration="78"
+        data-track-index="16"
+        data-volume="1"
+        src="assets/voiceover.wav"
+      ></audio>
+
       <img
         id="scene-kiosk"
         class="clip stage-img"
@@ -285,28 +294,36 @@
       window.__timelines = window.__timelines || {};
       const tl = gsap.timeline({ paused: true });
 
-      tl.from("#title-kiosk", { y: -16, opacity: 0, duration: 0.6, ease: "power2.out" }, 0.4);
+      // Scene 1 — kiosk ingreso (ease: power3.out for image, back.out for title)
+      tl.from("#title-kiosk", { y: -16, opacity: 0, duration: 0.6, ease: "back.out(1.4)" }, 0.4);
 
-      tl.from("#scene-kiosk-otp", { opacity: 0, duration: 0.6, ease: "power2.out" }, 10.5);
-      tl.from("#title-kiosk-otp", { y: -16, opacity: 0, duration: 0.6, ease: "power2.out" }, 10.9);
+      // Scene 2 — OTP verification (ease: expo.out for image, power4.out for title)
+      tl.from("#scene-kiosk-otp", { opacity: 0, duration: 0.6, ease: "expo.out" }, 10.5);
+      tl.from("#title-kiosk-otp", { y: -16, opacity: 0, duration: 0.6, ease: "power4.out" }, 10.9);
 
-      tl.from("#scene-kiosk-consent", { opacity: 0, duration: 0.6, ease: "power2.out" }, 21.0);
-      tl.from("#title-kiosk-consent", { y: -16, opacity: 0, duration: 0.6, ease: "power2.out" }, 21.4);
+      // Scene 3 — digital consent (ease: power3.out for image, circ.out for title)
+      tl.from("#scene-kiosk-consent", { opacity: 0, duration: 0.6, ease: "power3.out" }, 21.0);
+      tl.from("#title-kiosk-consent", { y: -16, opacity: 0, duration: 0.6, ease: "circ.out" }, 21.4);
 
-      tl.from("#scene-kiosk-offline", { opacity: 0, duration: 0.6, ease: "power2.out" }, 31.5);
-      tl.from("#title-kiosk-offline", { y: -16, opacity: 0, duration: 0.6, ease: "power2.out" }, 31.9);
+      // Scene 4 — offline success (ease: expo.out for image, back.out for title)
+      tl.from("#scene-kiosk-offline", { opacity: 0, duration: 0.6, ease: "expo.out" }, 31.5);
+      tl.from("#title-kiosk-offline", { y: -16, opacity: 0, duration: 0.6, ease: "back.out(1.7)" }, 31.9);
 
-      tl.from("#scene-admin-dash", { opacity: 0, duration: 0.6, ease: "power2.out" }, 42.0);
-      tl.from("#title-admin-dash", { y: -16, opacity: 0, duration: 0.6, ease: "power2.out" }, 42.4);
+      // Scene 5 — admin dashboard (ease: power4.out for image, power3.out for title)
+      tl.from("#scene-admin-dash", { opacity: 0, duration: 0.6, ease: "power4.out" }, 42.0);
+      tl.from("#title-admin-dash", { y: -16, opacity: 0, duration: 0.6, ease: "power3.out" }, 42.4);
 
-      tl.from("#scene-admin-consents", { opacity: 0, duration: 0.6, ease: "power2.out" }, 52.5);
-      tl.from("#title-admin-consents", { y: -16, opacity: 0, duration: 0.6, ease: "power2.out" }, 52.9);
+      // Scene 6 — consent records (ease: power3.out for image, circ.out for title)
+      tl.from("#scene-admin-consents", { opacity: 0, duration: 0.6, ease: "power3.out" }, 52.5);
+      tl.from("#title-admin-consents", { y: -16, opacity: 0, duration: 0.6, ease: "circ.out" }, 52.9);
 
-      tl.from("#scene-public", { opacity: 0, duration: 0.6, ease: "power2.out" }, 63.0);
-      tl.from("#title-public", { y: -16, opacity: 0, duration: 0.6, ease: "power2.out" }, 63.4);
+      // Scene 7 — public consent (ease: expo.out for image, power4.out for title)
+      tl.from("#scene-public", { opacity: 0, duration: 0.6, ease: "expo.out" }, 63.0);
+      tl.from("#title-public", { y: -16, opacity: 0, duration: 0.6, ease: "power4.out" }, 63.4);
 
-      tl.to("#scene-public", { opacity: 0, duration: 0.5, ease: "power2.in" }, 73.5);
-      tl.to("#title-public", { opacity: 0, duration: 0.5, ease: "power2.in" }, 73.5);
+      // Final exit — only scene 7 fades out before the outro
+      tl.to("#scene-public", { opacity: 0, duration: 0.5, ease: "power3.in" }, 73.5);
+      tl.to("#title-public", { opacity: 0, duration: 0.5, ease: "power3.in" }, 73.5);
       tl.from("#outro-card", { opacity: 0, y: 12, duration: 0.6, ease: "power2.out" }, 74.0);
 
       window.__timelines["jp-tour"] = tl;

@@ -22,15 +22,42 @@ The composition ends with an honest text-only closing slate:
 - `7 scenes from real screenshots`
 - `Real product screenshots &middot; Not a render`
 
-Total duration: 78.0s. Narration, music, and MP4 rendering remain out of scope.
+Total duration: 78.0s. The composition now includes a real Spanish TTS narration export wired into the root composition and a documented local render artifact trail.
+
+## Narration and render workflow
+
+The composition keeps the visuals honest and now uses a real local narration asset:
+
+- `composition/assets/narration-script.es.txt` is the committed Spanish narration source used for TTS
+- `composition/assets/voiceover.wav` is the generated narration audio from HyperFrames CLI using voice `ef_dora` and lang `es` (the previous planning name was `voiceover.mp3`, but the real generated artifact is WAV)
+- audio is wired via a dedicated `<audio>` child element inside the root composition with standard HyperFrames clip attributes (`data-start`, `data-duration`, `data-track-index`, `src`)
+- Optional planning path remains `composition/assets/music-bed.mp3`, but no such file exists in this task
+- Audio bed: none unless a licensed file is explicitly added later
+- final render is generated locally and recorded in `docs/portfolio/artifact-manifest.md`
+
+Render commands:
+
+```bash
+bun x hyperframes render docs/portfolio/motion/composition
+npx hyperframes render docs/portfolio/motion/composition --output docs/portfolio/renders/jumping-park-product-tour.mp4
+```
+
+After a real render/export pass:
+
+1. Save the reviewed manifest as `docs/portfolio/artifact-manifest.md`.
+2. Record narrator/TTS source, audio-bed decision, output filename, size, and duration.
+3. Keep generated MP4 untracked unless the repository explicitly adopts a binary-artifact policy.
+
+The repo now includes the small reproducible narration source and WAV asset because the composition depends on them for a truthful render.
+
+Do not commit generated MP4 or WAV artifacts unless the repository explicitly adopts a binary-artifact policy for portfolio deliverables.
+For this task, the WAV is committed as a small reproducible dependency of the composition; the MP4 remains local and untracked.
 
 ## Still out of scope
 
 This composition still does **not** include:
 
-- narration / TTS
-- music or sound bed
-- final MP4 render (`hyperframes render`)
+- a committed music or sound bed
 - deploy or publication workflow
 - `robots.txt` / `llms.txt` closing evidence scenes
 
@@ -42,32 +69,30 @@ From the repo root:
 npx hyperframes lint docs/portfolio/motion/composition
 npx hyperframes validate docs/portfolio/motion/composition
 npx hyperframes inspect docs/portfolio/motion/composition
+bun test tests/portfolio-hyperframes-complete-scenes.test.ts tests/portfolio-hyperframes-render-output.test.ts
 ```
 
 Expected current state:
 
-- `lint` ? 0 errors, 0 warnings
-- `validate` ? 0 errors, WCAG AA contrast clean
-- `inspect` ? 0 layout issues on sampled timestamps
-
-## Why this stays in lint / validate / preview mode
-
-Final rendering (`hyperframes render`) depends on FFmpeg and a managed Chrome instance.
-This change focuses on validating structure, timing, and accessibility of the composition.
-Preview in the browser (`hyperframes preview`) is enough to review the tour interactively
-without creating an MP4 that would become stale after copy or screenshot updates.
+- `lint` -> 0 errors, 0 warnings
+- `validate` -> 0 errors, WCAG AA contrast clean
+- `inspect` -> 0 layout issues on sampled timestamps
+- targeted Bun tests -> passing
 
 ## File structure
 
 ```
 docs/portfolio/motion/
-+-- README.md            (this file)
-+-- demo-script.md       (timeline and narrative notes)
++-- README.md                      (this file)
++-- demo-script.md                 (timeline and narrative notes)
 +-- composition/
-    +-- index.html       (root composition: 7 scenes + closing slate)
-    +-- hyperframes.json (registry paths)
-    +-- meta.json        (id, dimensions, fps)
-    +-- assets/          (local copy of the 7 PNGs used by the composition)
+    +-- index.html                 (root composition: 7 scenes + closing slate + voiceover)
+    +-- hyperframes.json           (registry paths)
+    +-- meta.json                  (id, dimensions, fps)
+    +-- assets/
+        +-- narration-script.es.txt
+        +-- voiceover.wav
+        +-- *.png                  (local copy of the 7 PNGs used by the composition)
 ```
 
 ## Why the images live in `composition/assets/`
@@ -80,6 +105,7 @@ copy the updated file into `composition/assets/` so the composition can load it.
 ## Composition conventions
 
 - One root composition (`jp-tour`), no sub-compositions.
+- Root composition audio is the real generated narration WAV.
 - Each image clip has its own `data-track-index` (1-7) so crossfades work by overlap.
 - Each title has its own track (8-14). The closing slate lives on track 15.
 - Explicit `z-index` values control layering; `data-track-index` stays a sequencing contract.
