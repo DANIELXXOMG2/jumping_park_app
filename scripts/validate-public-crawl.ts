@@ -9,8 +9,13 @@
  *   - llms.txt     (exists, has content)
  *   - pricing.md   (exists, has content)
  *
+ * Also exports detectDeadAssets for local repo hygiene checks.
+ *
  * Outputs JSON + markdown table to stdout. Exits 1 if any critical check fails.
  */
+
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
+import { basename, join } from 'node:path'
 
 interface CheckResult {
   status: number
@@ -38,6 +43,97 @@ export interface CrawlResult {
     llmsTxt: ContentCheck
     pricingMd: ContentCheck
   }
+}
+
+// ---------------------------------------------------------------------------
+// Dead Asset Detection (Slice 5)
+// ---------------------------------------------------------------------------
+
+export interface DeadAssetCheck {
+  file: string
+  referencedInSrc: boolean
+  size: number
+  action: 'keep' | 'remove' | 'ignore'
+}
+
+/** Files referenced by browser convention or standard, not code. */
+const KNOWN_GOOD_PUBLIC_FILES = new Set([
+  'favicon.ico',
+  'favicon.png',
+  'favicon-16x16.png',
+  'favicon-32x32.png',
+  'favicon-48x48.png',
+  'apple-touch-icon.png',
+  'icon-192.png',
+  'icon-512.png',
+  'manifest.json',
+  'robots.txt',
+  'sitemap.xml',
+  'pricing.md',
+  'llms.txt',
+  'og-image.png',
+  'offline-sw.js',
+])
+
+function isReferencedInSrc(filename: string, srcDir: string): boolean {
+  if (!existsSync(srcDir)) return false
+
+  function scanDir(dir: string): boolean {
+    const entries = readdirSync(dir, { withFileTypes: true })
+    for (const entry of entries) {
+      const fullPath = join(dir, entry.name)
+      if (entry.isDirectory()) {
+        if (entry.name === 'node_modules') continue
+        if (scanDir(fullPath)) return true
+      } else if (/\.(ts|tsx|js|jsx|css)$/.test(entry.name)) {
+        const content = readFileSync(fullPath, 'utf8')
+        if (content.includes(filename)) return true
+      }
+    }
+    return false
+  }
+
+  return scanDir(srcDir)
+}
+
+export function detectDeadAssets(
+  publicDir: string,
+  srcDir: string,
+): DeadAssetCheck[] {
+  const results: DeadAssetCheck[] = []
+
+  function walk(dir: string): void {
+    if (!existsSync(dir)) return
+    const entries = readdirSync(dir, { withFileTypes: true })
+    for (const entry of entries) {
+      const fullPath = join(dir, entry.name)
+      if (entry.isDirectory()) {
+        walk(fullPath)
+      } else if (entry.isFile()) {
+        const stats = statSync(fullPath)
+        const referenced = isReferencedInSrc(entry.name, srcDir)
+        let action: DeadAssetCheck['action']
+
+        if (referenced) {
+          action = 'keep'
+        } else if (KNOWN_GOOD_PUBLIC_FILES.has(entry.name)) {
+          action = 'ignore'
+        } else {
+          action = 'remove'
+        }
+
+        results.push({
+          file: entry.name,
+          referencedInSrc: referenced,
+          size: stats.size,
+          action,
+        })
+      }
+    }
+  }
+
+  walk(publicDir)
+  return results
 }
 
 function normalizeUrl(baseUrl: string): string {
