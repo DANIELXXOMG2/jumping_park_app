@@ -25,15 +25,17 @@ function readPackageJson(): PackageJson {
 }
 
 describe('screenshot tooling foundation stays truthful', () => {
-	it('registers the screenshot optimizer command and script file', () => {
-		const packageJson = readPackageJson()
-
-		expect(packageJson.scripts?.['optimize:screenshots']).toBe(
-			'bun run scripts/optimize-screenshots.ts',
-		)
+	it('registers the screenshot optimizer script file and direct command', () => {
+		// `optimize:screenshots` was removed from package.json surface (Slice 5).
+		// The script remains runnable via: bun run scripts/optimize-screenshots.ts
 		expect(
 			existsSync(join(projectRoot, 'scripts', 'optimize-screenshots.ts')),
 		).toBe(true)
+		const archiveReadme = readFileSync(
+			join(projectRoot, 'scripts', 'archive', 'README.md'),
+			'utf-8',
+		)
+		expect(archiveReadme).toMatch(/optimize:screenshots/)
 	})
 
 	it('finds supported screenshot files and resolves deterministic jobs', async () => {

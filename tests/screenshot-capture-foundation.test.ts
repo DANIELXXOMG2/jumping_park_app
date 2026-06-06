@@ -70,15 +70,14 @@ function expectThrows(fn: () => unknown, pattern: string): void {
 }
 
 describe("screenshot capture foundation stays truthful", () => {
-	it("registers both capture and optimize script entries", () => {
+	it("registers capture and optimize script files (scripts removed from package.json surface per Slice 5)", () => {
 		const packageJson = readPackageJson();
-		expect(packageJson.scripts?.["optimize:screenshots"]).toBe(
-			"bun run scripts/optimize-screenshots.ts",
-		);
-		expect(packageJson.scripts?.["screenshot:capture"]).toBe(
-			"bun run scripts/capture-screenshots.ts",
-		);
+		// Scripts are no longer top-level package.json entries but remain
+		// runnable via: bun run scripts/capture-screenshots.ts / optimize-screenshots.ts
 		expect(existsSync(join(projectRoot, "scripts", "capture-screenshots.ts"))).toBe(
+			true,
+		);
+		expect(existsSync(join(projectRoot, "scripts", "optimize-screenshots.ts"))).toBe(
 			true,
 		);
 	});
