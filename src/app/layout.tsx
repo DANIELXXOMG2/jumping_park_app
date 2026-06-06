@@ -91,8 +91,6 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
 	width: "device-width",
 	initialScale: 1,
-	maximumScale: 1,
-	userScalable: false,
 	themeColor: "#2ECC71",
 };
 
@@ -104,6 +102,12 @@ export default function RootLayout({
 	return (
 		<html lang="es" suppressHydrationWarning>
 			<body className={`${sora.variable} font-sans antialiased`}>
+				<a
+					href="#main-content"
+					className="sr-only fixed left-4 top-4 z-[60] rounded-full bg-background px-4 py-2 text-sm font-semibold text-foreground shadow-lg focus:not-sr-only focus:outline-none focus:ring-2 focus:ring-primary"
+				>
+					Saltar al contenido principal
+				</a>
 				<ThemeProvider>{children}</ThemeProvider>
 				<Toaster
 					position="top-center"

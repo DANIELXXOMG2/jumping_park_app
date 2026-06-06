@@ -211,7 +211,10 @@ export default function ConsentimientoDigitalPage() {
 				</div>
 			</header>
 
-			<main className={`${cosmicStyles.background} min-h-screen pt-16`}>
+			<main
+				id="main-content"
+				className={`${cosmicStyles.background} min-h-screen pt-16`}
+			>
 				{/* ============================================================
 				    HERO SECTION
 				    ============================================================ */}
@@ -261,6 +264,7 @@ export default function ConsentimientoDigitalPage() {
 											href={WHATSAPP_URL}
 											target="_blank"
 											rel="noopener noreferrer"
+											aria-label="Escribinos por WhatsApp (abre en nueva pestaña)"
 											className="inline-flex items-center justify-center gap-2 rounded-full border border-brand-green/30 bg-brand-green/10 px-6 py-4 font-semibold text-brand-green transition-all hover:border-brand-green/50 hover:bg-brand-green/20"
 										>
 											Escribinos por WhatsApp
@@ -614,7 +618,7 @@ export default function ConsentimientoDigitalPage() {
 												target="_blank"
 												rel="noopener noreferrer"
 												className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-zinc-300 transition-colors hover:border-pink-500/30 hover:bg-pink-500/10 hover:text-pink-400"
-												aria-label="Seguir en Instagram"
+												aria-label="Seguir en Instagram (abre en nueva pestaña)"
 											>
 												<Instagram className="h-4 w-4" aria-hidden="true" />
 												Instagram
@@ -624,7 +628,7 @@ export default function ConsentimientoDigitalPage() {
 												target="_blank"
 												rel="noopener noreferrer"
 												className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-zinc-300 transition-colors hover:border-blue-500/30 hover:bg-blue-500/10 hover:text-blue-400"
-												aria-label="Seguir en Facebook"
+												aria-label="Seguir en Facebook (abre en nueva pestaña)"
 											>
 												<Facebook className="h-4 w-4" aria-hidden="true" />
 												Facebook
@@ -662,6 +666,7 @@ export default function ConsentimientoDigitalPage() {
 									href={WHATSAPP_URL}
 									target="_blank"
 									rel="noopener noreferrer"
+									aria-label="Consultar por WhatsApp (abre en nueva pestaña)"
 									className="inline-flex items-center justify-center gap-2 rounded-full border border-brand-green/30 bg-brand-green/10 px-10 py-4 text-lg font-bold text-brand-green transition-all hover:border-brand-green/50 hover:bg-brand-green/20"
 								>
 									Consultar por WhatsApp
@@ -760,7 +765,7 @@ export default function ConsentimientoDigitalPage() {
 									target="_blank"
 									rel="noopener noreferrer"
 									className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-zinc-400 transition-colors hover:border-pink-500/30 hover:bg-pink-500/10 hover:text-pink-400"
-									aria-label="Instagram"
+									aria-label="Instagram (abre en nueva pestaña)"
 								>
 									<Instagram className="h-5 w-5" aria-hidden="true" />
 								</a>
@@ -769,7 +774,7 @@ export default function ConsentimientoDigitalPage() {
 									target="_blank"
 									rel="noopener noreferrer"
 									className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-zinc-400 transition-colors hover:border-blue-500/30 hover:bg-blue-500/10 hover:text-blue-400"
-									aria-label="Facebook"
+									aria-label="Facebook (abre en nueva pestaña)"
 								>
 									<Facebook className="h-5 w-5" aria-hidden="true" />
 								</a>
