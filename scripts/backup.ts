@@ -12,34 +12,14 @@
  * - backups/consents_2024-01-15_143022.json
  */
 
-import { config } from "dotenv";
-config(); // Cargar .env
-
-import { initializeApp, cert, getApps } from "firebase-admin/app";
+import { initFirebaseAdmin } from "./lib/firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
 import { existsSync, mkdirSync, writeFileSync } from "fs";
 import { join } from "path";
 
-// Inicializar Firebase Admin
-if (getApps().length === 0) {
-	const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
-
-	if (!privateKey || !process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL) {
-		console.error("❌ Error: Faltan variables de entorno de Firebase");
-		console.error("   Asegúrate de tener FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL y FIREBASE_PRIVATE_KEY en .env");
-		process.exit(1);
-	}
-
-	initializeApp({
-		credential: cert({
-			projectId: process.env.FIREBASE_PROJECT_ID,
-			clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-			privateKey: privateKey,
-		}),
-	});
-}
-
-const db = getFirestore();
+// Inicializar Firebase Admin mediante la lib compartida
+const app = initFirebaseAdmin();
+const db = getFirestore(app);
 
 // ============================================================================
 // CONFIGURACIÓN
