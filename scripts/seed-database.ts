@@ -15,8 +15,8 @@
  */
 
 import { faker } from "@faker-js/faker/locale/es_MX";
-import { initializeApp, cert, getApps } from "firebase-admin/app";
 import { getFirestore, Timestamp } from "firebase-admin/firestore";
+import { initFirebaseAdmin } from "./lib/firebase-admin";
 
 // ============================================================================
 // CONFIGURACIÓN
@@ -31,49 +31,32 @@ const CONFIG = {
 };
 
 // ============================================================================
-// INICIALIZACIÓN FIREBASE ADMIN
+// INICIALIZACIÓN FIREBASE ADMIN (vía lib compartida)
 // ============================================================================
 
 function initFirebase() {
-  if (getApps().length === 0) {
-    // Intentar cargar credenciales desde variable de entorno
-    const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-    
-    if (serviceAccountJson) {
-      // Producción/Staging: usar service account
-      const serviceAccount = JSON.parse(serviceAccountJson);
-      initializeApp({
-        credential: cert(serviceAccount),
-      });
-      console.log("🔑 Usando Service Account Key");
-    } else if (process.env.FIRESTORE_EMULATOR_HOST) {
-      // Desarrollo: usar emulador de Firestore
-      initializeApp({
-        projectId: process.env.FIREBASE_PROJECT_ID || "jumping-park-dev",
-      });
-      console.log(`🔌 Conectando al emulador: ${process.env.FIRESTORE_EMULATOR_HOST}`);
-    } else {
-      // Sin credenciales ni emulador: mostrar error útil
-      console.error(`
+  try {
+    const app = initFirebaseAdmin();
+    return getFirestore(app);
+  } catch (error) {
+    console.error(`
 ╔════════════════════════════════════════════════════════════════════════╗
 ║  ⚠️  CREDENCIALES DE FIREBASE NO ENCONTRADAS                          ║
 ╠════════════════════════════════════════════════════════════════════════╣
-║  Para ejecutar el seed, necesitas una de estas opciones:              ║
+║  Para ejecutar el seed, configura las variables en .env:              ║
 ║                                                                        ║
-║  OPCIÓN 1 - Usar el emulador de Firestore (recomendado para dev):     ║
-║    1. Ejecutar: firebase emulators:start                              ║
-║    2. En otra terminal: FIRESTORE_EMULATOR_HOST=localhost:8080 bun run seed ║
+║    FIREBASE_PROJECT_ID=tu-proyecto                                     ║
+║    FIREBASE_CLIENT_EMAIL=tu-email@iam.gserviceaccount.com             ║
+║    FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\\n..."            ║
 ║                                                                        ║
-║  OPCIÓN 2 - Usar Service Account (para datos reales):                 ║
-║    1. Descargar el JSON desde Firebase Console > Project Settings     ║
-║    2. Exportar: FIREBASE_SERVICE_ACCOUNT_KEY='{"type":"..."}' bun run seed ║
+║  O usa el emulador:                                                    ║
+║    firebase emulators:start                                            ║
+║    FIRESTORE_EMULATOR_HOST=localhost:8080 bun run seed                 ║
 ║                                                                        ║
 ╚════════════════════════════════════════════════════════════════════════╝
 `);
-      process.exit(1);
-    }
+    process.exit(1);
   }
-  return getFirestore();
 }
 
 // ============================================================================

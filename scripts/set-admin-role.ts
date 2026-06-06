@@ -23,9 +23,9 @@
  * Roles disponibles: admin, trabajador
  */
 
-import { initializeApp, cert, getApps } from "firebase-admin/app";
 import { getFirestore, Timestamp } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
+import { initFirebaseAdmin } from "./lib/firebase-admin";
 import type { UserRole } from "../src/types/auth";
 
 // ============================================================================
@@ -38,47 +38,33 @@ const ROLE_DESCRIPTIONS: Record<string, string> = {
   trabajador: "Solo acceso al Dashboard",
 };
 
+/**
+ * Type guard — narrows unknown to UserRole without unsafe `as` casts.
+ */
+function isUserRole(value: unknown): value is UserRole {
+  if (typeof value !== 'string') return false;
+  return (VALID_ROLES as readonly string[]).includes(value);
+}
+
 // ============================================================================
-// INICIALIZACIÓN FIREBASE ADMIN
+// INICIALIZACIÓN FIREBASE ADMIN (vía lib compartida)
 // ============================================================================
 
 function initFirebase() {
-  if (getApps().length === 0) {
-    const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-    
-    if (serviceAccountJson) {
-      const serviceAccount = JSON.parse(serviceAccountJson);
-      initializeApp({
-        credential: cert(serviceAccount),
-      });
-      console.log("🔑 Usando Service Account Key");
-    } else {
-      // Intentar con variables de entorno individuales
-      const projectId = process.env.FIREBASE_PROJECT_ID;
-      const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-      const privateKeyRaw = process.env.FIREBASE_PRIVATE_KEY;
-      const privateKey = privateKeyRaw?.replace(/\\n/g, '\n');
-
-      if (projectId && clientEmail && privateKey) {
-        initializeApp({
-          credential: cert({ projectId, clientEmail, privateKey }),
-        });
-        console.log("🔑 Usando variables de entorno individuales");
-      } else {
-        console.error("❌ Error: No se encontraron credenciales de Firebase");
-        console.error("   Configura FIREBASE_SERVICE_ACCOUNT_KEY o las variables individuales:");
-        console.error("   - FIREBASE_PROJECT_ID");
-        console.error("   - FIREBASE_CLIENT_EMAIL");
-        console.error("   - FIREBASE_PRIVATE_KEY");
-        process.exit(1);
-      }
-    }
+  try {
+    const app = initFirebaseAdmin();
+    return {
+      db: getFirestore(app),
+      auth: getAuth(app),
+    };
+  } catch (error) {
+    console.error("❌ Error: No se encontraron credenciales de Firebase");
+    console.error("   Configura las variables individuales en .env:");
+    console.error("   - FIREBASE_PROJECT_ID");
+    console.error("   - FIREBASE_CLIENT_EMAIL");
+    console.error("   - FIREBASE_PRIVATE_KEY");
+    process.exit(1);
   }
-
-  return {
-    db: getFirestore(),
-    auth: getAuth(),
-  };
 }
 
 // ============================================================================
@@ -195,8 +181,8 @@ Nota: El usuario debe existir en Firebase Auth antes de ejecutar este script.
 }
 
 const email = args[0];
-const roleArg = args[1] as UserRole | undefined;
-const role = roleArg || 'admin';
+const roleArg = args[1];
+const role: UserRole = isUserRole(roleArg) ? roleArg : 'admin';
 
 // Validar email
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
