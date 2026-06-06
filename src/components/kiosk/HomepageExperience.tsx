@@ -3,8 +3,8 @@
 import { Clock, FileText, MapPin, Phone, Shield, Zap } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { StartActionButton } from "@/components/kiosk/StartActionButton";
 import { SpaceBackground } from "@/components/kiosk/SpaceBackground";
+import { StartActionButton } from "@/components/kiosk/StartActionButton";
 import { SecretAdminTrigger } from "@/components/ui/SecretAdminTrigger";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { PAGE_IMAGE_VARIANTS } from "@/lib/imageOptimization";
@@ -25,7 +25,10 @@ export function HomepageExperience() {
 	const { t } = useLanguage();
 
 	return (
-		<main className="relative min-h-screen w-full overflow-hidden bg-background text-foreground">
+		<main
+			id="main-content"
+			className="relative min-h-screen w-full overflow-hidden bg-background text-foreground"
+		>
 			<SpaceBackground />
 
 			<div
