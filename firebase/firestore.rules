@@ -100,6 +100,27 @@ service cloud.firestore {
     }
 
     // =========================================================================
+    // COLECCIÓN: _counters (internal atomic counters — Admin SDK only)
+    // =========================================================================
+    match /_counters/{documentId} {
+      allow read, write: if false;
+    }
+
+    // =========================================================================
+    // COLECCIÓN: settings (consent content configuration — Admin SDK / server only)
+    // =========================================================================
+    match /settings/{documentId} {
+      allow read, write: if false;
+    }
+
+    // =========================================================================
+    // COLECCIÓN: rate_limits (OTP/security rate limiting — Admin SDK only)
+    // =========================================================================
+    match /rate_limits/{documentId} {
+      allow read, write: if false;
+    }
+
+    // =========================================================================
     // DEFAULT: Denegar todo lo demás
     // =========================================================================
     match /{document=**} {

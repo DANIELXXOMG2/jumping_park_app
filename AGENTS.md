@@ -4,6 +4,8 @@
 - Use Bun-based workflows and commands.
 - Keep changes truthful to current implementation.
 - Prefer small, focused commits.
+- Prefer extending existing repo scripts/checks before introducing parallel tooling.
+- When a change touches repo surface or support artifacts, verify what actually ships to production instead of assuming.
 
 ## TypeScript
 - Keep TypeScript strict.
@@ -47,6 +49,15 @@
 - Admin SDK (`firebase-admin`): server routes and scripts only — never in client bundles.
 - `NEXT_PUBLIC_` prefix only for client-safe config keys.
 - Never hardcode credentials — all values from environment variables.
+- When changing `firebase/` rules or indexes, validate them against the current app/query surface and deployed reality before deleting or rewriting.
+
+## Documentation / Repo Surface
+- `docs/`, `diagramas/`, portfolio evidence, and API collections must stay truthful to the current implementation.
+- Delete genuinely obsolete files instead of keeping sentimental/legacy clutter.
+- If a static asset is unused, remove it from both the repo and deploy surface when safe.
+- If a static asset is still used and heavy, optimize it before considering replacement.
+- Preserve source assets that are required by optimization pipelines, but keep them out of production deploys when possible.
+- Prefer strengthening existing checks (`check:docs*`, `validate:evidence`, audit scripts) over adding overlapping one-off scripts.
 
 ## react-hook-form
 - Always pair `useForm` with `zodResolver(schema)` for type-safe validation.
@@ -65,13 +76,14 @@
 - One Resend singleton per process (`src/services/emailService.ts`).
 
 ## Playwright
-- Tests in `playwright/` with `*.a11y.ts` naming — run via `bun test`.
+- Tests in `playwright/` use `*.a11y.ts` naming and run via `bun run test:a11y:e2e` / `playwright test --config=playwright.config.ts`.
 - Every page interaction test includes an Axe check (`new AxeBuilder({ page }).analyze()`).
 - Locator-based waits only (`toBeVisible`, `toBeHidden`) — no `page.waitForTimeout()`.
 - Test isolation: each test seeds its own state, no cross-test dependencies.
+- Add new E2E coverage only for justified high-risk flows; avoid broad flaky coverage for vanity.
 
 ## Biome
-- Defer to `biome.json` — no duplicate lint config in `.eslintrc` or inline.
+- Defer to `biome.json` — Biome is the sole linter (ESLint removed as redundant).
 - Key rules: `noUnusedImports: error`, `noUnusedVariables: warn`, `useExhaustiveDependencies: warn`.
 - Run `bun run check` pre-commit — blocked on `error` severity.
 
@@ -84,3 +96,4 @@
 ## Repository Hygiene
 - Do not commit secrets or local-only artifacts.
 - Keep docs aligned with the implementation they describe.
+- Generated reports or temporary audit output should stay untracked unless the repo explicitly treats them as source artifacts.
