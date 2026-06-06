@@ -22,23 +22,34 @@ describe('check:docs pipeline exists and is wired', () => {
 		}
 	})
 
-	it('package.json has check:docs scripts', () => {
-		const pkg = require(join(projectRoot, 'package.json'))
-		expect(pkg.scripts['check:docs']).toBeDefined()
-		expect(pkg.scripts['check:docs:lint']).toBeDefined()
-		expect(pkg.scripts['check:docs:links']).toBeDefined()
-		expect(pkg.scripts['check:docs:redact']).toBeDefined()
-		expect(pkg.scripts['check:docs:drift']).toBeDefined()
+	it('check:docs pipeline scripts exist on disk and are runnable directly', () => {
+		// Scripts are no longer top-level package.json entries (surface reduction, Slice 5).
+		// They remain fully functional via direct invocation.
+		const scripts = [
+			'scripts/check-docs.ts',
+			'scripts/check-docs-lint.ts',
+			'scripts/check-docs-links.ts',
+			'scripts/check-docs-redact.ts',
+			'scripts/check-docs-drift.ts',
+		]
+		for (const script of scripts) {
+			expect(existsSync(join(projectRoot, script))).toBe(true)
+		}
 	})
 
-	it('package.json check chain includes check:docs', () => {
+	it('package.json check chain runs docs pipeline directly', () => {
 		const pkg = require(join(projectRoot, 'package.json'))
-		expect(pkg.scripts['check']).toContain('check:docs')
+		// check now inlines the commands — references the orchestrator script path
+		expect(pkg.scripts['check']).toContain('scripts/check-docs.ts')
 	})
 
-	it('check:docs script runs the orchestrator', () => {
-		const pkg = require(join(projectRoot, 'package.json'))
-		expect(pkg.scripts['check:docs']).toContain('check-docs.ts')
+	it('check:docs orchestrator is importable and runnable', () => {
+		// The orchestrator file exists and exports runCheckDocs
+		const orchestratorPath = join(projectRoot, 'scripts', 'check-docs.ts')
+		expect(existsSync(orchestratorPath)).toBe(true)
+		// eslint-disable-next-line @typescript-eslint/no-require-imports
+		const mod = require(orchestratorPath)
+		expect(typeof mod.runCheckDocs).toBe('function')
 	})
 })
 

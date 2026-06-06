@@ -17,7 +17,7 @@ function runGit(args: string[]): string {
 }
 
 function runPrecheck() {
-	const result = spawnSync(process.execPath, ['run', 'scripts/git-history-mp4-precheck.ts'], {
+	const result = spawnSync(process.execPath, ['run', 'scripts/archive/one-time/git-history-mp4-precheck.ts'], {
 		cwd: repoRoot,
 		encoding: 'utf8',
 	})

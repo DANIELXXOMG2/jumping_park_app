@@ -34,13 +34,10 @@ describe('testing guide stays truthful', () => {
 		const scriptNames = [
 			'test',
 			'check',
-			'check:format',
-			'check:lint',
-			'check:types',
+			'fix:format',
+			'fix:lint',
 			'audit',
 			'build',
-			'playwright:install',
-			'test:a11y:e2e',
 		]
 
 		for (const name of scriptNames) {
