@@ -1,7 +1,7 @@
 # Gentleman Guardian Angel — jumping_park_app
 # Provider: OpenCode (suscripción opencode-go)
-# Model: deepseek-v4-flash
-PROVIDER="opencode:opencode-go/deepseek-v4-flash"
+# Model: qwen3.7-plus
+PROVIDER="opencode:opencode-go/qwen3.7-plus"
 
 FILE_PATTERNS="*.ts,*.tsx,*.js,*.jsx"
 EXCLUDE_PATTERNS="*.test.ts,*.spec.ts,*.test.tsx,*.spec.tsx,*.d.ts"

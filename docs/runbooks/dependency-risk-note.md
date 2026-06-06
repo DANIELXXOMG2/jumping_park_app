@@ -18,8 +18,7 @@ Reference date: `2026-04-06`
 ### Transitive tooling / CI
 
 - `smol-toml` via `knip`
-- `ajv`, `brace-expansion`, `minimatch`, `flatted` via `eslint`
-- `picomatch` via `dependency-cruiser`, `knip`, `eslint-config-next`, and `jscpd`
+- `picomatch` via `dependency-cruiser`, `knip`, and `jscpd`
 
 These findings primarily affect development/CI tooling, not the production runtime served to users.
 

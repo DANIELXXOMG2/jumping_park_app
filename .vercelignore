@@ -16,6 +16,11 @@ tests/
 playwright/
 playwright.config.ts
 
+# Source PNGs — retained for optimization pipeline, excluded from deploy
+# (runtime serves optimized WebP/PNG derivatives instead)
+public/assets/astronauta.png
+public/assets/jumping-park-logo.png
+
 # Local evidence screenshots
 block-e-consentimiento-digital.png
 block-e-kiosk-consent-dialog.png

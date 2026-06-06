@@ -1,7 +1,7 @@
 # Firebase Configuration & Operations
 
 > **Status**: current
-> **Audit date**: 2026-05-24
+> **Audit date**: 2026-06-05
 > **Diátaxis**: Reference
 > **Linked sources**: `firebase/firestore.rules`, `firebase/firestore.indexes.json`, `firebase/storage.rules`, `src/services/authService.ts`, `src/lib/adminAuth.ts`, `src/types/auth.ts`
 
@@ -26,8 +26,8 @@ Firebase project ID: `jumping-park-consents`. All runtime configuration flows th
 
 | Collection | Purpose | Access Pattern | Source |
 |---|---|---|---|
-| `users` | Visitor profiles keyed by cedula (document ID) | Self-read/write; admin read all | `firebase/firestore.rules` lines 33-38 |
-| `admin_users` | Admin/trabajador profiles with role claims | Admin-only read; write via Admin SDK only | `firebase/firestore.rules` lines 22-28 |
+| `users` | Visitor profiles keyed by cedula (document ID) | Self-read/write; admin read all | `firebase/firestore.rules` (`match /users/{userId}`) |
+| `admin_users` | Admin/trabajador profiles with role claims | Admin-only read; write via Admin SDK only | `firebase/firestore.rules` (`match /admin_users/{userId}`) |
 
 **`users` schema** (governed by `src/types/firestore.ts`):
 - `email` — contact email for OTP delivery
@@ -47,9 +47,9 @@ All OTP collections are **server-side only** — client reads and writes are den
 
 | Collection | Purpose | Lifecycle | Source |
 |---|---|---|---|
-| `otp_challenges` | Active OTP codes pending validation | Created on OTP request; deleted on expiry. Successful validation resets attempts/lockout and stamps `lastValidatedAt` on the same challenge document. | `firebase/firestore.rules` lines 43-45 |
-| `otp_access_sessions` | Post-validation kiosk access session (split model) | Created on successful OTP validation; expires after `OTP_SESSION_DURATION_MINUTES` (default 120 min) | `firebase/firestore.rules` lines 47-49 |
-| `otp_sessions` | Legacy OTP session format (fallback compatibility) | Maintained for backward compatibility; read during session verification fallback | `firebase/firestore.rules` lines 51-53 |
+| `otp_challenges` | Active OTP codes pending validation | Created on OTP request; deleted on expiry. Successful validation resets attempts/lockout and stamps `lastValidatedAt` on the same challenge document. | `firebase/firestore.rules` (`match /otp_challenges/{documentId}`) |
+| `otp_access_sessions` | Post-validation kiosk access session (split model) | Created on successful OTP validation; expires after `OTP_SESSION_DURATION_MINUTES` (default 120 min) | `firebase/firestore.rules` (`match /otp_access_sessions/{documentId}`) |
+| `otp_sessions` | Legacy OTP session format (fallback compatibility) | Maintained for backward compatibility; read during session verification fallback | `firebase/firestore.rules` (`match /otp_sessions/{documentId}`) |
 
 **OTP challenge schema** (`OtpChallenge` type in `src/types/firestore.ts`):
 - `email`, `code` — challenge identity
@@ -66,8 +66,8 @@ All OTP collections are **server-side only** — client reads and writes are den
 
 | Collection | Purpose | Access Pattern | Source |
 |---|---|---|---|
-| `consents` | Signed consent records | Self-read by userId; admin read all; write via Admin SDK only | `firebase/firestore.rules` lines 86-92 |
-| `accesses` | Park entry records | Admin-only read/write | `firebase/firestore.rules` lines 97-100 |
+| `consents` | Signed consent records | Self-read by userId; admin read all; write via Admin SDK only | `firebase/firestore.rules` (`match /consents/{consentId}`) |
+| `accesses` | Park entry records | Admin-only read/write | `firebase/firestore.rules` (`match /accesses/{accessId}`) |
 
 **`consents` schema**:
 - `userId`, `responsibleAdult` — identity linkage
@@ -80,12 +80,15 @@ All OTP collections are **server-side only** — client reads and writes are den
 
 | Collection | Purpose | Source |
 |---|---|---|
-| `offline_sync` | Idempotent ledger for offline consent replay deduplication | `firebase/firestore.rules` lines 58-60 |
-| `minors_index` | Denormalized projection for fast minor lookups by parent | `firebase/firestore.rules` lines 65-67 |
-| `admin_metrics` | Read model for admin dashboard aggregates | `firebase/firestore.rules` lines 72-74 |
-| `admin_audit_logs` | Immutable audit trail for admin operations | `firebase/firestore.rules` lines 78-81 |
+| `offline_sync` | Idempotent ledger for offline consent replay deduplication | `firebase/firestore.rules` (`match /offline_sync/{documentId}`) |
+| `minors_index` | Denormalized projection for fast minor lookups by parent | `firebase/firestore.rules` (`match /minors_index/{documentId}`) |
+| `admin_metrics` | Read model for admin dashboard aggregates | `firebase/firestore.rules` (`match /admin_metrics/{documentId}`) |
+| `admin_audit_logs` | Immutable audit trail for admin operations | `firebase/firestore.rules` (`match /admin_audit_logs/{documentId}`) |
+| `_counters` | Atomic document counters for sequential consent numbering and minor index ID assignment | `firebase/firestore.rules` (`match /_counters/{documentId}`) |
+| `settings` | Consent content configuration for multilingual Firestore-sourced legal copy | `firebase/firestore.rules` (`match /settings/{documentId}`) |
+| `rate_limits` | OTP/security rate-limiting buckets (per identifier/IP window) | `firebase/firestore.rules` (`match /rate_limits/{documentId}`) |
 
-All four collections are **server-side only** — no client access. Operations go through dedicated services: `src/services/adminMetricsService.ts`, `src/services/minorIndexService.ts`, `src/services/consentService.ts`.
+All seven collections are **server-side only** — no client access. Operations go through dedicated services: `src/services/adminMetricsService.ts`, `src/services/minorIndexService.ts`, `src/services/consentService.ts`, `src/services/rateLimitService.ts`.
 
 ## 3. Security Rules (firestore.rules)
 
@@ -126,6 +129,9 @@ Roles are defined in `src/types/auth.ts`:
 | `minors_index` | Denied | Denied | Full |
 | `admin_metrics` | Denied | Denied | Full |
 | `admin_audit_logs` | Denied | Denied | Full |
+| `_counters` | Denied | Denied | Full |
+| `settings` | Denied | Denied | Full |
+| `rate_limits` | Denied | Denied | Full |
 | `{document=**}` (default) | Denied | Denied | Denied |
 
 ### 3.3 Default Deny
@@ -266,6 +272,7 @@ Same default-deny posture as Firestore rules. No unlisted paths are accessible.
 
 ### 7.1 Deployment
 
+- Local repo changes do **not** affect production until an explicit Firebase deploy is run.
 - Deploy rules: `firebase deploy --only firestore:rules`
 - Deploy indexes: `firebase deploy --only firestore:indexes`
 - Deploy storage rules: `firebase deploy --only storage`
