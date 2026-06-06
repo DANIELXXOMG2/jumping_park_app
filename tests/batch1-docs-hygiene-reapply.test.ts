@@ -220,7 +220,7 @@ function extractDocsReadmeTableStatuses(markdown: string): string[] {
 			),
 		).toEqual([])
 		expect(rootReadmeRequiredCollections.filter((claim) => !rootReadme.includes(claim))).toEqual([])
-		expect(scripts['check:phase5']).toBeDefined()
+		expect(scripts['check:phase5']).toBeUndefined()
 	})
 
 	it('keeps docs README aligned with the integrated current-vs-historical contract', () => {

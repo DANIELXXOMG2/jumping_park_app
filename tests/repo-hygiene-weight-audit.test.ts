@@ -17,7 +17,7 @@ function parseFirestoreRules(rulesContent: string): FirestoreRuleEntry[] {
 	const entries: FirestoreRuleEntry[] = []
 	// Match: match /collectionName/{docId} { ... up to next match or EOF
 	const blockRegex =
-		/match\s+\/([\w_]+)\/\{[^}]+\}\s*\{((?:[^{}]|\{[^{}]*\})*?)\}/gs
+		/match\s+\/([\w_]+)\/\{[^}]+\}\s*\{((?:[^{}]|\{[^{}]*\})*?)\}/g
 	let match: RegExpExecArray | null
 	while ((match = blockRegex.exec(rulesContent)) !== null) {
 		const collection = match[1]
@@ -325,6 +325,8 @@ describe('repo hygiene and weight audit slice', () => {
 		)
 		const optimizeAssetsScript = readRepoFile(
 			'scripts',
+			'archive',
+			'one-time',
 			'optimize-assets.ts',
 		)
 
@@ -641,15 +643,9 @@ describe('repo hygiene and weight audit slice', () => {
 
 			for (const col of serverOnlyCollections) {
 				const entry = ruleEntries.find((e) => e.collection === col)
-				expect(entry, `Missing rule block for ${col}`).toBeDefined()
-				expect(
-					entry?.allowRead?.includes('false'),
-					`${col} read should be denied`,
-				).toBe(true)
-				expect(
-					entry?.allowWrite?.includes('false'),
-					`${col} write should be denied`,
-				).toBe(true)
+				expect(entry).toBeDefined()
+				expect(entry?.allowRead?.includes('false')).toBe(true)
+				expect(entry?.allowWrite?.includes('false')).toBe(true)
 			}
 		})
 
@@ -700,9 +696,7 @@ describe('repo hygiene and weight audit slice', () => {
 			}
 
 			expect(
-				deadRuleCollections,
-				'Collections in rules but not referenced anywhere in src/',
-			).toEqual([])
+				deadRuleCollections).toEqual([])
 		})
 
 		// ------------------------------------------------------------------
@@ -756,9 +750,7 @@ describe('repo hygiene and weight audit slice', () => {
 			}
 
 			expect(
-				orphanIndexes,
-				'Orphan indexes found — no matching collection query in src/services/',
-			).toEqual([])
+				orphanIndexes).toEqual([])
 		})
 
 		// ------------------------------------------------------------------
@@ -778,10 +770,7 @@ describe('repo hygiene and weight audit slice', () => {
 			)
 			expect(sigMatch).not.toBeNull()
 			const sigBlock = sigMatch?.[0] ?? ''
-			expect(
-				sigBlock.includes('allow write: if false'),
-				'Signatures write should be denied to clients',
-			).toBe(true)
+			expect(sigBlock.includes('allow write: if false')).toBe(true)
 		})
 
 		it('generated-pdfs namespace is explicitly blocked', () => {
@@ -793,7 +782,6 @@ describe('repo hygiene and weight audit slice', () => {
 			const pdfBlock = pdfMatch?.[0] ?? ''
 			expect(
 				pdfBlock.includes('allow read, write: if false'),
-				'generated-pdfs should deny all client access',
 			).toBe(true)
 		})
 
@@ -820,9 +808,7 @@ describe('repo hygiene and weight audit slice', () => {
 			}
 
 			expect(
-				staleEndpoints,
-				'Stale Bruno endpoints — references routes that do not exist',
-			).toEqual([])
+				staleEndpoints).toEqual([])
 		})
 
 		it('every active API route has a matching .bru file or is documented as intentionally uncovered', () => {
@@ -900,9 +886,7 @@ describe('repo hygiene and weight audit slice', () => {
 			}
 
 			expect(
-				uncovered,
-				'API routes without Bruno coverage (add to allowlist or create .bru file)',
-			).toEqual([])
+				uncovered).toEqual([])
 		})
 	})
 
@@ -951,9 +935,7 @@ describe('repo hygiene and weight audit slice', () => {
 			)
 
 			expect(
-				deadAssets,
-				'Dead assets found in public/ — files with zero src/ references and not in known-good list',
-			).toEqual([])
+				deadAssets).toEqual([])
 		})
 
 		it('flags dead SVGs as action=remove when they exist (hypothetical regression)', () => {
@@ -990,9 +972,7 @@ describe('repo hygiene and weight audit slice', () => {
 			// No known-good file should appear in the dead list
 			for (const goodFile of KNOWN_GOOD_FILES) {
 				expect(
-					deadFiles,
-					`${goodFile} should not be flagged as dead`,
-				).not.toContain(goodFile)
+					deadFiles).not.toContain(goodFile)
 			}
 		})
 
@@ -1013,11 +993,8 @@ describe('repo hygiene and weight audit slice', () => {
 			expect(assetResults.length).toBeGreaterThan(0)
 
 			for (const r of assetResults) {
-				expect(
-					r.referencedInSrc,
-					`${r.file} should be referenced in src/`,
-				).toBe(true)
-				expect(r.action, `${r.file} should be kept`).toBe('keep')
+				expect(r.referencedInSrc).toBe(true)
+				expect(r.action).toBe('keep')
 			}
 		})
 
@@ -1171,9 +1148,7 @@ describe('repo hygiene and weight audit slice', () => {
 			const result = validateDiagramConsistency(svgFiles, mmdFiles)
 
 			expect(
-				result.staleSvgs,
-				'Stale SVGs in docs/assets/diagrams/ — no matching .mmd source in diagramas/',
-			).toEqual([])
+				result.staleSvgs).toEqual([])
 		})
 	})
 })

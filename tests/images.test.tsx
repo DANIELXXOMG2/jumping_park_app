@@ -19,37 +19,12 @@ const {
 const repoRoot = process.cwd()
 const maxOptimizedImageBytes = 150_000
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-	return typeof value === 'object' && value !== null
-}
-
-function hasStringScripts(
-	value: unknown,
-): value is { scripts: Record<string, string> } {
-	if (!isRecord(value) || !isRecord(value.scripts)) {
-		return false
-	}
-
-	return Object.values(value.scripts).every(
-		(script) => typeof script === 'string',
-	)
-}
-
-function readPackageScripts(): Record<string, string> {
-	const packageJson: unknown = JSON.parse(
-		readFileSync(join(repoRoot, 'package.json'), 'utf8'),
-	)
-
-	return hasStringScripts(packageJson) ? packageJson.scripts : {}
-}
-
 function getPublicAssetPath(assetPath: string): string {
 	return join(repoRoot, 'public', assetPath.replace(/^\//, ''))
 }
 
 describe('image optimization phase', () => {
-	it('configures next image formats with a quality floor and exposes the optimize:images workflow', () => {
-		const packageScripts = readPackageScripts()
+	it('configures next image formats with a quality floor and the optimize:images script exists', () => {
 		const imageConfig = nextConfig.images
 		const configuredQualities = imageConfig?.qualities ?? []
 
@@ -61,9 +36,8 @@ describe('image optimization phase', () => {
 				configuredQualities.includes(asset.quality),
 			),
 		).toBe(true)
-		expect(packageScripts['optimize:images']).toBe(
-			'bun run scripts/optimize-images.ts',
-		)
+		// `optimize:images` was removed from package.json surface (Slice 5).
+		// The script remains runnable via: bun run scripts/optimize-images.ts
 		expect(existsSync(join(repoRoot, 'scripts', 'optimize-images.ts'))).toBe(true)
 	})
 
