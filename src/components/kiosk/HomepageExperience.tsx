@@ -71,8 +71,6 @@ export function HomepageExperience() {
 									alt="Sistema Solar"
 									width={2000}
 									height={1560}
-									priority
-									loading="eager"
 									className="h-auto min-w-[600px] opacity-60 mix-blend-screen md:opacity-50"
 								/>
 							</div>

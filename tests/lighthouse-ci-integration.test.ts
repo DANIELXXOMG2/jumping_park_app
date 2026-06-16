@@ -85,6 +85,7 @@ describe('lighthouse ci integration slice', () => {
 		)
 		expect(config.ci?.collect?.startServerReadyPattern).toBe('Ready in')
 		expect(config.ci?.collect?.url).toEqual([
+			'http://127.0.0.1:3000/',
 			'http://127.0.0.1:3000/consentimiento-digital',
 		])
 		expect(config.ci?.upload?.target).toBe('temporary-public-storage')

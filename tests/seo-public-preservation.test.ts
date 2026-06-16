@@ -7,7 +7,7 @@ const {
 	contentType: consentOpenGraphContentType,
 	default: ConsentimientoDigitalOpenGraphImage,
 	size: consentOpenGraphSize,
-} = await import('@/app/(public)/opengraph-image')
+} = await import('@/app/(public)/consentimiento-digital/opengraph-image')
 const {
 	CONSENTIMIENTO_DIGITAL_FAQ_ENTRIES,
 	FRESHNESS_DATE,

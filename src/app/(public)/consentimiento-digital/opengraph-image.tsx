@@ -1,22 +1,14 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { ImageResponse } from "next/og";
-import { LANDING_OPEN_GRAPH_ALT } from "@/lib/landingSeo";
-import { APP_NAME, createCanonicalUrl } from "@/lib/seo";
+import { CONSENTIMIENTO_DIGITAL_OPEN_GRAPH_ALT } from "@/lib/consentimientoDigitalSeo";
+import {
+	APP_NAME,
+	CONSENTIMIENTO_DIGITAL_PAGE_PATH,
+	createCanonicalUrl,
+} from "@/lib/seo";
 
-const PAGE_URL = createCanonicalUrl("/");
+const PAGE_URL = createCanonicalUrl(CONSENTIMIENTO_DIGITAL_PAGE_PATH);
 
-// Read and inline the logo as a data URL so Satori can render it at build time.
-const logoPath = join(
-	process.cwd(),
-	"public",
-	"assets",
-	"jumping-park-logo.png",
-);
-const logoBase64 = readFileSync(logoPath).toString("base64");
-const logoSrc = `data:image/png;base64,${logoBase64}`;
-
-export const alt = LANDING_OPEN_GRAPH_ALT;
+export const alt = CONSENTIMIENTO_DIGITAL_OPEN_GRAPH_ALT;
 export const size = {
 	height: 630,
 	width: 1200,
@@ -29,7 +21,7 @@ export default function OpenGraphImage() {
 			style={{
 				alignItems: "stretch",
 				background:
-					"linear-gradient(135deg, #0f172a 0%, #1e1b4b 45%, #0c1929 100%)",
+					"linear-gradient(135deg, #09090b 0%, #18181b 45%, #052e2b 100%)",
 				color: "#f8fafc",
 				display: "flex",
 				height: "100%",
@@ -41,7 +33,7 @@ export default function OpenGraphImage() {
 			<div
 				style={{
 					background:
-						"radial-gradient(circle at top left, rgba(56, 189, 248, 0.32), transparent 38%), radial-gradient(circle at top right, rgba(250, 204, 21, 0.24), transparent 28%)",
+						"radial-gradient(circle at top left, rgba(52, 211, 153, 0.38), transparent 38%), radial-gradient(circle at top right, rgba(168, 85, 247, 0.28), transparent 28%)",
 					inset: 0,
 					position: "absolute",
 				}}
@@ -57,12 +49,11 @@ export default function OpenGraphImage() {
 					width: "100%",
 				}}
 			>
-				{/* Brand badge */}
 				<div
 					style={{
 						border: "1px solid rgba(255,255,255,0.16)",
 						borderRadius: "999px",
-						color: "#facc15",
+						color: "#a7f3d0",
 						display: "flex",
 						fontSize: 22,
 						fontWeight: 700,
@@ -73,8 +64,6 @@ export default function OpenGraphImage() {
 				>
 					{APP_NAME}
 				</div>
-
-				{/* Headline + Subtitle */}
 				<div
 					style={{
 						display: "flex",
@@ -85,12 +74,12 @@ export default function OpenGraphImage() {
 				>
 					<div
 						style={{
-							fontSize: 72,
+							fontSize: 76,
 							fontWeight: 900,
 							lineHeight: 1.05,
 						}}
 					>
-						Parque de Trampolines en Villavicencio
+						Consentimiento digital claro, rapido y listo antes de saltar.
 					</div>
 					<div
 						style={{
@@ -99,30 +88,17 @@ export default function OpenGraphImage() {
 							lineHeight: 1.35,
 						}}
 					>
-						Diversion segura para todas las edades. Lunes a viernes 1:30pm-8pm,
-						sabados y domingos 11am-8pm.
+						Validacion OTP, firma segura y experiencia premium para adultos y
+						menores.
 					</div>
 				</div>
-
-				{/* Logo + URL */}
 				<div
 					style={{
 						alignItems: "center",
 						display: "flex",
-						gap: "24px",
+						gap: "18px",
 					}}
 				>
-					{/* eslint-disable-next-line @next/next/no-img-element */}
-					<img
-						src={logoSrc}
-						alt={`${APP_NAME} logo`}
-						width={120}
-						height={43}
-						style={{
-							borderRadius: "8px",
-							objectFit: "contain",
-						}}
-					/>
 					<div
 						style={{
 							background: "rgba(255,255,255,0.08)",
