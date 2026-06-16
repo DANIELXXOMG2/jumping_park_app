@@ -15,7 +15,7 @@ export default function LandingPage() {
 	});
 
 	return (
-		<LanguageProvider>
+		<LanguageProvider initialLanguage="es">
 			<Script
 				id="landing-jsonld"
 				type="application/ld+json"

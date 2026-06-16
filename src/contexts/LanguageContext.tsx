@@ -1,18 +1,64 @@
 "use client";
 
-import {
-	createContext,
-	type ReactNode,
-	useCallback,
-	useContext,
-	useEffect,
-	useState,
-} from "react";
+import { createContext, type ReactNode, useContext, useState } from "react";
 import {
 	type DictionaryKey,
 	getTranslation,
 	type Language,
 } from "@/lib/i18n/dictionary";
+
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+
+const STORAGE_KEY = "kiosk-language";
+const LOCALE_COOKIE = "jp-locale";
+
+// ============================================================================
+// PURE HELPERS (exported for testing)
+// ============================================================================
+
+/**
+ * Reads the jp-locale cookie value from document.cookie.
+ * Returns the cookie value or undefined if not found.
+ */
+function readLocaleCookie(): string | undefined {
+	if (typeof document === "undefined") return undefined;
+
+	const match = document.cookie.match(
+		new RegExp(`(?:^|;\\s*)${LOCALE_COOKIE}=([^;]*)`),
+	);
+	return match ? decodeURIComponent(match[1]) : undefined;
+}
+
+/**
+ * Writes the jp-locale cookie for server-side locale persistence.
+ * Client-side only — no-op during SSR.
+ */
+function writeLocaleCookie(lang: Language): void {
+	if (typeof document === "undefined") return;
+
+	document.cookie = `${LOCALE_COOKIE}=${lang}; path=/; sameSite=lax`;
+}
+
+/**
+ * Pure function — resolves the initial language from server prop,
+ * existing cookie, or defaults to "es".
+ *
+ * Priority: initialLanguage (server) > cookie > "es"
+ */
+export function resolveInitialLanguage(
+	initialLanguage: Language | undefined,
+	cookieValue: string | undefined,
+): Language {
+	if (initialLanguage === "es" || initialLanguage === "en") {
+		return initialLanguage;
+	}
+	if (cookieValue === "es" || cookieValue === "en") {
+		return cookieValue;
+	}
+	return "es";
+}
 
 // ============================================================================
 // TIPOS
@@ -40,99 +86,51 @@ const LanguageContext = createContext<LanguageContextValue | undefined>(
 	undefined,
 );
 
-const STORAGE_KEY = "kiosk-language";
-
-/**
- * Detecta el idioma preferido del navegador.
- * Retorna 'en' si el navegador está en inglés, 'es' por defecto.
- */
-function detectBrowserLanguage(): Language {
-	if (typeof window === "undefined") return "es";
-
-	const browserLang = navigator.language || navigator.languages?.[0] || "es";
-	const langCode = browserLang.split("-")[0].toLowerCase();
-
-	return langCode === "en" ? "en" : "es";
-}
-
-/**
- * Obtiene el idioma guardado en localStorage o detecta del navegador.
- */
-function getInitialLanguage(): Language {
-	if (typeof window === "undefined") return "es";
-
-	try {
-		const stored = localStorage.getItem(STORAGE_KEY);
-		if (stored === "es" || stored === "en") {
-			return stored;
-		}
-	} catch {
-		// localStorage no disponible
-	}
-
-	return detectBrowserLanguage();
-}
-
 // ============================================================================
 // PROVIDER
 // ============================================================================
 
 interface LanguageProviderProps {
 	children: ReactNode;
-	/** Idioma inicial (opcional, si no se provee se detecta automáticamente) */
-	defaultLanguage?: Language;
+	/** Idioma inicial desde el servidor (REQUERIDO en SSR) */
+	initialLanguage: Language;
 }
 
 export function LanguageProvider({
 	children,
-	defaultLanguage,
+	initialLanguage,
 }: LanguageProviderProps) {
-	// Inicializar con el idioma por defecto o 'es' para evitar hydration mismatch
-	const [language, setLanguageState] = useState<Language>(
-		defaultLanguage || "es",
-	);
-	const [isInitialized, setIsInitialized] = useState(false);
+	// Resolve language on mount: server prop > cookie > default "es"
+	const resolveLanguage = (): Language => {
+		const cookieValue = readLocaleCookie();
+		return resolveInitialLanguage(initialLanguage, cookieValue);
+	};
 
-	// Detectar idioma del navegador en el cliente (solo una vez)
-	useEffect(() => {
-		const initLanguage = () => {
-			if (!defaultLanguage) {
-				const initialLang = getInitialLanguage();
-				setLanguageState(initialLang);
-			}
-			setIsInitialized(true);
-		};
+	const [language, setLanguageState] = useState<Language>(resolveLanguage);
 
-		// Usar requestAnimationFrame para evitar el warning de setState síncrono
-		const rafId = requestAnimationFrame(initLanguage);
-		return () => cancelAnimationFrame(rafId);
-	}, [defaultLanguage]);
-
-	// Guardar en localStorage cuando cambie
-	const setLanguage = useCallback((lang: Language) => {
+	// Guardar en localStorage + cookie cuando cambie
+	const setLanguage = (lang: Language) => {
 		setLanguageState(lang);
 		try {
 			localStorage.setItem(STORAGE_KEY, lang);
 		} catch {
 			// localStorage no disponible
 		}
-	}, []);
+		writeLocaleCookie(lang);
+	};
 
 	// Alternar entre idiomas
-	const toggleLanguage = useCallback(() => {
+	const toggleLanguage = () => {
 		setLanguage(language === "es" ? "en" : "es");
-	}, [language, setLanguage]);
+	};
 
 	// Función de traducción
-	const t = useCallback(
-		(
-			key: DictionaryKey,
-			replacements?: Record<string, string | number>,
-		): string => {
-			return getTranslation(key, language, replacements);
-		},
-		[language],
-	);
+	const t = (
+		key: DictionaryKey,
+		replacements?: Record<string, string | number>,
+	): string => {
+		return getTranslation(key, language, replacements);
+	};
 
 	const value: LanguageContextValue = {
 		language,
@@ -140,15 +138,6 @@ export function LanguageProvider({
 		toggleLanguage,
 		t,
 	};
-
-	// Evitar flash de contenido incorrecto en SSR
-	if (!isInitialized) {
-		return (
-			<LanguageContext.Provider value={value}>
-				{children}
-			</LanguageContext.Provider>
-		);
-	}
 
 	return (
 		<LanguageContext.Provider value={value}>

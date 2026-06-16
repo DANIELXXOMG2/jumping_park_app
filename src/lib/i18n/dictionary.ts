@@ -60,6 +60,92 @@ export const dictionary = {
 		en: "Your browser does not support HTML5 videos.",
 	},
 
+	// --- Atracciones ---
+	"home.attractions.title": {
+		es: "Atracciones",
+		en: "Attractions",
+	},
+	"home.attractions.trampolines": {
+		es: "Trampolines",
+		en: "Trampolines",
+	},
+	"home.attractions.trampolinesDesc": {
+		es: "Camas elásticas para saltar y divertirte sin límites.",
+		en: "Trampolines to jump and have unlimited fun.",
+	},
+	"home.attractions.kids": {
+		es: "Juegos infantiles",
+		en: "Kids Games",
+	},
+	"home.attractions.kidsDesc": {
+		es: "Zona con juegos chiquitos para los más pequeños.",
+		en: "Play area with games for the little ones.",
+	},
+	"home.attractions.ballPit": {
+		es: "Piscina de pelotas",
+		en: "Ball Pit",
+	},
+	"home.attractions.ballPitDesc": {
+		es: "Piscina de pelotas para los niños.",
+		en: "Ball pit for the kids.",
+	},
+
+	// --- Negocio ---
+	"home.business.address": {
+		es: "Centro Comercial Primavera Urbana, Locales 313-317, Calle 15 #40-01, Villavicencio, Meta",
+		en: "Centro Comercial Primavera Urbana, Locales 313-317, Calle 15 #40-01, Villavicencio, Meta",
+	},
+	"home.business.phone": {
+		es: "+57 312 2594245",
+		en: "+57 312 2594245",
+	},
+	"home.business.instagram": {
+		es: "@jumpingparkvillavo",
+		en: "@jumpingparkvillavo",
+	},
+	"home.business.instagramLabel": {
+		es: "Instagram:",
+		en: "Instagram:",
+	},
+	"home.business.hours.weekday": {
+		es: "Lunes a Viernes: 1:30 p.m. - 8:00 p.m.",
+		en: "Monday to Friday: 1:30 p.m. - 8:00 p.m.",
+	},
+	"home.business.hours.weekend": {
+		es: "Sábados, Domingos y Festivos: 11:00 a.m. - 8:00 p.m.",
+		en: "Saturdays, Sundays and Holidays: 11:00 a.m. - 8:00 p.m.",
+	},
+
+	// --- Footer ---
+	"home.footer.copyright": {
+		es: "JUMPING PARK ©",
+		en: "JUMPING PARK ©",
+	},
+
+	// --- Hero images ---
+	"home.hero.astronautAlt": {
+		es: "Astronauta flotando",
+		en: "Floating astronaut",
+	},
+	"home.hero.solarSystemAlt": {
+		es: "Sistema Solar",
+		en: "Solar System",
+	},
+	"home.hero.logoAlt": {
+		es: "Jumping Park - Logo",
+		en: "Jumping Park - Logo",
+	},
+
+	// --- Language Toggle ---
+	"home.toggle.switchToEs": {
+		es: "Cambiar a Español",
+		en: "Switch to Spanish",
+	},
+	"home.toggle.switchToEn": {
+		es: "Cambiar a Inglés",
+		en: "Switch to English",
+	},
+
 	// ============================================================================
 	// PÁGINA DE INGRESO (CÉDULA)
 	// ============================================================================

@@ -5,8 +5,29 @@ import {
 	readAdminSessionFromEdgeRequest,
 } from "@/lib/adminSessionEdge";
 import { evaluateHardeningFlag, HARDENING_FLAG } from "@/lib/hardeningPolicy";
+import type { Language } from "@/lib/i18n/dictionary";
 
 const PUBLIC_ADMIN_ROUTES = ["/admin/login", "/admin/unauthorized"];
+const LOCALE_COOKIE = "jp-locale";
+
+/**
+ * Parses an Accept-Language header and returns the first supported locale.
+ * Defaults to "es" when no supported language is found or the header is missing.
+ */
+export function parseAcceptLanguage(header: string | null): Language {
+	if (!header) return "es";
+
+	const locales = header.split(",").map((entry) => {
+		const [tag] = entry.trim().split(";");
+		return tag.split("-")[0].toLowerCase();
+	});
+
+	for (const locale of locales) {
+		if (locale === "es" || locale === "en") return locale;
+	}
+
+	return "es";
+}
 const NOINDEX_PREFIXES = [
 	"/admin",
 	"/ingreso",
@@ -169,5 +190,22 @@ export async function proxy(request: NextRequest) {
 		}
 	}
 
-	return applySecurityHeaders(NextResponse.next(), pathname);
+	let response = applySecurityHeaders(NextResponse.next(), pathname);
+
+	// Locale detection: only for the homepage route
+	if (pathname === "/" && !request.cookies.has(LOCALE_COOKIE)) {
+		const acceptLanguage = request.headers.get("Accept-Language");
+		const locale = parseAcceptLanguage(acceptLanguage);
+
+		response.cookies.set({
+			name: LOCALE_COOKIE,
+			value: locale,
+			httpOnly: false,
+			secure: request.nextUrl.protocol === "https:",
+			sameSite: "lax",
+			path: "/",
+		});
+	}
+
+	return response;
 }
