@@ -24,7 +24,7 @@ export function LanguageToggle({
 	variant = "premium",
 	className,
 }: LanguageToggleProps) {
-	const { language, toggleLanguage } = useLanguage();
+	const { language, toggleLanguage, t } = useLanguage();
 	const { playClick } = useUISound();
 
 	const handleToggle = () => {
@@ -46,8 +46,12 @@ export function LanguageToggle({
 					"transition-all duration-200",
 					className,
 				)}
-				aria-label={isEnglish ? "Cambiar a Español" : "Switch to English"}
-				title={isEnglish ? "Cambiar a Español" : "Switch to English"}
+				aria-label={
+					isEnglish ? t("home.toggle.switchToEs") : t("home.toggle.switchToEn")
+				}
+				title={
+					isEnglish ? t("home.toggle.switchToEs") : t("home.toggle.switchToEn")
+				}
 			>
 				<Globe className="w-3.5 h-3.5" />
 				<span className="uppercase">{language}</span>
@@ -69,8 +73,12 @@ export function LanguageToggle({
 					"transition-all duration-200 transform hover:scale-105",
 					className,
 				)}
-				aria-label={isEnglish ? "Cambiar a Español" : "Switch to English"}
-				title={isEnglish ? "Cambiar a Español" : "Switch to English"}
+				aria-label={
+					isEnglish ? t("home.toggle.switchToEs") : t("home.toggle.switchToEn")
+				}
+				title={
+					isEnglish ? t("home.toggle.switchToEs") : t("home.toggle.switchToEn")
+				}
 			>
 				<Globe className="w-4 h-4 text-primary" />
 				<span className="flex items-center gap-1">
@@ -110,8 +118,12 @@ export function LanguageToggle({
 				"transition-all duration-300",
 				className,
 			)}
-			aria-label={isEnglish ? "Cambiar a Español" : "Switch to English"}
-			title={isEnglish ? "Cambiar a Español" : "Switch to English"}
+			aria-label={
+				isEnglish ? t("home.toggle.switchToEs") : t("home.toggle.switchToEn")
+			}
+			title={
+				isEnglish ? t("home.toggle.switchToEs") : t("home.toggle.switchToEn")
+			}
 		>
 			{/* Efecto shimmer */}
 			<span

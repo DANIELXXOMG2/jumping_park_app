@@ -131,7 +131,7 @@ describe("Task 2.1 — solar-system Image no longer has priority", () => {
 			"src",
 			"components",
 			"kiosk",
-			"HomepageExperience.tsx",
+			"HomepageHeroIsland.tsx",
 		);
 		const source = readFileSync(sourcePath, "utf-8");
 
@@ -153,7 +153,7 @@ describe("Task 2.1 — solar-system Image no longer has priority", () => {
 			"src",
 			"components",
 			"kiosk",
-			"HomepageExperience.tsx",
+			"HomepageHeroIsland.tsx",
 		);
 		const source = readFileSync(sourcePath, "utf-8");
 

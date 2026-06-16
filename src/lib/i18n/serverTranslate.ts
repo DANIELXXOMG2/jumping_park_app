@@ -11,9 +11,7 @@ const LOCALE_COOKIE = "jp-locale";
  * Pure function — maps a cookie value (or undefined) to a valid Language.
  * Defaults to "es" when the value is missing or unsupported.
  */
-export function resolveLocale(
-	cookieValue: string | undefined,
-): Language {
+export function resolveLocale(cookieValue: string | undefined): Language {
 	if (!cookieValue) return "es";
 	if (cookieValue === "es" || cookieValue === "en") return cookieValue;
 	return "es";
