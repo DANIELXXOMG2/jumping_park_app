@@ -117,6 +117,7 @@ describe("Task 2.1 — HomepageHeroIsland client island", () => {
 // ============================================================================
 
 const SHELL_PATH = join(SRC, "components/kiosk/HomepageShell.tsx");
+const CONTENT_PATH = join(SRC, "components/kiosk/HomepageContent.tsx");
 
 describe("Task 2.2 — HomepageShell Server Component", () => {
 	it("[RED 2.2a] HomepageShell file exists", () => {
@@ -134,20 +135,20 @@ describe("Task 2.2 — HomepageShell Server Component", () => {
 		expect(source).toContain("home.title.line2");
 	});
 
-	it("[RED 2.2d] HomepageShell renders attractions section using dictionary keys", () => {
-		const source = readFileSync(SHELL_PATH, "utf-8");
+	it("[RED 2.2d] HomepageContent renders attractions section using dictionary keys", () => {
+		const source = readFileSync(CONTENT_PATH, "utf-8");
 		expect(source).toContain("home.attractions.title");
 		expect(source).toContain("home.attractions.trampolines");
 	});
 
-	it("[RED 2.2e] HomepageShell renders business info section using dictionary keys", () => {
-		const source = readFileSync(SHELL_PATH, "utf-8");
+	it("[RED 2.2e] HomepageContent renders business info section using dictionary keys", () => {
+		const source = readFileSync(CONTENT_PATH, "utf-8");
 		expect(source).toContain("home.business.address");
 		expect(source).toContain("home.business.phone");
 	});
 
-	it("[RED 2.2f] HomepageShell renders footer with copyright key", () => {
-		const source = readFileSync(SHELL_PATH, "utf-8");
+	it("[RED 2.2f] HomepageContent renders footer with copyright key", () => {
+		const source = readFileSync(CONTENT_PATH, "utf-8");
 		expect(source).toContain("home.footer.copyright");
 	});
 
@@ -160,6 +161,17 @@ describe("Task 2.2 — HomepageShell Server Component", () => {
 		const source = readFileSync(SHELL_PATH, "utf-8");
 		// LanguageToggle is composed in the shell (not the island)
 		expect(source).toContain("LanguageToggle");
+	});
+
+	it("[TRIANGULATE 2.2i] HomepageShell composes HomepageContent for translatable text", () => {
+		const source = readFileSync(SHELL_PATH, "utf-8");
+		expect(source).toContain("HomepageContent");
+	});
+
+	it("[TRIANGULATE 2.2j] HomepageContent is a client component for real-time i18n", () => {
+		const source = readFileSync(CONTENT_PATH, "utf-8");
+		expect(source).toContain('"use client"');
+		expect(source).toContain("useLanguage");
 	});
 });
 
