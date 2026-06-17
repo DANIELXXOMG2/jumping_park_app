@@ -23,7 +23,7 @@ export default async function LandingPage() {
 				// biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD is server-rendered static data
 				dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
 			/>
-			<HomepageShell t={t} locale={locale} />
+			<HomepageShell t={t} />
 		</LanguageProvider>
 	);
 }
