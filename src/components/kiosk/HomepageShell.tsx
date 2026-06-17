@@ -6,8 +6,10 @@ import { LanguageToggle } from "@/components/kiosk/LanguageToggle";
 import { SecretAdminTrigger } from "@/components/ui/SecretAdminTrigger";
 import type { DictionaryKey, Language } from "@/lib/i18n/dictionary";
 import { PAGE_IMAGE_VARIANTS } from "@/lib/imageOptimization";
+import { BUSINESS_PHONE } from "@/lib/seo";
 
 const INSTAGRAM_URL = "https://www.instagram.com/jumpingparkvillavo/";
+const WHATSAPP_URL = `https://wa.me/${BUSINESS_PHONE.replace(/[\s+]/g, "")}`;
 
 interface HomepageShellProps {
 	t: (
@@ -34,7 +36,7 @@ export function HomepageShell({ t, locale: _locale }: HomepageShellProps) {
 	return (
 		<main
 			id="main-content"
-			className="relative min-h-screen w-full overflow-hidden bg-background text-foreground"
+			className="relative min-h-screen w-full overflow-x-hidden bg-background text-foreground"
 		>
 			{/* Client island — SpaceBackground, images, CTA, bounce indicator */}
 			<HomepageHeroIsland
@@ -133,8 +135,15 @@ export function HomepageShell({ t, locale: _locale }: HomepageShellProps) {
 							<p className="text-sm leading-6">{t("home.business.address")}</p>
 						</div>
 						<div className="flex flex-col items-center gap-3 text-center text-white/70">
-							<Phone className="h-6 w-6 text-primary" />
-							<p className="text-sm">{t("home.business.phone")}</p>
+							<Phone className="h-6 w-6 text-[#25D366]" />
+							<a
+								href={WHATSAPP_URL}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="text-sm font-medium text-[#25D366] hover:text-[#20BD5A] transition-colors"
+							>
+								{t("home.business.phone")}
+							</a>
 							<Link
 								href={INSTAGRAM_URL}
 								target="_blank"

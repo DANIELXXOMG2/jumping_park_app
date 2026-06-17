@@ -1,7 +1,14 @@
-import { describe, expect, it } from 'bun:test'
+import { describe, expect, it, mock } from 'bun:test'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { Modal } from '@/components/ui/Modal'
 import { getDialogFocusLoopTarget } from '@/lib/a11y/dialog'
+
+// Mock next/headers to provide cookies() in test environment
+mock.module('next/headers', () => ({
+	cookies: async () => ({
+		get: () => undefined,
+	}),
+}))
 
 const { default: ConsentimientoDigitalPage } = await import(
 	'@/app/(public)/consentimiento-digital/page'
@@ -41,13 +48,13 @@ function collectCriticalA11ySmokeViolations(
 }
 
 describe('block e accessibility smoke coverage', () => {
-	it('keeps the public consentimiento digital page free of critical smoke violations', () => {
-		const markup = renderToStaticMarkup(<ConsentimientoDigitalPage />)
+	it('keeps the public consentimiento digital page free of critical smoke violations', async () => {
+		const markup = renderToStaticMarkup(await ConsentimientoDigitalPage())
 
 		expect(markup).toContain('<main')
 		expect(markup).toContain('<h1')
 		expect(markup).toContain('Firma tu consentimiento')
-		expect(markup).toContain('Ver como funciona')
+		expect(markup).toContain('Ver cómo funciona')
 		expect(markup).toContain('Preguntas frecuentes')
 		expect(markup).toContain('Empezar registro')
 		expect(markup).toContain('<dl')

@@ -16,6 +16,15 @@ mock.module("next/font/google", () => ({
 }));
 
 // ---------------------------------------------------------------------------
+// Mock next/headers to provide cookies() in test environment
+// ---------------------------------------------------------------------------
+mock.module("next/headers", () => ({
+	cookies: async () => ({
+		get: () => undefined,
+	}),
+}));
+
+// ---------------------------------------------------------------------------
 // TASK 1: Root viewport MUST allow user scaling
 // ---------------------------------------------------------------------------
 
@@ -91,7 +100,7 @@ describe("consentimiento-digital main-content anchor", () => {
 		const { default: ConsentimientoDigitalPage } = await import(
 			"@/app/(public)/consentimiento-digital/page"
 		);
-		const markup = renderToStaticMarkup(<ConsentimientoDigitalPage />);
+		const markup = renderToStaticMarkup(await ConsentimientoDigitalPage());
 		expect(markup).toContain('<main');
 		expect(markup).toContain('id="main-content"');
 	});
@@ -124,7 +133,7 @@ describe("consentimiento-digital external link accessible names", () => {
 		const { default: ConsentimientoDigitalPage } = await import(
 			"@/app/(public)/consentimiento-digital/page"
 		);
-		const markup = renderToStaticMarkup(<ConsentimientoDigitalPage />);
+		const markup = renderToStaticMarkup(await ConsentimientoDigitalPage());
 
 		// Count target="_blank" occurrences
 		const blankCount = (markup.match(/target="_blank"/g) ?? []).length;
@@ -141,7 +150,7 @@ describe("consentimiento-digital external link accessible names", () => {
 		const { default: ConsentimientoDigitalPage } = await import(
 			"@/app/(public)/consentimiento-digital/page"
 		);
-		const markup = renderToStaticMarkup(<ConsentimientoDigitalPage />);
+		const markup = renderToStaticMarkup(await ConsentimientoDigitalPage());
 
 		// There should be at least one WhatsApp link with target=_blank that announces new tab
 		expect(markup).toContain("wa.me");
