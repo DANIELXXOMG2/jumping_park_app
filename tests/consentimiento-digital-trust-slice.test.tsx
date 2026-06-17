@@ -1,6 +1,13 @@
-import { describe, expect, it } from 'bun:test'
+import { describe, expect, it, mock } from 'bun:test'
 import type { ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
+
+// Mock next/headers to provide cookies() in test environment
+mock.module('next/headers', () => ({
+	cookies: async () => ({
+		get: () => undefined, // default to 'es'
+	}),
+}))
 
 const { default: ConsentimientoDigitalPage } = await import(
 	'@/app/(public)/consentimiento-digital/page'
@@ -104,22 +111,19 @@ function isFaqPageSchema(value: unknown): value is {
 }
 
 describe('consentimiento digital trust slice', () => {
-	it('renders the trust narrative, faq content, and CTA in SSR markup', () => {
-		const markup = renderToStaticMarkup(<ConsentimientoDigitalPage />)
+	it('renders the trust narrative, faq content, and CTA in SSR markup', async () => {
+		const markup = renderToStaticMarkup(await ConsentimientoDigitalPage())
 
-		expect(markup).toContain(
-			'Firma tu consentimiento',
-		)
+		// Page uses t() with Spanish locale — verify Spanish strings present
+		expect(markup).toContain('Firma tu consentimiento')
 		expect(markup).toContain('Preguntas frecuentes')
-		expect(markup).toContain(
-			'Completar registro ahora',
-		)
-		expect(markup).toContain('No pierdas mas tiempo en filas')
+		expect(markup).toContain('Completar registro ahora')
+		expect(markup).toContain('No pierdas más tiempo en filas')
 	})
 
-	it('keeps the FAQ entries visible in markup and faq json-ld output', () => {
-		const pageTree = ConsentimientoDigitalPage()
-		const markup = renderToStaticMarkup(<ConsentimientoDigitalPage />)
+	it('keeps the FAQ entries visible in markup and faq json-ld output', async () => {
+		const pageTree = await ConsentimientoDigitalPage()
+		const markup = renderToStaticMarkup(pageTree)
 		const firstEntry = CONSENTIMIENTO_DIGITAL_FAQ_ENTRIES[0]
 		const lastEntry = CONSENTIMIENTO_DIGITAL_FAQ_ENTRIES.at(-1)
 		const elementIds = findElementIds(pageTree)

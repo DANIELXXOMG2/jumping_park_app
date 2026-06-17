@@ -1,7 +1,14 @@
 import { existsSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
-import { describe, expect, it } from 'bun:test'
+import { describe, expect, it, mock } from 'bun:test'
 import { renderToStaticMarkup } from 'react-dom/server'
+
+// Mock next/headers to provide cookies() in test environment
+mock.module('next/headers', () => ({
+	cookies: async () => ({
+		get: () => undefined,
+	}),
+}))
 
 const { default: ConsentimientoDigitalPage } = await import(
 	'@/app/(public)/consentimiento-digital/page',
@@ -75,8 +82,8 @@ describe('image optimization phase', () => {
 		)
 	})
 
-	it('renders responsive next/image markup for the consentimiento digital public page', () => {
-		const markup = renderToStaticMarkup(<ConsentimientoDigitalPage />)
+	it('renders responsive next/image markup for the consentimiento digital public page', async () => {
+		const markup = renderToStaticMarkup(await ConsentimientoDigitalPage())
 
 		expect(markup).toContain('jumping-park-logo.webp')
 		expect(markup).toContain(

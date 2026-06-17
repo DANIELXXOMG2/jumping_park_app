@@ -18,10 +18,15 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import Script from "next/script";
+import { LanguageToggle } from "@/components/kiosk/LanguageToggle";
 import { AnimatedSection } from "@/components/public/AnimatedSection";
 import cosmicStyles from "@/components/public/cosmic-bg.module.css";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import { buildConsentimientoDigitalMetadata } from "@/lib/consentimientoDigitalSeo";
+import { type DictionaryKey } from "@/lib/i18n/dictionary";
+import { createServerTranslator } from "@/lib/i18n/serverTranslate";
 import { PAGE_IMAGE_VARIANTS } from "@/lib/imageOptimization";
+import { cn } from "@/lib/utils";
 import {
 	APP_NAME,
 	BUSINESS_PHONE,
@@ -36,109 +41,17 @@ import {
 } from "@/lib/seo";
 
 // ---------------------------------------------------------------------------
-// Local display constants (UI copy in Spanish)
+// Social display names for UI
 // ---------------------------------------------------------------------------
 
-const PARK_TAGLINE = "Primavera Urbana";
-const PARK_COUNTRY = "Colombia";
-const PARK_CITY_REGION = "Villavicencio, Meta";
-
-const PARK_STATS = {
-	trampolines: "50+",
-	visitors: "10,000+",
-	rating: "4.8",
-} as const;
-
-const PARK_ATTRACTIONS = [
-	"Mas de 50 camas elasticas interconectadas",
-	"Piscina de espuma gigante",
-	"Zona de salto libre",
-	"Area infantil exclusiva",
-	"Cancha de dodgeball",
-	"Muro de escalada",
-] as const;
-
-const PARK_HOURS_DISPLAY = {
-	weekdays: "Lunes a Viernes: 1:30 PM - 8:00 PM",
-	weekends: "Sabados, Domingos y Festivos: 11:00 AM - 8:00 PM",
-} as const;
-
-// Social display names for UI
 const INSTAGRAM_URL = BUSINESS_SOCIAL_PROFILES[0];
 const FACEBOOK_URL = BUSINESS_SOCIAL_PROFILES[1];
 
 const WHATSAPP_NUMBER_RAW = BUSINESS_PHONE.replace(/[\s+]/g, "");
 const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER_RAW}`;
 
-const PROCESS_STEPS = [
-	{
-		step: 1,
-		title: "Completa tus datos",
-		description:
-			"Ingresa tu informacion personal y la de los menores que te acompanan. El formulario guiado te lleva paso a paso.",
-		icon: FileCheck,
-		duration: "2 min",
-	},
-	{
-		step: 2,
-		title: "Verifica tu identidad",
-		description:
-			"Recibe un codigo de 6 digitos en tu correo electronico. Esta validacion protege tu informacion y confirma tu identidad.",
-		icon: ShieldCheck,
-		duration: "1 min",
-	},
-	{
-		step: 3,
-		title: "Firma el consentimiento",
-		description:
-			"Revisa los terminos y firma digitalmente. Tu consentimiento queda registrado y listo para cuando llegues al parque.",
-		icon: PenTool,
-		duration: "1 min",
-	},
-] as const;
-
-const BENEFITS = [
-	{
-		title: "Ahorra tiempo en la entrada",
-		description:
-			"Llega al parque con el consentimiento firmado y pasa directo a la diversion. Sin filas, sin esperas, sin papeles.",
-		icon: Zap,
-	},
-	{
-		title: "Registra a toda tu familia",
-		description:
-			"Un solo adulto puede registrar a todos los menores del grupo. Cada menor queda vinculado a su responsable legal.",
-		icon: Users,
-	},
-	{
-		title: "Seguridad garantizada",
-		description:
-			"Validacion por codigo OTP, firma digital con valor legal, y datos protegidos. Todo cumple con la normativa colombiana.",
-		icon: ShieldCheck,
-	},
-] as const;
-
-const REQUIREMENTS = [
-	{
-		item: "Documento de identidad",
-		detail: "Cedula de ciudadania o tarjeta de identidad",
-	},
-	{
-		item: "Correo electronico activo",
-		detail: "Para recibir el codigo de verificacion OTP",
-	},
-	{
-		item: "Datos de menores",
-		detail: "Documento y fecha de nacimiento de cada menor",
-	},
-	{
-		item: "5 minutos de tu tiempo",
-		detail: "Es todo lo que necesitas para completar el proceso",
-	},
-] as const;
-
 // ---------------------------------------------------------------------------
-// Structured data
+// Structured data (not translatable — kept as-is)
 // ---------------------------------------------------------------------------
 
 const structuredData = buildPublicPageStructuredData({
@@ -152,12 +65,88 @@ const faqSchema = buildFaqPageSchema(CONSENTIMIENTO_DIGITAL_FAQ_ENTRIES);
 export const metadata: Metadata = buildConsentimientoDigitalMetadata();
 
 // ---------------------------------------------------------------------------
-// Page component (Server Component)
+// Page component (async Server Component)
 // ---------------------------------------------------------------------------
 
-export default function ConsentimientoDigitalPage() {
+export default async function ConsentimientoDigitalPage() {
+	const { t, locale } = await createServerTranslator();
+
+	// Shorthand helper — t() accepts DictionaryKey, our dynamic keys are valid
+	const tk = (key: DictionaryKey) => t(key);
+
+	// Stats — raw numbers, labels from dictionary
+	const PARK_STATS = {
+		trampolines: "50+",
+		visitors: "10,000+",
+		rating: "4.8",
+	} as const;
+
+	// Process steps — icons are component references, text from dictionary
+	const PROCESS_STEPS = [
+		{
+			step: 1,
+			title: tk("consentDigital.process.step1.title"),
+			description: tk("consentDigital.process.step1.description"),
+			icon: FileCheck,
+			duration: tk("consentDigital.process.step1.duration"),
+		},
+		{
+			step: 2,
+			title: tk("consentDigital.process.step2.title"),
+			description: tk("consentDigital.process.step2.description"),
+			icon: ShieldCheck,
+			duration: tk("consentDigital.process.step2.duration"),
+		},
+		{
+			step: 3,
+			title: tk("consentDigital.process.step3.title"),
+			description: tk("consentDigital.process.step3.description"),
+			icon: PenTool,
+			duration: tk("consentDigital.process.step3.duration"),
+		},
+	] as const;
+
+	// Benefits
+	const BENEFITS = [
+		{
+			title: tk("consentDigital.benefits.item1.title"),
+			description: tk("consentDigital.benefits.item1.description"),
+			icon: Zap,
+		},
+		{
+			title: tk("consentDigital.benefits.item2.title"),
+			description: tk("consentDigital.benefits.item2.description"),
+			icon: Users,
+		},
+		{
+			title: tk("consentDigital.benefits.item3.title"),
+			description: tk("consentDigital.benefits.item3.description"),
+			icon: ShieldCheck,
+		},
+	] as const;
+
+	// Requirements
+	const REQUIREMENTS = [
+		{
+			item: tk("consentDigital.requirements.item1"),
+			detail: tk("consentDigital.requirements.detail1"),
+		},
+		{
+			item: tk("consentDigital.requirements.item2"),
+			detail: tk("consentDigital.requirements.detail2"),
+		},
+		{
+			item: tk("consentDigital.requirements.item3"),
+			detail: tk("consentDigital.requirements.detail3"),
+		},
+		{
+			item: tk("consentDigital.requirements.item4"),
+			detail: tk("consentDigital.requirements.detail4"),
+		},
+	] as const;
+
 	return (
-		<>
+		<LanguageProvider initialLanguage={locale}>
 			<Script
 				id="structured-data"
 				type="application/ld+json"
@@ -179,7 +168,9 @@ export default function ConsentimientoDigitalPage() {
 					<Link href="/" className="flex items-center gap-3">
 						<Image
 							src={PAGE_IMAGE_VARIANTS.publicConsentLogo.src}
-							alt={`Logo de ${APP_NAME}`}
+							alt={t("consentDigital.header.logoAlt", {
+								appName: APP_NAME,
+							})}
 							width={140}
 							height={40}
 							priority
@@ -192,19 +183,20 @@ export default function ConsentimientoDigitalPage() {
 							href="#como-funciona"
 							className="hidden text-sm font-medium text-zinc-400 transition-colors hover:text-white sm:block"
 						>
-							Como funciona
+							{t("consentDigital.header.navProcess")}
 						</Link>
 						<Link
 							href="#preguntas"
 							className="hidden text-sm font-medium text-zinc-400 transition-colors hover:text-white sm:block"
 						>
-							Preguntas
+							{t("consentDigital.header.navFaq")}
 						</Link>
+						<LanguageToggle variant="minimal" />
 						<Link
 							href="/"
 							className="inline-flex items-center gap-2 rounded-full bg-brand-green px-4 py-2 text-sm font-bold text-slate-950 transition-all hover:brightness-110"
 						>
-							Iniciar registro
+							{t("consentDigital.header.ctaButton")}
 							<ArrowRight className="h-4 w-4" aria-hidden="true" />
 						</Link>
 					</nav>
@@ -213,7 +205,7 @@ export default function ConsentimientoDigitalPage() {
 
 			<main
 				id="main-content"
-				className={`${cosmicStyles.background} min-h-screen pt-16`}
+				className={cn(cosmicStyles.background, "min-h-screen pt-16")}
 			>
 				{/* ============================================================
 				    HERO SECTION
@@ -230,20 +222,22 @@ export default function ConsentimientoDigitalPage() {
 											aria-hidden="true"
 										/>
 										<span className="text-sm font-medium text-brand-green">
-											{PARK_STATS.rating} estrellas en Google
+											{PARK_STATS.rating}{" "}
+											{t("consentDigital.stats.ratingLabel")}
 										</span>
 									</div>
 
 									<h1 className="text-balance text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
-										Firma tu consentimiento{" "}
-										<span className="text-brand-green">antes de llegar</span>
+										{t("consentDigital.hero.title1")}{" "}
+										<span className="text-brand-green">
+											{t("consentDigital.hero.title2")}
+										</span>
 									</h1>
 
 									<p className="max-w-xl text-pretty text-lg leading-relaxed text-zinc-300">
-										Completa el registro digital de{" "}
-										<strong className="text-white">{APP_NAME}</strong> desde tu
-										casa. Valida tu identidad con un codigo OTP, firma
-										digitalmente y llega al parque listo para saltar.
+										{t("consentDigital.hero.subtitle", {
+											appName: APP_NAME,
+										})}
 									</p>
 
 									<div className="flex flex-col gap-4 pt-2 sm:flex-row">
@@ -251,23 +245,23 @@ export default function ConsentimientoDigitalPage() {
 											href="/"
 											className="inline-flex items-center justify-center gap-2 rounded-full bg-brand-green px-8 py-4 text-lg font-bold text-slate-950 shadow-lg shadow-brand-green/25 transition-all hover:brightness-110 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-offset-2 focus:ring-offset-slate-950"
 										>
-											Empezar registro
+											{t("consentDigital.hero.ctaPrimary")}
 											<ChevronRight className="h-5 w-5" aria-hidden="true" />
 										</Link>
 										<Link
 											href="#como-funciona"
 											className="inline-flex items-center justify-center gap-2 rounded-full border border-white/20 bg-white/5 px-6 py-4 font-semibold text-white transition-all hover:border-white/40 hover:bg-white/10"
 										>
-											Ver como funciona
+											{t("consentDigital.hero.ctaSecondary")}
 										</Link>
 										<a
 											href={WHATSAPP_URL}
 											target="_blank"
 											rel="noopener noreferrer"
-											aria-label="Escribinos por WhatsApp (abre en nueva pestaña)"
+											aria-label={t("consentDigital.hero.ctaWhatsAppAria")}
 											className="inline-flex items-center justify-center gap-2 rounded-full border border-brand-green/30 bg-brand-green/10 px-6 py-4 font-semibold text-brand-green transition-all hover:border-brand-green/50 hover:bg-brand-green/20"
 										>
-											Escribinos por WhatsApp
+											{t("consentDigital.hero.ctaWhatsApp")}
 										</a>
 									</div>
 
@@ -285,7 +279,7 @@ export default function ConsentimientoDigitalPage() {
 													{PARK_STATS.visitors}
 												</p>
 												<p className="text-xs text-zinc-400">
-													visitantes felices
+													{t("consentDigital.stats.visitorsLabel")}
 												</p>
 											</div>
 										</div>
@@ -300,7 +294,9 @@ export default function ConsentimientoDigitalPage() {
 												<p className="text-lg font-bold text-white">
 													{PARK_STATS.trampolines}
 												</p>
-												<p className="text-xs text-zinc-400">trampolines</p>
+												<p className="text-xs text-zinc-400">
+													{t("consentDigital.stats.trampolinesLabel")}
+												</p>
 											</div>
 										</div>
 									</div>
@@ -312,7 +308,9 @@ export default function ConsentimientoDigitalPage() {
 									<div className="relative overflow-hidden rounded-3xl border border-white/10 bg-slate-900/50 p-8">
 										<Image
 											src={PAGE_IMAGE_VARIANTS.kioskAstronaut.src}
-											alt="Astronauta de Jumping Park invitandote a registrarte"
+											alt={t("consentDigital.hero.imageAlt", {
+												appName: APP_NAME,
+											})}
 											width={400}
 											height={400}
 											priority
@@ -322,10 +320,11 @@ export default function ConsentimientoDigitalPage() {
 										<div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
 											<p className="text-center text-sm text-zinc-300">
 												<strong className="text-white">
-													Mas de {PARK_STATS.trampolines} camas elasticas
+													{t("consentDigital.hero.imageCaption1", {
+														count: PARK_STATS.trampolines,
+													})}
 												</strong>{" "}
-												te esperan en el parque de trampolines mas grande de
-												Villavicencio.
+												{t("consentDigital.hero.imageCaption2")}
 											</p>
 										</div>
 									</div>
@@ -350,11 +349,10 @@ export default function ConsentimientoDigitalPage() {
 									id="process-title"
 									className="text-balance text-3xl font-black tracking-tight text-white sm:text-4xl"
 								>
-									Tres pasos simples para tu consentimiento digital
+									{t("consentDigital.process.title")}
 								</h2>
 								<p className="mt-4 text-lg text-zinc-400">
-									El proceso completo toma menos de 5 minutos. Hazlo desde tu
-									celular o computador.
+									{t("consentDigital.process.subtitle")}
 								</p>
 							</div>
 
@@ -393,7 +391,7 @@ export default function ConsentimientoDigitalPage() {
 							{/* Requirements Box */}
 							<div className="mt-12 rounded-2xl border border-brand-yellow/20 bg-brand-yellow/5 p-6 sm:p-8">
 								<h3 className="mb-4 text-lg font-bold text-white">
-									Que necesitas tener listo
+									{t("consentDigital.process.requirementsTitle")}
 								</h3>
 								<div className="grid gap-4 sm:grid-cols-2">
 									{REQUIREMENTS.map((req) => (
@@ -428,11 +426,10 @@ export default function ConsentimientoDigitalPage() {
 									id="benefits-title"
 									className="text-balance text-3xl font-black tracking-tight text-white sm:text-4xl"
 								>
-									Por que usar el consentimiento digital
+									{t("consentDigital.benefits.title")}
 								</h2>
 								<p className="mx-auto mt-4 max-w-2xl text-lg text-zinc-400">
-									Disenado para familias que quieren aprovechar al maximo su
-									tiempo en el parque.
+									{t("consentDigital.benefits.subtitle")}
 								</p>
 							</div>
 
@@ -476,10 +473,10 @@ export default function ConsentimientoDigitalPage() {
 									id="faq-title"
 									className="text-balance text-3xl font-black tracking-tight text-white sm:text-4xl"
 								>
-									Preguntas frecuentes
+									{t("consentDigital.faq.title")}
 								</h2>
 								<p className="mt-4 text-lg text-zinc-400">
-									Resuelve tus dudas antes de completar el registro.
+									{t("consentDigital.faq.subtitle")}
 								</p>
 							</div>
 
@@ -521,20 +518,25 @@ export default function ConsentimientoDigitalPage() {
 										id="about-title"
 										className="text-balance text-3xl font-black tracking-tight text-white sm:text-4xl"
 									>
-										Conoce {APP_NAME}
+										{t("consentDigital.about.title", { appName: APP_NAME })}
 									</h2>
 									<p className="mt-4 text-lg text-zinc-400">
-										El parque de trampolines mas grande de Villavicencio,
-										ubicado en Centro Comercial Primavera Urbana. Diversion
-										garantizada para toda la familia.
+										{t("consentDigital.about.description")}
 									</p>
 
 									<div className="mt-8 space-y-3">
 										<h3 className="text-sm font-bold uppercase tracking-wider text-zinc-500">
-											Nuestras atracciones
+											{t("consentDigital.attractions.title")}
 										</h3>
 										<ul className="grid gap-2 sm:grid-cols-2">
-											{PARK_ATTRACTIONS.map((attraction) => (
+											{[
+												t("consentDigital.attractions.item1"),
+												t("consentDigital.attractions.item2"),
+												t("consentDigital.attractions.item3"),
+												t("consentDigital.attractions.item4"),
+												t("consentDigital.attractions.item5"),
+												t("consentDigital.attractions.item6"),
+											].map((attraction) => (
 												<li
 													key={attraction}
 													className="flex items-center gap-2 text-zinc-300"
@@ -553,7 +555,7 @@ export default function ConsentimientoDigitalPage() {
 								{/* Contact Card */}
 								<div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 sm:p-8">
 									<h3 className="mb-6 text-xl font-bold text-white">
-										Informacion de contacto
+										{t("consentDigital.contact.title")}
 									</h3>
 
 									<div className="space-y-4">
@@ -566,13 +568,14 @@ export default function ConsentimientoDigitalPage() {
 											</div>
 											<div>
 												<p className="font-medium text-white">
-													Centro Comercial Primavera Urbana
+													{t("consentDigital.mallName")}
 												</p>
 												<p className="text-sm text-zinc-400">
 													{BUSINESS_STREET_ADDRESS}
 												</p>
 												<p className="text-sm text-zinc-400">
-													{PARK_CITY_REGION}, {PARK_COUNTRY}
+													{t("consentDigital.cityRegion")},{" "}
+													{t("consentDigital.country")}
 												</p>
 											</div>
 										</div>
@@ -591,7 +594,9 @@ export default function ConsentimientoDigitalPage() {
 												>
 													{BUSINESS_PHONE}
 												</a>
-												<p className="text-sm text-zinc-400">Llamanos</p>
+												<p className="text-sm text-zinc-400">
+													{t("consentDigital.contact.callUs")}
+												</p>
 											</div>
 										</div>
 
@@ -604,10 +609,10 @@ export default function ConsentimientoDigitalPage() {
 											</div>
 											<div>
 												<p className="text-sm text-zinc-300">
-													{PARK_HOURS_DISPLAY.weekdays}
+													{t("consentDigital.hours.weekdays")}
 												</p>
 												<p className="text-sm text-zinc-300">
-													{PARK_HOURS_DISPLAY.weekends}
+													{t("consentDigital.hours.weekends")}
 												</p>
 											</div>
 										</div>
@@ -618,7 +623,9 @@ export default function ConsentimientoDigitalPage() {
 												target="_blank"
 												rel="noopener noreferrer"
 												className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-zinc-300 transition-colors hover:border-pink-500/30 hover:bg-pink-500/10 hover:text-pink-400"
-												aria-label="Seguir en Instagram (abre en nueva pestaña)"
+												aria-label={t(
+													"consentDigital.contact.followInstagramAria",
+												)}
 											>
 												<Instagram className="h-4 w-4" aria-hidden="true" />
 												Instagram
@@ -628,7 +635,9 @@ export default function ConsentimientoDigitalPage() {
 												target="_blank"
 												rel="noopener noreferrer"
 												className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-zinc-300 transition-colors hover:border-blue-500/30 hover:bg-blue-500/10 hover:text-blue-400"
-												aria-label="Seguir en Facebook (abre en nueva pestaña)"
+												aria-label={t(
+													"consentDigital.contact.followFacebookAria",
+												)}
 											>
 												<Facebook className="h-4 w-4" aria-hidden="true" />
 												Facebook
@@ -648,32 +657,31 @@ export default function ConsentimientoDigitalPage() {
 					<section className="border-t border-white/10 px-4 py-16 sm:px-6 sm:py-24">
 						<div className="mx-auto max-w-4xl text-center">
 							<h2 className="text-balance text-3xl font-black tracking-tight text-white sm:text-4xl">
-								No pierdas mas tiempo en filas
+								{t("consentDigital.ctaFinal.title")}
 							</h2>
 							<p className="mx-auto mt-4 max-w-2xl text-lg text-zinc-400">
-								Completa tu consentimiento digital ahora y llega al parque listo
-								para la diversion. Tu familia te lo agradecera.
+								{t("consentDigital.ctaFinal.subtitle")}
 							</p>
 							<div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
 								<Link
 									href="/"
 									className="inline-flex items-center justify-center gap-2 rounded-full bg-brand-green px-10 py-4 text-lg font-bold text-slate-950 shadow-lg shadow-brand-green/25 transition-all hover:brightness-110 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-offset-2 focus:ring-offset-slate-950"
 								>
-									Completar registro ahora
+									{t("consentDigital.ctaFinal.buttonPrimary")}
 									<ArrowRight className="h-5 w-5" aria-hidden="true" />
 								</Link>
 								<a
 									href={WHATSAPP_URL}
 									target="_blank"
 									rel="noopener noreferrer"
-									aria-label="Consultar por WhatsApp (abre en nueva pestaña)"
+									aria-label={t("consentDigital.ctaFinal.buttonWhatsAppAria")}
 									className="inline-flex items-center justify-center gap-2 rounded-full border border-brand-green/30 bg-brand-green/10 px-10 py-4 text-lg font-bold text-brand-green transition-all hover:border-brand-green/50 hover:bg-brand-green/20"
 								>
-									Consultar por WhatsApp
+									{t("consentDigital.ctaFinal.buttonWhatsApp")}
 								</a>
 							</div>
 							<p className="mt-6 text-sm text-zinc-500">
-								El proceso toma menos de 5 minutos
+								{t("consentDigital.ctaFinal.timeNote")}
 							</p>
 						</div>
 					</section>
@@ -690,23 +698,25 @@ export default function ConsentimientoDigitalPage() {
 						<div className="sm:col-span-2 lg:col-span-1">
 							<Image
 								src={PAGE_IMAGE_VARIANTS.publicConsentLogo.src}
-								alt={`Logo de ${APP_NAME}`}
+								alt={t("consentDigital.footer.logoAlt", { appName: APP_NAME })}
 								width={140}
 								height={40}
 								loading="lazy"
 								sizes={PAGE_IMAGE_VARIANTS.publicConsentLogo.sizes}
 								className="h-10 w-auto"
 							/>
-							<p className="mt-4 text-sm text-zinc-500">{PARK_TAGLINE}</p>
+							<p className="mt-4 text-sm text-zinc-500">
+								{t("consentDigital.tagline")}
+							</p>
 							<p className="mt-2 text-sm text-zinc-500">
-								El parque de trampolines mas grande de Villavicencio.
+								{t("consentDigital.footer.tagline")}
 							</p>
 						</div>
 
 						{/* Links */}
 						<div>
 							<h4 className="mb-4 text-sm font-bold uppercase tracking-wider text-zinc-400">
-								Enlaces rapidos
+								{t("consentDigital.footer.quickLinks")}
 							</h4>
 							<ul className="space-y-2">
 								<li>
@@ -714,7 +724,7 @@ export default function ConsentimientoDigitalPage() {
 										href="/"
 										className="text-sm text-zinc-500 hover:text-white"
 									>
-										Iniciar registro
+										{t("consentDigital.footer.linkStartRegistration")}
 									</Link>
 								</li>
 								<li>
@@ -722,7 +732,7 @@ export default function ConsentimientoDigitalPage() {
 										href="#como-funciona"
 										className="text-sm text-zinc-500 hover:text-white"
 									>
-										Como funciona
+										{t("consentDigital.footer.linkHowItWorks")}
 									</Link>
 								</li>
 								<li>
@@ -730,7 +740,7 @@ export default function ConsentimientoDigitalPage() {
 										href="#preguntas"
 										className="text-sm text-zinc-500 hover:text-white"
 									>
-										Preguntas frecuentes
+										{t("consentDigital.footer.linkFaq")}
 									</Link>
 								</li>
 							</ul>
@@ -739,7 +749,7 @@ export default function ConsentimientoDigitalPage() {
 						{/* Contact */}
 						<div>
 							<h4 className="mb-4 text-sm font-bold uppercase tracking-wider text-zinc-400">
-								Contacto
+								{t("consentDigital.footer.contact")}
 							</h4>
 							<ul className="space-y-2">
 								<li className="flex items-center gap-2 text-sm text-zinc-500">
@@ -757,7 +767,7 @@ export default function ConsentimientoDigitalPage() {
 						{/* Social */}
 						<div>
 							<h4 className="mb-4 text-sm font-bold uppercase tracking-wider text-zinc-400">
-								Siguenos
+								{t("consentDigital.footer.followUs")}
 							</h4>
 							<div className="flex gap-3">
 								<a
@@ -765,7 +775,7 @@ export default function ConsentimientoDigitalPage() {
 									target="_blank"
 									rel="noopener noreferrer"
 									className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-zinc-400 transition-colors hover:border-pink-500/30 hover:bg-pink-500/10 hover:text-pink-400"
-									aria-label="Instagram (abre en nueva pestaña)"
+									aria-label={t("consentDigital.footer.instagramAria")}
 								>
 									<Instagram className="h-5 w-5" aria-hidden="true" />
 								</a>
@@ -774,7 +784,7 @@ export default function ConsentimientoDigitalPage() {
 									target="_blank"
 									rel="noopener noreferrer"
 									className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-zinc-400 transition-colors hover:border-blue-500/30 hover:bg-blue-500/10 hover:text-blue-400"
-									aria-label="Facebook (abre en nueva pestaña)"
+									aria-label={t("consentDigital.footer.facebookAria")}
 								>
 									<Facebook className="h-5 w-5" aria-hidden="true" />
 								</a>
@@ -786,12 +796,14 @@ export default function ConsentimientoDigitalPage() {
 					<div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 sm:flex-row">
 						<p className="text-sm text-zinc-500">{BUSINESS_STREET_ADDRESS}</p>
 						<p className="text-sm text-zinc-600">
-							&copy; {new Date().getFullYear()} {APP_NAME}. Todos los derechos
-							reservados.
+							{t("consentDigital.footer.copyright", {
+								year: new Date().getFullYear(),
+								appName: APP_NAME,
+							})}
 						</p>
 					</div>
 				</div>
 			</footer>
-		</>
+		</LanguageProvider>
 	);
 }
