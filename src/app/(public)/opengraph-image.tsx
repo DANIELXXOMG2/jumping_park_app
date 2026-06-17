@@ -11,7 +11,7 @@ const logoPath = join(
 	process.cwd(),
 	"public",
 	"assets",
-	"jumping-park-logo.png",
+	"jumping-park-logo-optimized.png",
 );
 const logoBase64 = readFileSync(logoPath).toString("base64");
 const logoSrc = `data:image/png;base64,${logoBase64}`;
@@ -112,8 +112,7 @@ export default function OpenGraphImage() {
 						gap: "24px",
 					}}
 				>
-					{/* eslint-disable-next-line @next/next/no-img-element */}
-					<img
+						<img
 						src={logoSrc}
 						alt={`${APP_NAME} logo`}
 						width={120}
