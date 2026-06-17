@@ -106,8 +106,8 @@ describe("Task 2.1 — HomepageHeroIsland client island", () => {
 		expect(source).toContain("SpaceBackground");
 	});
 
-	it("[TRIANGULATE 2.1f] HomepageHeroIsland imports StartActionButton", () => {
-		const source = readFileSync(HERO_ISLAND_PATH, "utf-8");
+	it("[TRIANGULATE 2.1f] HomepageShell imports StartActionButton for CTA", () => {
+		const source = readFileSync(SHELL_PATH, "utf-8");
 		expect(source).toContain("StartActionButton");
 	});
 });

@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { HomepageHeroIsland } from "@/components/kiosk/HomepageHeroIsland";
 import { LanguageToggle } from "@/components/kiosk/LanguageToggle";
+import { StartActionButton } from "@/components/kiosk/StartActionButton";
 import { SecretAdminTrigger } from "@/components/ui/SecretAdminTrigger";
 import type { DictionaryKey, Language } from "@/lib/i18n/dictionary";
 import { PAGE_IMAGE_VARIANTS } from "@/lib/imageOptimization";
@@ -38,10 +39,8 @@ export function HomepageShell({ t, locale: _locale }: HomepageShellProps) {
 			id="main-content"
 			className="relative min-h-screen w-full overflow-x-hidden bg-background text-foreground"
 		>
-			{/* Client island — SpaceBackground, images, CTA, bounce indicator */}
+			{/* Client island — SpaceBackground, astronaut, solar-system */}
 			<HomepageHeroIsland
-				ctaText={ctaText}
-				ctaAriaLabel={ctaAriaLabel}
 				astronautAlt={astronautAlt}
 				solarSystemAlt={solarSystemAlt}
 			/>
@@ -81,6 +80,18 @@ export function HomepageShell({ t, locale: _locale }: HomepageShellProps) {
 					<p className="mb-12 max-w-xl text-xl font-light tracking-wide text-white/80 sm:text-2xl md:text-3xl">
 						{t("home.subtitle")}
 					</p>
+
+					{/* CTA — client interactive button */}
+					<div className="w-full max-w-2xl transform transition-transform duration-300 hover:scale-[1.02]">
+						<StartActionButton ctaText={ctaText} ctaAriaLabel={ctaAriaLabel} />
+					</div>
+
+					{/* Bounce indicator */}
+					<div className="mt-16 animate-bounce">
+						<div className="mx-auto h-14 w-8 rounded-full border-2 border-white/30 p-1">
+							<div className="h-3 w-full animate-pulse rounded-full bg-white/60" />
+						</div>
+					</div>
 				</section>
 
 				{/* ATRACCIONES */}
