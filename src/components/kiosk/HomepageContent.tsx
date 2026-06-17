@@ -1,6 +1,7 @@
 "use client";
 
 import { Clock, FileText, MapPin, Phone, Shield, Zap } from "lucide-react";
+import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { BUSINESS_PHONE } from "@/lib/seo";
 
@@ -19,6 +20,20 @@ export function HomepageContent() {
 
 	return (
 		<>
+			{/* HERO TEXT */}
+			<section className="flex flex-1 flex-col items-center justify-center px-6 text-center">
+				<h1 className="font-sora mb-6 text-6xl font-black uppercase leading-none tracking-tight text-white drop-shadow-2xl sm:text-7xl md:text-8xl lg:text-9xl">
+					{t("home.title.line1")}
+					<span className="mt-2 block bg-linear-to-r from-primary via-yellow-300 to-primary bg-clip-text text-transparent">
+						{t("home.title.line2")}
+					</span>
+				</h1>
+
+				<p className="mb-12 max-w-xl text-xl font-light tracking-wide text-white/80 sm:text-2xl md:text-3xl">
+					{t("home.subtitle")}
+				</p>
+			</section>
+
 			{/* ATRACCIONES */}
 			<section className="px-6 py-12">
 				<div className="mx-auto max-w-4xl">
@@ -71,23 +86,23 @@ export function HomepageContent() {
 						<p className="text-sm leading-6">{t("home.business.address")}</p>
 					</div>
 					<div className="flex flex-col items-center gap-3 text-center text-white/70">
-						<Phone className="h-6 w-6 text-whatsapp" />
+						<Phone className="h-6 w-6 text-[#25D366]" />
 						<a
 							href={WHATSAPP_URL}
 							target="_blank"
 							rel="noopener noreferrer"
-							className="text-sm font-medium text-whatsapp hover:text-whatsapp-hover transition-colors"
+							className="text-sm font-medium text-[#25D366] hover:text-[#20BD5A] transition-colors"
 						>
 							{t("home.business.phone")}
 						</a>
-						<a
+						<Link
 							href={INSTAGRAM_URL}
 							target="_blank"
 							rel="noopener noreferrer"
 							className="text-sm text-primary hover:underline"
 						>
 							{t("home.business.instagramLabel")} {t("home.business.instagram")}
-						</a>
+						</Link>
 					</div>
 					<div className="flex flex-col items-center gap-3 text-center text-white/70">
 						<Clock className="h-6 w-6 text-primary" />

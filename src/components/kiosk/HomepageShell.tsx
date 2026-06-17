@@ -4,7 +4,7 @@ import { HomepageHeroIsland } from "@/components/kiosk/HomepageHeroIsland";
 import { LanguageToggle } from "@/components/kiosk/LanguageToggle";
 import { StartActionButton } from "@/components/kiosk/StartActionButton";
 import { SecretAdminTrigger } from "@/components/ui/SecretAdminTrigger";
-import type { DictionaryKey } from "@/lib/i18n/dictionary";
+import type { DictionaryKey, Language } from "@/lib/i18n/dictionary";
 import { PAGE_IMAGE_VARIANTS } from "@/lib/imageOptimization";
 
 interface HomepageShellProps {
@@ -12,6 +12,7 @@ interface HomepageShellProps {
 		key: DictionaryKey,
 		replacements?: Record<string, string | number>,
 	) => string;
+	locale: Language;
 }
 
 /**
@@ -26,7 +27,7 @@ interface HomepageShellProps {
  * The server renders the initial HTML with the locale from the cookie (SEO).
  * After hydration, HomepageContent uses useLanguage() for instant language switching.
  */
-export function HomepageShell({ t }: HomepageShellProps) {
+export function HomepageShell({ t, locale: _locale }: HomepageShellProps) {
 	const ctaText = t("common.tapToStart");
 	const ctaAriaLabel = t("common.tapToStartAria");
 	const astronautAlt = t("home.hero.astronautAlt");
@@ -50,7 +51,7 @@ export function HomepageShell({ t }: HomepageShellProps) {
 					<LanguageToggle variant="premium" />
 				</div>
 
-				{/* Hero section — Logo, H1, CTA, Bounce */}
+				{/* Logo + CTA + Bounce — fixed position, not affected by language toggle */}
 				<section className="flex flex-1 flex-col items-center justify-center px-6 text-center">
 					{/* Logo with 5-click admin trigger */}
 					<div className="mb-8 animate-fade-in">
@@ -66,18 +67,6 @@ export function HomepageShell({ t }: HomepageShellProps) {
 							/>
 						</SecretAdminTrigger>
 					</div>
-
-					{/* H1 + Subtitle — rendered from server t() for SEO, updated by HomepageContent on toggle */}
-					<h1 className="font-sora mb-6 text-6xl font-black uppercase leading-none tracking-tight text-white drop-shadow-2xl sm:text-7xl md:text-8xl lg:text-9xl">
-						{t("home.title.line1")}
-						<span className="mt-2 block bg-linear-to-r from-primary via-yellow-300 to-primary bg-clip-text text-transparent">
-							{t("home.title.line2")}
-						</span>
-					</h1>
-
-					<p className="mb-12 max-w-xl text-xl font-light tracking-wide text-white/80 sm:text-2xl md:text-3xl">
-						{t("home.subtitle")}
-					</p>
 
 					{/* CTA — client interactive button */}
 					<div className="w-full max-w-2xl transform transition-transform duration-300 hover:scale-[1.02]">

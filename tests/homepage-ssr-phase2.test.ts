@@ -129,8 +129,8 @@ describe("Task 2.2 — HomepageShell Server Component", () => {
 		expect(source).not.toContain('"use client"');
 	});
 
-	it("[RED 2.2c] HomepageShell renders H1 with home.title.line1 and line2 keys", () => {
-		const source = readFileSync(SHELL_PATH, "utf-8");
+	it("[RED 2.2c] HomepageContent renders H1 with home.title.line1 and line2 keys", () => {
+		const source = readFileSync(CONTENT_PATH, "utf-8");
 		expect(source).toContain("home.title.line1");
 		expect(source).toContain("home.title.line2");
 	});
