@@ -50,7 +50,7 @@ export function HomepageShell({ t }: HomepageShellProps) {
 					<LanguageToggle variant="premium" />
 				</div>
 
-				{/* Logo + CTA + Bounce — fixed position, not affected by language toggle */}
+				{/* Hero section — Logo, H1, CTA, Bounce */}
 				<section className="flex flex-1 flex-col items-center justify-center px-6 text-center">
 					{/* Logo with 5-click admin trigger */}
 					<div className="mb-8 animate-fade-in">
@@ -66,6 +66,18 @@ export function HomepageShell({ t }: HomepageShellProps) {
 							/>
 						</SecretAdminTrigger>
 					</div>
+
+					{/* H1 + Subtitle */}
+					<h1 className="font-sora mb-6 text-6xl font-black uppercase leading-none tracking-tight text-white drop-shadow-2xl sm:text-7xl md:text-8xl lg:text-9xl">
+						{t("home.title.line1")}
+						<span className="mt-2 block bg-linear-to-r from-primary via-yellow-300 to-primary bg-clip-text text-transparent">
+							{t("home.title.line2")}
+						</span>
+					</h1>
+
+					<p className="mb-12 max-w-xl text-xl font-light tracking-wide text-white/80 sm:text-2xl md:text-3xl">
+						{t("home.subtitle")}
+					</p>
 
 					{/* CTA — client interactive button */}
 					<div className="w-full max-w-2xl transform transition-transform duration-300 hover:scale-[1.02]">
