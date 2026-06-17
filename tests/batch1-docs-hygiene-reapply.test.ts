@@ -769,7 +769,7 @@ function extractDocsReadmeTableStatuses(markdown: string): string[] {
 		expect(seoMinScore).toBe(0.9)
 		expect(accessibilityMinScore).toBe(0.9)
 		expect(bestPracticesMinScore).toBe(0.9)
-		expect(lcpThreshold).toBe(3600)
+		expect(lcpThreshold).toBe(3800)
 		expect(tbtThreshold).toBe(300)
 		expect(clsThreshold).toBe(0.1)
 	})

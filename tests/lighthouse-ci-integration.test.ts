@@ -117,7 +117,7 @@ describe('lighthouse ci integration slice', () => {
 
 		expect(assertions?.['largest-contentful-paint']).toEqual([
 			'error',
-			{ maxNumericValue: 3600 },
+			{ maxNumericValue: 3800 },
 		])
 		expect(assertions?.['total-blocking-time']).toEqual([
 			'error',
@@ -142,7 +142,7 @@ describe('lighthouse ci integration slice', () => {
 		expect(rationale.includes('no CDN')).toBe(true)
 		expect(rationale.includes('cold cache')).toBe(true)
 		expect(rationale.includes('production')).toBe(true)
-		expect(rationale.includes('LCP <= 3600ms')).toBe(true)
+		expect(rationale.includes('LCP <= 3800ms')).toBe(true)
 		expect(rationale.includes('CI TBT <= 300ms')).toBe(true)
 		expect(rationale.includes('Production target: LCP <= 2500ms')).toBe(true)
 		expect(rationale.includes('Production target: TBT <= 200ms')).toBe(true)

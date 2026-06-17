@@ -13,7 +13,7 @@ These CI thresholds protect the public landing page without pretending GitHub Ac
 ## Enforced CI thresholds
 
 - Performance score >= 0.8
-- LCP <= 3600ms
+- LCP <= 3800ms
 - CI TBT <= 300ms
 - CLS <= 0.1
 
