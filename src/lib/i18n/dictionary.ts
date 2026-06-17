@@ -1008,6 +1008,402 @@ export const dictionary = {
 		es: "Área de firma digital",
 		en: "Digital signature area",
 	},
+
+	// ============================================================================
+	// PÁGINA CONSENTIMIENTO-DIGITAL (LANDING PÚBLICA)
+	// ============================================================================
+
+	// --- Tagline / Ubicación ---
+	"consentDigital.tagline": {
+		es: "Primavera Urbana",
+		en: "Primavera Urbana",
+	},
+	"consentDigital.country": {
+		es: "Colombia",
+		en: "Colombia",
+	},
+	"consentDigital.cityRegion": {
+		es: "Villavicencio, Meta",
+		en: "Villavicencio, Meta",
+	},
+	"consentDigital.mallName": {
+		es: "Centro Comercial Primavera Urbana",
+		en: "Primavera Urbana Shopping Center",
+	},
+
+	// --- Stats ---
+	"consentDigital.stats.ratingLabel": {
+		es: "estrellas en Google",
+		en: "stars on Google",
+	},
+	"consentDigital.stats.visitorsLabel": {
+		es: "visitantes felices",
+		en: "happy visitors",
+	},
+	"consentDigital.stats.trampolinesLabel": {
+		es: "trampolines",
+		en: "trampolines",
+	},
+
+	// --- Attractions ---
+	"consentDigital.attractions.title": {
+		es: "Nuestras atracciones",
+		en: "Our attractions",
+	},
+	"consentDigital.attractions.item1": {
+		es: "Más de 50 camas elásticas interconectadas",
+		en: "Over 50 interconnected trampolines",
+	},
+	"consentDigital.attractions.item2": {
+		es: "Piscina de espuma gigante",
+		en: "Giant foam pit",
+	},
+	"consentDigital.attractions.item3": {
+		es: "Zona de salto libre",
+		en: "Free jump zone",
+	},
+	"consentDigital.attractions.item4": {
+		es: "Área infantil exclusiva",
+		en: "Exclusive kids area",
+	},
+	"consentDigital.attractions.item5": {
+		es: "Cancha de dodgeball",
+		en: "Dodgeball court",
+	},
+	"consentDigital.attractions.item6": {
+		es: "Muro de escalada",
+		en: "Climbing wall",
+	},
+
+	// --- Hours ---
+	"consentDigital.hours.weekdays": {
+		es: "Lunes a Viernes: 1:30 PM - 8:00 PM",
+		en: "Monday to Friday: 1:30 PM - 8:00 PM",
+	},
+	"consentDigital.hours.weekends": {
+		es: "Sábados, Domingos y Festivos: 11:00 AM - 8:00 PM",
+		en: "Saturdays, Sundays and Holidays: 11:00 AM - 8:00 PM",
+	},
+
+	// --- Header ---
+	"consentDigital.header.logoAlt": {
+		es: "Logo de {appName}",
+		en: "{appName} Logo",
+	},
+	"consentDigital.header.navProcess": {
+		es: "Cómo funciona",
+		en: "How it works",
+	},
+	"consentDigital.header.navFaq": {
+		es: "Preguntas",
+		en: "FAQ",
+	},
+	"consentDigital.header.ctaButton": {
+		es: "Iniciar registro",
+		en: "Start registration",
+	},
+
+	// --- Hero ---
+	"consentDigital.hero.title1": {
+		es: "Firma tu consentimiento",
+		en: "Sign your consent",
+	},
+	"consentDigital.hero.title2": {
+		es: "antes de llegar",
+		en: "before arriving",
+	},
+	"consentDigital.hero.subtitle": {
+		es: "Completa el registro digital de {appName} desde tu casa. Valida tu identidad con un código OTP, firma digitalmente y llega al parque listo para saltar.",
+		en: "Complete the digital registration of {appName} from home. Verify your identity with an OTP code, sign digitally and arrive at the park ready to jump.",
+	},
+	"consentDigital.hero.ctaPrimary": {
+		es: "Empezar registro",
+		en: "Start registration",
+	},
+	"consentDigital.hero.ctaSecondary": {
+		es: "Ver cómo funciona",
+		en: "See how it works",
+	},
+	"consentDigital.hero.ctaWhatsApp": {
+		es: "Escribinos por WhatsApp",
+		en: "Chat with us on WhatsApp",
+	},
+	"consentDigital.hero.ctaWhatsAppAria": {
+		es: "Escribinos por WhatsApp (abre en nueva pestaña)",
+		en: "Chat with us on WhatsApp (opens in new tab)",
+	},
+	"consentDigital.hero.imageAlt": {
+		es: "Astronauta de {appName} invitándote a registrarte",
+		en: "{appName} astronaut inviting you to register",
+	},
+	"consentDigital.hero.imageCaption1": {
+		es: "Más de {count} camas elásticas",
+		en: "Over {count} trampolines",
+	},
+	"consentDigital.hero.imageCaption2": {
+		es: "te esperan en el parque de trampolines más grande de Villavicencio.",
+		en: "await you at the largest trampoline park in Villavicencio.",
+	},
+
+	// --- Process ---
+	"consentDigital.process.title": {
+		es: "Tres pasos simples para tu consentimiento digital",
+		en: "Three simple steps for your digital consent",
+	},
+	"consentDigital.process.subtitle": {
+		es: "El proceso completo toma menos de 5 minutos. Hazlo desde tu celular o computador.",
+		en: "The entire process takes less than 5 minutes. Do it from your phone or computer.",
+	},
+	"consentDigital.process.step1.title": {
+		es: "Completa tus datos",
+		en: "Fill in your details",
+	},
+	"consentDigital.process.step1.description": {
+		es: "Ingresa tu información personal y la de los menores que te acompañan. El formulario guiado te lleva paso a paso.",
+		en: "Enter your personal information and that of the minors accompanying you. The guided form takes you step by step.",
+	},
+	"consentDigital.process.step1.duration": {
+		es: "2 min",
+		en: "2 min",
+	},
+	"consentDigital.process.step2.title": {
+		es: "Verifica tu identidad",
+		en: "Verify your identity",
+	},
+	"consentDigital.process.step2.description": {
+		es: "Recibe un código de 6 dígitos en tu correo electrónico. Esta validación protege tu información y confirma tu identidad.",
+		en: "Receive a 6-digit code in your email. This validation protects your information and confirms your identity.",
+	},
+	"consentDigital.process.step2.duration": {
+		es: "1 min",
+		en: "1 min",
+	},
+	"consentDigital.process.step3.title": {
+		es: "Firma el consentimiento",
+		en: "Sign the consent",
+	},
+	"consentDigital.process.step3.description": {
+		es: "Revisa los términos y firma digitalmente. Tu consentimiento queda registrado y listo para cuando llegues al parque.",
+		en: "Review the terms and sign digitally. Your consent is recorded and ready for when you arrive at the park.",
+	},
+	"consentDigital.process.step3.duration": {
+		es: "1 min",
+		en: "1 min",
+	},
+	"consentDigital.process.requirementsTitle": {
+		es: "Qué necesitas tener listo",
+		en: "What you need to have ready",
+	},
+
+	// --- Requirements ---
+	"consentDigital.requirements.item1": {
+		es: "Documento de identidad",
+		en: "ID document",
+	},
+	"consentDigital.requirements.detail1": {
+		es: "Cédula de ciudadanía o tarjeta de identidad",
+		en: "Citizenship ID or identity card",
+	},
+	"consentDigital.requirements.item2": {
+		es: "Correo electrónico activo",
+		en: "Active email address",
+	},
+	"consentDigital.requirements.detail2": {
+		es: "Para recibir el código de verificación OTP",
+		en: "To receive the OTP verification code",
+	},
+	"consentDigital.requirements.item3": {
+		es: "Datos de menores",
+		en: "Minors' information",
+	},
+	"consentDigital.requirements.detail3": {
+		es: "Documento y fecha de nacimiento de cada menor",
+		en: "Document and birth date of each minor",
+	},
+	"consentDigital.requirements.item4": {
+		es: "5 minutos de tu tiempo",
+		en: "5 minutes of your time",
+	},
+	"consentDigital.requirements.detail4": {
+		es: "Es todo lo que necesitas para completar el proceso",
+		en: "That's all you need to complete the process",
+	},
+
+	// --- Benefits ---
+	"consentDigital.benefits.title": {
+		es: "Por qué usar el consentimiento digital",
+		en: "Why use digital consent",
+	},
+	"consentDigital.benefits.subtitle": {
+		es: "Diseñado para familias que quieren aprovechar al máximo su tiempo en el parque.",
+		en: "Designed for families who want to make the most of their time at the park.",
+	},
+	"consentDigital.benefits.item1.title": {
+		es: "Ahorra tiempo en la entrada",
+		en: "Save time at the entrance",
+	},
+	"consentDigital.benefits.item1.description": {
+		es: "Llega al parque con el consentimiento firmado y pasa directo a la diversión. Sin filas, sin esperas, sin papeles.",
+		en: "Arrive at the park with the consent signed and go straight to the fun. No lines, no waiting, no paperwork.",
+	},
+	"consentDigital.benefits.item2.title": {
+		es: "Registra a toda tu familia",
+		en: "Register your whole family",
+	},
+	"consentDigital.benefits.item2.description": {
+		es: "Un solo adulto puede registrar a todos los menores del grupo. Cada menor queda vinculado a su responsable legal.",
+		en: "A single adult can register all minors in the group. Each minor is linked to their legal guardian.",
+	},
+	"consentDigital.benefits.item3.title": {
+		es: "Seguridad garantizada",
+		en: "Guaranteed security",
+	},
+	"consentDigital.benefits.item3.description": {
+		es: "Validación por código OTP, firma digital con valor legal, y datos protegidos. Todo cumple con la normativa colombiana.",
+		en: "OTP code validation, legally binding digital signature, and protected data. All compliant with Colombian regulations.",
+	},
+
+	// --- FAQ ---
+	"consentDigital.faq.title": {
+		es: "Preguntas frecuentes",
+		en: "Frequently asked questions",
+	},
+	"consentDigital.faq.subtitle": {
+		es: "Resuelve tus dudas antes de completar el registro.",
+		en: "Solve your questions before completing the registration.",
+	},
+	"consentDigital.faq.q1.question": {
+		es: "¿Es seguro firmar digitalmente?",
+		en: "Is it safe to sign digitally?",
+	},
+	"consentDigital.faq.q1.answer": {
+		es: "Sí. La firma digital tiene validez legal en Colombia según la Ley 527 de 1999. Tus datos están protegidos y encriptados.",
+		en: "Yes. Digital signatures have legal validity in Colombia under Law 527 of 1999. Your data is protected and encrypted.",
+	},
+	"consentDigital.faq.q2.question": {
+		es: "¿Puedo registrar a varios menores?",
+		en: "Can I register multiple minors?",
+	},
+	"consentDigital.faq.q2.answer": {
+		es: "Sí. Un adulto responsable puede registrar a todos los menores del grupo familiar. Solo necesitas los documentos de cada uno.",
+		en: "Yes. A responsible adult can register all minors in the family group. You only need each one's documents.",
+	},
+	"consentDigital.faq.q3.question": {
+		es: "¿Cuánto tiempo dura el consentimiento?",
+		en: "How long does the consent last?",
+	},
+	"consentDigital.faq.q3.answer": {
+		es: "El consentimiento es válido por el día de la visita. Debes renovarlo en cada visita al parque por seguridad.",
+		en: "The consent is valid for the day of the visit. You must renew it on each visit to the park for safety.",
+	},
+	"consentDigital.faq.q4.question": {
+		es: "¿Necesito el consentimiento si solo voy a acompañar?",
+		en: "Do I need the consent if I'm just accompanying?",
+	},
+	"consentDigital.faq.q4.answer": {
+		es: "Si no vas a usar las atracciones no necesitas firmar. Solo deben firmar quienes vayan a saltar, o el responsable de los menores.",
+		en: "If you are not going to use the attractions you do not need to sign. Only those who will jump, or the minors' guardian, must sign.",
+	},
+
+	// --- About ---
+	"consentDigital.about.title": {
+		es: "Conoce {appName}",
+		en: "Discover {appName}",
+	},
+	"consentDigital.about.description": {
+		es: "El parque de trampolines más grande de Villavicencio, ubicado en Centro Comercial Primavera Urbana. Diversión garantizada para toda la familia.",
+		en: "The largest trampoline park in Villavicencio, located in Primavera Urbana Shopping Center. Guaranteed fun for the whole family.",
+	},
+
+	// --- Contact ---
+	"consentDigital.contact.title": {
+		es: "Información de contacto",
+		en: "Contact information",
+	},
+	"consentDigital.contact.callUs": {
+		es: "Llámanos",
+		en: "Call us",
+	},
+	"consentDigital.contact.followInstagramAria": {
+		es: "Seguir en Instagram (abre en nueva pestaña)",
+		en: "Follow on Instagram (opens in new tab)",
+	},
+	"consentDigital.contact.followFacebookAria": {
+		es: "Seguir en Facebook (abre en nueva pestaña)",
+		en: "Follow on Facebook (opens in new tab)",
+	},
+
+	// --- CTA Final ---
+	"consentDigital.ctaFinal.title": {
+		es: "No pierdas más tiempo en filas",
+		en: "Don't waste more time in lines",
+	},
+	"consentDigital.ctaFinal.subtitle": {
+		es: "Completa tu consentimiento digital ahora y llega al parque listo para la diversión. Tu familia te lo agradecerá.",
+		en: "Complete your digital consent now and arrive at the park ready for fun. Your family will thank you.",
+	},
+	"consentDigital.ctaFinal.buttonPrimary": {
+		es: "Completar registro ahora",
+		en: "Complete registration now",
+	},
+	"consentDigital.ctaFinal.buttonWhatsApp": {
+		es: "Consultar por WhatsApp",
+		en: "Ask via WhatsApp",
+	},
+	"consentDigital.ctaFinal.buttonWhatsAppAria": {
+		es: "Consultar por WhatsApp (abre en nueva pestaña)",
+		en: "Ask via WhatsApp (opens in new tab)",
+	},
+	"consentDigital.ctaFinal.timeNote": {
+		es: "El proceso toma menos de 5 minutos",
+		en: "The process takes less than 5 minutes",
+	},
+
+	// --- Footer ---
+	"consentDigital.footer.logoAlt": {
+		es: "Logo de {appName}",
+		en: "{appName} Logo",
+	},
+	"consentDigital.footer.tagline": {
+		es: "El parque de trampolines más grande de Villavicencio.",
+		en: "The largest trampoline park in Villavicencio.",
+	},
+	"consentDigital.footer.quickLinks": {
+		es: "Enlaces rápidos",
+		en: "Quick links",
+	},
+	"consentDigital.footer.linkStartRegistration": {
+		es: "Iniciar registro",
+		en: "Start registration",
+	},
+	"consentDigital.footer.linkHowItWorks": {
+		es: "Cómo funciona",
+		en: "How it works",
+	},
+	"consentDigital.footer.linkFaq": {
+		es: "Preguntas frecuentes",
+		en: "Frequently asked questions",
+	},
+	"consentDigital.footer.contact": {
+		es: "Contacto",
+		en: "Contact",
+	},
+	"consentDigital.footer.followUs": {
+		es: "Síguenos",
+		en: "Follow us",
+	},
+	"consentDigital.footer.instagramAria": {
+		es: "Instagram (abre en nueva pestaña)",
+		en: "Instagram (opens in new tab)",
+	},
+	"consentDigital.footer.facebookAria": {
+		es: "Facebook (abre en nueva pestaña)",
+		en: "Facebook (opens in new tab)",
+	},
+	"consentDigital.footer.copyright": {
+		es: "&copy; {year} {appName}. Todos los derechos reservados.",
+		en: "&copy; {year} {appName}. All rights reserved.",
+	},
 } as const;
 
 export type DictionaryKey = keyof typeof dictionary;
