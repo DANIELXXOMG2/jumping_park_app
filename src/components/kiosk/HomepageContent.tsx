@@ -20,20 +20,6 @@ export function HomepageContent() {
 
 	return (
 		<>
-			{/* HERO TEXT */}
-			<section className="flex flex-1 flex-col items-center justify-center px-6 text-center">
-				<h1 className="font-sora mb-6 text-6xl font-black uppercase leading-none tracking-tight text-white drop-shadow-2xl sm:text-7xl md:text-8xl lg:text-9xl">
-					{t("home.title.line1")}
-					<span className="mt-2 block bg-linear-to-r from-primary via-yellow-300 to-primary bg-clip-text text-transparent">
-						{t("home.title.line2")}
-					</span>
-				</h1>
-
-				<p className="mb-12 max-w-xl text-xl font-light tracking-wide text-white/80 sm:text-2xl md:text-3xl">
-					{t("home.subtitle")}
-				</p>
-			</section>
-
 			{/* ATRACCIONES */}
 			<section className="px-6 py-12">
 				<div className="mx-auto max-w-4xl">
