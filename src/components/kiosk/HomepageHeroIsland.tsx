@@ -2,7 +2,6 @@
 
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import { StartActionButton } from "@/components/kiosk/StartActionButton";
 import { PAGE_IMAGE_VARIANTS } from "@/lib/imageOptimization";
 
 const SpaceBackground = dynamic(
@@ -12,10 +11,6 @@ const SpaceBackground = dynamic(
 );
 
 interface HomepageHeroIslandProps {
-	/** Translated CTA button text */
-	ctaText: string;
-	/** Translated CTA button aria-label */
-	ctaAriaLabel: string;
 	/** Translated astronaut alt text */
 	astronautAlt: string;
 	/** Translated solar system alt text */
@@ -23,16 +18,12 @@ interface HomepageHeroIslandProps {
 }
 
 /**
- * HomepageHeroIsland — Client-side island containing all interactive
- * and animated hero elements (canvas background, images, CTA button,
- * secret admin trigger).
+ * HomepageHeroIsland — Client-side island containing decorative
+ * and animated hero elements (canvas background, astronaut, solar system).
  *
- * Receives ALL translated strings as props — never reads from context.
- * This keeps the island decoupled from i18n and render-android outside SSR.
+ * Interactive elements (CTA, bounce) are in HomepageShell for correct DOM order.
  */
 export function HomepageHeroIsland({
-	ctaText,
-	ctaAriaLabel,
 	astronautAlt,
 	solarSystemAlt,
 }: HomepageHeroIslandProps) {
@@ -85,19 +76,6 @@ export function HomepageHeroIsland({
 							/>
 						</div>
 						<div className="absolute inset-0 bg-linear-to-l from-transparent via-[#111C59]/20 to-transparent blur-2xl" />
-					</div>
-				</div>
-
-				{/* Logo is rendered in HomepageShell (server component) for LCP */}
-
-				{/* CTA */}
-				<div className="w-full max-w-2xl transform transition-transform duration-300 hover:scale-[1.02]">
-					<StartActionButton ctaText={ctaText} ctaAriaLabel={ctaAriaLabel} />
-				</div>
-
-				<div className="mt-16 animate-bounce">
-					<div className="mx-auto h-14 w-8 rounded-full border-2 border-white/30 p-1">
-						<div className="h-3 w-full animate-pulse rounded-full bg-white/60" />
 					</div>
 				</div>
 			</section>

@@ -112,7 +112,7 @@ export default function OpenGraphImage() {
 						gap: "24px",
 					}}
 				>
-						<img
+					<img
 						src={logoSrc}
 						alt={`${APP_NAME} logo`}
 						width={120}
