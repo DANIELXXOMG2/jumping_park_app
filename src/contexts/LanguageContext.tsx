@@ -38,6 +38,7 @@ function readLocaleCookie(): string | undefined {
 function writeLocaleCookie(lang: Language): void {
 	if (typeof document === "undefined") return;
 
+	// biome-ignore lint/suspicious/noDocumentCookie: Client-side locale cookie for SSR compatibility
 	document.cookie = `${LOCALE_COOKIE}=${lang}; path=/; sameSite=lax`;
 }
 

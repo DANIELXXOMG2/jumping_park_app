@@ -1,8 +1,11 @@
 import { Clock, FileText, MapPin, Phone, Shield, Zap } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { HomepageHeroIsland } from "@/components/kiosk/HomepageHeroIsland";
 import { LanguageToggle } from "@/components/kiosk/LanguageToggle";
+import { SecretAdminTrigger } from "@/components/ui/SecretAdminTrigger";
 import type { DictionaryKey, Language } from "@/lib/i18n/dictionary";
+import { PAGE_IMAGE_VARIANTS } from "@/lib/imageOptimization";
 
 const INSTAGRAM_URL = "https://www.instagram.com/jumpingparkvillavo/";
 
@@ -27,7 +30,6 @@ export function HomepageShell({ t, locale: _locale }: HomepageShellProps) {
 	const ctaAriaLabel = t("common.tapToStartAria");
 	const astronautAlt = t("home.hero.astronautAlt");
 	const solarSystemAlt = t("home.hero.solarSystemAlt");
-	const logoAlt = t("home.hero.logoAlt");
 
 	return (
 		<main
@@ -40,7 +42,6 @@ export function HomepageShell({ t, locale: _locale }: HomepageShellProps) {
 				ctaAriaLabel={ctaAriaLabel}
 				astronautAlt={astronautAlt}
 				solarSystemAlt={solarSystemAlt}
-				logoAlt={logoAlt}
 			/>
 
 			{/* Content overlay (above SpaceBackground z-0 and overlay z-10) */}
@@ -52,6 +53,22 @@ export function HomepageShell({ t, locale: _locale }: HomepageShellProps) {
 
 				{/* HERO TEXT — SSR rendered, overlaid on hero visuals */}
 				<section className="flex flex-1 flex-col items-center justify-center px-6 text-center">
+					{/* Logo — server-rendered for optimal LCP */}
+					<div className="mb-8 animate-fade-in relative">
+						<Image
+							src={PAGE_IMAGE_VARIANTS.kioskLogo.src}
+							alt={t("home.hero.logoAlt")}
+							width={280}
+							height={100}
+							priority
+							sizes={PAGE_IMAGE_VARIANTS.kioskLogo.sizes}
+							className="h-auto w-48 drop-shadow-[0_0_30px_rgba(255,255,255,0.3)] sm:w-56 md:w-64 lg:w-72"
+						/>
+						<SecretAdminTrigger redirectTo="/admin/login">
+							<span className="absolute inset-0" aria-hidden="true" />
+						</SecretAdminTrigger>
+					</div>
+
 					<h1 className="font-sora mb-6 text-6xl font-black uppercase leading-none tracking-tight text-white drop-shadow-2xl sm:text-7xl md:text-8xl lg:text-9xl">
 						{t("home.title.line1")}
 						<span className="mt-2 block bg-linear-to-r from-primary via-yellow-300 to-primary bg-clip-text text-transparent">

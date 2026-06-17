@@ -94,10 +94,11 @@ describe("Task 2.1 — HomepageHeroIsland client island", () => {
 		expect(source).toContain("alt={astronautAlt}");
 	});
 
-	it("[RED 2.1d] HomepageHeroIsland renders logo wrapped in SecretAdminTrigger", () => {
-		const source = readFileSync(HERO_ISLAND_PATH, "utf-8");
+	it("[RED 2.1d] HomepageShell renders logo with priority for LCP", () => {
+		const source = readFileSync(SHELL_PATH, "utf-8");
 		expect(source).toContain("SecretAdminTrigger");
 		expect(source).toContain("PAGE_IMAGE_VARIANTS.kioskLogo");
+		expect(source).toContain("priority");
 	});
 
 	it("[TRIANGULATE 2.1e] HomepageHeroIsland imports SpaceBackground", () => {

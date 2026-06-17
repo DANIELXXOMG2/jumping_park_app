@@ -1,10 +1,15 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Image from "next/image";
-import { SpaceBackground } from "@/components/kiosk/SpaceBackground";
 import { StartActionButton } from "@/components/kiosk/StartActionButton";
-import { SecretAdminTrigger } from "@/components/ui/SecretAdminTrigger";
 import { PAGE_IMAGE_VARIANTS } from "@/lib/imageOptimization";
+
+const SpaceBackground = dynamic(
+	() =>
+		import("@/components/kiosk/SpaceBackground").then((m) => m.SpaceBackground),
+	{ ssr: false },
+);
 
 interface HomepageHeroIslandProps {
 	/** Translated CTA button text */
@@ -15,8 +20,6 @@ interface HomepageHeroIslandProps {
 	astronautAlt: string;
 	/** Translated solar system alt text */
 	solarSystemAlt: string;
-	/** Translated logo alt text */
-	logoAlt: string;
 }
 
 /**
@@ -32,7 +35,6 @@ export function HomepageHeroIsland({
 	ctaAriaLabel,
 	astronautAlt,
 	solarSystemAlt,
-	logoAlt,
 }: HomepageHeroIslandProps) {
 	return (
 		<>
@@ -77,6 +79,7 @@ export function HomepageHeroIsland({
 								alt={solarSystemAlt}
 								width={2000}
 								height={1560}
+								loading="lazy"
 								className="h-auto min-w-[600px] opacity-60 mix-blend-screen md:opacity-50"
 							/>
 						</div>
@@ -84,20 +87,7 @@ export function HomepageHeroIsland({
 					</div>
 				</div>
 
-				{/* Logo */}
-				<div className="mb-8 animate-fade-in">
-					<SecretAdminTrigger redirectTo="/admin/login">
-						<Image
-							src={PAGE_IMAGE_VARIANTS.kioskLogo.src}
-							alt={logoAlt}
-							width={280}
-							height={100}
-							priority
-							sizes={PAGE_IMAGE_VARIANTS.kioskLogo.sizes}
-							className="h-auto w-48 drop-shadow-[0_0_30px_rgba(255,255,255,0.3)] sm:w-56 md:w-64 lg:w-72"
-						/>
-					</SecretAdminTrigger>
-				</div>
+				{/* Logo is rendered in HomepageShell (server component) for LCP */}
 
 				{/* CTA */}
 				<div className="w-full max-w-2xl transform transition-transform duration-300 hover:scale-[1.02]">
