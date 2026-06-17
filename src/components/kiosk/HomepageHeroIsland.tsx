@@ -64,6 +64,7 @@ export function HomepageHeroIsland({
 							alt={astronautAlt}
 							width={500}
 							height={625}
+							loading="lazy"
 							sizes={PAGE_IMAGE_VARIANTS.kioskAstronaut.sizes}
 							className="animate-float drop-shadow-[0_0_60px_rgba(139,92,246,0.5)] w-40 h-auto opacity-50 xs:w-48 xs:opacity-60 sm:w-56 sm:opacity-70 md:w-64 md:opacity-80 lg:w-80 lg:opacity-100 xl:w-96 2xl:w-[480px]"
 						/>
