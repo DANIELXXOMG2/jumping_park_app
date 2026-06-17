@@ -10,6 +10,10 @@ import { useKioskStore } from "@/store/kioskStore";
 
 interface StartActionButtonProps {
 	href?: string;
+	/** Override for the button CTA text (otherwise uses t("common.tapToStart")) */
+	ctaText?: string;
+	/** Override for the button aria-label (otherwise uses t("common.tapToStartAria")) */
+	ctaAriaLabel?: string;
 }
 
 /**
@@ -20,11 +24,16 @@ interface StartActionButtonProps {
  */
 export function StartActionButton({
 	href = "/ingreso",
+	ctaText,
+	ctaAriaLabel,
 }: StartActionButtonProps) {
 	const resetFlow = useKioskStore((state) => state.resetFlow);
 	const setStep = useKioskStore((state) => state.setStep);
 	const [isPending, startTransition] = useTransition();
 	const { t } = useLanguage();
+
+	const displayText = ctaText ?? t("common.tapToStart");
+	const displayAriaLabel = ctaAriaLabel ?? t("common.tapToStartAria");
 
 	// Hook de sonidos UI
 	const { playClick } = useUISound();
@@ -42,7 +51,7 @@ export function StartActionButton({
 	return (
 		<Link
 			href={href}
-			aria-label={t("common.tapToStartAria")}
+			aria-label={displayAriaLabel}
 			onClick={handlePress}
 			className={cn(
 				"group",
@@ -132,7 +141,7 @@ export function StartActionButton({
 								aria-hidden="true"
 							/>
 						</span>
-						<span className="drop-shadow-sm">{t("common.tapToStart")}</span>
+						<span className="drop-shadow-sm">{displayText}</span>
 						{/* Cohete con animación de despegue */}
 						<span
 							className="text-2xl sm:text-3xl md:text-4xl group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform duration-300"

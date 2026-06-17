@@ -49,10 +49,10 @@ describe("root viewport allows user scaling (WCAG 1.4.4)", () => {
 describe("root layout skip-to-content link", () => {
 	it("renders a skip link targeting #main-content", async () => {
 		const { default: RootLayout } = await import("@/app/layout");
+		const mockStore = { get: (_name: string) => ({ value: "es" }) };
 		// Render with children that include <main id="main-content">
-		const markup = renderToStaticMarkup(
-			RootLayout({ children: React.createElement("main", { id: "main-content" }, "test") } as any),
-		);
+		const layoutElement = await RootLayout({ children: React.createElement("main", { id: "main-content" }, "test"), cookieStore: mockStore } as any);
+		const markup = renderToStaticMarkup(layoutElement);
 
 		// Skip link must appear before the main content
 		const skipLinkPos = markup.indexOf("Saltar al contenido principal");
@@ -63,18 +63,18 @@ describe("root layout skip-to-content link", () => {
 
 	it("skip link targets #main-content", async () => {
 		const { default: RootLayout } = await import("@/app/layout");
-		const markup = renderToStaticMarkup(
-			RootLayout({ children: React.createElement("main", { id: "main-content" }, "test") } as any),
-		);
+		const mockStore = { get: (_name: string) => ({ value: "es" }) };
+		const layoutElement = await RootLayout({ children: React.createElement("main", { id: "main-content" }, "test"), cookieStore: mockStore } as any);
+		const markup = renderToStaticMarkup(layoutElement);
 
 		expect(markup).toContain('#main-content');
 	});
 
 	it("skip link is visually hidden by default and shown on focus", async () => {
 		const { default: RootLayout } = await import("@/app/layout");
-		const markup = renderToStaticMarkup(
-			RootLayout({ children: React.createElement("main", { id: "main-content" }, "test") } as any),
-		);
+		const mockStore = { get: (_name: string) => ({ value: "es" }) };
+		const layoutElement = await RootLayout({ children: React.createElement("main", { id: "main-content" }, "test"), cookieStore: mockStore } as any);
+		const markup = renderToStaticMarkup(layoutElement);
 
 		// Should be sr-only (visually hidden) but not aria-hidden
 		expect(markup).toContain("sr-only");
@@ -155,26 +155,19 @@ describe("consentimiento-digital external link accessible names", () => {
 // ---------------------------------------------------------------------------
 
 describe("homepage main-content anchor", () => {
-	it("HomepageExperience main element has id='main-content'", async () => {
-		const { HomepageExperience } = await import(
-			"@/components/kiosk/HomepageExperience"
+	it("HomepageShell main element has id='main-content'", async () => {
+		const { HomepageShell } = await import(
+			"@/components/kiosk/HomepageShell"
 		);
-		// Note: HomepageExperience is a client component that depends on
-		// LanguageProvider context. We verify the source code has the correct
-		// id attribute by rendering to static markup (the context-dependent
-		// children will error, but we can still verify the main element).
-		try {
-			const markup = renderToStaticMarkup(<HomepageExperience />);
-			expect(markup).toContain('id="main-content"');
-		} catch {
-			// Fallback: read the component source directly
-			const srcPath = path.resolve(
-				import.meta.dirname,
-				"../src/components/kiosk/HomepageExperience.tsx",
-			);
-			const source = fs.readFileSync(srcPath, "utf-8");
-			expect(source).toContain('id="main-content"');
-		}
+		// Note: HomepageShell is a server component that expects t and locale props.
+		// We verify the source code has the correct id attribute by reading the source.
+		const { readFileSync } = await import("node:fs");
+		const srcPath = path.resolve(
+			import.meta.dirname,
+			"../src/components/kiosk/HomepageShell.tsx",
+		);
+		const source = readFileSync(srcPath, "utf-8");
+		expect(source).toContain('id="main-content"');
 	});
 });
 

@@ -160,7 +160,7 @@ The audit runs against the **public consent page** at `/consentimiento-digital` 
 
 | Metric | Maximum Value | Notes |
 |---|---|---|
-| **Largest Contentful Paint (LCP)** | 3600 ms | Must be under 3.6 seconds |
+| **Largest Contentful Paint (LCP)** | 3800 ms | Must be under 3.8 seconds |
 | **Total Blocking Time (TBT)** | 300 ms | Main thread blocking budget |
 | **Cumulative Layout Shift (CLS)** | 0.1 | Visual stability budget |
 

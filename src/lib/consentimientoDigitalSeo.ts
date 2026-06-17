@@ -8,7 +8,8 @@ import {
 	createCanonicalUrl,
 } from "@/lib/seo";
 
-export const CONSENTIMIENTO_DIGITAL_OPEN_GRAPH_IMAGE_PATH = "/opengraph-image";
+export const CONSENTIMIENTO_DIGITAL_OPEN_GRAPH_IMAGE_PATH =
+	"/consentimiento-digital/opengraph-image";
 export const CONSENTIMIENTO_DIGITAL_OPEN_GRAPH_IMAGE_URL = createCanonicalUrl(
 	CONSENTIMIENTO_DIGITAL_OPEN_GRAPH_IMAGE_PATH,
 );

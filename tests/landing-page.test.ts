@@ -50,8 +50,8 @@ describe('Phase 3 — Landing page route restructuring', () => {
 		expect(source).not.toContain('useAuth')
 		expect(source).not.toContain('useKioskStore')
 		expect(source).not.toContain('"use client"')
-		// HomepageExperience is a client component wrapper — allowed
-		expect(source).toContain('HomepageExperience')
+		// HomepageShell is the server component wrapper — allowed
+		expect(source).toContain('HomepageShell')
 	})
 })
 

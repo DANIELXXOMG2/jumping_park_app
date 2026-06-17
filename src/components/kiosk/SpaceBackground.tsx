@@ -53,8 +53,16 @@ export function SpaceBackground() {
 		};
 
 		// Inicializar estrellas
+		// Respect user's motion preference
+		const prefersReducedMotion = window.matchMedia(
+			"(prefers-reduced-motion: reduce)",
+		).matches;
+
 		const initStars = () => {
-			const starCount = Math.floor((canvas.width * canvas.height) / 3000);
+			const starCount = Math.min(
+				Math.floor((canvas.width * canvas.height) / 6000),
+				100,
+			);
 			starsRef.current = [];
 
 			for (let i = 0; i < starCount; i++) {
@@ -262,6 +270,28 @@ export function SpaceBackground() {
 		// Loop de animación
 		let lastTime = 0;
 		const animate = (time: number) => {
+			// Skip animation frames if user prefers reduced motion
+			if (prefersReducedMotion) {
+				// Draw a single static frame then stop
+				const bgGradient = ctx.createLinearGradient(
+					0,
+					0,
+					canvas.width,
+					canvas.height,
+				);
+				bgGradient.addColorStop(0, "#0a1a12");
+				bgGradient.addColorStop(0.3, "#0a0a1a");
+				bgGradient.addColorStop(0.6, "#0d1a14");
+				bgGradient.addColorStop(1, "#050d0a");
+				ctx.fillStyle = bgGradient;
+				ctx.fillRect(0, 0, canvas.width, canvas.height);
+				drawNebula(0);
+				starsRef.current.forEach((star) => {
+					drawStar(star, 0);
+				});
+				return; // Don't schedule next frame
+			}
+
 			const _deltaTime = time - lastTime;
 			lastTime = time;
 

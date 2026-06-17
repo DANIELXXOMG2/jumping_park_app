@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Sora } from "next/font/google";
+import { cookies } from "next/headers";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/ui/ThemeProvider";
 import {
@@ -9,6 +10,16 @@ import {
 	NON_INDEXABLE_ROBOTS,
 } from "@/lib/seo";
 import "./globals.css";
+
+/**
+ * Resolves the HTML lang attribute from a cookie store.
+ * Extracted for testability — production uses cookies() from next/headers.
+ */
+export function resolveHtmlLang(cookieStore: {
+	get: (name: string) => { value: string } | undefined;
+}): string {
+	return cookieStore.get("jp-locale")?.value === "en" ? "en" : "es";
+}
 
 const sora = Sora({
 	variable: "--font-sora",
@@ -94,13 +105,22 @@ export const viewport: Viewport = {
 	themeColor: "#2ECC71",
 };
 
-export default function RootLayout({
+interface CookieStore {
+	get: (name: string) => { value: string } | undefined;
+}
+
+export default async function RootLayout({
 	children,
+	cookieStore,
 }: Readonly<{
 	children: React.ReactNode;
+	cookieStore?: CookieStore;
 }>) {
+	const store = cookieStore ?? (await cookies());
+	const locale = resolveHtmlLang(store);
+
 	return (
-		<html lang="es" suppressHydrationWarning>
+		<html lang={locale} suppressHydrationWarning>
 			<body className={`${sora.variable} font-sans antialiased`}>
 				<a
 					href="#main-content"

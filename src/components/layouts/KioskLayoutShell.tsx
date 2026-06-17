@@ -144,7 +144,7 @@ export function KioskLayoutShell({
 	return (
 		<AuthProvider>
 			<KioskHardeningProvider hardeningFlags={hardeningFlags}>
-				<LanguageProvider>
+				<LanguageProvider initialLanguage="es">
 					<KioskLayoutContent>{children}</KioskLayoutContent>
 				</LanguageProvider>
 			</KioskHardeningProvider>
