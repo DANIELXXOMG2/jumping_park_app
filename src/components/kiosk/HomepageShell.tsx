@@ -4,7 +4,7 @@ import { HomepageHeroIsland } from "@/components/kiosk/HomepageHeroIsland";
 import { LanguageToggle } from "@/components/kiosk/LanguageToggle";
 import { StartActionButton } from "@/components/kiosk/StartActionButton";
 import { SecretAdminTrigger } from "@/components/ui/SecretAdminTrigger";
-import type { DictionaryKey, Language } from "@/lib/i18n/dictionary";
+import type { DictionaryKey } from "@/lib/i18n/dictionary";
 import { PAGE_IMAGE_VARIANTS } from "@/lib/imageOptimization";
 
 interface HomepageShellProps {
@@ -12,7 +12,6 @@ interface HomepageShellProps {
 		key: DictionaryKey,
 		replacements?: Record<string, string | number>,
 	) => string;
-	locale: Language;
 }
 
 /**
@@ -27,7 +26,7 @@ interface HomepageShellProps {
  * The server renders the initial HTML with the locale from the cookie (SEO).
  * After hydration, HomepageContent uses useLanguage() for instant language switching.
  */
-export function HomepageShell({ t, locale: _locale }: HomepageShellProps) {
+export function HomepageShell({ t }: HomepageShellProps) {
 	const ctaText = t("common.tapToStart");
 	const ctaAriaLabel = t("common.tapToStartAria");
 	const astronautAlt = t("home.hero.astronautAlt");
